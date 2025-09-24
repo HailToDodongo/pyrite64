@@ -11,6 +11,6 @@ namespace Editor
     private:
 
     public:
-      void draw();
+      static void draw();
   };
 }

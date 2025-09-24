@@ -94,8 +94,6 @@ int main(int, char**)
   ImFont* font = io.Fonts->AddFontFromFileTTF("./data/Altinn-DINExp.ttf");
   IM_ASSERT(font != nullptr);
 
-  // Our state
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
   Editor::Scene editorScene{};
 
   std::vector<Renderer::Vertex> vertices{};
