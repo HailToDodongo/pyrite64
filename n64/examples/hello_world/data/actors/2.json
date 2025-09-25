@@ -1,0 +1,1 @@
+{"id":2,"name":"Gear","className":"Test2","components":[{"type":"mesh","title":"model.glb - model945f","data":{"name":"model945f","model":"/home/mbeboek/Documents/projects/n64_engine/examples/hello_world/assets/model.glb"}},{"type":"script","title":"actor_a98b28da1","data":{"script":"a98b28da1"}}],"hasScale":true,"hasPos":true,"modelScale":[0.1,0.1,0.1]}

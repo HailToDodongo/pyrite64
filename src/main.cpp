@@ -1,29 +1,25 @@
-// Dear ImGui: standalone example application for SDL3 + SDL_GPU
-// (SDL is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
-
-// Learn about Dear ImGui:
-// - FAQ                  https://dearimgui.com/faq
-// - Getting Started      https://dearimgui.com/getting-started
-// - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
-// - Introduction, links and more at the top of imgui.cpp
-
-// Important note to the reader who wish to integrate imgui_impl_sdlgpu3.cpp/.h in their own engine/app.
-// - Unlike other backends, the user must call the function ImGui_ImplSDLGPU_PrepareDrawData() BEFORE issuing a SDL_GPURenderPass containing ImGui_ImplSDLGPU_RenderDrawData.
-//   Calling the function is MANDATORY, otherwise the ImGui will not upload neither the vertex nor the index buffer for the GPU. See imgui_impl_sdlgpu3.cpp for more info.
-
+#include "context.h"
 #include "imgui.h"
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlgpu3.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
 
+#include "editor/editorMain.h"
 #include "editor/editorScene.h"
 #include "renderer/shader.h"
+#include "renderer/texture.h"
 #include "renderer/vertBuffer.h"
 
+constinit Context ctx{};
+
 // Main code
-int main(int, char**) {
+int main(int, char**)
+{
+  fflush(stdout);
+
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
   {
     printf("Error: SDL_Init(): %s\n", SDL_GetError());
@@ -62,6 +58,22 @@ int main(int, char**) {
     return -1;
   }
   SDL_SetGPUSwapchainParameters(gpu_device, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_VSYNC);
+/*
+  SDL_GPUSamplerCreateInfo samplerInfo{};
+  samplerInfo.min_filter = SDL_GPU_FILTER_LINEAR;
+  samplerInfo.mag_filter = SDL_GPU_FILTER_LINEAR;
+  samplerInfo.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR;
+  samplerInfo.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+  samplerInfo.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+  samplerInfo.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+  samplerInfo.mip_lod_bias = 0.0f;
+  samplerInfo.min_lod = -1000.0f;
+  samplerInfo.max_lod = 1000.0f;
+  samplerInfo.enable_anisotropy = false;
+  samplerInfo.max_anisotropy = 1.0f;
+  samplerInfo.enable_compare = false;
+  auto texSampler = SDL_CreateGPUSampler(gpu_device, &samplerInfo);
+*/
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
@@ -93,6 +105,7 @@ int main(int, char**) {
   ImFont* font = io.Fonts->AddFontFromFileTTF("./data/Altinn-DINExp.ttf");
   IM_ASSERT(font != nullptr);
   {
+    Editor::Main editorMain{gpu_device};
     Editor::Scene editorScene{};
 
     std::vector<Renderer::Vertex> vertices{};
@@ -180,7 +193,11 @@ int main(int, char**) {
       ImGui_ImplSDL3_NewFrame();
       ImGui::NewFrame();
 
-      editorScene.draw();
+      if (ctx.project) {
+        editorScene.draw();
+      } else {
+        editorMain.draw();
+      }
 
       // Rendering
       ImGui::Render();
@@ -192,12 +209,11 @@ int main(int, char**) {
       SDL_GPUTexture* swapchain_texture;
       SDL_WaitAndAcquireGPUSwapchainTexture(command_buffer, window, &swapchain_texture, nullptr, nullptr); // Acquire a swapchain texture
 
-      if (swapchain_texture != nullptr && !is_minimized)
-      {
+      if (swapchain_texture != nullptr && !is_minimized) {
         // Setup and start a render pass
         SDL_GPUColorTargetInfo target_info = {};
         target_info.texture = swapchain_texture;
-        target_info.clear_color = {0.25f,0.25f,0.25f,0};
+        target_info.clear_color = {0.106f, 0.106f, 0.106f, 0};
         target_info.load_op = SDL_GPU_LOADOP_CLEAR;
         target_info.store_op = SDL_GPU_STOREOP_STORE;
         target_info.mip_level = 0;
@@ -215,16 +231,18 @@ int main(int, char**) {
         SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(command_buffer, &target_info, 1, nullptr);
         SDL_BindGPUGraphicsPipeline(renderPass, graphicsPipeline);
 
-        // bind the vertex buffer
-        SDL_GPUBufferBinding bufferBindings[1];
-        vertBuff.addBinding(bufferBindings[0]);
-        SDL_BindGPUVertexBuffers(renderPass, 0, bufferBindings, 1); // bind one buffer starting from slot 0
+        if (ctx.project) {
+          // bind the vertex buffer
+          SDL_GPUBufferBinding bufferBindings[1];
+          vertBuff.addBinding(bufferBindings[0]);
+          SDL_BindGPUVertexBuffers(renderPass, 0, bufferBindings, 1); // bind one buffer starting from slot 0
 
-        SDL_Rect scissorFull{0,0, (int)draw_data->DisplaySize.x, (int)draw_data->DisplaySize.y};
-        SDL_Rect scissor3D{0,0, 640, 480};
-        //SDL_SetGPUScissor(renderPass, &scissor3D);
+          SDL_Rect scissorFull{0,0, (int)draw_data->DisplaySize.x, (int)draw_data->DisplaySize.y};
+          SDL_Rect scissor3D{0,0, 640, 480};
+          //SDL_SetGPUScissor(renderPass, &scissor3D);
 
-        SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+          SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+        }
 
         //SDL_SetGPUScissor(renderPass, &scissorFull);
 

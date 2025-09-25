@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O2")
 
 add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL)
+add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)
 
 # Create your game executable target as usual
 add_executable(p64editor src/main.cpp
@@ -32,9 +33,14 @@ add_executable(p64editor src/main.cpp
         src/renderer/vertBuffer.h
         src/renderer/vertBuffer.cpp
         src/renderer/vertex.h
+        src/context.h
+        src/project/project.h
+        src/editor/editorMain.cpp
+        src/renderer/texture.cpp
+        src/renderer/texture.h
 )
 
 target_include_directories(p64editor PRIVATE vendored/imgui)
 
 # Link to the actual SDL3 library.
-target_link_libraries(p64editor PRIVATE SDL3::SDL3)
+target_link_libraries(p64editor PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)

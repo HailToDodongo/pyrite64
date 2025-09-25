@@ -1,0 +1,1 @@
+{"id":1,"name":"Box","className":"Box","components":[{"type":"script","data":{"script":"a28ec2e68"},"title":"actor_a28ec2e68"},{"type":"mesh","title":"box.glb - model8a90","data":{"name":"model8a90","model":"/home/mbeboek/Documents/projects/n64_engine/examples/hello_world/assets/box.glb"}}],"hasPos":true,"hasRot":false,"hasScale":true,"modelScale":[0.25,0.25,0.25]}

@@ -1,0 +1,1 @@
+{"id":3,"name":"BGM","className":"BGM","hasPos":false,"hasRot":false,"hasScale":false,"components":[{"type":"audio2d","title":"DiscFrag.mp3 - audio75c9","data":{"name":"audio75c9","audio":"/home/mbeboek/Documents/projects/n64_engine/examples/hello_world/assets/DiscFrag.mp3"}}],"modelScale":[0.1,0.1,0.1]}
