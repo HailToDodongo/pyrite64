@@ -9,8 +9,9 @@ namespace Editor
   class Scene
   {
     private:
+      bool dockSpaceInit{false};
 
     public:
-      static void draw();
+      void draw();
   };
 }
