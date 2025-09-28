@@ -7,3 +7,6 @@
 [submodule "vendored/SDL_image"]
 	path = vendored/SDL_image
 	url = https://github.com/libsdl-org/SDL_image.git
+[submodule "vendored/SHA256"]
+	path = vendored/SHA256
+	url = https://github.com/System-Glitch/SHA256.git

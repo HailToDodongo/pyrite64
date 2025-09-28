@@ -58,7 +58,9 @@ void Editor::AssetsBrowser::draw()
     );
     if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-      ImGui::SetTooltip("%s", asset.name.c_str());
+      ImGui::SetTooltip("File: %s\nUUID: %08X-%08X", asset.name.c_str(),
+        asset.uuid >> 32, asset.uuid & 0xFFFFFFFF
+      );
     }
 
     currentWidth += itemWidth;

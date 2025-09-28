@@ -18,6 +18,10 @@ add_executable(p64editor src/main.cpp
         vendored/simdjson/simdjson.cpp
         vendored/simdjson/simdjson.h
 
+        # SHA256
+        vendored/SHA256/src/SHA256.cpp
+        vendored/SHA256/include/SHA256.h
+
         # imgui
         vendored/imgui/backends/imgui_impl_sdl3.cpp
         vendored/imgui/backends/imgui_impl_sdl3.h
@@ -64,9 +68,15 @@ add_executable(p64editor src/main.cpp
         src/editor/pages/parts/assetsBrowser.cpp
         src/project/assetManager.h
         src/project/assetManager.cpp
+        src/utils/hash.h
 )
 
-target_include_directories(p64editor PRIVATE vendored/imgui vendored/simdjson vendored/IconFontCppHeaders)
+target_include_directories(p64editor PRIVATE
+    vendored/imgui
+    vendored/simdjson
+    vendored/IconFontCppHeaders
+    vendored/SHA256/include
+)
 
 # Link to the actual SDL3 library.
 target_link_libraries(p64editor PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)

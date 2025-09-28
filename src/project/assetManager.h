@@ -23,6 +23,7 @@ namespace Project
 
       struct Entry
       {
+        uint64_t uuid{0};
         std::string name{};
         std::string path{};
         FileType type{};

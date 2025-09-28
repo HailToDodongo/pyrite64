@@ -6,6 +6,9 @@
 #include "../context.h"
 #include <filesystem>
 
+#include "SHA256.h"
+#include "../utils/hash.h"
+
 void Project::AssetManager::reload() {
   entries.clear();
 
@@ -19,6 +22,7 @@ void Project::AssetManager::reload() {
     if (entry.is_regular_file()) {
       auto path = entry.path();
       auto ext = path.extension().string();
+
       FileType type = FileType::UNKNOWN;
       if (ext == ".png") {
         type = FileType::IMAGE;
@@ -28,13 +32,19 @@ void Project::AssetManager::reload() {
         type = FileType::MODEL_3D;
       }
 
-
       Renderer::Texture *texture{nullptr};
       if (type == FileType::IMAGE) {
         texture = new Renderer::Texture{ctx.gpu, path.string()};
       }
 
-      entries.push_back({path.filename().string(), path.string(), type, texture});
+      uint64_t uuid = Utils::Hash::sha256_64bit("ASSET:" + path.string());
+      entries.push_back({
+        .uuid = uuid,
+        .name = path.filename().string(),
+        .path = path.string(),
+        .type = type,
+        .texture = texture
+      });
     }
   }
 }
