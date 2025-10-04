@@ -31,13 +31,11 @@ namespace
     return p.string();
   }
 
-  std::string genAssetRules(Project::Project &project)
+  std::string genAssetRules(Project::Project &project, std::vector<std::string> &assetList)
   {
     std::string rules = "";
     auto entries = project.getAssets().getEntries();
     auto projectBase = fs::absolute(project.getPath()).string();
-
-    std::vector<std::string> assetList{};
 
     auto getComprLevel = [](Project::ComprTypes type) -> int {
       int level = (int)type - 1;
@@ -86,12 +84,6 @@ namespace
       }
     }
 
-    rules += "\n" "assets_conv =";
-    for(const auto &a : assetList) {
-      rules += " " + a;
-    }
-    rules += '\n';
-
     return rules;
   }
 }
@@ -109,11 +101,13 @@ bool Build::buildProject(Project::Project &project) {
     fs::create_directories(fsDataPath);
   }
 
+  SceneCtx sceneCtx{};
+
   // Scenes
   project.getScenes().reload();
   const auto &scenes = project.getScenes().getEntries();
   for (const auto &scene : scenes) {
-    buildScene(project, scene);
+    buildScene(project, scene, sceneCtx);
   }
 
   // Makefile
@@ -123,7 +117,8 @@ bool Build::buildProject(Project::Project &project) {
   makefile = Utils::replaceAll(makefile, "{{ENGINE_PATH}}", enginePath);
   makefile = Utils::replaceAll(makefile, "{{ROM_NAME}}", project.conf.romName);
   makefile = Utils::replaceAll(makefile, "{{PROJECT_NAME}}", project.conf.name);
-  makefile = Utils::replaceAll(makefile, "{{RULES_ASSETS}}", genAssetRules(project));
+  makefile = Utils::replaceAll(makefile, "{{RULES_ASSETS}}", genAssetRules(project, sceneCtx.files));
+  makefile = Utils::replaceAll(makefile, "{{ASSET_LIST}}", Utils::join(sceneCtx.files, " "));
 
   auto oldMakefile = Utils::FS::loadTextFile(path + "/Makefile");
   if (oldMakefile != makefile) {

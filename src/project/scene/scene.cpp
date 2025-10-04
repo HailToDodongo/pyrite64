@@ -60,12 +60,14 @@ Project::Scene::Scene(int id_)
     JSON_GET_INT(fbFormat);
     //JSON_GET_FLOAT(clearColor);
 
-
-    auto col = doc["clearColor"].get_array();
-    conf.clearColor.r = col.at(0).get_double();
-    conf.clearColor.g = col.at(1).get_double();
-    conf.clearColor.b = col.at(2).get_double();
-    conf.clearColor.a = col.at(3).get_double();
+    auto clearColor = doc["clearColor"];
+    if (!clearColor.error()) {
+      auto col = clearColor.get_array();
+      conf.clearColor.r = col.at(0).get_double();
+      conf.clearColor.g = col.at(1).get_double();
+      conf.clearColor.b = col.at(2).get_double();
+      conf.clearColor.a = col.at(3).get_double();
+    }
     JSON_GET_BOOL(doClearColor);
     JSON_GET_BOOL(doClearDepth);
   }

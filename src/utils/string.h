@@ -30,4 +30,15 @@ namespace Utils
     if(str.length() >= totalLength)return str;
     return std::string(totalLength - str.length(), padChar) + str;
   }
+
+  inline std::string join(const std::vector<std::string> &values, const std::string &separator) {
+    std::string result{};
+    for(size_t i=0; i<values.size(); ++i) {
+      result += values[i];
+      if(i < values.size()-1) {
+        result += separator;
+      }
+    }
+    return result;
+  }
 }

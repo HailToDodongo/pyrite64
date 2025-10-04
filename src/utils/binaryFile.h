@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <bit>
 
+#include "color.h"
+
 namespace Utils
 {
   class BinaryFile
@@ -50,6 +52,19 @@ namespace Utils
 
       void write(const std::string &str) {
         writeChars(str.c_str(), str.size());
+      }
+
+      void writeRGBA(const Color &color) {
+        write<uint8_t>(color.r * 255);
+        write<uint8_t>(color.g * 255);
+        write<uint8_t>(color.b * 255);
+        write<uint8_t>(color.a * 255);
+      }
+
+      void writeRGB(const Color &color) {
+        write<uint8_t>(color.r * 255);
+        write<uint8_t>(color.g * 255);
+        write<uint8_t>(color.b * 255);
       }
 
       void writeChars(const char* str, size_t len) {

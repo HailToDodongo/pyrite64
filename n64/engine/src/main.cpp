@@ -1,10 +1,12 @@
 #include <libdragon.h>
 #include <t3d/t3d.h>
 
+#include "../include/scene/sceneManager.h"
 #include "vi/swapChain.h"
 #include "lib/logger.h"
 #include "lib/memory.h"
 #include "scene/scene.h"
+#include "scene/sceneManager.h"
 #include "scene/globalState.h"
 #include "./audio/audioManagerPrivate.h"
 
@@ -45,6 +47,8 @@ int main()
 
   P64::MatrixManager::reset();
   P64::VI::SwapChain::init();
+
+  P64::SceneManager::load(1);
 
   for(;;)
   {
