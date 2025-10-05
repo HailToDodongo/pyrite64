@@ -8,6 +8,8 @@
 #include "IconsFontAwesome4.h"
 #include "../../utils/filePicker.h"
 #include "../../utils/color.h"
+#include "glm/vec3.hpp"
+#include "glm/gtc/quaternion.hpp"
 
 namespace ImGui::InpTable
 {
@@ -76,6 +78,28 @@ namespace ImGui::InpTable
 
       auto labelHidden = "##" + name;
       ImGui::InputFloat(labelHidden.c_str(), &value);
+  }
+
+  inline void addInputVec3(const std::string &name, glm::vec3 &v) {
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text(name.c_str());
+    ImGui::TableSetColumnIndex(1);
+
+    auto labelHidden = "##0" + name;
+    ImGui::InputFloat3(labelHidden.c_str(), &v.x);
+  }
+
+  inline void addInputQuat(const std::string &name, glm::quat &v) {
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text(name.c_str());
+    ImGui::TableSetColumnIndex(1);
+
+    auto labelHidden = "##0" + name;
+    ImGui::InputFloat4(labelHidden.c_str(), &v.x);
   }
 
   inline void addInputInt(const std::string &name, int &value) {

@@ -19,6 +19,10 @@ namespace
     builder.set("name", obj.name);
     builder.set("uuid", obj.uuid);
 
+    builder.set("pos", obj.pos);
+    builder.set("rot", obj.rot);
+    builder.set("scale", obj.scale);
+
     std::vector<Builder> children{};
     for (const auto &child : obj.children) {
       children.push_back(serializeObj(*child));
@@ -39,6 +43,10 @@ void Project::Object::deserialize(Scene &scene, const simdjson::simdjson_result<
   id = Utils::JSON::readInt(doc, "id");
   name = Utils::JSON::readString(doc, "name");
   uuid = Utils::JSON::readU64(doc, "uuid");
+
+  pos = Utils::JSON::readVec3(doc, "pos");
+  rot = Utils::JSON::readQuat(doc, "rot");
+  scale = Utils::JSON::readVec3(doc, "scale", {1,1,1});
 
   auto ch = doc["children"];
   if (ch.error() != simdjson::SUCCESS)return;

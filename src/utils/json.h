@@ -5,7 +5,8 @@
 #pragma once
 #include "fs.h"
 #include "simdjson.h"
-#include "SDL3/SDL_iostream.h"
+#include "glm/vec3.hpp"
+#include "glm/gtc/quaternion.hpp"
 
 namespace Utils::JSON
 {
@@ -103,5 +104,33 @@ namespace Utils::JSON
     col.b = arr.at(2).get_double();
     col.a = arr.at(3).get_double();
     return col;
+  }
+
+  inline glm::vec3 readVec3(const simdjson::simdjson_result<simdjson::dom::element> &el, const std::string &key, const glm::vec3 &def = {}) {
+    auto val = el[key];
+    if (val.error() != simdjson::SUCCESS)return def;
+    auto arr = val.get_array();
+    if (arr.error() != simdjson::SUCCESS)return def;
+
+    return {
+      (float)arr.at(0).get_double(),
+      (float)arr.at(1).get_double(),
+      (float)arr.at(2).get_double()
+    };
+  }
+
+  inline glm::quat readQuat(const simdjson::simdjson_result<simdjson::dom::element> &el, const std::string &key) {
+    auto res = glm::identity<glm::quat>();
+
+    auto val = el[key];
+    if (val.error() != simdjson::SUCCESS)return res;
+    auto arr = val.get_array();
+    if (arr.error() != simdjson::SUCCESS)return res;
+
+    res.x = arr.at(0).get_double();
+    res.y = arr.at(1).get_double();
+    res.z = arr.at(2).get_double();
+    res.w = arr.at(3).get_double();
+    return res;
   }
 }

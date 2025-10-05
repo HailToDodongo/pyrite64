@@ -8,6 +8,9 @@
 #include <vector>
 
 #include "simdjson.h"
+#include "glm/vec3.hpp"
+#include "glm/gtc/quaternion.hpp"
+
 
 namespace Project
 {
@@ -21,6 +24,10 @@ namespace Project
       std::string name{};
       uint64_t uuid{0};
       uint16_t id{};
+
+      glm::vec3 pos{};
+      glm::quat rot{};
+      glm::vec3 scale{};
 
       std::vector<std::shared_ptr<Object>> children{};
 
