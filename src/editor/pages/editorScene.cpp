@@ -4,6 +4,7 @@
 */
 #include "editorScene.h"
 
+#include "IconsFontAwesome4.h"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "../actions.h"
@@ -14,7 +15,7 @@ namespace
   constexpr float HEIGHT_TOP_BAR = 26.0f;
   constexpr float HEIGHT_STATUS_BAR = 32.0f;
 
-  constinit bool projectSettingsOpen{true};
+  constinit bool projectSettingsOpen{false};
 }
 
 void Editor::Scene::draw()
@@ -117,7 +118,7 @@ void Editor::Scene::draw()
     // Thick borders
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-    ImGui::Begin("Project Settings", &projectSettingsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
+    ImGui::Begin(ICON_FA_COG " Project Settings", &projectSettingsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
     if (projectSettings.draw()) {
       projectSettingsOpen = false;
     }
@@ -138,15 +139,15 @@ void Editor::Scene::draw()
   {
     if(ImGui::BeginMenu("Project"))
     {
-      if(ImGui::MenuItem("Save"))ctx.project->save();
-      if(ImGui::MenuItem("Settings"))projectSettingsOpen = true;
-      if(ImGui::MenuItem("Close"))Actions::call(Actions::Type::PROJECT_CLOSE);
+      if(ImGui::MenuItem(ICON_FA_FLOPPY_O " Save"))ctx.project->save();
+      if(ImGui::MenuItem(ICON_FA_COG " Settings"))projectSettingsOpen = true;
+      if(ImGui::MenuItem(ICON_FA_SIGN_OUT " Close"))Actions::call(Actions::Type::PROJECT_CLOSE);
       ImGui::EndMenu();
     }
 
     if(ImGui::BeginMenu("Build"))
     {
-      if(ImGui::MenuItem("Build"))Actions::call(Actions::Type::PROJECT_BUILD);
+      if(ImGui::MenuItem(ICON_FA_BUILDING " Build"))Actions::call(Actions::Type::PROJECT_BUILD);
       ImGui::EndMenu();
     }
 
