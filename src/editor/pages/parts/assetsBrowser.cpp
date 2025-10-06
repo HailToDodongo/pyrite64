@@ -68,6 +68,11 @@ void Editor::AssetsBrowser::draw()
       ctx.selAssetUUID = asset.uuid == ctx.selAssetUUID ? 0 : asset.uuid;
     }
 
+    if (ImGui::BeginDragDropSource()) {
+      ImGui::ImageButton(asset.name.c_str(), icon, {imageSize*0.75f, imageSize*0.75f});
+      ImGui::EndDragDropSource();
+    }
+
     if(isSelected)ImGui::PopStyleColor(2);
 
     if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
