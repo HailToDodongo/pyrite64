@@ -8,8 +8,15 @@
 #include "glm/ext/matrix_transform.hpp"
 //#include "glm/gtx/quaternion.hpp"
 
+namespace
+{
+  constexpr glm::vec3 WORLD_UP{0,1,0};
+  constexpr glm::vec3 WORLD_FORWARD{0,0,-1};
+}
+
 Renderer::Camera::Camera() {
   rot = glm::identity<glm::quat>();
+  posOffset = {0,0,2};
 }
 
 void Renderer::Camera::update() {
@@ -19,12 +26,17 @@ void Renderer::Camera::apply(UniformGlobal &uniGlobal)
 {
   float x = SDL_GetTicks() / 1000.0f;
   float aspect = screenSize.x / screenSize.y;
-  uniGlobal.projMat = glm::perspective(70.0f, aspect, 0.1f, 100.0f);
+  uniGlobal.projMat = glm::perspective(glm::radians(70.0f), aspect, 0.1f, 100.0f);
 
-  //uniGlobal.cameraMat = glm::lookAt(glm::vec3{0,0,-10}, {sinf(x) * 4,0,0}, {0,1,0});
+  const glm::vec3 direction = glm::normalize(rot * WORLD_FORWARD);
+  const glm::vec3 dynamicUp = glm::normalize(rot * WORLD_UP);
+  const glm::vec3 target = pos + posOffset + direction;
+  uniGlobal.cameraMat = glm::lookAt(pos + posOffset, target, dynamicUp);
 
+/*
   uniGlobal.cameraMat = glm::mat4_cast(rot);
   uniGlobal.cameraMat = glm::translate(uniGlobal.cameraMat, -pos * rot);
+  */
 }
 
 void Renderer::Camera::rotateDelta(glm::vec2 screenDelta)
@@ -36,7 +48,7 @@ void Renderer::Camera::rotateDelta(glm::vec2 screenDelta)
 
   // rotate based on screen delta
   float angleX = screenDelta.x * -0.0025f;
-  float angleY = screenDelta.y * 0.0025f;
+  float angleY = screenDelta.y * -0.0025f;
   glm::quat qx = glm::angleAxis(angleX, glm::vec3(0, 1, 0));
   glm::quat qy = glm::angleAxis(angleY, glm::vec3(1, 0, 0));
   rot = qx * rotBase * qy;

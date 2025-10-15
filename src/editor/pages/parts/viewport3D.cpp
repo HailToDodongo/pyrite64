@@ -143,9 +143,6 @@ Editor::Viewport3D::Viewport3D()
   vertices.push_back({{ 1, 1, 1}, {0,0,-1}, {0,1,0,1}, {1,1}});
 
 
-
-
-
   vertBuff = new Renderer::VertBuffer({sizeof(vertices), ctx.gpu});
   vertBuff->setData(vertices);
 
@@ -155,7 +152,7 @@ Editor::Viewport3D::Viewport3D()
   gizStyle.labelSize = 1.9f;
   gizStyle.labelColor = IM_COL32(0,0,0,0xFF);
 
-  camera.pos = {0,0,3};
+  camera.pos = {0,0,0};
 }
 
 Editor::Viewport3D::~Viewport3D() {
@@ -268,7 +265,7 @@ void Editor::Viewport3D::draw() {
   currPos.x += 8;
   Draw3DGridAndAxes(draw_list, uniGlobal.cameraMat, uniGlobal.projMat, currSize, currPos);
 
-  if (ImViewGuizmo::Rotate(camera.pos, camera.rot, gizPos)) {
+  if (ImViewGuizmo::Rotate(camera.posOffset, camera.rot, gizPos)) {
 
   }
 }
