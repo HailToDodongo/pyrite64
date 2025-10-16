@@ -120,6 +120,8 @@ add_executable(p64editor src/main.cpp
         src/renderer/mesh.cpp
         src/renderer/object.h
         src/renderer/object.cpp
+        src/utils/meshGen.h
+        src/utils/meshGen.cpp
 )
 
 target_include_directories(p64editor PRIVATE

@@ -247,6 +247,7 @@ int main(int argc, char** argv)
   }
 
   SDL_WaitForGPUIdle(ctx.gpu);
+
   ImGui_ImplSDL3_Shutdown();
   ImGui_ImplSDLGPU3_Shutdown();
   ImGui::DestroyContext();

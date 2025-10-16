@@ -7,9 +7,6 @@
 
 Renderer::Framebuffer::Framebuffer()
 {
-  texInfo.type = SDL_GPU_TEXTURETYPE_2D;
-  texInfo.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
-  texInfo.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
   texInfo.width = 0;
   texInfo.height = 0;
   texInfo.layer_count_or_depth = 1;
@@ -23,6 +20,13 @@ Renderer::Framebuffer::Framebuffer()
   targetInfo.mip_level = 0;
   targetInfo.layer_or_depth_plane = 0;
   targetInfo.cycle = false;
+
+  depthTargetInfo.texture = nullptr;
+  depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+  depthTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+  depthTargetInfo.stencil_load_op = SDL_GPU_LOADOP_CLEAR;
+  depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_STORE;
+  depthTargetInfo.mip_level = 0;
 }
 
 Renderer::Framebuffer::~Framebuffer() {
@@ -40,6 +44,17 @@ void Renderer::Framebuffer::resize(uint32_t width, uint32_t height)
   if(gpuTex) {
     SDL_ReleaseGPUTexture(ctx.gpu, gpuTex);
   }
+
+  texInfo.type = SDL_GPU_TEXTURETYPE_2D;
+  texInfo.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+  texInfo.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
   gpuTex = SDL_CreateGPUTexture(ctx.gpu, &texInfo);
+
+  texInfo.type = SDL_GPU_TEXTURETYPE_2D;
+  texInfo.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;
+  texInfo.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
+  gpuTexDepth = SDL_CreateGPUTexture(ctx.gpu, &texInfo);
+
   targetInfo.texture = gpuTex;
+  depthTargetInfo.texture = gpuTexDepth;
 }

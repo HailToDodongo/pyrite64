@@ -12,16 +12,12 @@
 #include "../../../renderer/object.h"
 #include "../../../renderer/scene.h"
 #include "../../../renderer/uniforms.h"
+#include "../../../utils/meshGen.h"
 #include "SDL3/SDL_gpu.h"
 
 namespace
 {
   constinit uint32_t nextPassId{0};
-
-  std::shared_ptr<Renderer::Mesh> mesh{};
-
-  Renderer::Object obj{};
-  Renderer::Object obj2{};
 }
 
 Editor::Viewport3D::Viewport3D()
@@ -36,30 +32,7 @@ Editor::Viewport3D::Viewport3D()
 
   mesh = std::make_shared<Renderer::Mesh>();
   mesh->vertices.clear();
-  // cube:
-
-  // large floor
-  mesh->vertices.push_back({{-10,0,-10}, {0,1,0}, {1,0,0,1}, {0,0}});
-  mesh->vertices.push_back({{ 10,0, 10}, {0,1,0}, {0,1,0,1}, {1,1}});
-  mesh->vertices.push_back({{ 10,0,-10}, {0,1,0}, {0,0,1,1}, {1,0}});
-  mesh->vertices.push_back({{-10,0,-10}, {0,1,0}, {1,0,0,1}, {0,0}});
-  mesh->vertices.push_back({{-10,0, 10}, {0,1,0}, {1,1,0,1}, {0,1}});
-  mesh->vertices.push_back({{ 10,0, 10}, {0,1,0}, {0,1,0,1}, {1,1}});
-
-  mesh->vertices.push_back({{-1,-1, -1}, {0,0,-1}, {1,0,0,1}, {0,0}});
-  mesh->vertices.push_back({{ 1, 1, -1}, {0,0,-1}, {0,1,0,1}, {1,1}});
-  mesh->vertices.push_back({{ 1,-1, -1}, {0,0,-1}, {0,0,1,1}, {1,0}});
-  mesh->vertices.push_back({{-1,-1, -1}, {0,0,-1}, {1,0,0,1}, {0,0}});
-  mesh->vertices.push_back({{-1, 1, -1}, {0,0,-1}, {1,1,0,1}, {0,1}});
-  mesh->vertices.push_back({{ 1, 1, -1}, {0,0,-1}, {0,1,0,1}, {1,1}});
-
-  mesh->vertices.push_back({{-1,-1, 1}, {0,0,-1}, {1,0,0,1}, {0,0}});
-  mesh->vertices.push_back({{ 1, 1, 1}, {0,0,-1}, {0,1,0,1}, {1,1}});
-  mesh->vertices.push_back({{ 1,-1, 1}, {0,0,-1}, {0,0,1,1}, {1,0}});
-  mesh->vertices.push_back({{-1,-1, 1}, {0,0,-1}, {1,0,0,1}, {0,0}});
-  mesh->vertices.push_back({{-1, 1, 1}, {0,0,-1}, {1,1,0,1}, {0,1}});
-  mesh->vertices.push_back({{ 1, 1, 1}, {0,0,-1}, {0,1,0,1}, {1,1}});
-
+  Utils::Mesh::generateCube(*mesh);
   mesh->recreate(*ctx.scene);
   obj.setMesh(mesh);
   obj2.setMesh(mesh);
@@ -82,7 +55,9 @@ Editor::Viewport3D::~Viewport3D() {
 
 void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, SDL_GPUGraphicsPipeline* pipeline)
 {
-  SDL_GPURenderPass* renderPass3D = SDL_BeginGPURenderPass(cmdBuff, &fb.getTargetInfo(), 1, nullptr);
+  SDL_GPURenderPass* renderPass3D = SDL_BeginGPURenderPass(
+    cmdBuff, &fb.getTargetInfo(), 1, &fb.getDepthTargetInfo()
+  );
   SDL_BindGPUGraphicsPipeline(renderPass3D, pipeline);
 
   camera.apply(uniGlobal);

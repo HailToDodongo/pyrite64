@@ -8,17 +8,18 @@
 
 void Renderer::Mesh::recreate(Renderer::Scene &scene) {
   delete vertBuff;
-  vertBuff = new VertBuffer({sizeof(vertices), ctx.gpu});
+  if (vertices.empty())return;
+  vertBuff = new VertBuffer(vertices.size(), ctx.gpu);
   vertBuff->setData(vertices);
 
   scene.addOneTimeCopyPass([this](SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass *copyPass){
-    if (vertBuff) {
-      vertBuff->upload(*copyPass);
-    }
+    vertBuff->upload(*copyPass);
+    dataReady = true;
   });
 }
 
 void Renderer::Mesh::draw(SDL_GPURenderPass* pass) {
+  if (!dataReady)return;
   SDL_GPUBufferBinding bufferBindings[1];
   addBinding(bufferBindings[0]);
   SDL_BindGPUVertexBuffers(pass, 0, bufferBindings, 1); // bind one buffer starting from slot 0

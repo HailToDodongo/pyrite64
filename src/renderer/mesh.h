@@ -17,6 +17,7 @@ namespace Renderer
   {
     private:
       Renderer::VertBuffer *vertBuff{nullptr};
+      bool dataReady = false;
 
     public:
       std::vector<Renderer::Vertex> vertices{};
