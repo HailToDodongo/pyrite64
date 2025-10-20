@@ -58,13 +58,6 @@ namespace Project::Component::Model
     ctx.fileObj.write<uint16_t>(0);
   }
 
-  const char* getter(void* user_data, int idx)
-  {
-    auto &scriptList = ctx.project->getAssets().getTypeEntries(AssetManager::FileType::MODEL_3D);
-    if (idx < 0 || idx >= scriptList.size())return "<Select Model>";
-    return scriptList[idx].name.c_str();
-  }
-
   void draw(Object &obj, Entry &entry)
   {
     Data &data = *static_cast<Data*>(entry.data.get());
@@ -84,6 +77,13 @@ namespace Project::Component::Model
           break;
         }
       }
+
+      auto getter = [](void*, int idx) -> const char*
+      {
+        auto &scriptList = ctx.project->getAssets().getTypeEntries(AssetManager::FileType::MODEL_3D);
+        if (idx < 0 || idx >= scriptList.size())return "<Select Model>";
+        return scriptList[idx].name.c_str();
+      };
 
       if (ImGui::Combo("##UUID", &idx, getter, nullptr, modelList.size()+1)) {
         data.obj3DLoaded = false;
@@ -125,7 +125,7 @@ namespace Project::Component::Model
       }
 
       Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, aabbCol);
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt * 1.01f, aabbCol);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, aabbCol);
     }
   }
 }
