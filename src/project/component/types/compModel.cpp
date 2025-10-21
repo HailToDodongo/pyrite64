@@ -14,6 +14,9 @@
 #include "../../../renderer/scene.h"
 #include "../../../utils/meshGen.h"
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/matrix_decompose.hpp"
+
 namespace Project::Component::Model
 {
   struct Data
@@ -111,9 +114,14 @@ namespace Project::Component::Model
     }
 
     data.obj3D.setObjectID(obj.uuid);
-    data.obj3D.setPos(obj.pos);
-    data.obj3D.draw(pass, cmdBuff);
+    //data.obj3D.setPos(obj.pos);
 
+    // @TODO: tidy-up
+    glm::vec3 skew{0,0,0};
+    glm::vec4 persp{0,0,0,1};
+    data.obj3D.uniform.modelMat = glm::recompose(obj.scale, obj.rot, obj.pos, skew, persp);
+
+    data.obj3D.draw(pass, cmdBuff);
 
     bool isSelected = ctx.selObjectUUID == obj.uuid;
     if (isSelected)

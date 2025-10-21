@@ -13,6 +13,7 @@
 #include "../../../renderer/scene.h"
 #include "../../../renderer/uniforms.h"
 #include "../../../utils/meshGen.h"
+#include "glm/gtx/matrix_decompose.hpp"
 #include "SDL3/SDL_gpu.h"
 
 namespace
@@ -109,7 +110,8 @@ void Editor::Viewport3D::onPostRender(Renderer::Scene &renderScene) {
 
 void Editor::Viewport3D::draw() {
   camera.update();
-  fb.setClearColor(ctx.project->getScenes().getLoadedScene()->conf.clearColor);
+  auto scene = ctx.project->getScenes().getLoadedScene();
+  fb.setClearColor(scene->conf.clearColor);
 
   if (pickedObjID.hasResult()) {
     ctx.selObjectUUID = pickedObjID.consume();
@@ -137,13 +139,18 @@ void Editor::Viewport3D::draw() {
 
   float moveSpeed = 2.5f * deltaTime;
 
-  bool newMouseDown = ImGui::IsMouseDown(ImGuiMouseButton_Middle) || ImGui::IsMouseDown(ImGuiMouseButton_Right);
+  bool mouseHeldRight = ImGui::IsMouseDown(ImGuiMouseButton_Right);
+  bool newMouseDown = ImGui::IsMouseDown(ImGuiMouseButton_Middle) || mouseHeldRight;
   bool isShiftDown = ImGui::GetIO().KeyShift;
 
-  if (isMouseHover && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+  if (!ImGuizmo::IsOver() && isMouseHover && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
     pickedObjID.request();
     mousePosClick = mousePos;
   }
+
+  ImGui::SetMouseCursor(
+    mouseHeldRight ? ImGuiMouseCursor_None : ImGuiMouseCursor_Arrow
+  );
 
   if (newMouseDown) {
     if (ImGui::IsKeyDown(ImGuiKey_W))camera.pos += camera.rot * glm::vec3(0,0,-moveSpeed);
@@ -192,6 +199,38 @@ void Editor::Viewport3D::draw() {
   glm::mat4 unit = glm::mat4(1.0f);
   ImGuizmo::SetDrawlist(draw_list);
   ImGuizmo::SetRect(currPos.x, currPos.y, currSize.x, currSize.y);
+
+  auto obj = scene->getObjectByUUID(ctx.selObjectUUID);
+  if (obj) {
+    glm::mat4 gizmoMat{};
+    glm::vec3 skew{0,0,0};
+    glm::vec4 persp{0,0,0,1};
+
+    gizmoMat = glm::recompose(obj->scale, obj->rot, obj->pos, skew, persp);
+
+    ImGuizmo::Manipulate(
+      glm::value_ptr(uniGlobal.cameraMat),
+      glm::value_ptr(uniGlobal.projMat),
+      ImGuizmo::OPERATION::TRANSLATE,
+      ImGuizmo::MODE::WORLD,
+      glm::value_ptr(gizmoMat)
+    );
+
+    /*ImGuizmo::DecomposeMatrixToComponents(
+      glm::value_ptr(gizmoMat),
+      glm::value_ptr(obj->pos),
+      glm::value_ptr(dummyRot),
+      glm::value_ptr(obj->scale)
+    );*/
+    glm::decompose(
+      gizmoMat,
+      obj->scale,
+      obj->rot,
+      obj->pos,
+      skew, persp
+    );
+  }
+
   /*ImGuizmo::DrawGrid(
     glm::value_ptr(uniGlobal.cameraMat),
     glm::value_ptr(uniGlobal.projMat),

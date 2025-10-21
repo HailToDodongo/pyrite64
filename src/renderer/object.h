@@ -17,9 +17,9 @@ namespace Renderer
       glm::vec3 pos{0,0,0};
       bool transformDirty{true};
 
+    public:
       UniformsObject uniform{};
 
-    public:
       void setObjectID(uint32_t id) {
         uniform.objectID = id;
       }
