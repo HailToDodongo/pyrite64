@@ -16,6 +16,7 @@ namespace Renderer
       {
         uint32_t indicesOffset{0};
         uint32_t indicesCount{0};
+        UniformN64Material material{};
       };
 
       Mesh mesh{};

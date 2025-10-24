@@ -22,10 +22,14 @@ layout(std140, set = 1, binding = 0) uniform UniformGlobal {
 
 layout(std140, set = 1, binding = 1) uniform UniformObject {
     mat4 modelMat;
+
     uint cc0Color;
     uint cc0Alpha;
     uint cc1Color;
     uint cc1Alpha;
+    uint colPrim;
+    uint colEnv;
+
     uint objectID;
 };
 
@@ -43,7 +47,9 @@ void main()
   v_cc1Color = ivec4(unpackUnorm4x8(cc1Color) * 255.0);
   v_cc1Alpha = ivec4(unpackUnorm4x8(cc1Alpha) * 255.0);
 
-  v_color = inColor;// * vec4(test, 1.0f);
+  vec4 prinColor = unpackUnorm4x8(colPrim);
+
+  v_color = inColor * prinColor;// * vec4(test, 1.0f);
   v_uv = vec2(inUV) / float(1 << 5);
   v_objectID = objectID;
 }

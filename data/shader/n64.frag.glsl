@@ -25,10 +25,6 @@ void main()
 
   FragColor = texelFetch(texSampler, uvNorm, 0) * v_color;
 
-  if(v_cc0Color.x != 1) {
-    FragColor.rgb = vec3(1,1,0.3);
-  }
-
   //FragColor = v_color;
   ObjID = v_objectID;
 }

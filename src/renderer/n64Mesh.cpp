@@ -8,9 +8,31 @@ void Renderer::N64Mesh::fromT3DM(const T3DMData &t3dmData)
 {
   mesh.vertices.clear();
   mesh.indices.clear();
+  parts.clear();
+
+
+  parts.resize(t3dmData.models.size());
+  auto part = parts.begin();
 
   uint16_t idx = 0;
-  for (auto &model : t3dmData.models) {
+  for (auto &model : t3dmData.models)
+  {
+    part->indicesOffset = mesh.indices.size();
+    part->indicesCount = model.triangles.size() * 3;
+
+    part->material.colPrim = {
+      model.material.primColor[0],
+      model.material.primColor[1],
+      model.material.primColor[2],
+      model.material.primColor[3]
+    };
+    part->material.colEnv = {
+      model.material.envColor[0],
+      model.material.envColor[1],
+      model.material.envColor[2],
+      model.material.envColor[3],
+    };
+
     printf("Tex: %s\n", model.material.texA.texPath.c_str());
     //model.material.colorCombiner
     for (auto &tri : model.triangles) {
@@ -40,6 +62,8 @@ void Renderer::N64Mesh::fromT3DM(const T3DMData &t3dmData)
       mesh.indices.push_back(idx++);
       mesh.indices.push_back(idx++);
     }
+
+    ++part;
   }
 }
 
@@ -49,5 +73,9 @@ void Renderer::N64Mesh::recreate(Renderer::Scene &scene) {
 
 void Renderer::N64Mesh::draw(SDL_GPURenderPass* pass, UniformsObject &uniforms)
 {
-  mesh.draw(pass);
+  for (auto &part : parts) {
+    uniforms.mat = part.material;
+    mesh.draw(pass, part.indicesOffset, part.indicesCount);
+  }
+  //mesh.draw(pass);
 }
