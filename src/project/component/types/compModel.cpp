@@ -127,8 +127,8 @@ namespace Project::Component::Model
     bool isSelected = ctx.selObjectUUID == obj.uuid;
     if (isSelected)
     {
-      auto center = obj.pos + (data.aabb.getCenter() * obj.scale * 512.0f);
-      auto halfExt = data.aabb.getHalfExtend() * obj.scale * 512.0f;
+      auto center = obj.pos + (data.aabb.getCenter() * obj.scale * (float)0xFFFF);
+      auto halfExt = data.aabb.getHalfExtend() * obj.scale * (float)0xFFFF;
 
       glm::u8vec4 aabbCol{0xAA,0xAA,0xAA,0xFF};
       if (isSelected) {
