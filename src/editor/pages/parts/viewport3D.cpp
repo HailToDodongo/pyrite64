@@ -142,6 +142,9 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
   meshLines->vertLines.clear();
   meshLines->indices.clear();
 
+  auto scene = ctx.project->getScenes().getLoadedScene();
+  if (!scene)return;
+
   SDL_GPURenderPass* renderPass3D = SDL_BeginGPURenderPass(
     cmdBuff, fb.getTargetInfo(), fb.getTargetInfoCount(), &fb.getDepthTargetInfo()
   );
@@ -149,8 +152,6 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
 
   camera.apply(uniGlobal);
   SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
-
-  auto scene = ctx.project->getScenes().getLoadedScene();
   auto &rootObj = scene->getRootObject();
   for(auto& child : rootObj.children)
   {
@@ -187,6 +188,7 @@ void Editor::Viewport3D::draw()
 {
   camera.update();
   auto scene = ctx.project->getScenes().getLoadedScene();
+  if (!scene)return;
   fb.setClearColor(scene->conf.clearColor);
 
   if (pickedObjID.hasResult()) {
