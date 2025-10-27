@@ -66,6 +66,36 @@ Project::AssetManager::~AssetManager() {
 
 }
 
+void Project::AssetManager::reloadEntry(Entry &entry, const std::string &path)
+{
+  switch(entry.type)
+  {
+    case FileType::IMAGE:
+    {
+      entry.texture = std::make_shared<Renderer::Texture>(ctx.gpu, path);
+      break;
+    }
+
+    case FileType::MODEL_3D:
+    {
+      try {
+        entry.t3dmData = parseGLTF(path.c_str(), entry.conf.baseScale);
+        if (!entry.t3dmData.models.empty()) {
+          if (!entry.mesh3D) {
+            entry.mesh3D = std::make_shared<Renderer::N64Mesh>();
+          }
+          entry.mesh3D->fromT3DM(entry.t3dmData, *this);
+        }
+      } catch (...) {
+        Utils::Logger::log("Failed to load 3D model asset: " + entry.path);
+      }
+    }
+    break;
+
+    default: break;
+  }
+}
+
 void Project::AssetManager::reload() {
   for (auto &e : entries)e.clear();
 
@@ -110,10 +140,6 @@ void Project::AssetManager::reload() {
         .type = type,
       };
 
-      if (type == FileType::IMAGE && ctx.window) {
-        entry.texture = std::make_shared<Renderer::Texture>(ctx.gpu, path.string());
-      }
-
       // check if meta-data exists
       auto pathMeta = path;
       pathMeta += ".conf";
@@ -130,6 +156,10 @@ void Project::AssetManager::reload() {
         }
       }
 
+      if (type == FileType::IMAGE && ctx.window) {
+        reloadEntry(entry, path.string());
+      }
+
       entries[(int)type].push_back(entry);
       entriesMap[entry.uuid] = static_cast<int>(entries.size() - 1);
     }
@@ -139,15 +169,7 @@ void Project::AssetManager::reload() {
   for (auto &typed : entries) {
     for (auto &entry : typed) {
       if (entry.type == FileType::MODEL_3D) {
-        try {
-          entry.t3dmData = parseGLTF(entry.path.c_str(), entry.conf.baseScale);
-          if (!entry.t3dmData.models.empty()) {
-            entry.mesh3D = std::make_shared<Renderer::N64Mesh>();
-            entry.mesh3D->fromT3DM(entry.t3dmData, *this);
-          }
-        } catch (...) {
-          Utils::Logger::log("Failed to load 3D model asset: " + entry.path);
-        }
+        reloadEntry(entry, entry.path);
       }
     }
   }
@@ -191,6 +213,12 @@ void Project::AssetManager::reload() {
       entriesMap[entry.uuid] = static_cast<int>(entries.size() - 1);
     }
   }
+}
+
+void Project::AssetManager::reloadAssetByUUID(uint64_t uuid) {
+  auto asset = getEntryByUUID(uuid);
+  if (!asset)return;
+  reloadEntry(*asset, asset->path);
 }
 
 void Project::AssetManager::save()

@@ -29,7 +29,7 @@ Renderer::Scene::Scene()
   });
   shaderLines = std::make_unique<Shader>(ctx.gpu, Shader::Config{
     .name = "lines",
-    .vertUboCount = 1,
+    .vertUboCount = 2,
     .fragUboCount = 0,
     .vertTexCount = 0,
     .fragTexCount = 0,

@@ -29,6 +29,13 @@ namespace Renderer
 
       void setMesh(const std::shared_ptr<Mesh>& m) { mesh = m; n64Mesh = nullptr; }
       void setMesh(const std::shared_ptr<N64Mesh>& m) { n64Mesh = m; mesh = nullptr; }
+      void removeMesh() { mesh = nullptr; n64Mesh = nullptr; }
+
+      bool isMeshLoaded() const {
+        if (mesh)return true;
+        if (n64Mesh)return n64Mesh->isLoaded();
+        return false;
+      }
 
       void setPos(const glm::vec3& p) { pos = p; transformDirty = true; }
 

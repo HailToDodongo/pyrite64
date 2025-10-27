@@ -74,10 +74,10 @@ namespace ImGui::InpTable
     ImGui::InputFloat4(labelHidden.c_str(), &v.x);
   }
 
-  inline void addInputInt(const std::string &name, int &value) {
+  inline bool addInputInt(const std::string &name, int &value) {
     add(name);
     auto labelHidden = "##" + name;
-    ImGui::InputInt(labelHidden.c_str(), &value);
+    return ImGui::InputInt(labelHidden.c_str(), &value);
   }
 
   inline void addColor(const std::string &name, Utils::Color &color, bool withAlpha = true) {

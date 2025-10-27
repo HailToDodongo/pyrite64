@@ -14,6 +14,7 @@ extern SDL_GPUSampler *texSamplerRepeat; // @TODO make sampler manager? is this 
 
 void Renderer::N64Mesh::fromT3DM(const T3DMData &t3dmData, Project::AssetManager &assetManager)
 {
+  loaded = false;
   mesh.vertices.clear();
   mesh.indices.clear();
   parts.clear();

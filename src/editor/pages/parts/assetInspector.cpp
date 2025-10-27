@@ -43,7 +43,9 @@ void Editor::AssetInspector::draw() {
     }
     else if (asset->type == FileType::MODEL_3D)
     {
-      ImGui::InpTable::addInputInt("Base-Scale", asset->conf.baseScale);
+      if (ImGui::InpTable::addInputInt("Base-Scale", asset->conf.baseScale)) {
+        ctx.project->getAssets().reloadAssetByUUID(asset->uuid);
+      }
       ImGui::InpTable::addCheckBox("Create BVH", asset->conf.gltfBVH);
     }
 

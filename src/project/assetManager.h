@@ -74,6 +74,8 @@ namespace Project
       std::string defaultScript{};
       Renderer::Texture fallbackTex;
 
+      void reloadEntry(Entry &entry, const std::string &path);
+
     public:
       std::unordered_map<uint64_t, int> entriesMap{};
       //std::unordered_map<uint64_t, int> entriesMapScript{};
@@ -82,6 +84,7 @@ namespace Project
       ~AssetManager();
 
       void reload();
+      void reloadAssetByUUID(uint64_t uuid);
 
       [[nodiscard]] const auto& getEntries() const {
         return entries;

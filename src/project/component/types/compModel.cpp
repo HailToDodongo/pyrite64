@@ -23,7 +23,6 @@ namespace Project::Component::Model
   {
     uint64_t modelUUID{0};
     Renderer::Object obj3D{};
-    bool obj3DLoaded{false};
     Utils::AABB aabb{};
   };
 
@@ -89,7 +88,7 @@ namespace Project::Component::Model
       };
 
       if (ImGui::Combo("##UUID", &idx, getter, nullptr, modelList.size()+1)) {
-        data.obj3DLoaded = false;
+        data.obj3D.removeMesh();
       }
 
       if (idx < modelList.size()) {
@@ -104,7 +103,7 @@ namespace Project::Component::Model
   void draw3D(Object& obj, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPURenderPass* pass)
   {
     Data &data = *static_cast<Data*>(entry.data.get());
-    if (!data.obj3DLoaded) {
+    if (!data.obj3D.isMeshLoaded()) {
       auto asset = ctx.project->getAssets().getEntryByUUID(data.modelUUID);
       if (asset && asset->mesh3D) {
         if (!asset->mesh3D->isLoaded()) {
@@ -113,7 +112,6 @@ namespace Project::Component::Model
         data.aabb = asset->mesh3D->getAABB();
         data.obj3D.setMesh(asset->mesh3D);
       }
-      data.obj3DLoaded = true;
     }
 
     data.obj3D.setObjectID(obj.uuid);
