@@ -22,10 +22,16 @@ namespace P64::Script::C3AF5D870988CBC0
 
     float speed = 0.125f;
     auto &cam = SceneManager::getCurrent().getCamera();
-    if (held.d_up)cam.move({0,0,-speed});
-    if (held.d_down)cam.move({0,0,speed});
+    if (held.z) {
+      if (held.d_up)cam.move({0,speed, 0});
+      if (held.d_down)cam.move({0,-speed, 0});
+    } else {
+      if (held.d_up)cam.move({0,0,-speed});
+      if (held.d_down)cam.move({0,0,speed});
+    }
     if (held.d_left)cam.move({-speed,0,0});
     if (held.d_right)cam.move({speed,0,0});
+
 
     data->speed += 0.1f;
   }

@@ -198,7 +198,9 @@ void main()
 
   vec4 uvTex = uv;
 
-  vec4 ccShade = geoModeSelect(G_SHADE_SMOOTH, cc_shade_flat, cc_shade);
+  // @TODO: handle flat shading
+  //vec4 ccShade = geoModeSelect(G_SHADE_SMOOTH, cc_shade_flat, cc_shade);
+  vec4 ccShade = cc_shade;
 
   // pre-calc UVs for both textures + get two extra points for 3-point sampling
   // then sample both textures even if none are used. This is done to vectorize both

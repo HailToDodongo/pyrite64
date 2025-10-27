@@ -47,6 +47,8 @@ std::shared_ptr<Project::Object> Project::Scene::addObject(Object &parent) {
   child->id = nextUUID++;
   child->name = "New Object ("+std::to_string(child->id)+")";
   child->uuid = Utils::Hash::sha256_64bit(child->name + std::to_string(rand()));
+  child->scale = {1,1,1};
+  child->rot = glm::identity<glm::quat>();
   return addObject(parent, child);
 }
 
