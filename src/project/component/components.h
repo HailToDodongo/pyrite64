@@ -6,7 +6,7 @@
 #include <array>
 #include <memory>
 
-#include "IconsFontAwesome4.h"
+#include "IconsMaterialDesignIcons.h"
 #include "simdjson.h"
 #include "../../build/sceneContext.h"
 
@@ -72,7 +72,7 @@ namespace Project::Component
   constexpr std::array TABLE{
     CompInfo{
       .id = 0,
-      .icon = ICON_FA_CODE " ",
+      .icon = ICON_MDI_SCRIPT " ",
       .name = "Code",
       .funcInit = Code::init,
       .funcDraw = Code::draw,
@@ -82,7 +82,7 @@ namespace Project::Component
     },
     CompInfo{
       .id = 1,
-      .icon = ICON_FA_CUBE " ",
+      .icon = ICON_MDI_CUBE_OUTLINE " ",
       .name = "Model",
       .funcInit = Model::init,
       .funcDraw = Model::draw,
@@ -93,7 +93,7 @@ namespace Project::Component
     },
     CompInfo{
       .id = 2,
-      .icon = ICON_FA_LIGHTBULB_O " ",
+      .icon = ICON_MDI_LIGHTBULB_ON_OUTLINE " ",
       .name = "Light",
       .funcInit = Light::init,
       .funcUpdate = Light::update,
@@ -105,7 +105,7 @@ namespace Project::Component
     },
     CompInfo{
       .id = 3,
-      .icon = ICON_FA_VIDEO_CAMERA " ",
+      .icon = ICON_MDI_VIDEO_VINTAGE " ",
       .name = "Camera",
       .funcInit = Camera::init,
       .funcUpdate = Camera::update,

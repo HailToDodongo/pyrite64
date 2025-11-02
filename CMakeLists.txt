@@ -13,6 +13,8 @@ add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)
 add_subdirectory(vendored/glm EXCLUDE_FROM_ALL)
 
+add_compile_definitions(IMGUI_USE_WCHAR32)
+
 # Create your game executable target as usual
 add_executable(p64editor src/main.cpp
         # JSON
@@ -81,7 +83,6 @@ add_executable(p64editor src/main.cpp
         src/editor/imgui/theme.h
         src/editor/imgui/theme.cpp
         src/editor/imgui/helper.h
-        vendored/IconFontCppHeaders/IconsFontAwesome4.h
         src/utils/filePicker.h
         src/utils/filePicker.cpp
         src/editor/pages/parts/viewport3D.h
@@ -156,6 +157,8 @@ add_executable(p64editor src/main.cpp
         src/renderer/n64/ccMapping.h
         src/project/component/types/compLight.cpp
         src/project/component/types/compCamera.cpp
+        src/editor/imgui/helper.cpp
+        src/editor/imgui/helper.cpp
 )
 
 target_include_directories(p64editor PRIVATE

@@ -6,11 +6,26 @@
 #include <string>
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
-#include "IconsFontAwesome4.h"
+#include "IconsMaterialDesignIcons.h"
 #include "../../utils/filePicker.h"
 #include "glm/vec3.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtc/type_ptr.hpp"
+
+namespace ImGui
+{
+  bool IconButton(const char* label, const ImVec4 &color = ImVec4{1,1,1,1});
+
+  inline void IconToggle(bool &state, const char* labelOn, const char* labelOff)
+  {
+    if(IconButton(
+      state ? labelOn : labelOff,
+      state ? ImVec4{1,1,1,1} : ImVec4{0.6f,0.6f,0.6f,1}
+    )) {
+      state = !state;
+    }
+  }
+}
 
 namespace ImGui::InpTable
 {
@@ -93,7 +108,7 @@ namespace ImGui::InpTable
     add(name);
     auto labelHidden = "##" + name;
     ImGui::PushID(labelHidden.c_str());
-    if (ImGui::Button(ICON_FA_FOLDER)) {
+    if (ImGui::Button(ICON_MDI_FOLDER_OUTLINE)) {
       Utils::FilePicker::open([&str](const std::string &path) {
         str = path;
       }, isDir);

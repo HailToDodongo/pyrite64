@@ -30,6 +30,9 @@ namespace Project
       glm::quat rot{};
       glm::vec3 scale{};
 
+      bool enabled{true};
+      bool selectable{true};
+
       std::vector<std::shared_ptr<Object>> children{};
       std::vector<Component::Entry> components{};
 

@@ -35,9 +35,9 @@ void Editor::AssetsBrowser::draw() {
   auto &assets = ctx.project->getAssets().getEntries();
 
   const char* TABS[] = {
-    ICON_FA_FILE "  Assets",
-    ICON_FA_CODE "  Scripts",
-    ICON_FA_CUBE "  Prefabs"
+    ICON_MDI_FILE "  Assets",
+    ICON_MDI_SCRIPT_OUTLINE "  Scripts",
+    ICON_MDI_CUBE_OUTLINE "  Prefabs"
   };
 
   ImGui::BeginChild("LEFT", ImVec2(94, 0), ImGuiChildFlags_Border);

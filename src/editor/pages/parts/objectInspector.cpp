@@ -69,10 +69,10 @@ void Editor::ObjectInspector::draw() {
 
       if(ImGui::BeginPopupContextItem("CompCtx"))
       {
-        if (ImGui::MenuItem(ICON_FA_CLONE " Duplicate")) {
+        if (ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Duplicate")) {
           compCopy = &comp;
         }
-        if (ImGui::MenuItem(ICON_FA_TRASH " Delete")) {
+        if (ImGui::MenuItem(ICON_MDI_TRASH_CAN_OUTLINE " Delete")) {
           compDelUUID = comp.uuid;
         }
         ImGui::EndPopup();
@@ -91,7 +91,7 @@ void Editor::ObjectInspector::draw() {
     obj->removeComponent(compDelUUID);
   }
 
-  const char* addLabel = ICON_FA_PLUS_SQUARE " Add Component";
+  const char* addLabel = ICON_MDI_PLUS_BOX_OUTLINE " Add Component";
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 4);
   ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(addLabel).x) * 0.5f - 4);
   if (ImGui::Button(addLabel)) {

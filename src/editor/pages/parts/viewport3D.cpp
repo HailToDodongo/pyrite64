@@ -15,6 +15,7 @@
 #include "../../../utils/meshGen.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "SDL3/SDL_gpu.h"
+#include "IconsMaterialDesignIcons.h"
 
 namespace
 {
@@ -175,6 +176,8 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
   auto &rootObj = scene->getRootObject();
   for(auto& child : rootObj.children)
   {
+    if(!child->enabled)continue;
+
     for(auto &comp : child->components)
     {
       auto &def = Project::Component::TABLE[comp.id];
@@ -228,6 +231,8 @@ void Editor::Viewport3D::draw()
   auto &rootObj = scene->getRootObject();
   for(auto& child : rootObj.children)
   {
+    if(!child->enabled)continue;
+
     for(auto &comp : child->components)
     {
       auto &def = Project::Component::TABLE[comp.id];
@@ -240,8 +245,15 @@ void Editor::Viewport3D::draw()
 
   fb.setClearColor(scene->conf.clearColor);
 
-  if (pickedObjID.hasResult()) {
-    ctx.selObjectUUID = pickedObjID.consume();
+  if(pickedObjID.hasResult())
+  {
+    uint32_t newUUID = pickedObjID.consume();
+    auto newObj = scene->getObjectByUUID(newUUID);
+    if(newObj && !newObj->selectable) {
+      newUUID = ctx.selObjectUUID;
+    }
+
+    ctx.selObjectUUID = newUUID;
   }
   auto obj = scene->getObjectByUUID(ctx.selObjectUUID);
 
@@ -304,13 +316,14 @@ void Editor::Viewport3D::draw()
       mousePosStart = mousePos;
     }
     isMouseDown = newMouseDown;
+    isMouseDown = newMouseDown;
   }
 
   currPos = ImGui::GetCursorPos();
 
   //ImGui::Text("Viewport: %f | %f | %08X", mousePos.x, mousePos.y, ctx.selObjectUUID);
 
-  constexpr char* GIZMO_LABELS[3] = {ICON_FA_ARROWS, ICON_FA_CIRCLE_O_NOTCH, ICON_FA_EXPAND};
+  constexpr char* GIZMO_LABELS[3] = {ICON_MDI_CURSOR_MOVE, ICON_MDI_ROTATE_360, ICON_MDI_ARROW_EXPAND};
   for (int i=0; i<3; ++i) {
     if (ConnectedToggleButton(
       GIZMO_LABELS[i],
@@ -324,7 +337,7 @@ void Editor::Viewport3D::draw()
 
   ImGui::SameLine();
 
-  if(ConnectedToggleButton("Grid", showGrid, true, true, ImVec2(32,24))) {
+  if(ConnectedToggleButton(ICON_MDI_GRID, showGrid, true, true, ImVec2(32,24))) {
     showGrid = !showGrid;
   }
 

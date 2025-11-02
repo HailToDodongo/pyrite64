@@ -4,7 +4,7 @@
 */
 #include "editorScene.h"
 
-#include "IconsFontAwesome4.h"
+#include "IconsMaterialDesignIcons.h"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "../actions.h"
@@ -132,7 +132,7 @@ void Editor::Scene::draw()
     // Thick borders
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-    ImGui::Begin(ICON_FA_COG " Project Settings", &projectSettingsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
+    ImGui::Begin(ICON_MDI_COG " Project Settings", &projectSettingsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
     if (projectSettings.draw()) {
       projectSettingsOpen = false;
     }
@@ -153,15 +153,15 @@ void Editor::Scene::draw()
   {
     if(ImGui::BeginMenu("Project"))
     {
-      if(ImGui::MenuItem(ICON_FA_FLOPPY_O " Save"))ctx.project->save();
-      if(ImGui::MenuItem(ICON_FA_COG " Settings"))projectSettingsOpen = true;
-      if(ImGui::MenuItem(ICON_FA_SIGN_OUT " Close"))Actions::call(Actions::Type::PROJECT_CLOSE);
+      if(ImGui::MenuItem(ICON_MDI_CONTENT_SAVE_OUTLINE " Save"))ctx.project->save();
+      if(ImGui::MenuItem(ICON_MDI_COG " Settings"))projectSettingsOpen = true;
+      if(ImGui::MenuItem(ICON_MDI_CLOSE " Close"))Actions::call(Actions::Type::PROJECT_CLOSE);
       ImGui::EndMenu();
     }
 
     if(ImGui::BeginMenu("Build"))
     {
-      if(ImGui::MenuItem(ICON_FA_WRENCH " Build"))Actions::call(Actions::Type::PROJECT_BUILD);
+      if(ImGui::MenuItem(ICON_MDI_PLAY " Build"))Actions::call(Actions::Type::PROJECT_BUILD);
       ImGui::EndMenu();
     }
 

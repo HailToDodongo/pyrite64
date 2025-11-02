@@ -4,7 +4,7 @@
 */
 #include "theme.h"
 #include "imgui.h"
-#include "IconsFontAwesome4.h"
+#include "IconsMaterialDesignIcons.h"
 #include "ImGuizmo.h"
 
 namespace
@@ -113,12 +113,12 @@ void ImGui::loadFonts(float contentScale) {
   ImFont* font = io.Fonts->AddFontFromFileTTF("./data/Altinn-DINExp.ttf");
   IM_ASSERT(font != nullptr);
 
-  static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
+  static const ImWchar icons_ranges[] = { ICON_MIN_MDI, ICON_MAX_16_MDI, 0 };
   ImFontConfig icons_config;
   icons_config.MergeMode = true;
   icons_config.PixelSnapH = true;
-  icons_config.GlyphMinAdvanceX = 15.0f;
-  font = io.Fonts->AddFontFromFileTTF("./data/fontawesome-webfont.ttf", 14, &icons_config, icons_ranges);
+  icons_config.GlyphMinAdvanceX = 16.0f;
+  font = io.Fonts->AddFontFromFileTTF("./data/materialdesignicons-webfont.ttf", 16, &icons_config, icons_ranges);
   IM_ASSERT(font != nullptr);
 
   fontMono = io.Fonts->AddFontFromFileTTF("./data/GoogleSansCode.ttf", 16);
