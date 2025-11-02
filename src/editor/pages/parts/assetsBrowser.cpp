@@ -105,6 +105,7 @@ void Editor::AssetsBrowser::draw() {
 
       if (ImGui::BeginDragDropSource()) {
         ImGui::ImageButton(asset.name.c_str(), icon, {imageSize*0.75f, imageSize*0.75f});
+        ImGui::SetDragDropPayload("ASSET", &asset.uuid, sizeof(asset.uuid));
         ImGui::EndDragDropSource();
       }
 

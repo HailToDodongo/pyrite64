@@ -8,10 +8,69 @@
 #include "../../../context.h"
 #include "../../imgui/helper.h"
 #include "IconsMaterialDesignIcons.h"
+#include "imgui_internal.h"
 
 namespace
 {
   Project::Object* deleteObj{nullptr};
+
+  struct DragDropTask {
+    uint32_t sourceUUID{0};
+    uint32_t targetUUID{0};
+    bool isInsert{false};
+  };
+
+  DragDropTask dragDropTask{};
+
+  bool DrawDropTarget(uint32_t& dragDropTarget, uint32_t uuid, float thickness = 2.0f, float hitHeight = 6.0f)
+  {
+    // Only show when drag-drop is active
+    if (!ImGui::IsDragDropActive())
+      return false;
+
+    bool res = false;
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    ImVec2 cursorScreen = ImGui::GetCursorScreenPos();
+    float fullWidth = ImGui::GetContentRegionAvail().x;
+
+    // Compute overlay position
+    ImVec2 overlayStart = cursorScreen;
+    overlayStart.y -= hitHeight / 2;
+    ImVec2 overlayEnd = ImVec2(cursorScreen.x + fullWidth, cursorScreen.y + hitHeight);
+
+    // Push a dummy cursor to draw hit zone *without affecting layout*
+    ImGui::SetCursorScreenPos(overlayStart);
+    ImGui::PushID(("drop_overlay_" + std::to_string(uuid)).c_str());
+    ImGui::InvisibleButton("##dropzone", ImVec2(fullWidth, hitHeight));
+    bool hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+    if (hovered) {
+      drawList->AddLine(
+          ImVec2(overlayStart.x, overlayStart.y),
+          ImVec2(overlayEnd.x, overlayStart.y),
+          ImGui::GetColorU32(ImGuiCol_DragDropTarget),
+          thickness
+      );
+    }
+
+    ImGui::PushStyleColor(ImGuiCol_DragDropTarget, ImVec4(0,0,0,0));
+    // Accept drag payload
+    if (ImGui::BeginDragDropTarget())
+    {
+      if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECT"))
+      {
+        dragDropTarget = *((uint32_t*)payload->Data);
+        res = true;
+      }
+      ImGui::EndDragDropTarget();
+    }
+    ImGui::PopStyleColor();
+
+    ImGui::PopID();
+
+    ImGui::SetCursorScreenPos(cursorScreen);
+    return res;
+  }
 
   void drawObjectNode(
     Project::Scene &scene, Project::Object &obj, bool keyDelete,
@@ -39,7 +98,7 @@ namespace
 
     if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
       ctx.selObjectUUID = obj.uuid;
-      ImGui::SetWindowFocus("Object");
+      //ImGui::SetWindowFocus("Object");
       //ImGui::SetWindowFocus("Graph");
     }
     if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
@@ -47,6 +106,20 @@ namespace
       ImGui::OpenPopup("NodePopup");
     }
 
+    if (obj.parent && ImGui::BeginDragDropSource())
+    {
+      ImGui::SetDragDropPayload("OBJECT", &obj.uuid, sizeof(obj.uuid));
+      ImGui::EndDragDropSource();
+    }
+
+    if (obj.parent && obj.isGroup && ImGui::BeginDragDropTarget()) {
+      if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECT")) {
+        dragDropTask.sourceUUID = *((uint32_t*)payload->Data);
+        dragDropTask.targetUUID = obj.uuid;
+        dragDropTask.isInsert = true;
+      }
+      ImGui::EndDragDropTarget();
+    }
 
     if(obj.parent)
     {
@@ -67,6 +140,12 @@ namespace
       ImGui::PopID();
 
       if(!parentEnabled)ImGui::EndDisabled();
+    }
+
+    if(ImGui::IsDragDropActive()) {
+      if(DrawDropTarget(dragDropTask.sourceUUID, obj.uuid)) {
+        dragDropTask.targetUUID = obj.uuid;
+      }
     }
 
     if(isOpen)
@@ -107,6 +186,7 @@ void Editor::SceneGraph::draw()
   auto scene = ctx.project->getScenes().getLoadedScene();
   if (!scene)return;
 
+  dragDropTask = {};
   bool isFocus = ImGui::IsWindowFocused();
 
   // Menu
@@ -130,6 +210,10 @@ void Editor::SceneGraph::draw()
   drawObjectNode(*scene, root, keyDelete);
 
   ImGui::PopStyleVar();
+
+  if(dragDropTask.sourceUUID && dragDropTask.targetUUID) {
+    printf("dragDropTarget %08X -> %08X (%d)\n", dragDropTask.sourceUUID, dragDropTask.targetUUID, dragDropTask.isInsert);
+  }
 
   if (deleteObj) {
     scene->removeObject(*deleteObj);
