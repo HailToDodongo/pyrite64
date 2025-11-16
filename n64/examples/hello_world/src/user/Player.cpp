@@ -54,7 +54,7 @@ namespace P64::Script::C0FCD808BF296813
     if(inp.btn.c_down)moveRotated.y -= 1.0f;
 
     obj.pos += moveRotated * speed;
-    debugf("pos: %.2f, %.2f, %.2f\n", obj.pos.x, obj.pos.y, obj.pos.z);
+    //debugf("pos: %.2f, %.2f, %.2f\n", obj.pos.x, obj.pos.y, obj.pos.z);
 
     auto &cam = SceneManager::getCurrent().getActiveCamera();
     cam.setTarget(obj.pos);

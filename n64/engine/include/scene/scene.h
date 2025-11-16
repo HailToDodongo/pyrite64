@@ -8,6 +8,7 @@
 
 #include "lighting.h"
 #include "object.h"
+#include "collision/scene.h"
 #include "scene/camera.h"
 
 namespace P64
@@ -40,6 +41,8 @@ namespace P64
       // @TODO: avoid vector + fragmented alloc
       std::vector<Object*> objects{};
 
+      Coll::Scene collScene{};
+
       std::vector<Object*> pendingObjDelete{};
 
       Lighting lighting{};
@@ -59,6 +62,7 @@ namespace P64
       [[nodiscard]] uint16_t getId() const { return id; }
       [[nodiscard]] Camera* getCamera(uint32_t index = 0) { return cameras[index]; }
       [[nodiscard]] Camera& getActiveCamera() { return *camMain; }
+      Coll::Scene &getCollision() { return collScene; }
 
       void addCamera(Camera *cam) {
         cameras.push_back(cam);

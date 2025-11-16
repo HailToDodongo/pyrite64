@@ -14,6 +14,7 @@
 #include "assets/assetManager.h"
 #include "audio/audioManager.h"
 #include "../audio/audioManagerPrivate.h"
+#include "debug/debugDraw.h"
 #include "scene/componentTable.h"
 #include "script/scriptTable.h"
 
@@ -26,6 +27,7 @@ P64::Scene::Scene(uint16_t sceneId, Scene** ref)
   : id{sceneId}
 {
   if(ref)*ref = this;
+  Debug::init();
   loadScene();
 
   state.screenSize[0] = conf.screenWidth;
@@ -42,6 +44,7 @@ P64::Scene::Scene(uint16_t sceneId, Scene** ref)
   VI::SwapChain::setDrawPass([this](surface_t *surf, uint32_t fbIndex, auto done) {
     rdpq_attach(surf, &P64::Mem::allocDepthBuffer(P64::state.screenSize[0], P64::state.screenSize[1]));
     draw(1.0f / 60.0f);
+    Debug::draw(static_cast<uint16_t*>(surf->buffer));
     rdpq_detach_cb((void(*)(void*))((void*)done), (void*)fbIndex);
   });
 
@@ -72,6 +75,7 @@ P64::Scene::~Scene()
   AudioManager::stopAll();
   MatrixManager::reset();
   AssetManager::freeAll();
+  Debug::destroy();
 }
 
 void P64::Scene::update(float deltaTime) {
@@ -81,6 +85,8 @@ void P64::Scene::update(float deltaTime) {
   lighting.reset();
 
   camMain = cameras[0];
+
+  collScene.update(deltaTime);
 
   for(auto obj : objects)
   {
@@ -172,6 +178,9 @@ void P64::Scene::draw(float deltaTime)
   rdpq_sync_load();
   rdpq_sync_tile();
   rdpq_sprite_blit(sprite, 16, 16, nullptr);
+
+  Debug::printStart();
+  Debug::printf(16, 16, "FPS: %.2f\n", (double)VI::SwapChain::getFPS());
 }
 
 void P64::Scene::removeObject(Object &obj)

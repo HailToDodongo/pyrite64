@@ -47,4 +47,7 @@ add_executable(n64_engine
         engine/src/scene/lighting.cpp
         engine/include/scene/components/camera.h
         engine/include/lib/math.h
+        engine/src/debug/debugDraw.cpp
+        engine/include/lib/ringBuffer.h
+        engine/src/vi/vi.cpp
 )

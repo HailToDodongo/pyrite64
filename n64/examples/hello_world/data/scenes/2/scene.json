@@ -21,6 +21,11 @@
 "fov":1.3089969158172607,
 "near":0.10000000149011612,
 "far":100.0}
+},
+{"id":2,
+"uuid":6307257146008000633,
+"name":"Light","data":{"index":0,
+"type":0,"color":[1.0,1.0,1.0,0.0]}
 }],"children":[]},
 {"id":2,
 "name":"New Object (2)",
@@ -29,6 +34,6 @@
 "enabled":true,
 "isGroup":false,"pos":[0.0,0.0,0.0],"rot":[0.0,0.0,0.0,1.0],"scale":[1.0,1.0,1.0],"components":[{"id":1,
 "uuid":17537811237039872454,
-"name":"Model","data":{"model":8408891455870217598}
+"name":"Model","data":{"model":13394225801917039638}
 }],"children":[]}]}
 }

@@ -105,6 +105,7 @@ bool Build::buildProject(std::string path)
     };
 
     std::vector<Entry> assetList{};
+
     uint32_t stringOffset{0};
     uint32_t assetCount = 0;
     for (auto &typed : project.getAssets().getEntries()) {

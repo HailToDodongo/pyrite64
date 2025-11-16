@@ -95,9 +95,7 @@ void main()
   uv = uvGen.xyxy;// * texSize.xyxy;
   // apply material.shift from top left of texture:
 
-  uv.yw = texSize.yw - uv.yw - 1;
   uv *= material.shift;
-  uv.yw = texSize.yw - uv.yw - 1;
 
   uv = uv - (material.shift * 0.5) - material.low;
 

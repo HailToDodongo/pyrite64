@@ -112,8 +112,8 @@
 },
 {"id":0,
 "uuid":11094208121761379551,
-"name":"Code","data":{"script":14217352249424089854,"args":{"groupOn":"9",
-"groupOff":"5"}}
+"name":"Code","data":{"script":14217352249424089854,"args":{"groupOff":"5",
+"groupOn":"9"}}
 }],"children":[]},
 {"id":13,
 "name":"Box Top",
@@ -122,8 +122,8 @@
 "enabled":true,
 "isGroup":false,"pos":[-634.782958984375,227.1674346923828,-478.0],"rot":[0.0,-0.8245362043380737,0.0,0.5658091902732849],"scale":[1.789999008178711,1.7899999618530273,1.789999008178711],"components":[{"id":0,
 "uuid":8610499884717988503,
-"name":"Test Name","data":{"script":14100591792882240448,"args":{"sceneId":"3",
-"speed":"1.0"}}
+"name":"Test Name","data":{"script":14100591792882240448,"args":{"speed":"1.0",
+"sceneId":"3"}}
 },
 {"id":1,
 "uuid":8516570315678244938,
@@ -136,8 +136,8 @@
 "enabled":true,
 "isGroup":false,"pos":[-84.44979858398438,13.621387481689453,58.985931396484375],"rot":[0.0,0.0,0.0,1.0],"scale":[1.0,1.0,1.0],"components":[{"id":0,
 "uuid":6325870488503875873,
-"name":"Code","data":{"script":13906227281491748883,"args":{"camAngleTarget":"0",
-"camAngle":"0"}}
+"name":"Code","data":{"script":13906227281491748883,"args":{"camAngle":"0",
+"camAngleTarget":"0"}}
 },
 {"id":1,
 "uuid":10773598924183418245,

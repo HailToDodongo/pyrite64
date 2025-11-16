@@ -35,6 +35,8 @@ AUDIOCONV_FLAGS = --wav-resample 24000 --wav-compress 1
 
 assets_conv ={{ASSET_LIST}}
 
+assets_conv += filesystem/p64/font.ia4.sprite
+
 # Images
 filesystem/%.sprite: assets/%.png
 	@mkdir -p $(dir $@)

@@ -13,6 +13,9 @@ namespace P64::VI::SwapChain
 
   void init();
 
+  float getDeltaTime();
+  float getFPS();
+
   void nextFrame();
   void drain();
   void setFrameSkip(uint32_t skip);

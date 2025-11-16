@@ -13,7 +13,7 @@ void P64::Camera::update(float deltaTime)
 
   //if(needsProjUpdate) {
     t3d_viewport_set_projection(vp, fov, near, far);
-    //vp._normScaleW = 0.04f;
+    // vp._normScaleW = 0.001f;
     //needsProjUpdate = false;
   //}
 

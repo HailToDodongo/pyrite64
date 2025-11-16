@@ -3,8 +3,11 @@
 * @license MIT
 */
 #include "vi/swapChain.h"
+
+#include "vi.h"
 #include "lib/fifo.h"
 #include "lib/logger.h"
+#include "lib/ringBuffer.h"
 
 namespace {
   constexpr uint32_t FB_COUNT = 3;
@@ -19,6 +22,13 @@ namespace {
   // leading to random corruptions
   volatile uint8_t blockNewFrame = false;
   surface_t *frameBuffers = nullptr;
+
+  uint64_t lastTicks{};
+  P64::RingBuffer<float, 6> lastDeltaTimes{};
+  float avgDeltaTime{};
+  float avgFps{};
+  float refreshRate{};
+  float refreshRateRound{};
 
   P64::VI::SwapChain::RenderPassDrawTask drawTask{nullptr};
   uint32_t frameSkip = 0;
@@ -73,12 +83,29 @@ void P64::VI::SwapChain::init()
   fbIdxForVI.fill(0xFF); // clear FIFO...
   fbIdxForVI.push(0); // ...and make VI render the first buffer
 
+  lastTicks = get_ticks() - TICKS_FROM_MS(16);
+  avgDeltaTime = 1.0f / 60.0f;
+  lastDeltaTimes.fill(avgDeltaTime);
+
+  refreshRate = calcRefreshRate();
+  refreshRateRound = roundf(refreshRate);
+
   disable_interrupts();
     register_VI_handler(on_vi_frame_ready);
     set_VI_interrupt(1, VI_V_CURRENT_VBLANK);
   enable_interrupts();
 
   rspq_wait();
+}
+
+float P64::VI::SwapChain::getDeltaTime()
+{
+  return avgDeltaTime;
+}
+
+float P64::VI::SwapChain::getFPS()
+{
+  return avgFps;
 }
 
 void P64::VI::SwapChain::nextFrame() {
@@ -95,6 +122,22 @@ void P64::VI::SwapChain::nextFrame() {
 
   uint32_t freeIdx = 0;
   while(fbState[freeIdx])++freeIdx;
+
+  uint64_t newTicks = get_ticks();
+  uint64_t ticksDiff = newTicks - lastTicks;
+
+  float newDelta = (float)((double)TICKS_TO_US(ticksDiff) * (1.0/1e6));
+  if(newDelta > (1.0f / 20.0f)) { // @TODO: somtimes this gets huge values in the thousands
+    //debugf("DELTA-TIME: %.4f (%lld - %lld)\n", newDelta, lastTicks, newTicks);
+    newDelta = (1.0f / 20.0f);
+  }
+
+  lastTicks = newTicks;
+  lastDeltaTimes.push(newDelta);
+  avgDeltaTime = lastDeltaTimes.average();
+
+  avgFps = (1.0f / avgDeltaTime) / refreshRate * refreshRateRound;
+  avgFps = fminf(avgFps, refreshRateRound);
 
   disable_interrupts();
   fbFreeCount -= 1;
