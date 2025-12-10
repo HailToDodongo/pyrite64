@@ -2,8 +2,8 @@
 * @copyright 2025 - Max Bebök
 * @license MIT
 */
-#include <cstdint>
 #include <libdragon.h>
+#include <cstdint>
 #include <t3d/t3d.h>
 #include <t3d/t3dmodel.h>
 

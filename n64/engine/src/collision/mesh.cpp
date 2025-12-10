@@ -247,9 +247,9 @@ namespace {
 
   bool pointVsTriangle2D(const fm_vec2_t &p, const Coll::Triangle2D &tri)
   {
-    bool b0 = fm_vec2_t{p[0] - tri.v[0][0], p[1] - tri.v[0][1]}.dot(fm_vec2_t{tri.v[0][1] - tri.v[1][1], tri.v[1][0] - tri.v[0][0]}) > 0.0f;
-    bool b1 = fm_vec2_t{p[0] - tri.v[1][0], p[1] - tri.v[1][1]}.dot(fm_vec2_t{tri.v[1][1] - tri.v[2][1], tri.v[2][0] - tri.v[1][0]}) > 0.0f;
-    bool b2 = fm_vec2_t{p[0] - tri.v[2][0], p[1] - tri.v[2][1]}.dot(fm_vec2_t{tri.v[2][1] - tri.v[0][1], tri.v[0][0] - tri.v[2][0]}) > 0.0f;
+    bool b0 = fm_vec2_dot(fm_vec2_t{p.v[0] - tri.v[0].v[0], p.v[1] - tri.v[0].v[1]}, fm_vec2_t{tri.v[0].v[1] - tri.v[1].v[1], tri.v[1].v[0] - tri.v[0].v[0]}) > 0.0f;
+    bool b1 = fm_vec2_dot(fm_vec2_t{p.v[0] - tri.v[1].v[0], p.v[1] - tri.v[1].v[1]}, fm_vec2_t{tri.v[1].v[1] - tri.v[2].v[1], tri.v[2].v[0] - tri.v[1].v[0]}) > 0.0f;
+    bool b2 = fm_vec2_dot(fm_vec2_t{p.v[0] - tri.v[2].v[0], p.v[1] - tri.v[2].v[1]}, fm_vec2_t{tri.v[2].v[1] - tri.v[0].v[1], tri.v[0].v[0] - tri.v[2].v[0]}) > 0.0f;
     return (b0 == b1 && b1 == b2);
   }
 

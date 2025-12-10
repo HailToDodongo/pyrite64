@@ -5,24 +5,10 @@
 #pragma once
 #include <libdragon.h>
 
-// global to mimic livdragons types
-union fm_vec2_t {
-  struct {
-    float x, y;
-  };
-  float v[2];
-
-  float &operator[](size_t idx) {
-    return v[idx];
-  }
-  const float &operator[](size_t idx) const {
-    return v[idx];
-  }
-
-  inline float dot(const fm_vec2_t &other) {
-    return x * other.x + y * other.y;
-  }
-};
+// libdragon overloads:
+static inline float fm_vec2_dot(const fm_vec2_t &a, const fm_vec2_t &b) {
+  return ::fm_vec2_dot(&a, &b);
+}
 
 namespace P64::Math
 {

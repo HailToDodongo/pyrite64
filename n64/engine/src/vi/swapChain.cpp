@@ -34,7 +34,7 @@ namespace {
   uint32_t frameSkip = 0;
   uint32_t frameIdx = 0;
 
-  void on_vi_frame_ready()
+  void onVIFrameReady([[maybe_unused]] void *userData)
   {
     if(++frameIdx <= frameSkip)return;
     disable_interrupts();
@@ -91,8 +91,7 @@ void P64::VI::SwapChain::init()
   refreshRateRound = roundf(refreshRate);
 
   disable_interrupts();
-    register_VI_handler(on_vi_frame_ready);
-    set_VI_interrupt(1, VI_V_CURRENT_VBLANK);
+    vi_install_vblank_handler(onVIFrameReady, nullptr);
   enable_interrupts();
 
   rspq_wait();
@@ -167,7 +166,7 @@ void P64::VI::SwapChain::start() {
   vi_write_begin();
     vi_show(&frameBuffers[fbIdxVI]);
   vi_write_end();
-  wait_ms(30);
+  //wait_ms(30);
 }
 
 void P64::VI::SwapChain::setFrameBuffers(surface_t buffers[3]) {
