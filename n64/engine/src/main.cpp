@@ -11,6 +11,7 @@
 #include "scene/globalState.h"
 #include "./audio/audioManagerPrivate.h"
 #include "assets/assetManager.h"
+#include "script/globalScript.h"
 
 P64::GlobalState P64::state{};
 
@@ -50,6 +51,8 @@ int main()
 
   P64::MatrixManager::reset();
   P64::VI::SwapChain::init();
+
+  P64::GlobalScript::callHooks(P64::GlobalScript::HookType::GAME_INIT);
 
   P64::SceneManager::load(1);
 

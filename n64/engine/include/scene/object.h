@@ -5,6 +5,7 @@
 #pragma once
 #include <libdragon.h>
 #include "objectFlags.h"
+#include "event.h"
 
 namespace P64
 {

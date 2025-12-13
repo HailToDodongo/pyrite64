@@ -14,6 +14,7 @@ namespace P64::Comp
     Script::FuncObjData funcInit{};
     Script::FuncObjDataDelta funcUpdate{};
     Script::FuncObjDataDelta funcDraw{};
+    Script::FuncObjDataEvent funcOnEvent{};
     Script::FuncObjData funcDestroy{};
 
     static uint32_t getAllocSize(uint16_t* initData)
@@ -34,6 +35,7 @@ namespace P64::Comp
       data->funcUpdate = scriptPtr.update;
       data->funcDraw = scriptPtr.draw;
       data->funcDestroy = scriptPtr.destroy;
+      data->funcOnEvent = scriptPtr.onEvent;
 
       if (dataSize > 0) {
         memcpy((char*)data + sizeof(Code), (char*)&initData[2], dataSize);
@@ -53,6 +55,11 @@ namespace P64::Comp
     static void draw(Object& obj, Code* data, float deltaTime) {
       char* funcData = (char*)data + sizeof(Code);
       if(data->funcDraw)data->funcDraw(obj, funcData, deltaTime);
+    }
+
+    static void onEvent(Object& obj, Code* data, const ObjectEvent& event) {
+      char* funcData = (char*)data + sizeof(Code);
+      if(data->funcOnEvent)data->funcOnEvent(obj, funcData, event);
     }
   };
 }

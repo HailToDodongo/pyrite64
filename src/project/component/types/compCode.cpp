@@ -77,7 +77,7 @@ namespace Project::Component::Code
 
   const char* getter(void* user_data, int idx)
   {
-    auto &scriptList = ctx.project->getAssets().getTypeEntries(AssetManager::FileType::CODE);
+    auto &scriptList = ctx.project->getAssets().getTypeEntries(AssetManager::FileType::CODE_OBJ);
     if (idx < 0 || idx >= scriptList.size())return "<Select Script>";
     return scriptList[idx].name.c_str();
   }
@@ -87,7 +87,7 @@ namespace Project::Component::Code
     Data &data = *static_cast<Data*>(entry.data.get());
 
     auto &assets = ctx.project->getAssets();
-    auto &scriptList = assets.getTypeEntries(AssetManager::FileType::CODE);
+    auto &scriptList = assets.getTypeEntries(AssetManager::FileType::CODE_OBJ);
 
     if (ImGui::InpTable::start("Comp")) {
       ImGui::InpTable::addString("Name", entry.name);

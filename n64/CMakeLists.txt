@@ -51,4 +51,6 @@ add_executable(n64_engine
         engine/include/lib/ringBuffer.h
         engine/src/vi/vi.cpp
         engine/include/script/userScript.h
+        engine/include/script/globalScript.h
+        engine/include/scene/event.h
 )

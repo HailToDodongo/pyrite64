@@ -13,6 +13,8 @@ extern SDL_GPUSampler *texSamplerRepeat;
 Renderer::Texture::Texture(SDL_GPUDevice* device, const std::string &imgPath, int rasterWidth, int rasterHeight)
   : gpuDevice(device)
 {
+  if(!gpuDevice)return; // CLI mode
+
   SDL_Surface *imgRaw;
   if (imgPath.ends_with(".svg") && rasterWidth > 0 && rasterHeight > 0) {
     auto imgStream = SDL_IOFromFile(imgPath.c_str(), "rb");

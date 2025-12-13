@@ -42,7 +42,7 @@ void Editor::AssetsBrowser::draw() {
     },
     TabDef{
       .name = ICON_MDI_SCRIPT_OUTLINE "  Scripts",
-      .fileTypes = {FileType::CODE}
+      .fileTypes = {FileType::CODE_OBJ, FileType::CODE_GLOBAL}
     },
     TabDef{
       .name = ICON_MDI_CUBE_OUTLINE "  Prefabs",
@@ -92,7 +92,7 @@ void Editor::AssetsBrowser::draw() {
           iconTxt = ICON_MDI_CUBE_OUTLINE;
         } else if (asset.type == FileType::AUDIO) {
           iconTxt = ICON_MDI_MUSIC;
-        } else if (asset.type == FileType::CODE) {
+        } else if (asset.type == FileType::CODE_OBJ || asset.type == FileType::CODE_GLOBAL) {
           iconTxt = ICON_MDI_LANGUAGE_CPP;
         }
       }

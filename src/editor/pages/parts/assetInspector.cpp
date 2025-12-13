@@ -29,7 +29,10 @@ void Editor::AssetInspector::draw() {
   }
 
   bool hasAssetConf = true;
-  if (asset->type == FileType::CODE || asset->type == FileType::PREFAB) {
+  if (asset->type == FileType::CODE_OBJ
+    || asset->type == FileType::CODE_GLOBAL
+    || asset->type == FileType::PREFAB)
+  {
     hasAssetConf = false;
   }
 

@@ -5,6 +5,19 @@
 #include "fs.h"
 #include <filesystem>
 
+std::vector<std::string> Utils::FS::scanDirs(const std::string &basePath)
+{
+  std::vector<std::string> dirs{};
+  for (const auto &entry : std::filesystem::recursive_directory_iterator(basePath))
+  {
+    if (entry.is_directory()) {
+      auto relPath = std::filesystem::relative(entry.path(), basePath).string();
+      dirs.push_back(relPath);
+    }
+  }
+  return dirs;
+}
+
 void Utils::FS::ensureDir(const std::string &path)
 {
   std::filesystem::path fsPath{path};

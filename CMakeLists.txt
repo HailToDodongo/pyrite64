@@ -176,5 +176,7 @@ target_include_directories(p64editor PRIVATE
     n64
 )
 
+set_target_properties(p64editor PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")
+
 # Link to the actual SDL3 library.
 target_link_libraries(p64editor PRIVATE SDL3::SDL3 SDL3_image::SDL3_image glm::glm)

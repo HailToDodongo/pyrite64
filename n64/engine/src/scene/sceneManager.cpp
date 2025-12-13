@@ -5,6 +5,8 @@
 #include <libdragon.h>
 
 #include "scene/sceneManager.h"
+
+#include "script/globalScript.h"
 #include "vi/swapChain.h"
 
 namespace {
@@ -26,8 +28,12 @@ namespace P64::SceneManager
 {
   void run()
   {
+    GlobalScript::callHooks(GlobalScript::HookType::SCENE_PRE_LOAD);
+
     sceneId = nextSceneId;
     currScene = new P64::Scene(sceneId, &currScene);
+
+    GlobalScript::callHooks(GlobalScript::HookType::SCENE_POST_LOAD);
 
     while(sceneId == nextSceneId) {
       currScene->update(VI::SwapChain::getDeltaTime());
@@ -36,7 +42,9 @@ namespace P64::SceneManager
 
   void unload()
   {
+    GlobalScript::callHooks(GlobalScript::HookType::SCENE_PRE_UNLOAD);
     delete currScene;
+    GlobalScript::callHooks(GlobalScript::HookType::SCENE_POST_UNLOAD);
     currScene = nullptr;
   }
 }

@@ -44,10 +44,11 @@ CLI::Result CLI::run(int argc, char** argv)
   Utils::Logger::setOutput([](const std::string &msg) {printf(msg.c_str());});
 
   printf("Pyrite64 - CLI\n");
+  bool res = false;
   if (cmd == "build") {
     printf("Building project: %s\n", projPath.c_str());
-    Build::buildProject(projPath);
+    res = Build::buildProject(projPath);
   }
 
-  return Result::SUCCESS;
+  return res ? Result::SUCCESS : Result::ERROR;
 }

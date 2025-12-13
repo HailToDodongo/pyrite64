@@ -16,6 +16,7 @@
 #include "../audio/audioManagerPrivate.h"
 #include "debug/debugDraw.h"
 #include "scene/componentTable.h"
+#include "script/globalScript.h"
 #include "script/scriptTable.h"
 
 P64::Scene::Scene(uint16_t sceneId, Scene** ref)
@@ -70,7 +71,8 @@ P64::Scene::~Scene()
   Debug::destroy();
 }
 
-void P64::Scene::update(float deltaTime) {
+void P64::Scene::update(float deltaTime)
+{
   joypad_poll();
   AudioManager::update();
 
@@ -79,6 +81,8 @@ void P64::Scene::update(float deltaTime) {
   camMain = cameras[0];
 
   collScene.update(deltaTime);
+
+  GlobalScript::callHooks(GlobalScript::HookType::SCENE_UPDATE);
 
   for(auto obj : objects)
   {
@@ -112,6 +116,28 @@ void P64::Scene::update(float deltaTime) {
     free(obj);
   }
   pendingObjDelete.clear();
+
+  // events, switch now to prevent infinite loops for objects that push events in response to events
+  auto &evQueue = eventQueue[eventQueueIdx];
+  eventQueueIdx = (eventQueueIdx + 1) % 2;
+  for(uint32_t e=0; e<evQueue.eventCount; ++e)
+  {
+    auto &entry = evQueue.events[e];
+    auto obj = getObjectById(entry.targetId);
+    if(obj)
+    {
+      auto compRefs = obj->getCompRefs();
+      for (uint32_t i=0; i<obj->compCount; ++i) {
+        const auto &compDef = COMP_TABLE[compRefs[i].type];
+        if(compDef.onEvent)
+        {
+          char* dataPtr = (char*)obj + compRefs[i].offset;
+          compDef.onEvent(*obj, dataPtr, entry.event);
+        }
+      }
+    }
+  }
+  evQueue.clear();
 
   AudioManager::update();
 
@@ -149,6 +175,8 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
     t3d_matrix_push_pos(1);
     //rspq_block_run(dplObjects);
 
+    GlobalScript::callHooks(GlobalScript::HookType::SCENE_PRE_DRAW_3D);
+
     for(auto obj : objects)
     {
       if(!obj->isEnabled())continue;
@@ -161,6 +189,8 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
       }
     }
 
+    GlobalScript::callHooks(GlobalScript::HookType::SCENE_POST_DRAW_3D);
+
     t3d_matrix_pop(1);
   }
 
@@ -172,13 +202,28 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
   rdpq_sync_load();
   rdpq_sync_tile();
 
+  GlobalScript::callHooks(GlobalScript::HookType::SCENE_PRE_DRAW_2D);
+
   Debug::printStart();
   Debug::printf(16, 16, "FPS: %.2f\n", (double)VI::SwapChain::getFPS());
+
+  GlobalScript::callHooks(GlobalScript::HookType::SCENE_POST_DRAW_2D);
 }
 
 void P64::Scene::removeObject(Object &obj)
 {
   pendingObjDelete.push_back(&obj);
+}
+
+P64::Object* P64::Scene::getObjectById(uint16_t objId) const
+{
+  // @TODO: optimize!
+  for(auto obj : objects) {
+    if (objId == obj->id) {
+      return obj;
+    }
+  }
+  return nullptr;
 }
 
 void P64::Scene::setGroupEnabled(uint16_t groupId, bool enabled) const

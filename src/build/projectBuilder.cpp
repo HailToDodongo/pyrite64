@@ -137,7 +137,15 @@ bool Build::buildProject(std::string path)
     fileList.writeToFile(fsDataPath / "a");
   }
 
+  // User scripts
+  auto userDirs = Utils::FS::scanDirs(path + "/src/user");
+  std::string userCodeRules = "";
+  for (const auto &dir : userDirs) {
+    userCodeRules += "src += $(wildcard src/user/" + dir + "/*.cpp)\n";
+  }
+
   // Scripts
+  buildGlobalScripts(project, sceneCtx);
   buildScripts(project, sceneCtx);
 
   // Scenes
@@ -156,6 +164,9 @@ bool Build::buildProject(std::string path)
   makefile = Utils::replaceAll(makefile, "{{PROJECT_NAME}}", project.conf.name);
   makefile = Utils::replaceAll(makefile, "{{RULES_ASSETS}}", mkAssetRules);
   makefile = Utils::replaceAll(makefile, "{{ASSET_LIST}}", Utils::join(sceneCtx.files, " "));
+  makefile = Utils::replaceAll(makefile, "{{USER_CODE_DIRS}}", userCodeRules);
+  makefile = Utils::replaceAll(makefile, "{{P64_SELF_PATH}}", Utils::Proc::getSelfPath());
+  makefile = Utils::replaceAll(makefile, "{{PROJECT_SELF_PATH}}", fs::absolute(path).string());
 
   auto oldMakefile = Utils::FS::loadTextFile(path + "/Makefile");
   if (oldMakefile != makefile) {
@@ -168,6 +179,10 @@ bool Build::buildProject(std::string path)
   // Build
   bool res = Utils::Proc::runSyncLogged("make -C \"" + path + "\" -j8");
 
-  Utils::Logger::log("Build done!");
+  if(res) {
+    Utils::Logger::log("Build done!");
+  } else {
+    Utils::Logger::log("Build failed!", Utils::Logger::LEVEL_ERROR);
+  }
   return res;
 }

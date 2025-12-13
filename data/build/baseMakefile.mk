@@ -21,6 +21,8 @@ $(BUILD_DIR)/src/user/%.o: N64_CXXFLAGS += -Wno-attributes
 
 src =  $(wildcard src/*.cpp) $(wildcard src/p64/*.cpp) $(wildcard src/user/*.cpp)
 
+{{USER_CODE_DIRS}}
+
 all: $(ROM_NAME).z64
 
 $(src): $(ENGINE_DIR)/build/engine.a
@@ -84,6 +86,9 @@ clean:
 
 cleanP64: clean
 	rm -rf assets/p64/*
+
+p64:
+	{{P64_SELF_PATH}} --cli --project {{PROJECT_SELF_PATH}} --cmd build
 
 
 -include $(wildcard $(BUILD_DIR)/src/*.d)

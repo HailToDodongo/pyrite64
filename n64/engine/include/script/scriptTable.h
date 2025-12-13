@@ -5,12 +5,13 @@
 #pragma once
 #include <libdragon.h>
 
-namespace P64 { class Object; }
+namespace P64 { class Object; struct ObjectEvent; }
 
 namespace P64::Script
 {
   typedef void(*FuncObjData)(Object&, void*);
   typedef void(*FuncObjDataDelta)(Object&, void*, float);
+  typedef void(*FuncObjDataEvent)(Object&, void*, const ObjectEvent&);
 
   struct ScriptEntry
   {
@@ -18,6 +19,7 @@ namespace P64::Script
     FuncObjDataDelta update;
     FuncObjDataDelta draw;
     FuncObjData destroy;
+    FuncObjDataEvent onEvent;
   };
 
   // Note: generated and implement in the project:

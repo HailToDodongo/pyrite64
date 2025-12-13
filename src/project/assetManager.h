@@ -35,7 +35,8 @@ namespace Project
         IMAGE,
         AUDIO,
         MODEL_3D,
-        CODE,
+        CODE_OBJ,
+        CODE_GLOBAL,
         PREFAB,
 
         _SIZE

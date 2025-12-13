@@ -186,16 +186,25 @@ void Project::AssetManager::reload() {
 
       FileType type = FileType::UNKNOWN;
       if (ext == ".cpp") {
-        type = FileType::CODE;
+        type = FileType::CODE_OBJ;
       } else {
         continue;
       }
 
       auto code = Utils::FS::loadTextFile(path);
 
-      auto uuidPos = code.find("Script::");
-      if (uuidPos == std::string::npos)continue;
-      uuidPos += 8;
+      auto uuidPos = code.find("::Script::");
+      if (uuidPos == std::string::npos)
+      {
+        type = FileType::CODE_GLOBAL;
+        uuidPos = code.find("::GlobalScript::");
+        if (uuidPos == std::string::npos)continue;
+        uuidPos += 16;
+      } else
+      {
+        uuidPos += 10;
+      }
+
       if (uuidPos + 16 > code.size())continue;
       auto uuidStr = code.substr(uuidPos, 16);
       uint64_t uuid = 0;
@@ -238,7 +247,7 @@ void Project::AssetManager::save()
   for(auto &typed : entries) {
     for(auto &entry : typed)
     {
-      if(entry.type == FileType::UNKNOWN || entry.type == FileType::CODE) {
+      if(entry.type == FileType::UNKNOWN || entry.type == FileType::CODE_OBJ) {
         continue;
       }
 

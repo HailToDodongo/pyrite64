@@ -4,6 +4,7 @@
 */
 #pragma once
 #include <libdragon.h>
+#include "event.h"
 
 namespace P64
 {
@@ -13,12 +14,14 @@ namespace P64
   typedef void(*FuncInitDel)(Object&, void*, void*);
   typedef void(*FuncUpdate)(Object&, void*, float deltaTime);
   typedef void(*FuncDraw)(Object&, void*, float deltaTime);
+  typedef void(*FuncOnEvent)(Object&, void*, const ObjectEvent&);
 
   struct ComponentDef
   {
     FuncInitDel initDel{};
     FuncUpdate update{};
     FuncDraw draw{};
+    FuncOnEvent onEvent{};
     FuncGetAllocSize getAllocSize{};
   };
 

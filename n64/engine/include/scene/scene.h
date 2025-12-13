@@ -6,6 +6,7 @@
 #include <libdragon.h>
 #include <vector>
 
+#include "event.h"
 #include "lighting.h"
 #include "object.h"
 #include "collision/scene.h"
@@ -42,8 +43,10 @@ namespace P64
       std::vector<Object*> objects{};
 
       Coll::Scene collScene{};
-
       std::vector<Object*> pendingObjDelete{};
+
+      uint32_t eventQueueIdx{0};
+      ObjectEventQueue eventQueue[2]{};
 
       Lighting lighting{};
 
@@ -64,6 +67,10 @@ namespace P64
       [[nodiscard]] Camera& getActiveCamera() { return *camMain; }
       Coll::Scene &getCollision() { return collScene; }
 
+      void sendEvent(uint16_t targetId, uint16_t senderId, uint16_t type, uint32_t value) {
+        eventQueue[eventQueueIdx].add(targetId, senderId, type, value);
+      }
+
       void addCamera(Camera *cam) {
         cameras.push_back(cam);
       }
@@ -73,6 +80,8 @@ namespace P64
       }
 
       void removeObject(Object &obj);
+
+      Object* getObjectById(uint16_t objId) const;
 
       void setGroupEnabled(uint16_t groupId, bool enabled) const;
 

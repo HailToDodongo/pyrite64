@@ -40,7 +40,7 @@ void Renderer::N64Mesh::fromT3DM(const T3DMData &t3dmData, Project::AssetManager
 
     if (!model.material.texA.texPath.empty()) {
       auto texEntry = assetManager.getByPath(model.material.texA.texPath);
-      if (texEntry) {
+      if (texEntry && texEntry->texture) {
         part->texBindings[0].texture = texEntry->texture->getGPUTex();
         part->refTex0 = texEntry->texture;
       }
@@ -48,7 +48,7 @@ void Renderer::N64Mesh::fromT3DM(const T3DMData &t3dmData, Project::AssetManager
 
     if (!model.material.texB.texPath.empty()) {
       auto texEntry = assetManager.getByPath(model.material.texB.texPath);
-      if (texEntry) {
+      if (texEntry && texEntry->texture) {
         part->texBindings[1].texture = texEntry->texture->getGPUTex();
         part->refTex1 = texEntry->texture;
       }

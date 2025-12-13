@@ -55,6 +55,8 @@ void cli(argparse::ArgumentParser &prog);
 // Main code
 int main(int argc, char** argv)
 {
+  std::filesystem::current_path(Utils::Proc::getSelfDir());
+
   auto cliRes = CLI::run(argc, argv);
   if (cliRes != CLI::Result::GUI) {
     return (cliRes == CLI::Result::SUCCESS) ? 0 : -1;
