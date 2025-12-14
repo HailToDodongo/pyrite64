@@ -56,9 +56,9 @@ Coll::Mesh* Coll::Mesh::load(const std::string &path)
 
   data += mesh->triCount * sizeof(IVec3);
   data = align(data, 4);
-  mesh->verts = (T3DVec3 *)data;
+  mesh->verts = (fm_vec3_t *)data;
 
-  data += mesh->vertCount * sizeof(T3DVec3);
+  data += mesh->vertCount * sizeof(fm_vec3_t);
   data = align(data, 4);
   mesh->bvh = (BVH*)data;
 

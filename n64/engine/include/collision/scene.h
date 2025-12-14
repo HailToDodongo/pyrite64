@@ -18,7 +18,7 @@ namespace Coll
       std::set<MeshInstance*> meshes{};
       std::vector<BCS*> collBCS{};
 
-      CollInfo vsBCS(BCS &bcs, const T3DVec3 &velocity, float deltaTime);
+      CollInfo vsBCS(BCS &bcs, const fm_vec3_t &velocity, float deltaTime);
 
     public:
       uint64_t ticks{0};
@@ -43,7 +43,7 @@ namespace Coll
         }
       }
 
-      RaycastRes raycastFloor(const T3DVec3 &pos);
+      RaycastRes raycastFloor(const fm_vec3_t &pos);
 
       [[nodiscard]] const std::vector<BCS*> &getSpheres() const {
         return collBCS;

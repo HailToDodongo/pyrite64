@@ -40,7 +40,7 @@ namespace P64 {
       return get();
     }
 
-    void fillSRT(const T3DVec3 &scale, const T3DVec3 &rot, const T3DVec3 &trans) {
+    void fillSRT(const fm_vec3_t &scale, const fm_vec3_t &rot, const fm_vec3_t &trans) {
       for(uint32_t i=0; i<COUNT; ++i) {
         t3d_mat4fp_from_srt_euler(getNext(), scale, rot, trans);
       }

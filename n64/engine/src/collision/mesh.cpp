@@ -13,9 +13,9 @@ using namespace P64;
 
 namespace {
 
-  constexpr T3DVec3 unitAxis0{1, 0, 0};
-  constexpr T3DVec3 unitAxis1{0, 1, 0};
-  constexpr T3DVec3 unitAxis2{0, 0, 1};
+  constexpr fm_vec3_t unitAxis0{1, 0, 0};
+  constexpr fm_vec3_t unitAxis1{0, 1, 0};
+  constexpr fm_vec3_t unitAxis2{0, 0, 1};
 
   float clamp(float x, float min, float max) {
     return fminf(fmaxf(x, min), max);
@@ -24,12 +24,12 @@ namespace {
   constexpr float MIN_PENETRATION = 0.0001f;
 
   bool intersectRaySphere(
-    const T3DVec3 &rayStarting, const T3DVec3 &rayNormalizedDirection,
-    const T3DVec3 &sphereCenter,
+    const fm_vec3_t &rayStarting, const fm_vec3_t &rayNormalizedDirection,
+    const fm_vec3_t &sphereCenter,
     float sphereRadiusSquared,
     float &intersectionDistance
   ) {
-    T3DVec3 diff = sphereCenter - rayStarting;
+    fm_vec3_t diff = sphereCenter - rayStarting;
     float t0 = t3d_vec3_dot(&diff, &rayNormalizedDirection);
     float dSquared = t3d_vec3_dot(&diff, &diff) - t0 * t0;
     if(dSquared > sphereRadiusSquared) {
@@ -42,12 +42,12 @@ namespace {
   }
 
   [[maybe_unused]] bool intersectRaySphere(
-      const T3DVec3 &rayStarting,
-      const T3DVec3 &rayNormalizedDirection,
-      const T3DVec3 &sphereCenter,
+      const fm_vec3_t &rayStarting,
+      const fm_vec3_t &rayNormalizedDirection,
+      const fm_vec3_t &sphereCenter,
       float sphereRadius,
-      T3DVec3 &intersectionPosition,
-      T3DVec3 &intersectionNormal
+      fm_vec3_t &intersectionPosition,
+      fm_vec3_t &intersectionNormal
     )
   {
     float distance;
@@ -60,13 +60,13 @@ namespace {
     return false;
   }
 
-  float pointPlaneDistance(const T3DVec3 &p, const T3DVec3 planePos, const T3DVec3 planeNorm)
+  float pointPlaneDistance(const fm_vec3_t &p, const fm_vec3_t planePos, const fm_vec3_t planeNorm)
   {
     auto diff = (p - planePos);
     return t3d_vec3_dot(&diff, &planeNorm);
   }
 
-  T3DVec3 getTriBaryCoord(const T3DVec3 &p, const T3DVec3 &a, const T3DVec3 &b, const T3DVec3 &c)
+  fm_vec3_t getTriBaryCoord(const fm_vec3_t &p, const fm_vec3_t &a, const fm_vec3_t &b, const fm_vec3_t &c)
   {
 		const auto v0 = c - a;
 		const auto v1 = b - a;
@@ -79,7 +79,7 @@ namespace {
 		const float denom = ( dot00 * dot11 - dot01 * dot01 );
 
 		if(denom == 0.0f) {
-			return T3DVec3{-1.0f, -1.0f, -1.0f};
+			return fm_vec3_t{-1.0f, -1.0f, -1.0f};
 		}
 
     const auto dot02 = t3d_vec3_dot(&v0, &v2);
@@ -92,13 +92,13 @@ namespace {
 		return {1.0f - u-v, v, u};
   }
 
-  T3DVec3 closestPointOnLine(const T3DVec3 &p, const T3DVec3 &a, const T3DVec3 &b)
+  fm_vec3_t closestPointOnLine(const fm_vec3_t &p, const fm_vec3_t &a, const fm_vec3_t &b)
   {
-    const T3DVec3 lineVec = b - a;
+    const fm_vec3_t lineVec = b - a;
     const float length = t3d_vec3_len(&lineVec);
     if(length < MIN_PENETRATION)return a;
-		const T3DVec3 pointToA = p - a;
-		const T3DVec3 lineDir = lineVec / length;
+		const fm_vec3_t pointToA = p - a;
+		const fm_vec3_t lineDir = lineVec / length;
 
 		const float pointDist = t3d_vec3_dot(&pointToA, &lineDir);
 		return a + (lineDir * clamp(pointDist, 0.0f, length));
@@ -181,16 +181,16 @@ namespace {
     const auto edge2 = v0 - v2;
 
     float distance = 999999.0f;
-    T3DVec3 lastAxis{};
+    fm_vec3_t lastAxis{};
 
-    const auto testAxis = [&v0, &v1, &v2, &box, &lastAxis, &distance](const T3DVec3 &satAxis)
+    const auto testAxis = [&v0, &v1, &v2, &box, &lastAxis, &distance](const fm_vec3_t &satAxis)
     {
       if((satAxis.x + satAxis.y + satAxis.z) == 0.0f) {
         return true;
       }
 
       // project vertices onto separating axis
-      T3DVec3 points{
+      fm_vec3_t points{
         t3d_vec3_dot(v0, satAxis),
         t3d_vec3_dot(v1, satAxis),
         t3d_vec3_dot(v2, satAxis),
@@ -253,10 +253,10 @@ namespace {
     return (b0 == b1 && b1 == b2);
   }
 
-  T3DVec3 getTrianglePosFromXZ(const T3DVec3 &pos, const T3DVec3 &vert, const T3DVec3 &normal)
+  fm_vec3_t getTrianglePosFromXZ(const fm_vec3_t &pos, const fm_vec3_t &vert, const fm_vec3_t &normal)
   {
     const float t = (t3d_vec3_dot(normal, pos) - t3d_vec3_dot(normal, vert)) / normal.v[1];
-    return pos + T3DVec3{{0, -t, 0}};
+    return pos + fm_vec3_t{{0, -t, 0}};
   }
 }
 
@@ -268,7 +268,7 @@ Coll::CollInfo Coll::Mesh::vsBox(const Coll::BCS &box, const Coll::Triangle &tri
   return triVsBox(box, triangle);
 }
 
-Coll::RaycastRes Coll::Mesh::vsFloorRay(const T3DVec3 &rayStart, const Coll::Triangle &face) const
+Coll::RaycastRes Coll::Mesh::vsFloorRay(const fm_vec3_t &rayStart, const Coll::Triangle &face) const
 {
     const auto &vert0 = *face.v[0];
     const auto &vert1 = *face.v[1];

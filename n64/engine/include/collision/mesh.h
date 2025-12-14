@@ -18,7 +18,7 @@ namespace Coll
     uint32_t triCount{};
     uint32_t vertCount{};
     float collScale{};
-    T3DVec3 *verts{};
+    fm_vec3_t *verts{};
     IVec3 *normals{};
     BVH* bvh{};
     // data follows here: indices, normals, verts, BVH
@@ -26,15 +26,15 @@ namespace Coll
 
     [[nodiscard]] Coll::CollInfo vsSphere(const Coll::BCS &sphere, const Triangle& triangle) const;
     [[nodiscard]] Coll::CollInfo vsBox(const Coll::BCS &box, const Triangle& triangle) const;
-    [[nodiscard]] Coll::RaycastRes vsFloorRay(const T3DVec3 &pos, const Triangle& triangle) const;
+    [[nodiscard]] Coll::RaycastRes vsFloorRay(const fm_vec3_t &pos, const Triangle& triangle) const;
 
     static Mesh* load(const std::string &path);
   };
 
   struct MeshInstance {
     Mesh *mesh{};
-    T3DVec3 pos{0.0f, 0.0f, 0.0f};
-    T3DVec3 scale{1.0f, 1.0f, 1.0f};
+    fm_vec3_t pos{0.0f, 0.0f, 0.0f};
+    fm_vec3_t scale{1.0f, 1.0f, 1.0f};
     T3DQuat rot{0.0f, 0.0f, 0.0f, 1.0f};
   };
 }

@@ -41,7 +41,7 @@ namespace P64::Comp
       SceneManager::getCurrent().addCamera(&data->camera);
       auto &cam = data->camera;
       cam.setPos(obj.pos);
-      cam.setTarget(obj.pos + T3DVec3{{0, 0, -100}});
+      cam.setTarget(obj.pos + fm_vec3_t{{0, 0, -100}});
       cam.fov  = initData->fov;
       cam.near = initData->near;
       cam.far  = initData->far;

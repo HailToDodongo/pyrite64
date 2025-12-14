@@ -12,8 +12,8 @@ namespace P64
   struct Camera
   {
     T3DViewport viewports[3]{};
-    T3DVec3 pos{};
-    T3DVec3 target{};
+    fm_vec3_t pos{};
+    fm_vec3_t target{};
     float fov{};
     float near{};
     float far{};
@@ -24,21 +24,21 @@ namespace P64
     void update(float deltaTime);
     void attach();
 
-    void setPos(T3DVec3 newPos) {
+    void setPos(fm_vec3_t newPos) {
       pos = newPos;
     }
 
-    void setTarget(T3DVec3 newPos) {
+    void setTarget(fm_vec3_t newPos) {
       target = newPos;
     }
 
-    void move(T3DVec3 dir) {
+    void move(fm_vec3_t dir) {
       target += dir;
       pos += dir;
     }
 
-    [[nodiscard]] const T3DVec3 &getTarget() const { return target; }
-    [[nodiscard]] const T3DVec3 &getPos() const { return pos; }
+    [[nodiscard]] const fm_vec3_t &getTarget() const { return target; }
+    [[nodiscard]] const fm_vec3_t &getPos() const { return pos; }
 
     fm_vec3_t getScreenPos(const fm_vec3_t &worldPos);
   };

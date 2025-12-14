@@ -17,9 +17,9 @@ void P64::Camera::update([[maybe_unused]] float deltaTime)
     //needsProjUpdate = false;
   //}
 
-  t3d_viewport_look_at(vp, pos, target, T3DVec3{{0, 1, 0}});
+  t3d_viewport_look_at(vp, pos, target, fm_vec3_t{{0, 1, 0}});
 
-/*  T3DVec3 up{{0, 1, 0}};
+/*  fm_vec3_t up{{0, 1, 0}};
   t3d_mat4_look_at(vp.matCamera, pos, target, up);
 
   t3d_mat4_mul(&vp.matCamProj, &vp.matProj, &vp.matCamera);

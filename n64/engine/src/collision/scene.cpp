@@ -14,7 +14,7 @@ namespace {
   constexpr bool isFloor(const Coll::IVec3 &normal) {
     return normal.v[1] > (int16_t)(0x7FFF * FLOOR_ANGLE);
   }
-  constexpr bool isFloor(const T3DVec3 &normal) {
+  constexpr bool isFloor(const fm_vec3_t &normal) {
     return normal.v[1] > FLOOR_ANGLE;
   }
   constexpr bool isFloor(float normY) {
@@ -22,7 +22,7 @@ namespace {
   }
 }
 
-Coll::CollInfo Coll::Scene::vsBCS(BCS &bcs, const T3DVec3 &velocity, float deltaTime) {
+Coll::CollInfo Coll::Scene::vsBCS(BCS &bcs, const fm_vec3_t &velocity, float deltaTime) {
   uint64_t ticksStart = get_ticks();
   float len2 = fm_vec3_len2(&velocity);
 
@@ -124,7 +124,7 @@ void Coll::Scene::update(float deltaTime)
       if(res.collCount) {
         bool hitFloor = bcsA->hitTriTypes & TriType::FLOOR;
         if(bcsA->flags & BCSFlags::BOUNCY) {
-          //T3DVec3 norm;
+          //fm_vec3_t norm;
           //t3d_vec3_norm(res.floorWallAngle);
           bcsA->velocity = bcsA->velocity - res.floorWallAngle * 2.0f * t3d_vec3_dot(bcsA->velocity, res.floorWallAngle);
           bcsA->velocity *= 0.8f;
@@ -171,11 +171,11 @@ void Coll::Scene::update(float deltaTime)
   }
 }
 
-Coll::RaycastRes Coll::Scene::raycastFloor(const T3DVec3 &pos) {
+Coll::RaycastRes Coll::Scene::raycastFloor(const fm_vec3_t &pos) {
   ++raycastCount;
   Coll::RaycastRes res{
-    .hitPos = T3DVec3{0.0f, 0.0f, 0.0f},
-    .normal = T3DVec3{0.0f, 0.0f, 0.0f},
+    .hitPos = fm_vec3_t{0.0f, 0.0f, 0.0f},
+    .normal = fm_vec3_t{0.0f, 0.0f, 0.0f},
   };
 
   float highestFloor = -99999.0f;

@@ -16,7 +16,7 @@ namespace
     return sign < 0 ? -val : val;
   }
 
-  bool separateBCS(Coll::BCS &bcsA, Coll::BCS &bcsB, const T3DVec3 &dir, float dist2, float distTotal)
+  bool separateBCS(Coll::BCS &bcsA, Coll::BCS &bcsB, const fm_vec3_t &dir, float dist2, float distTotal)
   {
 
     if(dist2 > (distTotal*distTotal))return false;
@@ -58,7 +58,7 @@ namespace
 
 bool Coll::sphereVsSphere(Coll::BCS &collA, Coll::BCS &collB)
 {
-  T3DVec3 dir = collA.center - collB.center;
+  fm_vec3_t dir = collA.center - collB.center;
   auto dist2 = t3d_vec3_len2(dir);
   float radSum = collA.getRadius() + collB.getRadius();
   return separateBCS(collA, collB, dir, dist2, radSum);
@@ -97,7 +97,7 @@ bool Coll::boxVsBox(Coll::BCS &collA, Coll::BCS &collB) {
     if(isFixedA)interp = 1.0f;
     if(isFixedB)interp = 0.0f;
 
-    T3DVec3 penDiff = combExtend - posDiffAbs;
+    fm_vec3_t penDiff = combExtend - posDiffAbs;
     float min = Math::min(penDiff);
 
     if(min == penDiff.x){

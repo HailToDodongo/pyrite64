@@ -62,9 +62,9 @@ namespace Coll
 
   struct BCS
   {
-    T3DVec3 center{};
-    T3DVec3 halfExtend{};
-    T3DVec3 velocity{};
+    fm_vec3_t center{};
+    fm_vec3_t halfExtend{};
+    fm_vec3_t velocity{};
     //std::function<void(BCS&)> callback{};
     uint8_t maskRead{0};
     uint8_t maskWrite{0};
@@ -79,10 +79,10 @@ namespace Coll
       return halfExtend.y * halfExtend.y;
     }
 
-    [[nodiscard]] T3DVec3 getMinAABB() const {
+    [[nodiscard]] fm_vec3_t getMinAABB() const {
       return center - halfExtend;
     }
-    [[nodiscard]] T3DVec3 getMaxAABB() const {
+    [[nodiscard]] fm_vec3_t getMaxAABB() const {
       return center + halfExtend;
     }
 
@@ -105,14 +105,14 @@ namespace Coll
 
   struct CollInfo
   {
-    T3DVec3 penetration{};
-    T3DVec3 floorWallAngle{};
+    fm_vec3_t penetration{};
+    fm_vec3_t floorWallAngle{};
     int collCount{};
   };
 
   struct RaycastRes {
-    T3DVec3 hitPos{};
-    T3DVec3 normal{};
+    fm_vec3_t hitPos{};
+    fm_vec3_t normal{};
 
     [[nodiscard]] bool hasResult() const {
       return normal.y != 0.0f;
@@ -121,8 +121,8 @@ namespace Coll
 
   struct Triangle
   {
-    T3DVec3 normal{};
-    T3DVec3* v[3]{};
+    fm_vec3_t normal{};
+    fm_vec3_t* v[3]{};
     AABB aabb{};
   };
 
