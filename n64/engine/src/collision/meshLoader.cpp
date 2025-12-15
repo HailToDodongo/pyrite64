@@ -41,10 +41,9 @@ namespace {
   }
 }
 
-Coll::Mesh* Coll::Mesh::load(const std::string &path)
+Coll::Mesh* Coll::Mesh::load(void* rawData)
 {
-  int fileSize = 0;
-  Mesh* mesh = (Mesh*)asset_load(path.c_str(), &fileSize);
+  Mesh* mesh = (Mesh*)rawData;
 
   //debugf("Loading collision mesh %s, size: %d\n", path.c_str(), fileSize);
 

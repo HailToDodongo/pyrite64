@@ -53,4 +53,5 @@ add_executable(n64_engine
         engine/include/script/userScript.h
         engine/include/script/globalScript.h
         engine/include/scene/event.h
+        engine/src/scene/components/collMesh.cpp
 )

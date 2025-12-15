@@ -7,15 +7,10 @@
 #include <vector>
 #include "glm/vec3.hpp"
 
-namespace Project::Assets
+namespace Project::Assets::Collision
 {
-  struct CollisionMesh
-  {
-    std::vector<glm::vec3> verticesFloat{};
-    std::vector<glm::ivec3> vertices{};
-    std::vector<glm::ivec3> normals{};
-    std::vector<uint16_t> indices{};
-
-    void fromGLTF(const std::string &path);
-  };
+  std::vector<int16_t> createBVH(
+    const std::vector<glm::i16vec3> &vertices,
+    const std::vector<uint16_t> &indices
+  );
 }

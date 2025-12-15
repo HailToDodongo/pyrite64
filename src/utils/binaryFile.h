@@ -167,5 +167,10 @@ namespace Utils
         fflush(file);
         fclose(file);
       }
+
+      std::vector<uint8_t> &getData() {
+        data.resize(dataSize);
+        return data;
+      }
   };
 }

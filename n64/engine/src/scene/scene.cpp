@@ -17,7 +17,11 @@
 #include "debug/debugDraw.h"
 #include "scene/componentTable.h"
 #include "script/globalScript.h"
-#include "script/scriptTable.h"
+
+namespace
+{
+  bool collDebugDraw = false;
+}
 
 P64::Scene::Scene(uint16_t sceneId, Scene** ref)
   : id{sceneId}
@@ -74,6 +78,10 @@ P64::Scene::~Scene()
 void P64::Scene::update(float deltaTime)
 {
   joypad_poll();
+  if(joypad_get_buttons_pressed(JOYPAD_PORT_1).l) {
+    collDebugDraw = !collDebugDraw;
+  }
+
   AudioManager::update();
 
   lighting.reset();
@@ -212,7 +220,7 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
 
   GlobalScript::callHooks(GlobalScript::HookType::SCENE_POST_DRAW_2D);
 
-  collScene.debugDraw(true, true);
+  collScene.debugDraw(collDebugDraw, collDebugDraw);
 }
 
 void P64::Scene::removeObject(Object &obj)

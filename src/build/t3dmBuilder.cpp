@@ -14,9 +14,8 @@
 
 namespace fs = std::filesystem;
 
-namespace
-{
-
+namespace Build {
+  std::vector<uint8_t> buildCollision(const std::string &gltfPath, float baseScale);
 }
 
 bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
@@ -25,7 +24,12 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
   auto &models = sceneCtx.project->getAssets().getTypeEntries(Project::AssetManager::FileType::MODEL_3D);
   for (auto &model : models)
   {
-    Utils::Logger::log("Building T3DM: " + model.path + " | rom: " + model.outPath);
+    Utils::Logger::log("Building T3DM: " + model.outPath);
+
+    auto projectPath = fs::path{project.getPath()};
+    auto t3dmPath = projectPath / model.outPath;
+    auto t3dmDir = t3dmPath.parent_path();
+
     T3DM::config = {
       .globalScale = (float)model.conf.baseScale,
       .animSampleRate = 60,
@@ -38,10 +42,11 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
     };
 
     auto t3dm = T3DM::parseGLTF(model.path.c_str());
-    auto projectPath = fs::path{project.getPath()};
-    auto t3dmPath = projectPath / model.outPath;
-    auto t3dmDir = t3dmPath.parent_path();
-    T3DM::writeT3DM(t3dm, t3dmPath.c_str(), projectPath, {});
+
+    std::vector<T3DM::CustomChunk> customChunks{};
+    customChunks.emplace_back('0', buildCollision(model.path, T3DM::config.globalScale));
+
+    T3DM::writeT3DM(t3dm, t3dmPath.c_str(), projectPath, customChunks);
 
     int compr = (int)model.conf.compression - 1;
     if(compr < 0)compr = 1; // @TODO: pull default compression level

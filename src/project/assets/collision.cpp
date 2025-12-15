@@ -4,212 +4,110 @@
 */
 #include "collision.h"
 
+#include "bvh/v2/bvh.h"
+#include "bvh/v2/vec.h"
+#include "bvh/v2/ray.h"
+#include "bvh/v2/node.h"
+#include "bvh/v2/default_builder.h"
 
-
-/*include "vec.h"
-#include "math/vec3.h"
-#include "math/mat4.h"
-#include "lib/json.hpp"
-
-namespace {
-  constexpr float BASE_SCALE = 64.0f;
-}
-
-#include "cgltfHelper.h"
-
-#define CGLTF_IMPLEMENTATION
-#include "lib/cgltf.h"
-
-#include "binaryFile.h"
-
-#include <string>
 #include <vector>
-#include <filesystem>
 
-std::vector<int16_t> createMeshBVH(
-  const std::vector<IVec3> &vertices,
-  const std::vector<uint16_t> &indices
-);
+using Scalar  = double;
+using BVec3   = bvh::v2::Vec<Scalar, 3>;
+using BBox    = bvh::v2::BBox<Scalar, 3>;
+using Node    = bvh::v2::Node<Scalar, 3>;
+using Bvh     = bvh::v2::Bvh<Node>;
 
-namespace fs = std::filesystem;
+namespace
+{
+  void writeBVHNode(std::vector<int16_t> &out, Node &node, int nodeIndex) {
+    // 'bounds' layout is [min_x, max_x, min_y, max_y, min_z, max_z]
+    // we need min/max as separate vectors
+    int16_t offset = 1;
 
-namespace {
-  Mat4 parseNodeMatrix(const cgltf_node *node, const Vec3 &posScale)
-  {
-    Mat4 matScale{};
-    if(node->has_scale)matScale.setScale({node->scale[0], node->scale[1], node->scale[2]});
-
-    Mat4 matRot{};
-    if(node->has_rotation)matRot.setRot({
-      node->rotation[0],
-      node->rotation[1],
-      node->rotation[2],
-      node->rotation[3]
-    });
-
-    Mat4 matTrans{};
-    if(node->has_translation) {
-      matTrans.setPos({
-        node->translation[0] * posScale[0],
-        node->translation[1] * posScale[1],
-        node->translation[2] * posScale[2],
-      });
+    glm::i16vec3 min{
+      (int16_t)round(node.bounds[0]) - offset,
+      (int16_t)round(node.bounds[2]) - offset,
+      (int16_t)round(node.bounds[4]) - offset
+    };
+    glm::i16vec3 max{
+      (int16_t)round(node.bounds[1]) + offset,
+      (int16_t)round(node.bounds[3]) + offset,
+      (int16_t)round(node.bounds[5]) + offset
     };
 
-    Mat4 res = matTrans * matRot * matScale;
-    for(int i=0; i<4; ++i) {
-      for(int j=0; j<4; ++j) {
-        if(fabs(res.data[i][j]) < 0.0001f)res.data[i][j] = 0.0f;
+    for(int i=0; i<3; ++i) {
+      int diff = max[i] - min[i];
+      if(diff < 8) {
+        min[i] -= 4;
+        max[i] += 4;
       }
     }
 
-    return res;
+    out.push_back(min.x);
+    out.push_back(min.y);
+    out.push_back(min.z);
+    out.push_back(max.x);
+    out.push_back(max.y);
+    out.push_back(max.z);
+
+    int dataCount = node.index.value & 0b1111;
+    int dataOffset = node.index.value >> 4;
+
+    if(dataCount == 0) {
+      int indexDiff = dataOffset - nodeIndex;
+
+      int16_t packedVal = (int16_t)(indexDiff << 4);
+      if((packedVal >> 4) != indexDiff) {
+        printf("Error: indexDiff %d (%d - %d) does not fit in 12 bits\n", indexDiff, dataOffset, nodeIndex);
+        throw;
+      }
+      //assert((packedVal >> 4) == indexDiff);
+      out.push_back(packedVal);
+    } else {
+      out.push_back(node.index.value);
+    }
+  }
+
+  void writeBVH(std::vector<int16_t> &out, Bvh &bvh) {
+    out.push_back(bvh.nodes.size());
+    out.push_back(bvh.prim_ids.size());
+    int nodeIndex = 0;
+    for(auto& node : bvh.nodes) {
+      writeBVHNode(out, node, nodeIndex++);
+    }
+    for(auto&& prim_id : bvh.prim_ids) {
+      out.push_back(prim_id);
+    }
   }
 }
 
-int main(int argc, char** argv)
-{
-  const char* gltfPath = argv[1];
-  const char* collPath = argv[2];
-  fs::path gltfBasePath{argv[1]};
-  gltfBasePath = gltfBasePath.parent_path();
+std::vector<int16_t> Project::Assets::Collision::createBVH(
+  const std::vector<glm::i16vec3> &vertices,
+  const std::vector<uint16_t> &indices
+) {
+  std::vector<BBox> aabbs;
+  std::vector<BVec3> centers;
 
-  cgltf_options options{};
-  cgltf_data* data = nullptr;
-  cgltf_result result = cgltf_parse_file(&options, gltfPath, &data);
+  for(int i=0; i<indices.size(); i+=3) {
+    auto &v0 = vertices[indices[i]];
+    auto &v1 = vertices[indices[i+1]];
+    auto &v2 = vertices[indices[i+2]];
 
-  if(result == cgltf_result_file_not_found) {
-    throw std::runtime_error("File not found!");
-  }
-  if(cgltf_validate(data) != cgltf_result_success) {
-    throw std::runtime_error("Invalid glTF data!");
-  }
+    BBox aabb{  BVec3(v0[0], v0[1], v0[2])};
+    aabb.extend(BVec3(v1[0], v1[1], v1[2]));
+    aabb.extend(BVec3(v2[0], v2[1], v2[2]));
 
-  cgltf_load_buffers(&options, data, gltfPath);
-
-  std::vector<Vec3> verticesFloat{};
-  std::vector<IVec3> vertices{};
-  std::vector<IVec3> normals{};
-  std::vector<uint16_t> indices{};
-
-  for(int i=0; i<data->nodes_count; ++i)
-  {
-    auto node = &data->nodes[i];
-    if(!node->mesh || (node->name && std::string(node->name).starts_with("fast64_f3d_material_library"))) {
-      continue;
-    }
-
-    if(std::string(node->name).find("coll_") == std::string::npos) {
-      continue;
-    }
-
-    auto nodeMat = parseNodeMatrix(node, {1.0f, 1.0f, 1.0f});
-    auto mesh = node->mesh;
-
-    for(int j = 0; j < mesh->primitives_count; j++)
-    {
-      int baseIndex = vertices.size();
-      assert(baseIndex < 0x10000);
-
-      auto prim = &mesh->primitives[j];
-
-      // Read indices
-      if(prim->indices != nullptr)
-      {
-        auto acc = prim->indices;
-        auto basePtr = ((uint8_t*)acc->buffer_view->buffer->data) + acc->buffer_view->offset + acc->offset;
-        auto elemSize = Gltf::getDataSize(acc->component_type);
-
-        for(int k = 0; k < acc->count; k++) {
-          indices.push_back(baseIndex + Gltf::readAsU32(basePtr, acc->component_type));
-          basePtr += elemSize;
-        }
-      }
-
-      for(int k = 0; k < prim->attributes_count; k++)
-      {
-        auto attr = &prim->attributes[k];
-        auto acc = attr->data;
-        auto basePtr = ((uint8_t*)acc->buffer_view->buffer->data) + acc->buffer_view->offset + acc->offset;
-
-        if(attr->type == cgltf_attribute_type_position) {
-          assert(attr->data->type == cgltf_type_vec3);
-          for(int l = 0; l < acc->count; l++) {
-            auto vert = Gltf::readAsVec3(basePtr, attr->data->type, acc->component_type);
-            vert = nodeMat * vert;
-
-            verticesFloat.push_back(vert);
-            vertices.push_back({
-              (int16_t)(vert[0] * BASE_SCALE),
-              (int16_t)(vert[1] * BASE_SCALE),
-              (int16_t)(vert[2] * BASE_SCALE)
-            });
-          }
-        }
-      }
-
-    } // primitives
-  } // nodes
-
-  // generate normals
-  for(int v=0; v<indices.size(); v+=3) {
-    Vec3 edge1 = verticesFloat[indices[v+1]] - verticesFloat[indices[v]];
-    Vec3 edge2 = verticesFloat[indices[v+2]] - verticesFloat[indices[v]];
-    Vec3 edge3 = verticesFloat[indices[v+2]] - verticesFloat[indices[v]];
-
-    if(edge1.length() < 0.01f || edge2.length() < 0.01f || edge3.length() < 0.01f) {
-      printf("Degenerate triangle:\nA: %.4f %.4f %.4f\nB: %.4f %.4f %.4f\nC: %.4f %.4f %.4f\n",
-        verticesFloat[indices[v]][0], verticesFloat[indices[v]][1], verticesFloat[indices[v]][2],
-        verticesFloat[indices[v+1]][0], verticesFloat[indices[v+1]][1], verticesFloat[indices[v+1]][2],
-        verticesFloat[indices[v+2]][0], verticesFloat[indices[v+2]][1], verticesFloat[indices[v+2]][2]
-      );
-      printf("Indices: %d %d %d\n", indices[v], indices[v+1], indices[v+2]);
-      throw std::runtime_error("Degenerate triangle!");
-    }
-
-    Vec3 normal = edge1.cross(edge2);
-    normal = normal * (1.0f / normal.length());
-    normals.push_back({
-      (int16_t)(normal[0] * 32767.0f),
-      (int16_t)(normal[1] * 32767.0f),
-      (int16_t)(normal[2] * 32767.0f)
-    });
+    aabbs.push_back(aabb);
+    centers.push_back(aabb.get_center());
   }
 
-  assert(indices.size() % 3 == 0);
+  bvh::v2::ThreadPool thread_pool;
+  typename bvh::v2::DefaultBuilder<Node>::Config config;
+  config.quality = bvh::v2::DefaultBuilder<Node>::Quality::High;
+  auto bvh = bvh::v2::DefaultBuilder<Node>::build(thread_pool, aabbs, centers, config);
 
-  printf("Vert/Index count: %d %d\n", vertices.size(), indices.size());
-
-  auto bvh = createMeshBVH(vertices, indices);
-
-  BinaryFile file{};
-  file.write<uint32_t>(indices.size() / 3);
-  file.write<uint32_t>(vertices.size());
-  file.write<float>(1.0f / BASE_SCALE);
-  file.write<uint32_t>(0); // vertex pointer
-  file.write<uint32_t>(0); // normals pointer
-  file.write<uint32_t>(0); // BVH pointer
-
-  file.writeArray(indices.data(), indices.size());
-  file.align(4);
-
-  for(auto& n : normals) {
-    file.writeArray(n.pos, 3);
-  }
-  file.align(4);
-
-  for(auto& v : verticesFloat) {
-    file.writeArray(v.data, 3);
-  }
-  file.align(4);
-
-  file.writeArray(bvh.data(), bvh.size());
-  file.align(4);
-
-  file.writeToFile(collPath);
-}
-*/
-void Project::Assets::CollisionMesh::fromGLTF(const std::string &path)
-{
-
+  std::vector<int16_t> treeData;
+  writeBVH(treeData, bvh);
+  return treeData;
 }

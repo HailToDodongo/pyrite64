@@ -32,7 +32,7 @@ namespace Coll
     void vsAABB(const AABB &aabb, BVHResult &res) const;
 
     inline void vsBCS(const BCS &bcs, BVHResult &res) const {
-      vsAABB((bcs * 64.0f).toAABB(), res);
+      vsAABB((bcs).toAABB(), res);
     }
 
     void raycastFloor(const Coll::IVec3 &pos, BVHResult &res) const;

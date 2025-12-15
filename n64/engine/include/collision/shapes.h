@@ -25,16 +25,6 @@ namespace Coll
     constexpr uint8_t SHAPE_BOX = 1 << 2;
   }
 
-  enum class CollType : uint8_t {
-    PLAYER = 0,
-    BOSS_HEAD = 1,
-    BOSS_BODY = 2,
-    SWORD = 3,
-    COIN = 4,
-    LIFE = 5,
-    DESTRUCTABLE = 6,
-  };
-
   namespace Mask {
     constexpr uint8_t TRI_MESH    = 1 << 0;
     constexpr uint8_t PLAYER      = 1 << 1;
@@ -70,7 +60,6 @@ namespace Coll
     uint8_t maskWrite{0};
     uint8_t flags{0};
     uint8_t hitTriTypes{0}; // mask of triangle types the sphere last collided with
-    CollType type{};
 
     [[nodiscard]] constexpr float getRadius() const {
       return halfExtend.y;

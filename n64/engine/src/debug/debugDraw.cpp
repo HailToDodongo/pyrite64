@@ -96,15 +96,16 @@ void Debug::draw(uint16_t *fb) {
   debugf("Drawing %d lines, %d rects\n", lines.size());
   rspq_wait();
 
-  for(auto &line : lines) {
-    t3d_viewport_calc_viewspace_pos(nullptr, &line.a, &line.a);
-    t3d_viewport_calc_viewspace_pos(nullptr, &line.b, &line.b);
-  }
-
   auto vp = t3d_viewport_get();
   float maxX = vp->size[0];
   float maxY = vp->size[1];
   for(auto &line : lines) {
+    t3d_viewport_calc_viewspace_pos(nullptr, &line.a, &line.a);
+    t3d_viewport_calc_viewspace_pos(nullptr, &line.b, &line.b);
+
+    if(line.a.z > 1)continue;
+    if(line.b.z > 1)continue;
+
     if(line.a.x < 0 && line.b.x < 0)continue;
     if(line.a.y < 0 && line.b.y < 0)continue;
     if(line.a.x > maxX && line.b.x > maxX)continue;

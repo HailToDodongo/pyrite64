@@ -14,7 +14,7 @@ namespace Coll
   struct Mesh
   {
     // NOTE: don't place any extra members here!
-    // mirrors the .coll file format
+    // mirrors the collion data in the t3dm extension
     uint32_t triCount{};
     uint32_t vertCount{};
     float collScale{};
@@ -24,17 +24,24 @@ namespace Coll
     // data follows here: indices, normals, verts, BVH
     int16_t indices[];
 
-    [[nodiscard]] Coll::CollInfo vsSphere(const Coll::BCS &sphere, const Triangle& triangle) const;
-    [[nodiscard]] Coll::CollInfo vsBox(const Coll::BCS &box, const Triangle& triangle) const;
-    [[nodiscard]] Coll::RaycastRes vsFloorRay(const fm_vec3_t &pos, const Triangle& triangle) const;
+    [[nodiscard]] CollInfo vsSphere(const BCS &sphere, const Triangle& triangle) const;
+    [[nodiscard]] CollInfo vsBox(const BCS &box, const Triangle& triangle) const;
+    [[nodiscard]] RaycastRes vsFloorRay(const fm_vec3_t &pos, const Triangle& triangle) const;
 
-    static Mesh* load(const std::string &path);
+    static Mesh* load(void* rawData);
   };
 
   struct MeshInstance {
     Mesh *mesh{};
     fm_vec3_t pos{0.0f, 0.0f, 0.0f};
     fm_vec3_t scale{1.0f, 1.0f, 1.0f};
-    T3DQuat rot{0.0f, 0.0f, 0.0f, 1.0f};
+    fm_quat_t rot{0.0f, 0.0f, 0.0f, 1.0f};
+
+    fm_vec3_t intoLocalSpace(const fm_vec3_t &p) const {
+      return (p / scale) - pos;
+    }
+    fm_vec3_t outOfLocalSpace(const fm_vec3_t &p) const {
+      return (p + pos) * scale;
+    }
   };
 }

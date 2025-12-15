@@ -6,9 +6,10 @@
 #include "collision/bvh.h"
 #include "debug/debugDraw.h"
 #include "collision/resolver.h"
+#include "lib/logger.h"
 
 namespace {
-  constexpr float MIN_PENETRATION = 0.00005f;
+  constexpr float MIN_PENETRATION = 0.00004f;
   constexpr float FLOOR_ANGLE = 0.7f;
 
   constexpr bool isFloor(const Coll::IVec3 &normal) {
@@ -46,7 +47,8 @@ Coll::CollInfo Coll::Scene::vsBCS(BCS &bcs, const fm_vec3_t &velocity, float del
       auto &mesh = *meshInst->mesh;
 
       auto bcsLocal = bcs;
-      bcsLocal.center = bcsLocal.center - meshInst->pos;
+      bcsLocal.center = meshInst->intoLocalSpace(bcs.center);
+      bcsLocal.halfExtend /= meshInst->scale;
 
       auto ticksBvhStart = get_ticks();
       bvhRes.reset();
@@ -54,7 +56,7 @@ Coll::CollInfo Coll::Scene::vsBCS(BCS &bcs, const fm_vec3_t &velocity, float del
 
       ticksBVH += get_ticks() - ticksBvhStart;
       if(bvhRes.count >= Coll::MAX_RESULT_COUNT-1) {
-        //debugf("BVH count: %d\n", bvhRes.count);
+        P64::Log::error("BVH result count exceeded max limit (%d)\n", bvhRes.count);
       }
 
       for(int b=0; b<bvhRes.count; ++b) {
@@ -95,10 +97,11 @@ Coll::CollInfo Coll::Scene::vsBCS(BCS &bcs, const fm_vec3_t &velocity, float del
             res.floorWallAngle.z = collInfo.floorWallAngle.z;
           }
 
-          bcs.center = bcs.center - collInfo.penetration;
-          bcsLocal.center = bcs.center - meshInst->pos;
+          bcsLocal.center -= collInfo.penetration;
         }
       } // BVH res
+
+      bcs.center = meshInst->outOfLocalSpace(bcsLocal.center);
     } // meshes
   } // steps
 
@@ -118,7 +121,6 @@ void Coll::Scene::update(float deltaTime)
     // Static/Triangle mesh collision
     bool checkColl = bcsA->maskRead & Mask::TRI_MESH;
 
-    // ...if we are not inside one, check actual mesh data
     if(checkColl) {
       auto res = vsBCS(*bcsA, bcsA->velocity, deltaTime);
       if(res.collCount) {
@@ -194,10 +196,9 @@ Coll::RaycastRes Coll::Scene::raycastFloor(const fm_vec3_t &pos) {
     Coll::BVHResult bvhRes{};
     mesh.bvh->raycastFloor(posInt, bvhRes);
 
-    for(int b=0; b<bvhRes.count; ++b)
-    {
-    //for(uint32_t b=0; b<mesh.triCount; ++b) {
+    for(int b=0; b<bvhRes.count; ++b) {
       uint32_t t = bvhRes.triIndex[b];
+    //for(uint32_t b=0; b<mesh.triCount; ++b) {
       //uint32_t t = b;
       if(!isFloor(mesh.normals[t]))continue;
 
@@ -208,9 +209,9 @@ Coll::RaycastRes Coll::Scene::raycastFloor(const fm_vec3_t &pos) {
 
       Triangle tri{
         .normal = {{
-         (float)norm.v[0] / 32767.0f,
-         (float)norm.v[1] / 32767.0f,
-         (float)norm.v[2] / 32767.0f
+         (float)norm.v[0] * (1.0f/32767.0f),
+         (float)norm.v[1] * (1.0f/32767.0f),
+         (float)norm.v[2] * (1.0f/32767.0f)
         }},
         .v = {&mesh.verts[idxA], &mesh.verts[idxB], &mesh.verts[idxC]}
       };
@@ -257,6 +258,13 @@ void Coll::Scene::debugDraw(bool showMesh, bool showSpheres)
         auto v0 = (mesh.verts[idxA] + meshInst->pos);
         auto v1 = (mesh.verts[idxB] + meshInst->pos);
         auto v2 = (mesh.verts[idxC] + meshInst->pos);
+
+        v0 *= meshInst->scale;
+        v1 *= meshInst->scale;
+        v2 *= meshInst->scale;
+        v0 += meshInst->pos;
+        v1 += meshInst->pos;
+        v2 += meshInst->pos;
 
         if(mesh.normals[t].v[2] < 0)continue;
         auto color = isFloor(mesh.normals[t])
