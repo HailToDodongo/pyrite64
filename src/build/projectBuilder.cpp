@@ -32,10 +32,6 @@ namespace
 
         switch(entry.type)
         {
-          case AT::MODEL_3D: // @TODO: remove here
-          case AT::FONT:
-            assetList.push_back(entry.outPath);
-
           case AT::AUDIO:
             assetList.push_back(entry.outPath);
             // @TODO: handle XM
@@ -194,4 +190,17 @@ bool Build::buildProject(std::string path)
     Utils::Logger::log("Build failed!", Utils::Logger::LEVEL_ERROR);
   }
   return success;
+}
+
+
+bool Build::assetBuildNeeded(const Project::AssetManager::Entry &asset, const std::string &outPath)
+{
+  auto ageSrc = Utils::FS::getFileAge(asset.path);
+  auto ageDst = Utils::FS::getFileAge(outPath);
+  if(ageSrc < ageDst) {
+    Utils::Logger::log("Skipping Asset (up to date): " + asset.path);
+    return false;
+  }
+  Utils::Logger::log("Building Asset: " + asset.path);
+  return true;
 }

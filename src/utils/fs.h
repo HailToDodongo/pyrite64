@@ -5,6 +5,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace Utils::FS
 {
@@ -38,4 +39,6 @@ namespace Utils::FS
   void ensureFile(const std::string &path, const std::string &pathTemplate);
 
   void delFile(const std::string &filePath);
+
+  uint64_t getFileAge(const std::string &filePath);
 }

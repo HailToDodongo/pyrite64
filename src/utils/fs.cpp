@@ -39,3 +39,13 @@ void Utils::FS::delFile(const std::string &filePath)
 {
   std::filesystem::remove(filePath);
 }
+
+uint64_t Utils::FS::getFileAge(const std::string &filePath)
+{
+  std::filesystem::path fsPath{filePath};
+  if(!std::filesystem::exists(fsPath)) {
+    return 0;
+  }
+  auto ftime = std::filesystem::last_write_time(fsPath);
+  return ftime.time_since_epoch().count();
+}

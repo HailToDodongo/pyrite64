@@ -17,11 +17,13 @@ bool Build::buildFontAssets(Project::Project &project, SceneCtx &sceneCtx)
   auto &fonts = sceneCtx.project->getAssets().getTypeEntries(Project::AssetManager::FileType::FONT);
   for (auto &font : fonts)
   {
-    Utils::Logger::log("Building font: " + font.outPath);
-
     auto projectPath = fs::path{project.getPath()};
     auto outPath = projectPath / font.outPath;
     auto outDir = outPath.parent_path();
+
+    sceneCtx.files.push_back(font.outPath);
+
+    if(!assetBuildNeeded(font, outPath))continue;
 
     int compr = (int)font.conf.compression - 1;
     if(compr < 0)compr = 1; // @TODO: pull default compression level

@@ -42,7 +42,7 @@ CLI::Result CLI::run(int argc, char** argv)
   auto projPath = prog.get<std::string>("--project");
 
   Utils::Logger::setOutput([](const std::string &msg) {
-    puts(msg.c_str());
+    fputs(msg.c_str(), stdout);
   });
 
   printf("Pyrite64 - CLI\n");

@@ -32,10 +32,10 @@ bool Build::buildTextureAssets(Project::Project &project, SceneCtx &sceneCtx)
 
     sceneCtx.files.push_back(outPath);
 
-    Utils::Logger::log("Building Texture: " + image.path);
-
     auto assetPath = fs::path{project.getPath()} / outPath;
     auto assetDir = assetPath.parent_path();
+
+    if(!assetBuildNeeded(image, assetPath.string()))continue;
 
     int compr = (int)image.conf.compression - 1;
     if(compr < 0)compr = 1; // @TODO: pull default compression level

@@ -24,11 +24,13 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
   auto &models = sceneCtx.project->getAssets().getTypeEntries(Project::AssetManager::FileType::MODEL_3D);
   for (auto &model : models)
   {
-    Utils::Logger::log("Building T3DM: " + model.outPath);
-
     auto projectPath = fs::path{project.getPath()};
     auto t3dmPath = projectPath / model.outPath;
     auto t3dmDir = t3dmPath.parent_path();
+
+    sceneCtx.files.push_back(model.outPath);
+
+    if(!assetBuildNeeded(model, t3dmPath))continue;
 
     T3DM::config = {
       .globalScale = (float)model.conf.baseScale,

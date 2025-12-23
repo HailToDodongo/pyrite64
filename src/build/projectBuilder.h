@@ -8,6 +8,10 @@
 
 namespace Build
 {
+  // helper
+  bool assetBuildNeeded(const Project::AssetManager::Entry &asset, const std::string &outPath);
+
+  // Asset builds
   void buildScene(Project::Project &project, const Project::SceneEntry &scene, SceneCtx &ctx);
   void buildScripts(Project::Project &project, SceneCtx &sceneCtx);
   void buildGlobalScripts(Project::Project &project, SceneCtx &sceneCtx);
