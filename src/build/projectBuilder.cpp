@@ -16,37 +16,7 @@ namespace fs = std::filesystem;
 
 using AT = Project::AssetManager::FileType;
 
-namespace
-{
-  std::string genAssetRules(Project::Project &project, std::vector<std::string> &assetList)
-  {
-    std::string rules = "";
-    auto entries = project.getAssets().getEntries();
-    auto projectBase = fs::absolute(project.getPath()).string();
-
-    std::string rulePath{};
-    for (const auto &typed : entries) {
-      for (const auto &entry : typed)
-      {
-        if (entry.conf.exclude)continue;
-
-        switch(entry.type)
-        {
-          case AT::AUDIO:
-            assetList.push_back(entry.outPath);
-            // @TODO: handle XM
-            break;
-
-          default: break;
-        }
-      }
-    }
-
-    return rules;
-  }
-}
-
-bool Build::buildProject(std::string path)
+bool Build::buildProject(const std::string &path)
 {
   Project::Project project{path};
   Utils::Logger::log("Building project...");
@@ -76,8 +46,6 @@ bool Build::buildProject(std::string path)
     f.write<uint32_t>(project.conf.sceneIdOnReset);
     f.writeToFile(fsDataPath / "conf");
   }
-
-  auto mkAssetRules = genAssetRules(project, sceneCtx.files);
 
   // Asset-Manager
   {
@@ -139,39 +107,41 @@ bool Build::buildProject(std::string path)
     buildScene(project, scene, sceneCtx);
   }
 
-  // T3DM Models & Collision
-  bool success = buildT3DMAssets(project, sceneCtx);
-  if(!success) {
+  // Assets
+  if(!buildT3DMAssets(project, sceneCtx)) {
     Utils::Logger::log("T3DM Asset build failed!", Utils::Logger::LEVEL_ERROR);
     return false;
   }
 
-  // Fonts
-  success = buildFontAssets(project, sceneCtx);
-  if(!success) {
+  if(!buildFontAssets(project, sceneCtx)) {
     Utils::Logger::log("Font Asset build failed!", Utils::Logger::LEVEL_ERROR);
     return false;
   }
 
-  // Textures & BCI Textures (256x big-textures)
-  success = buildTextureAssets(project, sceneCtx);
-  if(!success) {
+  if(!buildTextureAssets(project, sceneCtx)) {
     Utils::Logger::log("Texture Asset build failed!", Utils::Logger::LEVEL_ERROR);
     return false;
   }
 
-  // Makefile
-  auto makefile = Utils::FS::loadTextFile("data/build/baseMakefile.mk");
+  if(!buildAudioAssets(project, sceneCtx)) {
+    Utils::Logger::log("Audio Asset build failed!", Utils::Logger::LEVEL_ERROR);
+    return false;
+  }
 
-  makefile = Utils::replaceAll(makefile, "{{N64_INST}}", project.conf.pathN64Inst);
-  makefile = Utils::replaceAll(makefile, "{{ENGINE_PATH}}", enginePath);
-  makefile = Utils::replaceAll(makefile, "{{ROM_NAME}}", project.conf.romName);
-  makefile = Utils::replaceAll(makefile, "{{PROJECT_NAME}}", project.conf.name);
-  makefile = Utils::replaceAll(makefile, "{{RULES_ASSETS}}", mkAssetRules);
-  makefile = Utils::replaceAll(makefile, "{{ASSET_LIST}}", Utils::join(sceneCtx.files, " "));
-  makefile = Utils::replaceAll(makefile, "{{USER_CODE_DIRS}}", userCodeRules);
-  makefile = Utils::replaceAll(makefile, "{{P64_SELF_PATH}}", Utils::Proc::getSelfPath());
-  makefile = Utils::replaceAll(makefile, "{{PROJECT_SELF_PATH}}", fs::absolute(path).string());
+  // Makefile
+  auto makefile = Utils::replaceAll(
+    Utils::FS::loadTextFile("data/build/baseMakefile.mk"),
+    {
+      {"{{N64_INST}}",          project.conf.pathN64Inst},
+      {"{{ENGINE_PATH}}",       enginePath},
+      {"{{ROM_NAME}}",          project.conf.romName},
+      {"{{PROJECT_NAME}}",      project.conf.name},
+      {"{{ASSET_LIST}}",        Utils::join(sceneCtx.files, " ")},
+      {"{{USER_CODE_DIRS}}",    userCodeRules},
+      {"{{P64_SELF_PATH}}",     Utils::Proc::getSelfPath()},
+      {"{{PROJECT_SELF_PATH}}", fs::absolute(path).string()},
+    }
+  );
 
   auto oldMakefile = Utils::FS::loadTextFile(path + "/Makefile");
   if (oldMakefile != makefile) {
@@ -182,7 +152,7 @@ bool Build::buildProject(std::string path)
   }
 
   // Build
-  success = Utils::Proc::runSyncLogged("make -C \"" + path + "\" -j8");
+  bool success = Utils::Proc::runSyncLogged("make -C \"" + path + "\" -j8");
 
   if(success) {
     Utils::Logger::log("Build done!");
@@ -198,7 +168,7 @@ bool Build::assetBuildNeeded(const Project::AssetManager::Entry &asset, const st
   auto ageSrc = Utils::FS::getFileAge(asset.path);
   auto ageDst = Utils::FS::getFileAge(outPath);
   if(ageSrc < ageDst) {
-    Utils::Logger::log("Skipping Asset (up to date): " + asset.path);
+    Utils::Logger::log("Skipping Asset (up to date): " + asset.outPath);
     return false;
   }
   Utils::Logger::log("Building Asset: " + asset.path);

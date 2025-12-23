@@ -26,6 +26,14 @@ namespace Utils
     return result;
   }
 
+  inline std::string replaceAll(std::string str, const std::vector<std::pair<std::string, std::string>> &replacements)
+  {
+    for (const auto& [search, replace] : replacements) {
+      str = replaceAll(str, search, replace);
+    }
+    return str;
+  }
+
   inline std::string padLeft(const std::string &str, char padChar, size_t totalLength) {
     if(str.length() >= totalLength)return str;
     return std::string(totalLength - str.length(), padChar) + str;

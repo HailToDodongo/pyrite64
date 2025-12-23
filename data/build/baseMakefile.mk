@@ -33,10 +33,7 @@ FORCE: ;
 
 AUDIOCONV_FLAGS = --wav-resample 24000 --wav-compress 1
 
-{{RULES_ASSETS}}
-
-assets_conv ={{ASSET_LIST}}
-
+assets_conv = {{ASSET_LIST}}
 assets_conv += filesystem/p64/font.ia4.sprite
 
 # Images
@@ -49,16 +46,6 @@ filesystem/p64/%: assets/p64/%
 	@mkdir -p $(dir $@)
 	@echo "    [P64-BIN] $@"
 	$(N64_BINDIR)/mkasset -c 1 -w 256 -o $(dir $@) "$<"
-
-filesystem/%.wav64: assets/%.mp3
-	@mkdir -p $(dir $@)
-	@echo "    [AUDIO] $@"
-	$(N64_AUDIOCONV) $(AUDIOCONV_FLAGS) -o $(dir $@) "$<"
-
-filesystem/%.wav64: assets/%.wav
-	@mkdir -p $(dir $@)
-	@echo "    [AUDIO] $@"
-	$(N64_AUDIOCONV) $(AUDIOCONV_FLAGS) -o $(dir $@) "$<"
 
 build/%.dfs:
 	@mkdir -p $(dir $@)

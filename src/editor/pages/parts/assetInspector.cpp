@@ -54,17 +54,35 @@ void Editor::AssetInspector::draw() {
     } else if (asset->type == FileType::FONT)
     {
       ImTable::add("Size", asset->conf.baseScale);
+    } else if (asset->type == FileType::AUDIO)
+    {
+      ImTable::addProp("Force-Mono", asset->conf.wavForceMono);
+
+      //ImTable::addProp("Sample-Rate", asset->conf.wavResampleRate);
+      ImTable::addVecComboBox<ImTable::ComboEntry>("Sample-Rate", {
+          { 0, "Original" },
+          { 8000, "8000 Hz" },
+          { 11025, "11025 Hz" },
+          { 16000, "16000 Hz" },
+          { 22050, "22050 Hz" },
+          { 32000, "32000 Hz" },
+          { 44100, "44100 Hz" },
+        }, asset->conf.wavResampleRate.value
+      );
+      ImTable::addComboBox("Compression", asset->conf.wavCompression.value, {
+        "None", "VADPCM", "Opus",
+      });
     }
 
-    int idxCompr = static_cast<int>(asset->conf.compression);
-    const char* const ComprItems[] = {
-      "Project Default", "None",
-      "Level 1 - Fast",
-      "Level 2 - Good",
-      "Level 3 - High",
-    };
-    ImTable::addComboBox("Compression", idxCompr, ComprItems, 5);
-    asset->conf.compression = static_cast<Project::ComprTypes>(idxCompr);
+    if (asset->type != FileType::AUDIO)
+    {
+      ImTable::addComboBox("Compression", (int&)asset->conf.compression, {
+        "Project Default", "None",
+        "Level 1 - Fast",
+        "Level 2 - Good",
+        "Level 3 - High",
+      });
+    }
 
     ImTable::addCheckBox("Exclude", asset->conf.exclude);
 

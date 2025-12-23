@@ -176,6 +176,7 @@ add_executable(p64editor src/main.cpp
         src/build/textureBuilder.cpp
         src/build/tools/bci.cpp
         src/build/tools/bci.h
+        src/build/audioBuilder.cpp
 )
 
 target_include_directories(p64editor PRIVATE

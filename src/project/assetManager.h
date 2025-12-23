@@ -52,6 +52,10 @@ namespace Project
         ComprTypes compression{ComprTypes::DEFAULT};
         bool exclude{false};
 
+        PROP_BOOL(wavForceMono);
+        PROP_U32(wavResampleRate);
+        PROP_S32(wavCompression);
+
         std::string serialize() const;
       };
 
@@ -83,7 +87,6 @@ namespace Project
       std::shared_ptr<Renderer::Texture> fallbackTex{};
 
       void reloadEntry(Entry &entry, const std::string &path);
-
     public:
       std::unordered_map<uint64_t, std::pair<int, int>> entriesMap{};
       //std::unordered_map<uint64_t, int> entriesMapScript{};

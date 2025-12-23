@@ -74,6 +74,14 @@ namespace ImTable
 {
   extern Project::Object *obj;
 
+  struct ComboEntry
+  {
+    uint32_t value;
+    std::string name;
+    uint32_t getId() const { return value; }
+    const std::string &getName() const { return name; }
+  };
+
   inline bool start(const char *name, Project::Object *nextObj = nullptr)
   {
     obj = nullptr;
@@ -148,6 +156,8 @@ namespace ImTable
       return ImGui::Checkbox("##", value);
     } else if constexpr (std::is_same_v<T, int>) {
       return ImGui::InputInt("##", value);
+    } else if constexpr (std::is_same_v<T, uint32_t>) {
+      return ImGui::InputScalar("##", ImGuiDataType_U32, value);
     } else if constexpr (std::is_same_v<T, glm::vec3>) {
       return ImGui::InputFloat3("##", glm::value_ptr(*value));
     } else if constexpr (std::is_same_v<T, glm::quat>) {

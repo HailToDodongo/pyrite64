@@ -45,6 +45,22 @@ namespace
     p.replace_extension(newExt);
     return p.string();
   }
+
+
+  void deserialize(Project::AssetManager::AssetConf &conf, const std::filesystem::path &pathMeta)
+  {
+    auto doc = Utils::JSON::loadFile(pathMeta);
+    if (doc.is_object()) {
+      conf.format = Utils::JSON::readInt(doc, "format");
+      conf.baseScale = Utils::JSON::readInt(doc, "baseScale");
+      conf.compression = (Project::ComprTypes)Utils::JSON::readInt(doc, "compression");
+      conf.gltfBVH = Utils::JSON::readBool(doc, "gltfBVH");
+      conf.exclude = Utils::JSON::readBool(doc, "exclude");
+      Utils::JSON::readProp(doc, conf.wavForceMono);
+      Utils::JSON::readProp(doc, conf.wavResampleRate);
+      Utils::JSON::readProp(doc, conf.wavCompression);
+    }
+  }
 }
 
 std::string Project::AssetManager::AssetConf::serialize() const {
@@ -53,6 +69,9 @@ std::string Project::AssetManager::AssetConf::serialize() const {
   builder.set("baseScale", baseScale);
   builder.set("compression", static_cast<int>(compression));
   builder.set("gltfBVH", gltfBVH);
+  builder.set(wavForceMono);
+  builder.set(wavResampleRate);
+  builder.set(wavCompression);
   builder.set("exclude", exclude);
   return builder.toString();
 }
@@ -169,17 +188,8 @@ void Project::AssetManager::reload() {
       // check if meta-data exists
       auto pathMeta = path;
       pathMeta += ".conf";
-      if (type != FileType::UNKNOWN && fs::exists(pathMeta))
-      {
-        auto doc = Utils::JSON::loadFile(pathMeta);
-        if (doc.is_object()) {
-          auto &conf = entry.conf;
-          conf.format = Utils::JSON::readInt(doc, "format");
-          conf.baseScale = Utils::JSON::readInt(doc, "baseScale");
-          conf.compression = (ComprTypes)Utils::JSON::readInt(doc, "compression");
-          conf.gltfBVH = Utils::JSON::readBool(doc, "gltfBVH");
-          conf.exclude = Utils::JSON::readBool(doc, "exclude");
-        }
+      if (type != FileType::UNKNOWN && fs::exists(pathMeta)) {
+        deserialize(entry.conf, pathMeta);
       }
 
       if (type == FileType::IMAGE)
