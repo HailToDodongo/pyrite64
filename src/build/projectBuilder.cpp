@@ -40,12 +40,6 @@ bool Build::buildProject(const std::string &path)
 
   // Global project config
   sceneCtx.files.push_back("filesystem/p64/conf");
-  {
-    Utils::BinaryFile f{};
-    f.write<uint32_t>(project.conf.sceneIdOnBoot);
-    f.write<uint32_t>(project.conf.sceneIdOnReset);
-    f.writeToFile(fsDataPath / "conf");
-  }
 
   // Asset-Manager
   {
@@ -149,6 +143,17 @@ bool Build::buildProject(const std::string &path)
 
     Utils::FS::saveTextFile(path + "/Makefile", makefile);
     Utils::Proc::runSyncLogged("make -C \"" + path + "\" clean");
+  }
+
+  {
+    Utils::BinaryFile f{};
+    f.write<uint32_t>(project.conf.sceneIdOnBoot);
+    f.write<uint32_t>(project.conf.sceneIdOnReset);
+    for(uint32_t i=0; i<sceneCtx.autoLoadFontUUIDs.size(); ++i) {
+      auto uuid = sceneCtx.autoLoadFontUUIDs[i];
+      f.write<uint16_t>(uuid == 0 ? 0xFFFF : sceneCtx.assetUUIDToIdx[uuid]);
+    }
+    f.writeToFile(fsDataPath / "conf");
   }
 
   // Build

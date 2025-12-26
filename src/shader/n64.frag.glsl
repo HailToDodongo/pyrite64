@@ -244,8 +244,8 @@ void main()
   // handle I4/I8
   //texData0.rgb = linearToGamma(texData0.rgb);
   //texData1.rgb = linearToGamma(texData1.rgb);
-  texData0.rgba = flagSelect(DRAW_FLAG_TEX0_MONO, texData0.rgba, texData0.rrrr);
-  texData1.rgba = flagSelect(DRAW_FLAG_TEX1_MONO, texData1.rgba, texData1.rrrr);
+  //texData0.rgba = flagSelect(DRAW_FLAG_TEX0_MONO, texData0.rgba, texData0.rrrr);
+  //texData1.rgba = flagSelect(DRAW_FLAG_TEX1_MONO, texData1.rgba, texData1.rrrr);
 
   // @TODO: emulate other formats, e.g. quantization?
 
@@ -289,11 +289,12 @@ void main()
   ivec2 screenPosPixel = ivec2(trunc(gl_FragCoord.xy));
 
   int currDepth = int(mixSelect(zSource() == G_ZS_PRIM, gl_FragCoord.w * 0xFFFFF, material.primLodDepth.z));
-  int writeDepth = int(flagSelect(DRAW_FLAG_DECAL, currDepth, -0xFFFFFF));
+  //int writeDepth = int(flagSelect(DRAW_FLAG_DECAL, currDepth, -0xFFFFFF));
+  int writeDepth = int(currDepth);
 
-  if((DRAW_FLAGS & DRAW_FLAG_ALPHA_BLEND) != 0) {
+  /*if((DRAW_FLAGS & DRAW_FLAG_ALPHA_BLEND) != 0) {
     writeDepth = -0xFFFFFF;
-  }
+  }*/
 
   bool alphaTestFailed = ccValue.a < ALPHA_CLIP;
   if(alphaTestFailed)writeDepth = -0xFFFFFF;
@@ -304,7 +305,8 @@ void main()
     if(alphaTestFailed)discard; // discarding in interlock seems to cause issues, only do it here
   #endif
 
-  FragColor = vec4(ccValue.rgb, 1.0);
+  FragColor = vec4(ccValue.rgb, ccValue.a);
+  //FragColor.a = ccValue.a;
 
   /*{
     uint oldColorInt = 0;

@@ -28,6 +28,7 @@ void P64::Renderer::BigTex::patchT3DM(T3DModel &model)
   {
     auto *mat = obj->material;
     if(mat->textureA.texReference == 0xFF)continue;
+    if(mat->textureA.texWidth != 256)continue;
 
     uint8_t matIdx = 0;
     if (mat->textureA.texReference) {
@@ -45,23 +46,13 @@ void P64::Renderer::BigTex::patchT3DM(T3DModel &model)
       matIdx = textures.addTexture(mat->textureA.texPath);
       //debugf("Tex[%d]: %s (%s)\n", matIdx, mat->textureA.texPath, mat->name);
     }
-/*
-    mat->otherModeMask |= SOM_Z_COMPARE | SOM_Z_WRITE;
 
-    if(mat->name[0] == '_') {
-      mat->otherModeValue &= ~(SOM_Z_COMPARE | SOM_Z_WRITE);
-    } else if(mat->name[0] == '#') {
-      mat->otherModeValue &= ~(SOM_Z_COMPARE);
-      mat->otherModeValue |= SOM_Z_WRITE;
-    } else {
-      mat->otherModeValue |= SOM_Z_COMPARE | SOM_Z_WRITE;
-    }
-*/
     mat->otherModeMask |= SOM_SAMPLE_MASK;
     mat->otherModeValue |= SOM_SAMPLE_POINT;
 
     // Override material for UV texture gradients
     mat->renderFlags &= ~T3D_FLAG_SHADED;
+    mat->renderFlags |= T3D_FLAG_NO_LIGHT;
     mat->textureA.texPath = nullptr;
     mat->textureB.texPath = nullptr;
     mat->textureA.texReference = 0xFF;
@@ -97,19 +88,6 @@ void P64::Renderer::BigTex::patchT3DM(T3DModel &model)
 
     int lastNoDepth = -1;
     for(auto obj : objects) {
-        int noDepth = obj->material->name[0] == '_' ? 1 : 0;
-        if(noDepth != lastNoDepth)
-        {
-          rdpq_sync_pipe();
-          if(noDepth) {
-            rdpq_change_other_modes_raw(SOM_ZMODE_MASK  | SOM_Z_COMPARE | SOM_Z_WRITE, 0);
-          } else {
-            rdpq_change_other_modes_raw(SOM_ZMODE_MASK  | SOM_Z_COMPARE | SOM_Z_WRITE, SOM_ZMODE_DECAL | SOM_Z_COMPARE);
-          }
-
-          lastNoDepth = noDepth;
-        }
-
         t3d_model_draw_object(obj, nullptr);
     }
   dplDrawShade = rspq_block_end();

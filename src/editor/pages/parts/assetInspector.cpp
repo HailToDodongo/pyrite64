@@ -54,7 +54,12 @@ void Editor::AssetInspector::draw() {
     } else if (asset->type == FileType::FONT)
     {
       ImTable::add("Size", asset->conf.baseScale);
-    } else if (asset->type == FileType::AUDIO)
+      ImTable::addProp("ID", asset->conf.fontId);
+
+      ImTable::add("Charset");
+      ImGui::InputTextMultiline("##", &asset->conf.fontCharset.value);
+    }
+    else if (asset->type == FileType::AUDIO)
     {
       ImTable::addProp("Force-Mono", asset->conf.wavForceMono);
 

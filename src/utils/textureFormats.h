@@ -45,4 +45,8 @@ namespace Utils
   constexpr const char* getTexFormatName(TexFormat fmt) {
    return TEX_TYPES[static_cast<int>(fmt)];
   }
+
+  constexpr bool isTexFormatMono(TexFormat fmt) {
+    return fmt == TexFormat::I8 || fmt == TexFormat::I4;
+  }
 }

@@ -22,7 +22,7 @@ vec3 linearToGamma(in vec3 color) {
 
 #define mixSelect(amount, a, b) (mix(a, b, float(amount)))
 #define flagSelect(flag_mask, a, b) (mixSelect((DRAW_FLAGS & flag_mask) != 0, a, b))
-#define geoModeSelect(flag_mask, a, b) (mixSelect((T3D_DRAW_FLAG & flag_mask) != 0, a, b))
+#define drawFlagSelect(flag_mask, a, b) (mixSelect((T3D_DRAW_FLAG & flag_mask) != 0, a, b))
 #define othermodeHSelect(flag_mask, a, b) mixSelect((material.othermodeH & flag_mask) != 0, a, b)
 
 #define zSource() (OTHER_MODE_L & (1 << G_MDSFT_ZSRCSEL))

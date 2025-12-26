@@ -142,6 +142,7 @@ void P64::RenderPipelineBigTex::draw()
   ticks = get_ticks() - ticks;
   //debugf("Time: %lldus\n", TICKS_TO_US(ticks));
 
+  setupLayer();
   DrawLayer::draw3D(); // @TODO: split to get 3D after PP
   DrawLayer::drawPtx();
   DrawLayer::draw2D();

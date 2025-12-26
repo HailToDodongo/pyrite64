@@ -25,6 +25,7 @@ namespace P64::Comp
 
     data->model = (T3DModel*)AssetManager::getByIndex(assetIdx);
     assert(data->model != nullptr);
+    data->layerIdx = initData[1] >> 8;
 
     if(data->model->userBlock)return;
 

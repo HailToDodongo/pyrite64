@@ -7,6 +7,7 @@
 
 #include "assets/assetManager.h"
 #include "lib/matrixManager.h"
+#include "renderer/drawLayer.h"
 #include "scene/object.h"
 #include "script/scriptTable.h"
 
@@ -18,6 +19,7 @@ namespace P64::Comp
 
     T3DModel *model{};
     RingMat4FP matFP{};
+    uint8_t layerIdx{0};
 
     static uint32_t getAllocSize([[maybe_unused]] uint16_t* initData)
     {
@@ -26,7 +28,7 @@ namespace P64::Comp
 
     static void initDelete([[maybe_unused]] Object& obj, Model* data, uint16_t* initData);
 
-    static void update(Object& obj, Model* data, float deltaTime) {
+    static void update(Object& obj, Model* data, [[maybe_unused]] float deltaTime) {
       auto mat = data->matFP.getNext();
       t3d_mat4fp_from_srt(mat,
         obj.scale,
@@ -35,19 +37,14 @@ namespace P64::Comp
       );
     }
 
-    static void draw([[maybe_unused]] Object& obj, Model* data, float deltaTime) {
+    static void draw([[maybe_unused]] Object& obj, Model* data, [[maybe_unused]] float deltaTime)
+    {
+      if(data->layerIdx)DrawLayer::use3D(data->layerIdx);
+
       t3d_matrix_set(data->matFP.get(), true);
-      /*auto it = t3d_model_iter_create(data->model, T3D_CHUNK_TYPE_OBJECT);
-      while(t3d_model_iter_next(&it)) {
-        auto &mat = it.object->material;
-        mat->colorCombiner = RDPQ_COMBINER_SHADE;
-      }*/
-
       rspq_block_run(data->model->userBlock);
-      //t3d_model_draw(data->model);
 
-      //char* funcData = (char*)data + sizeof(Code);
-      //if(data->funcDraw)data->funcDraw(obj, funcData);
+      if(data->layerIdx)DrawLayer::useDefault();
     }
   };
 }

@@ -166,6 +166,12 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
     lighting.apply();
     t3d_matrix_push_pos(1);
 
+    for(int i=1; i<conf.layerSetup.layerCount3D; ++i) {
+      DrawLayer::use3D(i);
+        t3d_matrix_push_pos(1);
+      DrawLayer::useDefault();
+    }
+
     GlobalScript::callHooks(GlobalScript::HookType::SCENE_PRE_DRAW_3D);
 
     //debugf("Drawing objects:\n");
@@ -186,7 +192,13 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
     }
 
     GlobalScript::callHooks(GlobalScript::HookType::SCENE_POST_DRAW_3D);
+
     t3d_matrix_pop(1);
+    for(int i=1; i<conf.layerSetup.layerCount3D; ++i) {
+      DrawLayer::use3D(i);
+        t3d_matrix_pop(1);
+      DrawLayer::useDefault();
+    }
   }
 
   DrawLayer::use(conf.layerSetup.layerCount3D + conf.layerSetup.layerCountPtx);

@@ -59,21 +59,25 @@ namespace
       Utils::JSON::readProp(doc, conf.wavForceMono);
       Utils::JSON::readProp(doc, conf.wavResampleRate);
       Utils::JSON::readProp(doc, conf.wavCompression);
+      Utils::JSON::readProp(doc, conf.fontId);
+      Utils::JSON::readProp(doc, conf.fontCharset);
     }
   }
 }
 
 std::string Project::AssetManager::AssetConf::serialize() const {
-  Utils::JSON::Builder builder{};
-  builder.set("format", format);
-  builder.set("baseScale", baseScale);
-  builder.set("compression", static_cast<int>(compression));
-  builder.set("gltfBVH", gltfBVH);
-  builder.set(wavForceMono);
-  builder.set(wavResampleRate);
-  builder.set(wavCompression);
-  builder.set("exclude", exclude);
-  return builder.toString();
+  return Utils::JSON::Builder{}
+    .set("format", format)
+    .set("baseScale", baseScale)
+    .set("compression", static_cast<int>(compression))
+    .set("gltfBVH", gltfBVH)
+    .set(wavForceMono)
+    .set(wavResampleRate)
+    .set(wavCompression)
+    .set(fontId)
+    .set(fontCharset)
+    .set("exclude", exclude)
+    .toString();
 }
 
 Project::AssetManager::AssetManager(Project* pr)
@@ -91,8 +95,10 @@ void Project::AssetManager::reloadEntry(Entry &entry, const std::string &path)
   switch(entry.type)
   {
     case FileType::IMAGE:
-      entry.texture = std::make_shared<Renderer::Texture>(ctx.gpu, path);
-    break;
+    {
+      bool isMono = Utils::isTexFormatMono(static_cast<Utils::TexFormat>(entry.conf.format));
+      entry.texture = std::make_shared<Renderer::Texture>(ctx.gpu, path, isMono);
+    } break;
 
     case FileType::PREFAB:
     {
@@ -201,6 +207,15 @@ void Project::AssetManager::reload() {
         if(ctx.window)reloadEntry(entry, path.string());
       }
 
+      if( type == FileType::FONT && entry.conf.fontCharset.value.empty())
+      {
+        entry.conf.fontCharset.value =
+          " !\"#$%&\'()*+,-./"                 "\n"
+          "0123456789:;<=>?@"                  "\n"
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`"  "\n"
+          "abcdefghijklmnopqrstuvwxyz{|}~";
+      }
+
       if (type == FileType::PREFAB) {
         reloadEntry(entry, path.string());
         entry.uuid = entry.prefab->uuid.value;
@@ -289,12 +304,19 @@ void Project::AssetManager::save()
   for(auto &typed : entries) {
     for(auto &entry : typed)
     {
-      if(entry.type == FileType::UNKNOWN || entry.type == FileType::CODE_OBJ) {
+      if(entry.type == FileType::UNKNOWN || entry.type == FileType::CODE_OBJ || entry.type == FileType::CODE_GLOBAL) {
         continue;
       }
 
       auto pathMeta = entry.path + ".conf";
       auto json = entry.conf.serialize();
+
+      auto oldFile = Utils::FS::loadTextFile(pathMeta);
+
+      // if the meta-data changed, force a recompile of the asset by deleting the target
+      if (oldFile == json)continue;
+      Utils::Logger::log("Asset meta-data changed, forcing recompile: " + entry.outPath, Utils::Logger::LEVEL_INFO);
+      Utils::FS::delFile(project->getPath() + "/" + entry.outPath);
       Utils::FS::saveTextFile(pathMeta, entry.conf.serialize());
     }
   }

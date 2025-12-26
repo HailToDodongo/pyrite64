@@ -29,6 +29,7 @@ namespace
   {
     uint32_t sceneIdOnBoot{};
     uint32_t sceneIdOnReset{};
+    std::array<uint16_t, 16> autoLoadFonts{}; // index=slot, value=asset-index
   };
   constinit ProjectConf projectConf{};
 }
@@ -56,8 +57,13 @@ int main()
 
 	P64::Log::info("Starting Game");
 
-  bool res = std::filesystem::exists("rom:/p64/conf"); // to init usb
-  P64::Log::info("File: %d\n", res);
+  // default VI setup, can be overwritten by the scene load later on
+  vi_init();
+  vi_set_dedither(false);
+  vi_set_aa_mode(VI_AA_MODE_RESAMPLE);
+  vi_set_interlaced(false);
+  vi_set_divot(false);
+  vi_set_gamma(VI_GAMMA_DISABLE);
 
 	{
 	  auto tmp = (ProjectConf*)asset_load("rom:/p64/conf", nullptr);
@@ -65,13 +71,14 @@ int main()
     free(tmp);
 	}
 
-  // default VI setup, can be overwritten by the scene load later onŝ
-  vi_init();
-  vi_set_dedither(false);
-  vi_set_aa_mode(VI_AA_MODE_RESAMPLE);
-  vi_set_interlaced(false);
-  vi_set_divot(false);
-  vi_set_gamma(VI_GAMMA_DISABLE);
+  // auto-load fonts marked as such
+  for(uint32_t fontIdx=0; fontIdx < projectConf.autoLoadFonts.size(); fontIdx++) {
+    debugf("Auto-load font slot %d: asset index %d\n", fontIdx, projectConf.autoLoadFonts[fontIdx]);
+    if(projectConf.autoLoadFonts[fontIdx] < 0xFFFF) {
+      auto font = (rdpq_font_t*)P64::AssetManager::getByIndex(projectConf.autoLoadFonts[fontIdx]);
+      rdpq_text_register_font(fontIdx, font);
+    }
+  }
 
   P64::DrawLayer::reset();
   P64::MatrixManager::reset();

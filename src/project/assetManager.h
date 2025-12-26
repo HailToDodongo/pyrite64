@@ -56,6 +56,9 @@ namespace Project
         PROP_U32(wavResampleRate);
         PROP_S32(wavCompression);
 
+        PROP_U32(fontId);
+        PROP_STRING(fontCharset);
+
         std::string serialize() const;
       };
 

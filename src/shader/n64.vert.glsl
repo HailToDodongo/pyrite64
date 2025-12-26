@@ -66,21 +66,21 @@ void main()
   cc_shade = inColor;
 
   //vec4 lightTotal = vec4(linearToGamma(material.ambientColor.rgb), 0.0);
-  vec4 lightTotal = vec4(material.ambientColor.rgb, 0.0);
+  vec4 lightTotal = material.ambientColor;
   for(int i=0; i<2; ++i) {
     float lightStren = max(dot(normScreen, material.lightDir[i].xyz), 0.0);
     //vec4 colorNorm = vec4(linearToGamma(material.lightColor[i].rgb), 1.0);
-    vec4 colorNorm = vec4(material.lightColor[i].rgb, 1.0);
+    vec4 colorNorm = material.lightColor[i];
     lightTotal += colorNorm * lightStren;
   }
 
-  lightTotal.rgb = clamp(lightTotal.rgb, 0.0, 1.0);
-  lightTotal.a = 1.0;
+  lightTotal = clamp(lightTotal, 0.0, 1.0);
+//  lightTotal.a = 1.0;
 
-  vec3 shadeWithLight = cc_shade.rgb * lightTotal.rgb;
+  vec4 shadeWithLight = cc_shade * lightTotal;
 
-  // cc_shade.rgb = geoModeSelect(G_LIGHTING, cc_shade.rgb, shadeWithLight);
-  cc_shade.rgb = shadeWithLight;
+  cc_shade = flagSelect(T3D_FLAG_NO_LIGHT, shadeWithLight, cc_shade);
+  //cc_shade.rgb = shadeWithLight;
 
   cc_shade = clamp(cc_shade, 0.0, 1.0);
   // cc_shade.rgb = norm * 0.5 + 0.5; // TEST

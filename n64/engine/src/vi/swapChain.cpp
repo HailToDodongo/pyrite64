@@ -21,14 +21,15 @@ namespace {
   // At least up until the VI takes over. Otherwise, it runs risk of doing 2 RDP passes in parallel
   // leading to random corruptions
   volatile uint8_t blockNewFrame = false;
-  surface_t *frameBuffers = nullptr;
+  constinit surface_t *frameBuffers = nullptr;
 
-  uint64_t lastTicks{};
-  P64::RingBuffer<float, 6> lastDeltaTimes{};
-  float avgDeltaTime{};
-  float avgFps{};
-  float refreshRate{};
-  float refreshRateRound{};
+  constinit uint64_t lastTicks{};
+  constinit P64::RingBuffer<float, 6> lastDeltaTimes{};
+  constinit float avgDeltaTime{};
+  constinit float avgFps{};
+  constinit float refreshRate{};
+  constinit float refreshRateRound{};
+  constinit bool vblankEnabled{false};
 
   P64::VI::SwapChain::RenderPassDrawTask drawTask{nullptr};
   uint32_t frameSkip = 0;
@@ -42,7 +43,7 @@ namespace {
 
     if(nextFbIdx != 0xFF) {
       vi_write_begin();
-      vi_show(&frameBuffers[nextFbIdx]);
+        vi_show(&frameBuffers[nextFbIdx]);
       vi_write_end();
 
       ++fbState[nextFbIdx];
@@ -95,6 +96,14 @@ void P64::VI::SwapChain::init()
   enable_interrupts();
 
   rspq_wait();
+}
+
+void P64::VI::SwapChain::setVBlank(bool enabled)
+{
+  if(vblankEnabled != enabled) {
+    vblankEnabled = enabled;
+    vi_blank(vblankEnabled);
+  }
 }
 
 float P64::VI::SwapChain::getDeltaTime()
@@ -154,6 +163,7 @@ void P64::VI::SwapChain::drain() {
   }
   blockNewFrame = false;
 }
+
 void P64::VI::SwapChain::setFrameSkip(uint32_t skip) {
   frameSkip = skip;
 }
@@ -163,10 +173,11 @@ void P64::VI::SwapChain::setDrawPass(SwapChain::RenderPassDrawTask task) {
 }
 
 void P64::VI::SwapChain::start() {
+  if(vblankEnabled)return;
+
   vi_write_begin();
     vi_show(&frameBuffers[fbIdxVI]);
   vi_write_end();
-  //wait_ms(30);
 }
 
 void P64::VI::SwapChain::setFrameBuffers(surface_t buffers[3]) {

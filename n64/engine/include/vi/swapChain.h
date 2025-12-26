@@ -13,6 +13,7 @@ namespace P64::VI::SwapChain
 
   void init();
 
+  void setVBlank(bool enabled);
   float getDeltaTime();
   float getFPS();
 

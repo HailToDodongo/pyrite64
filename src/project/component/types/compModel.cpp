@@ -13,6 +13,7 @@
 #include "../../../editor/pages/parts/viewport3D.h"
 #include "../../../renderer/scene.h"
 #include "../../../utils/meshGen.h"
+#include "../../../shader/defines.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/matrix_decompose.hpp"
@@ -21,26 +22,30 @@ namespace Project::Component::Model
 {
   struct Data
   {
-    uint64_t modelUUID{0};
+    PROP_U64(model);
+    PROP_U32(layerIdx);
+
     Renderer::Object obj3D{};
     Utils::AABB aabb{};
   };
 
   std::shared_ptr<void> init(Object &obj) {
-    auto data = std::make_shared<Data>();
-    return data;
+    return std::make_shared<Data>();
   }
 
-  std::string serialize(const Entry &entry) {
+  std::string serialize(const Entry &entry)
+  {
     Data &data = *static_cast<Data*>(entry.data.get());
-    Utils::JSON::Builder builder{};
-    builder.set("model", data.modelUUID);
-    return builder.toString();
+    return Utils::JSON::Builder{}
+      .set(data.model)
+      .set(data.layerIdx)
+      .toString();
   }
 
   std::shared_ptr<void> deserialize(simdjson::simdjson_result<simdjson::dom::object> &doc) {
     auto data = std::make_shared<Data>();
-    data->modelUUID = doc["model"].get<uint64_t>();
+    Utils::JSON::readProp(doc, data->layerIdx);
+    Utils::JSON::readProp(doc, data->model);
     return data;
   }
 
@@ -48,7 +53,7 @@ namespace Project::Component::Model
   {
     Data &data = *static_cast<Data*>(entry.data.get());
 
-    auto res = ctx.assetUUIDToIdx.find(data.modelUUID);
+    auto res = ctx.assetUUIDToIdx.find(data.model.value);
     uint16_t id = 0xDEAD;
     if (res == ctx.assetUUIDToIdx.end()) {
       Utils::Logger::log("Component Model: Model UUID not found: " + std::to_string(entry.uuid), Utils::Logger::LEVEL_ERROR);
@@ -57,7 +62,8 @@ namespace Project::Component::Model
     }
 
     ctx.fileObj.write<uint16_t>(id);
-    ctx.fileObj.write<uint16_t>(0);
+    ctx.fileObj.write<uint8_t>(data.layerIdx.value);
+    ctx.fileObj.write<uint8_t>(0);
   }
 
   void draw(Object &obj, Entry &entry)
@@ -74,7 +80,7 @@ namespace Project::Component::Model
 
       int idx = modelList.size();
       for (int i=0; i<modelList.size(); ++i) {
-        if (modelList[i].uuid == data.modelUUID) {
+        if (modelList[i].uuid == data.model.value) {
           idx = i;
           break;
         }
@@ -91,9 +97,11 @@ namespace Project::Component::Model
         data.obj3D.removeMesh();
       }
 
+      ImTable::addProp("Draw-Layer", data.layerIdx);
+
       if (idx < modelList.size()) {
         const auto &script = modelList[idx];
-        data.modelUUID = script.uuid;
+        data.model.value = script.uuid;
       }
 
       ImTable::end();
@@ -104,7 +112,7 @@ namespace Project::Component::Model
   {
     Data &data = *static_cast<Data*>(entry.data.get());
     if (!data.obj3D.isMeshLoaded()) {
-      auto asset = ctx.project->getAssets().getEntryByUUID(data.modelUUID);
+      auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
       if (asset && asset->mesh3D) {
         if (!asset->mesh3D->isLoaded()) {
           asset->mesh3D->recreate(*ctx.scene);
@@ -114,8 +122,13 @@ namespace Project::Component::Model
       }
     }
 
+    if(ctx.project->getScenes().getLoadedScene()->conf.renderPipeline.value != 0)
+    {
+      data.obj3D.uniform.mat.flags = 0;
+      if(data.layerIdx.value == 0)data.obj3D.uniform.mat.flags |= T3D_FLAG_NO_LIGHT;
+    }
+
     data.obj3D.setObjectID(obj.uuid);
-    //data.obj3D.setPos(obj.pos);
 
     // @TODO: tidy-up
     glm::vec3 skew{0,0,0};

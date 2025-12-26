@@ -5,12 +5,13 @@
 #include "texture.h"
 
 #include <cassert>
+#include <cmath>
 
 #include "SDL3_image/SDL_image.h"
 
 extern SDL_GPUSampler *texSamplerRepeat;
 
-Renderer::Texture::Texture(SDL_GPUDevice* device, const std::string &imgPath, int rasterWidth, int rasterHeight)
+Renderer::Texture::Texture(SDL_GPUDevice* device, const std::string &imgPath, bool isMono, int rasterWidth, int rasterHeight)
   : gpuDevice(device)
 {
   if(!gpuDevice)return; // CLI mode
@@ -24,6 +25,23 @@ Renderer::Texture::Texture(SDL_GPUDevice* device, const std::string &imgPath, in
   }
 
   auto img = SDL_ConvertSurface(imgRaw, SDL_PIXELFORMAT_BGRA32);
+
+  if(isMono)
+  {
+    SDL_LockSurface(img);
+    for (int y = 0; y < img->h; y++) {
+      for (int x = 0; x < img->w; x++) {
+        uint8_t* pixel = (uint8_t*)img->pixels + y * img->pitch + x * 4;
+        // gamma correction
+        float r = pixel[2] / 255.0f;
+        r = std::pow(r, 1.0f/2.2f);
+        uint8_t gray = (uint8_t)(SDL_clamp(r * 255.0f, 0.0f, 255.0f));
+        pixel[3] = gray;
+      }
+    }
+    SDL_UnlockSurface(img);
+  }
+
   SDL_DestroySurface(imgRaw);
 
   width = img->w;

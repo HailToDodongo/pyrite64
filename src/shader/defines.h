@@ -129,10 +129,12 @@
 #define G_AD_DISABLE          (3 << G_MDSFT_ALPHADITHER)
 
 // Draw flags (custom for the shader)
-#define DRAW_FLAG_TEX0_MONO    (1 << 1)
-#define DRAW_FLAG_TEX1_MONO    (1 << 2)
-#define DRAW_FLAG_DECAL        (1 << 3)
-#define DRAW_FLAG_ALPHA_BLEND  (1 << 4) // temporary, @TODO: proper blending emulation
+#define T3D_FLAG_DEPTH      (1 << 0)
+#define T3D_FLAG_TEXTURED   (1 << 1)
+#define T3D_FLAG_SHADED     (1 << 2)
+#define T3D_FLAG_CULL_FRONT (1 << 3)
+#define T3D_FLAG_CULL_BACK  (1 << 4)
+#define T3D_FLAG_NO_LIGHT   (1 << 5)
 
 #define DRAW_SHADER_COLLISION  (1 << 8)
 
