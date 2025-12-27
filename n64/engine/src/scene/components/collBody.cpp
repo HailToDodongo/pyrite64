@@ -37,6 +37,7 @@ namespace P64::Comp
     data->bcs = {
       .center = obj.pos + data->offset,
       .halfExtend = initData->halfExtend,
+      .objectId = obj.id,
       .maskRead = initData->maskRead,
       .maskWrite = initData->maskWrite,
       .flags = initData->flags,

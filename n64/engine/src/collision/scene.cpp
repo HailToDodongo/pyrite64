@@ -7,6 +7,7 @@
 #include "debug/debugDraw.h"
 #include "collision/resolver.h"
 #include "lib/logger.h"
+#include "scene/sceneManager.h"
 
 namespace {
   constexpr float MIN_PENETRATION = 0.00004f;
@@ -111,6 +112,8 @@ Coll::CollInfo Coll::Scene::vsBCS(BCS &bcs, const fm_vec3_t &velocity, float del
 
 void Coll::Scene::update(float deltaTime)
 {
+  auto &gameScene = P64::SceneManager::getCurrent();
+
   for(auto sp : collBCS) {
     sp->hitTriTypes = 0;
   }
@@ -166,9 +169,8 @@ void Coll::Scene::update(float deltaTime)
       }
 
       if(isColl) {
-        // @TODO:
-        //if(bcsA->callback && maskMatchA)bcsA->callback(*bcsB);
-        //if(bcsB->callback && maskMatchB)bcsB->callback(*bcsA);
+        // @TODO: don't do if object has no callback
+        gameScene.onObjectCollision({bcsA, bcsB});
       }
     }
   }

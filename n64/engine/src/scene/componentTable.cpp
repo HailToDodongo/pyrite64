@@ -39,7 +39,14 @@
 namespace P64
 {
   const ComponentDef COMP_TABLE[COMP_TABLE_SIZE] {
-    SET_EVENT_COMP(Code),
+    [Comp::Code::ID] = {
+      .initDel = reinterpret_cast<FuncInitDel>(Comp::Code::initDelete),
+      .update = reinterpret_cast<FuncUpdate>(Comp::Code::update),
+      .draw   = reinterpret_cast<FuncDraw>(Comp::Code::draw),
+      .onEvent = reinterpret_cast<FuncOnEvent>(Comp::Code::onEvent),
+      .onColl = reinterpret_cast<FuncOnColl>(Comp::Code::onColl),
+      .getAllocSize = reinterpret_cast<FuncGetAllocSize>(Comp::Code::getAllocSize),
+    },
     SET_COMP(Model),
     SET_COMP(Light),
     SET_COMP(Camera),

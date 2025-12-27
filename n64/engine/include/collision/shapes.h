@@ -32,6 +32,9 @@ namespace Coll
     fm_vec3_t halfExtend{};
     fm_vec3_t velocity{};
 
+    uint16_t objectId{0};
+    uint16_t _padding{};
+
     uint8_t maskRead{0};
     uint8_t maskWrite{0};
     uint8_t flags{0};
@@ -101,5 +104,11 @@ namespace Coll
 
   struct Triangle2D {
     fm_vec2_t v[3]{};
+  };
+
+  struct CollEvent
+  {
+    BCS* self{};
+    BCS* other{};
   };
 }

@@ -213,6 +213,40 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
   collScene.debugDraw(collDebugDraw, collDebugDraw);
 }
 
+void P64::Scene::onObjectCollision(const Coll::CollEvent &event)
+{
+  auto objA = getObjectById(event.self->objectId);
+  auto objB = getObjectById(event.other->objectId);
+  if(!objA || !objB)return;
+
+  //debugf("Collision: %d <> %d\n", event.self->objectId, event.other->objectId);
+
+  auto compRefsA = objA->getCompRefs();
+  for (uint32_t i=0; i<objA->compCount; ++i)
+  {
+    const auto &compDef = COMP_TABLE[compRefsA[i].type];
+    if(compDef.onColl) {
+      char* dataPtr = (char*)objA + compRefsA[i].offset;
+      compDef.onColl(*objA, dataPtr, event);
+    }
+  }
+
+  Coll::CollEvent eventOther{
+    .self = event.other,
+    .other = event.self,
+  };
+
+  auto compRefsB = objB->getCompRefs();
+  for (uint32_t i=0; i<objB->compCount; ++i)
+  {
+    const auto &compDef = COMP_TABLE[compRefsB[i].type];
+    if(compDef.onColl) {
+      char* dataPtr = (char*)objB + compRefsB[i].offset;
+      compDef.onColl(*objB, dataPtr, eventOther);
+    }
+  }
+}
+
 void P64::Scene::removeObject(Object &obj)
 {
   pendingObjDelete.push_back(&obj);

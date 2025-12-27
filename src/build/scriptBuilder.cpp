@@ -32,6 +32,7 @@ void Build::buildScripts(Project::Project &project, SceneCtx &sceneCtx)
     bool hasDraw = Utils::CPP::hasFunction(src, "void", "draw");
     bool hasDestroy = Utils::CPP::hasFunction(src, "void", "destroy");
     bool hasEvent = Utils::CPP::hasFunction(src, "void", "onEvent");
+    bool hasColl = Utils::CPP::hasFunction(src, "void", "onCollision");
 
     auto uuidStr = std::format("{:016X}", script.uuid);
 
@@ -44,6 +45,7 @@ void Build::buildScripts(Project::Project &project, SceneCtx &sceneCtx)
     if(hasDraw)srcDecl += "void draw(Object& obj, Data *data, float deltaTime);\n";
     if(hasDestroy)srcDecl += "void destroy(Object& obj, Data *data);\n";
     if(hasEvent)srcDecl += "void onEvent(Object& obj, Data *data, const ObjectEvent& event);\n";
+    if(hasColl)srcDecl += "void onCollision(Object& obj, Data *data, const Coll::CollEvent& event);\n";
     srcDecl += "}\n";
 
     srcEntries += "{\n";
@@ -52,6 +54,7 @@ void Build::buildScripts(Project::Project &project, SceneCtx &sceneCtx)
     if(hasDraw)srcEntries += " .draw = (FuncObjDataDelta)" + uuidStr + "::draw,\n";
     if(hasDestroy)srcEntries += " .destroy = (FuncObjData)" + uuidStr + "::destroy,\n";
     if(hasEvent)srcEntries += " .onEvent = (FuncObjDataEvent)" + uuidStr + "::onEvent,\n";
+    if(hasColl)srcEntries += " .onColl = (FuncObjDataColl)" + uuidStr + "::onCollision,\n";
     srcEntries += "},\n";
 
     sceneCtx.codeIdxMapUUID[script.uuid] = idx;

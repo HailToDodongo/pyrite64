@@ -43,7 +43,6 @@ void P64::DrawLayer::init(Setup &setup)
   size_t allocSize = layers.size() * LAYER_BUFFER_WORDS * LAYER_BUFFER_COUNT * sizeof(uint32_t);
   Log::info("DrawLayer mem-size: %d bytes", allocSize);
   layerMem = (volatile uint32_t*)malloc_uncached(allocSize);
-  sys_hw_memset64((void*)layerMem, 0, allocSize);
 
   auto mem = layerMem;
 
@@ -141,9 +140,6 @@ void P64::DrawLayer::nextFrame()
 
   for(auto &layer : layers) {
     layer[frameIdx].current = layer[frameIdx].pointer;
-
-    // @TODO: is this needed?
-    sys_hw_memset64((void*)layer[frameIdx].pointer, 0, LAYER_BUFFER_WORDS * sizeof(uint32_t));
   }
 }
 

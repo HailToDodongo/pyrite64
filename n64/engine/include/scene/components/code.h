@@ -6,6 +6,11 @@
 #include "scene/object.h"
 #include "script/scriptTable.h"
 
+namespace Coll
+{
+  struct CollEvent;
+}
+
 namespace P64::Comp
 {
   struct Code
@@ -17,6 +22,7 @@ namespace P64::Comp
     Script::FuncObjDataDelta funcUpdate{};
     Script::FuncObjDataDelta funcDraw{};
     Script::FuncObjDataEvent funcOnEvent{};
+    Script::FuncObjDataColl funcOnColl{};
     Script::FuncObjData funcDestroy{};
 
     static uint32_t getAllocSize(uint16_t* initData)
@@ -44,6 +50,7 @@ namespace P64::Comp
       data->funcDraw = scriptPtr.draw;
       data->funcDestroy = scriptPtr.destroy;
       data->funcOnEvent = scriptPtr.onEvent;
+      data->funcOnColl = scriptPtr.onColl;
 
       if (dataSize > 0) {
         memcpy((char*)data + sizeof(Code), (char*)&initData[2], dataSize);
@@ -67,6 +74,11 @@ namespace P64::Comp
     static void onEvent(Object& obj, Code* data, const ObjectEvent& event) {
       char* funcData = (char*)data + sizeof(Code);
       if(data->funcOnEvent)data->funcOnEvent(obj, funcData, event);
+    }
+
+    static void onColl(Object& obj, Code* data, const Coll::CollEvent& event) {
+      char* funcData = (char*)data + sizeof(Code);
+      if(data->funcOnColl)data->funcOnColl(obj, funcData, event);
     }
   };
 }

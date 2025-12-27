@@ -96,6 +96,8 @@ namespace P64
       [[nodiscard]] Camera& getActiveCamera() { return *camMain; }
       Coll::Scene &getCollision() { return collScene; }
 
+      void onObjectCollision(const Coll::CollEvent &event);
+
       void sendEvent(uint16_t targetId, uint16_t senderId, uint16_t type, uint32_t value) {
         eventQueue[eventQueueIdx].add(targetId, senderId, type, value);
       }

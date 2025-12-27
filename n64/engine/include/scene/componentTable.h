@@ -6,6 +6,11 @@
 #include <libdragon.h>
 #include "event.h"
 
+namespace Coll
+{
+  struct CollEvent;
+}
+
 namespace P64
 {
   class Object;
@@ -15,6 +20,7 @@ namespace P64
   typedef void(*FuncUpdate)(Object&, void*, float deltaTime);
   typedef void(*FuncDraw)(Object&, void*, float deltaTime);
   typedef void(*FuncOnEvent)(Object&, void*, const ObjectEvent&);
+  typedef void(*FuncOnColl)(Object&, void*, const Coll::CollEvent&);
 
   struct ComponentDef
   {
@@ -22,6 +28,7 @@ namespace P64
     FuncUpdate update{};
     FuncDraw draw{};
     FuncOnEvent onEvent{};
+    FuncOnColl onColl{};
     FuncGetAllocSize getAllocSize{};
   };
 
