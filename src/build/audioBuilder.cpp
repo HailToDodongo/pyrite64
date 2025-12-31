@@ -22,6 +22,7 @@ bool Build::buildAudioAssets(Project::Project &project, SceneCtx &sceneCtx)
     auto projectPath = fs::path{project.getPath()};
     auto outPath = projectPath / asset.outPath;
     auto outDir = outPath.parent_path();
+    Utils::FS::ensureDir(outPath.parent_path());
 
     sceneCtx.files.push_back(asset.outPath);
 

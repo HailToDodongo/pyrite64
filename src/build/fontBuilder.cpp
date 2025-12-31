@@ -20,6 +20,7 @@ bool Build::buildFontAssets(Project::Project &project, SceneCtx &sceneCtx)
     auto projectPath = fs::path{project.getPath()};
     auto outPath = projectPath / font.outPath;
     auto outDir = outPath.parent_path();
+    Utils::FS::ensureDir(outPath.parent_path());
 
     sceneCtx.files.push_back(font.outPath);
 

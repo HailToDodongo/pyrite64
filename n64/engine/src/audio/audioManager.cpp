@@ -18,6 +18,7 @@ namespace
   {
     wav64_t* audio{nullptr};
     float volume{1.0f};
+    float speed{1.0f};
     uint16_t uuid{0};
   };
 
@@ -50,7 +51,11 @@ namespace P64::AudioManager
   {
     mixer_try_play();
     for(uint32_t i=0; i<CHANNEL_COUNT; ++i) {
-      if(slots[i].audio && !mixer_ch_playing((int)i)) {
+      if(slots[i].audio && !mixer_ch_playing((int)i))
+      {
+        if(slots[i].audio == slots[i+1].audio) { // stereo
+          slots[i+1].audio = nullptr;
+        }
         slots[i].audio = nullptr;
       }
     }
@@ -71,8 +76,13 @@ namespace P64::AudioManager
     slots[slot].audio = audio;
     slots[slot].uuid = nextUUID;
     slots[slot].volume = 1.0f;
+
+    if(audio->wave.channels == 2) {
+      slots[slot+1] = slots[slot];
+    }
+
     wav64_play(audio, slot);
-    Log::info("Playing audio on channel %d, uuid: %d", slot, nextUUID);
+    //Log::info("Playing audio on channel %d, uuid: %d", slot, nextUUID);
     return Audio::Handle{(uint16_t)slot, nextUUID};
   }
 
@@ -95,4 +105,13 @@ void P64::Audio::Handle::setVolume(float volume)
   if(entry->uuid != uuid)return;
   entry->volume = volume;
   mixer_ch_set_vol(slot, volume, volume);
+}
+
+void P64::Audio::Handle::setSpeed(float speed)
+{
+  auto entry = &slots[slot];
+  if(entry->uuid != uuid)return;
+  entry->speed = speed;
+  float freq = entry->audio->wave.frequency * speed;
+  mixer_ch_set_freq(slot, freq);
 }

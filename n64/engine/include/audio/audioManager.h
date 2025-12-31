@@ -35,6 +35,7 @@ namespace P64::Audio
        */
       void stop();
       void setVolume(float volume);
+      void setSpeed(float speed);
   };
 }
 
@@ -45,5 +46,10 @@ namespace P64::Audio
 namespace P64::AudioManager
 {
   Audio::Handle play2D(wav64_t *audio);
+
+  inline Audio::Handle play2D(uint32_t assetId) {
+    return play2D((wav64_t*)AssetManager::getByIndex(assetId));
+  }
+
   void stopAll();
 }
