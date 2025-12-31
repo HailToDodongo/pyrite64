@@ -122,7 +122,7 @@ void* P64::AssetManager::getByIndex(uint32_t idx) {
 
 }
 
-void* P64::AssetManager::getByFilePath(const std::string &path)
+/*void* P64::AssetManager::getByFilePath(const std::string &path)
 {
   for (uint32_t i = 0; i < assetTable->count; ++i) {
     auto &entry = assetTable->entries[i];
@@ -131,4 +131,4 @@ void* P64::AssetManager::getByFilePath(const std::string &path)
     }
   }
   return nullptr;
-}
+}*/

@@ -12,7 +12,6 @@ namespace P64::AssetManager
   void freeAll();
 
   void* getByIndex(uint32_t idx);
-  void* getByFilePath(const std::string &path);
 }
 
 namespace P64
