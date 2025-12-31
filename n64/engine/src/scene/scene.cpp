@@ -200,11 +200,11 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
 
   DrawLayer::use(conf.layerSetup.layerCount3D + conf.layerSetup.layerCountPtx);
     Debug::printStart();
-    Debug::printf(16, 16, "%.2f\n", (double)VI::SwapChain::getFPS());
+    Debug::printf(270, 16, "%.2f\n", (double)VI::SwapChain::getFPS());
 
     heap_stats_t heap{};
     sys_get_heap_stats(&heap);
-    Debug::printf(16, 16+9, "%.4f\n", heap.used / 1024.0);
+    Debug::printf(270, 16+9, "%.4f\n", heap.used / 1024.0);
 
     GlobalScript::callHooks(GlobalScript::HookType::SCENE_DRAW_2D);
   DrawLayer::useDefault();
@@ -218,8 +218,6 @@ void P64::Scene::onObjectCollision(const Coll::CollEvent &event)
   auto objA = getObjectById(event.self->objectId);
   auto objB = getObjectById(event.other->objectId);
   if(!objA || !objB)return;
-
-  //debugf("Collision: %d <> %d\n", event.self->objectId, event.other->objectId);
 
   auto compRefsA = objA->getCompRefs();
   for (uint32_t i=0; i<objA->compCount; ++i)

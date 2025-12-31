@@ -51,6 +51,7 @@ bool Build::buildProject(const std::string &path)
     };
 
     std::vector<Entry> assetList{};
+    std::string assetFileMap = "";
 
     uint32_t stringOffset{0};
     uint32_t assetCount = 0;
@@ -58,6 +59,11 @@ bool Build::buildProject(const std::string &path)
       for (auto &entry : typed) {
         if (entry.conf.exclude || entry.type == Project::AssetManager::FileType::UNKNOWN) continue;
         sceneCtx.assetUUIDToIdx[entry.uuid] = assetList.size();
+
+        if(entry.romPath.size() > 5) {
+          auto outNameNoPrefix = entry.romPath.substr(5); // remove "rom:/"
+          assetFileMap += "if(path == \"" + outNameNoPrefix + "\")return " + std::to_string(assetList.size()) + ";\n";
+        }
 
         assetList.push_back({
           entry.romPath,
@@ -69,6 +75,11 @@ bool Build::buildProject(const std::string &path)
         ++assetCount;
       }
     }
+    auto assetTableCode = Utils::replaceAll(
+      Utils::FS::loadTextFile("data/scripts/assetTable.h"),
+      "{{ASSET_MAP}}", assetFileMap
+    );
+    Utils::FS::saveTextFile(project.getPath() + "/src/p64/assetTable.h", assetTableCode);
 
     Utils::BinaryFile fileList{};
     fileList.write<uint32_t>(assetCount);

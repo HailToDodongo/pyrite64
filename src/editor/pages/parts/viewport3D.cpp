@@ -352,9 +352,12 @@ void Editor::Viewport3D::draw()
         camera.velocity = camera.rot * moveDir;
       }
     } else {
-      if (ImGui::IsKeyDown(ImGuiKey_G))gizmoOp = 0;
-      if (ImGui::IsKeyDown(ImGuiKey_R))gizmoOp = 1;
-      if (ImGui::IsKeyDown(ImGuiKey_S))gizmoOp = 2;
+      if(!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
+      {
+        if (ImGui::IsKeyDown(ImGuiKey_G))gizmoOp = 0;
+        if (ImGui::IsKeyDown(ImGuiKey_R))gizmoOp = 1;
+        if (ImGui::IsKeyDown(ImGuiKey_S))gizmoOp = 2;
+      }
     }
   }
 

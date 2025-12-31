@@ -81,4 +81,5 @@ add_executable(n64_engine
         engine/include/renderer/particles/ptxSprites.h
         engine/src/renderer/particles/ptxSystem.cpp
         engine/src/renderer/particles/ptxSprites.cpp
+        engine/src/collision/resolver.cpp
 )

@@ -94,7 +94,6 @@ void Build::buildGlobalScripts(Project::Project &project, SceneCtx &sceneCtx)
 
   for (auto &script : scripts)
   {
-    printf("s: %s\n", script.path.c_str());
     auto src = Utils::FS::loadTextFile(script.path);
 
     for(auto &pair : nameMap)
