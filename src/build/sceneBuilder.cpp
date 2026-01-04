@@ -37,7 +37,7 @@ void Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool savePre
 
   uint16_t objFlags = 0;
   if(obj.enabled)objFlags |= P64::ObjectFlags::ACTIVE;
-  if(obj.isGroup)objFlags |= P64::ObjectFlags::IS_GROUP;
+  if(!obj.children.empty())objFlags |= P64::ObjectFlags::IS_GROUP;
 
   ctx.fileObj.write<uint16_t>(objFlags); // @TODO type
   ctx.fileObj.write<uint16_t>(obj.id);

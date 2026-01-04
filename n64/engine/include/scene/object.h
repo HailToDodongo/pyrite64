@@ -6,6 +6,7 @@
 #include <libdragon.h>
 #include "objectFlags.h"
 #include "event.h"
+#include "sceneManager.h"
 
 namespace P64
 {
@@ -119,5 +120,10 @@ namespace P64
        * Note: deletion is deferred until the end of the frame.
        */
       void remove();
+
+      static Scene& getScene()
+      {
+        return SceneManager::getCurrent();
+      }
   };
 }

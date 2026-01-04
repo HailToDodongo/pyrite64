@@ -125,8 +125,6 @@ bool ConnectedToggleButton(const char* text, bool active, bool first, bool last,
       }
       callback(*child, nullptr);
 
-      // only groups can have children
-      if(!parent.isGroup){ assert(parent.children.empty()); }
       iterateObjects(*child, callback);
     }
   }

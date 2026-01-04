@@ -6,6 +6,7 @@
 
 #include "scene/sceneManager.h"
 
+#include "scene/scene.h"
 #include "script/globalScript.h"
 #include "vi/swapChain.h"
 

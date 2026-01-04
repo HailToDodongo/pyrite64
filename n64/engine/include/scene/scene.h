@@ -8,7 +8,6 @@
 
 #include "event.h"
 #include "lighting.h"
-#include "object.h"
 #include "collision/scene.h"
 #include "lib/types.h"
 #include "renderer/drawLayer.h"
@@ -17,6 +16,7 @@
 
 namespace P64
 {
+  class Object;
   class RenderPipelineBigTex;
 }
 
@@ -170,3 +170,5 @@ namespace P64
       [[nodiscard]] Lighting& getLighting() { return lighting; }
   };
 }
+
+#include "object.h"

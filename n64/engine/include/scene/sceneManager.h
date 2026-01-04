@@ -4,7 +4,11 @@
 */
 #pragma once
 #include <libdragon.h>
-#include "scene.h"
+
+namespace P64
+{
+  class Scene;
+}
 
 /**
  * Functions to manager scenes.

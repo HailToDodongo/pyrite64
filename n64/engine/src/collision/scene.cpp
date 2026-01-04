@@ -3,6 +3,8 @@
  * @license TBD
  */
 #include "collision/scene.h"
+#include "scene/scene.h"
+
 #include "collision/bvh.h"
 #include "debug/debugDraw.h"
 #include "collision/resolver.h"

@@ -13,6 +13,7 @@ static inline float fm_vec2_dot(const fm_vec2_t &a, const fm_vec2_t &b) {
 namespace P64::Math
 {
   constexpr float SQRT_2_INV = 0.70710678118f;
+  constexpr float PI = 3.14159265358979f;
 
   constexpr uint32_t alignUp(uint32_t val, uint32_t alignTo) {
     return (val + (alignTo - 1)) & ~(alignTo - 1);
@@ -70,7 +71,7 @@ namespace P64::Math
   }
 
   inline float easeOutSin(float x) {
-    return fm_sinf((x * T3D_PI) * 0.5f);
+    return fm_sinf((x * PI) * 0.5f);
   }
 
   inline int noise2d(int x, int y) {
@@ -118,7 +119,7 @@ namespace P64::Math
 
   inline auto cross(const fm_vec3_t &a, const fm_vec3_t &b) {
     fm_vec3_t res;
-    t3d_vec3_cross(res, a, b);
+    fm_vec3_cross(&res, &a, &b);
     return res;
   }
 
@@ -132,14 +133,14 @@ namespace P64::Math
 
   inline fm_vec3_t randDir3D() {
     fm_vec3_t res{{rand01()-0.5f, rand01()-0.5f, rand01()-0.5f}};
-    t3d_vec3_norm(&res);
+    fm_vec3_norm(&res, &res);
     return res;
   }
 
   inline fm_vec3_t randDir2D()
   {
     fm_vec3_t res{{rand01()-0.5f, 0.0f, rand01()-0.5f}};
-    t3d_vec3_norm(&res);
+    fm_vec3_norm(&res, &res);
     return res;
   }
 }

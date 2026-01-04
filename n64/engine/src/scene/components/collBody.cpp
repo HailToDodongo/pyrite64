@@ -4,6 +4,8 @@
 */
 #include "scene/object.h"
 #include "scene/components/collBody.h"
+
+#include "scene/scene.h"
 #include "scene/sceneManager.h"
 
 namespace

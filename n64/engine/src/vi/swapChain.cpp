@@ -137,7 +137,8 @@ void P64::VI::SwapChain::nextFrame() {
   float newDelta = (float)((double)TICKS_TO_US(ticksDiff) * (1.0/1e6));
   if(newDelta > (1.0f / 20.0f)) { // @TODO: somtimes this gets huge values in the thousands
     //debugf("DELTA-TIME: %.4f (%lld - %lld)\n", newDelta, lastTicks, newTicks);
-    newDelta = (1.0f / 20.0f);
+    Log::warn("invalid delta time!");
+    newDelta = (1.0f / 60.0f);
   }
 
   lastTicks = newTicks;

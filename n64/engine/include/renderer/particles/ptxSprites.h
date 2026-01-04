@@ -13,12 +13,12 @@ namespace P64::PTX
   {
     public:
       struct Conf {
-        int countPerCell{};
+        uint32_t maxSize{};
         uint8_t isRotating{false};
         uint8_t noRng{false};
       };
 
-      System systems[6];
+      System system;
       float simTimer = 0.0f;
 
     private:
@@ -28,8 +28,6 @@ namespace P64::PTX
       uint16_t mirrorPt = 32;
       color_t color{};
       Conf conf{};
-
-      System* getBySection(const fm_vec3_t &sectionPos, uint32_t posHash);
 
     public:
       explicit Sprites(const char* spritePath, const Conf &conf);
@@ -45,7 +43,5 @@ namespace P64::PTX
 
       void draw(float deltaTime);
       void clear();
-
-      void debugDraw();
   };
 }

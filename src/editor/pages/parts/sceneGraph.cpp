@@ -119,7 +119,7 @@ namespace
       ImGui::EndDragDropSource();
     }
 
-    if (obj.parent && obj.isGroup && ImGui::BeginDragDropTarget()) {
+    if (obj.parent && ImGui::BeginDragDropTarget()) {
       if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECT")) {
         dragDropTask.sourceUUID = *((uint32_t*)payload->Data);
         dragDropTask.targetUUID = obj.uuid;
@@ -170,25 +170,14 @@ namespace
     {
       if (ImGui::BeginPopupContextItem("NodePopup"))
       {
-        if(obj.isGroup)
-        {
-          if (ImGui::MenuItem(ICON_MDI_CUBE_OUTLINE " Add Object")) {
-            ctx.selObjectUUID = scene.addObject(obj)->uuid;
-          }
-
-          if (ImGui::MenuItem(ICON_MDI_VIEW_GRID_PLUS " Add Group")) {
-            auto newObj = scene.addObject(obj);
-            newObj->isGroup = true;
-            ctx.selObjectUUID = newObj->uuid;
-          }
+        if (ImGui::MenuItem(ICON_MDI_CUBE_OUTLINE " Add Object")) {
+          ctx.selObjectUUID = scene.addObject(obj)->uuid;
         }
 
         if (obj.parent) {
           if (!obj.isPrefabInstance() && ImGui::MenuItem(ICON_MDI_PACKAGE_VARIANT_CLOSED_PLUS " To Prefab")) {
             scene.createPrefabFromObject(obj.uuid);
           }
-
-          if(obj.isGroup)ImGui::Separator();
 
           if (ImGui::MenuItem(ICON_MDI_TRASH_CAN " Delete"))deleteObj = &obj;
         }

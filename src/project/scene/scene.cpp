@@ -66,7 +66,6 @@ Project::Scene::Scene(int id_, const std::string &projectPath)
   root.id = 0;
   root.name = "Scene";
   root.uuid = Utils::Hash::sha256_64bit(root.name);
-  root.isGroup = true;
 }
 
 std::shared_ptr<Project::Object> Project::Scene::addObject(std::string &objJson)

@@ -35,7 +35,6 @@ namespace Project
 
       bool enabled{true};
       bool selectable{true};
-      bool isGroup{false};
       bool isPrefabEdit{false};
 
       std::unordered_map<uint64_t, GenericValue> propOverrides{};

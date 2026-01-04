@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "renderer/pipelineBigTex.h"
+#include "scene/scene.h"
 #include "scene/sceneManager.h"
 
 void P64::Renderer::BigTex::patchT3DM(T3DModel &model)

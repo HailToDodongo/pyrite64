@@ -79,8 +79,6 @@ void Editor::ObjectInspector::draw() {
     }
   }
 
-  if(obj->isGroup)return;
-
   uint64_t compDelUUID = 0;
   Project::Component::Entry *compCopy = nullptr;
   for (auto &comp : srcObj->components)

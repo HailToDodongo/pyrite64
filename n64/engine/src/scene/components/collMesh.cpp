@@ -8,6 +8,7 @@
 #include "scene/components/collMesh.h"
 #include <t3d/t3dmodel.h>
 
+#include "scene/scene.h"
 #include "scene/sceneManager.h"
 
 namespace P64::Comp

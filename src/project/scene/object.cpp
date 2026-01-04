@@ -23,7 +23,6 @@ namespace
 
     builder.set("selectable", obj.selectable);
     builder.set("enabled", obj.enabled);
-    builder.set("isGroup", obj.isGroup);
 
     builder
       .set(obj.uuidPrefab)
@@ -95,7 +94,6 @@ void Project::Object::deserialize(Scene *scene, const simdjson::simdjson_result<
 
   selectable = Utils::JSON::readBool(doc, "selectable", true);
   enabled = Utils::JSON::readBool(doc, "enabled", true);
-  isGroup = Utils::JSON::readBool(doc, "isGroup", false);
 
   Utils::JSON::readProp(doc, uuidPrefab);
   Utils::JSON::readProp(doc, pos);
