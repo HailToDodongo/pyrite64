@@ -115,14 +115,12 @@ namespace Project::Component::Code
           ImGui::Text("(None)");
         }
 
-        int idx = 0;
         for (auto &field : script.params.fields)
         {
-          std::string name = field.name;
+          std::string name{};
           auto metaName = field.attr.find("P64::Name");
-          if (metaName != field.attr.end()) {
-            name = metaName->second;
-          }
+          if (metaName == field.attr.end())continue;
+          name = metaName->second;
 
           if(data.args.find(name) == data.args.end()) {
             data.args[name] = PropString{name, field.defaultValue};
@@ -138,7 +136,6 @@ namespace Project::Component::Code
           } else {
             ImTable::addObjProp(name, data.args[field.name]);
           }
-          ++idx;
         }
       }
 

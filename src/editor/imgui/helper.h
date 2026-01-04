@@ -181,6 +181,10 @@ namespace ImTable
       return ImGui::InputInt("##", value);
     } else if constexpr (std::is_same_v<T, uint32_t>) {
       return ImGui::InputScalar("##", ImGuiDataType_U32, value);
+    } else if constexpr (std::is_same_v<T, uint16_t>) {
+      return ImGui::InputScalar("##", ImGuiDataType_U16, value);
+    } else if constexpr (std::is_same_v<T, uint8_t>) {
+      return ImGui::InputScalar("##", ImGuiDataType_U8, value);
     } else if constexpr (std::is_same_v<T, glm::vec3>) {
       return ImGui::InputFloat3("##", glm::value_ptr(*value));
     } else if constexpr (std::is_same_v<T, glm::quat>) {
