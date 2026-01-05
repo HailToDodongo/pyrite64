@@ -19,7 +19,6 @@
 
 namespace
 {
-  constinit uint64_t nextUUID{1};
   constexpr float DEF_MODEL_SCALE = 1.0f;
 }
 
@@ -56,13 +55,6 @@ Project::Scene::Scene(int id_, const std::string &projectPath)
 
   deserialize(Utils::FS::loadTextFile(scenePath + "/scene.json"));
 
-  nextUUID = 1;
-  for (const auto& [uuid, obj] : objectsMap) {
-    if (obj->id >= nextUUID) {
-      nextUUID = obj->id + 1;
-    }
-  }
-
   root.id = 0;
   root.name = "Scene";
   root.uuid = Utils::Hash::sha256_64bit(root.name);
@@ -72,8 +64,18 @@ std::shared_ptr<Project::Object> Project::Scene::addObject(std::string &objJson)
 {
   auto obj = std::make_shared<Object>(root);
   obj->deserialize(this, Utils::JSON::load(objJson));
-  obj->id = nextUUID++;
-  obj->name += " ("+std::to_string(obj->id)+")";
+  obj->id = getFreeObjectId();
+
+  auto oldName = obj->name;
+  // check if it ends in a ")", and the remove last "(id)"
+  if (oldName.size() > 4 && oldName[oldName.size() - 1] == ')') {
+    auto pos = oldName.find_last_of('(');
+    if (pos != std::string::npos) {
+      oldName = oldName.substr(0, pos - 1);
+    }
+  }
+
+  obj->name = oldName +  " ("+std::to_string(obj->id)+")";
   obj->uuid = Utils::Hash::sha256_64bit(obj->name + std::to_string(rand()));
   obj->pos.value += glm::vec3{10.0f, 0.0f, 0.0f};
   return addObject(root, obj);
@@ -81,7 +83,7 @@ std::shared_ptr<Project::Object> Project::Scene::addObject(std::string &objJson)
 
 std::shared_ptr<Project::Object> Project::Scene::addObject(Object &parent) {
   auto child = std::make_shared<Object>(parent);
-  child->id = nextUUID++;
+  child->id = getFreeObjectId();
   child->name = "New Object ("+std::to_string(child->id)+")";
   child->uuid = Utils::Hash::sha256_64bit(child->name + std::to_string(rand()));
   child->scale.value = {DEF_MODEL_SCALE, DEF_MODEL_SCALE, DEF_MODEL_SCALE};
@@ -101,7 +103,7 @@ std::shared_ptr<Project::Object> Project::Scene::addPrefabInstance(uint64_t pref
   if (!prefab)return nullptr;
 
   auto obj = std::make_shared<Object>(root);
-  obj->id = nextUUID++;
+  obj->id = getFreeObjectId();
   obj->name += prefab->obj.name + " ("+std::to_string(obj->id)+")";
   obj->uuid = Utils::Hash::randomU32();
   obj->pos = prefab->obj.pos;
@@ -109,6 +111,10 @@ std::shared_ptr<Project::Object> Project::Scene::addPrefabInstance(uint64_t pref
   obj->scale = prefab->obj.scale;
 
   obj->uuidPrefab.value = prefab->uuid.value; // Link to prefab
+  obj->addPropOverride(obj->pos); // by default allow transforming the instance
+  obj->addPropOverride(obj->rot);
+  obj->addPropOverride(obj->scale);
+
   return addObject(root, obj);
 }
 
@@ -288,4 +294,22 @@ void Project::Scene::deserialize(const std::string &data)
   removeAllObjects();
   auto docGraph = doc["graph"];
   root.deserialize(this, docGraph);
+}
+
+uint16_t Project::Scene::getFreeObjectId()
+{
+  uint16_t objId = 1;
+
+  for(int i=0; i<0xFFFF; ++i) {
+    bool found = false;
+    for (auto &[uuid, obj] : objectsMap) {
+      if (obj->id == objId) {
+        found = true;
+        break;
+      }
+    }
+    if (!found)break;
+    ++objId;
+  }
+  return objId;
 }

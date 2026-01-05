@@ -15,7 +15,7 @@ struct UBO_Material {
   ivec4 cc1Color;
   ivec4 cc1Alpha;
 
-  ivec4 modes; // geo, other-low, other-high, flags
+  ivec4 modes; // vertexFX, other-low, other-high, flags
   vec4 lightColor[2];
   vec4 lightDir[2]; // [0].w is alpha clip
   vec4 colPrim;

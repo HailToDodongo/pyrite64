@@ -216,7 +216,7 @@ void main()
     return;
   }
 
-  if((T3D_DRAW_FLAG & DRAWFLAG_CULL_BACK) != 0 && !gl_FrontFacing) {
+  if((DRAW_FLAGS & T3D_FLAG_CULL_BACK) != 0 && !gl_FrontFacing) {
     discard;
   }
 
@@ -306,7 +306,7 @@ void main()
   #endif
 
   FragColor = vec4(ccValue.rgb, ccValue.a);
-  //FragColor.a = ccValue.a;
+  // FragColor = cc_shade; // TEST
 
   /*{
     uint oldColorInt = 0;

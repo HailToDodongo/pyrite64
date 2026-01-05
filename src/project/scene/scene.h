@@ -83,5 +83,7 @@ namespace Project
       void resetLayers();
 
       void deserialize(const std::string &data);
+
+      uint16_t getFreeObjectId();
   };
 }

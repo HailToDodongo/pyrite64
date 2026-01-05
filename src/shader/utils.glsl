@@ -22,7 +22,7 @@ vec3 linearToGamma(in vec3 color) {
 
 #define mixSelect(amount, a, b) (mix(a, b, float(amount)))
 #define flagSelect(flag_mask, a, b) (mixSelect((DRAW_FLAGS & flag_mask) != 0, a, b))
-#define drawFlagSelect(flag_mask, a, b) (mixSelect((T3D_DRAW_FLAG & flag_mask) != 0, a, b))
+#define vertexFxSelect(flag_mask, a, b) (mixSelect(VERTEX_FX == flag_mask, a, b))
 #define othermodeHSelect(flag_mask, a, b) mixSelect((material.othermodeH & flag_mask) != 0, a, b)
 
 #define zSource() (OTHER_MODE_L & (1 << G_MDSFT_ZSRCSEL))
@@ -87,7 +87,7 @@ mat3 quantizeMat3(mat3 inMat)
   return inMat *= 1.0f / 32768.0;
 }
 
-#define T3D_DRAW_FLAG material.modes.x
+#define VERTEX_FX    material.modes.x
 #define OTHER_MODE_L material.modes.y
 #define OTHER_MODE_H material.modes.z
 #define DRAW_FLAGS   material.modes.w

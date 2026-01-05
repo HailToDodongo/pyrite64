@@ -136,6 +136,13 @@
 #define T3D_FLAG_CULL_BACK  (1 << 4)
 #define T3D_FLAG_NO_LIGHT   (1 << 5)
 
+#define T3D_VERTEX_FX_NONE           0
+#define T3D_VERTEX_FX_SPHERICAL_UV   1
+#define T3D_VERTEX_FX_CELSHADE_COLOR 2
+#define T3D_VERTEX_FX_CELSHADE_ALPHA 3
+#define T3D_VERTEX_FX_OUTLINE        4
+#define T3D_VERTEX_FX_UV_OFFSET      5
+
 #define DRAW_SHADER_COLLISION  (1 << 8)
 
 /*

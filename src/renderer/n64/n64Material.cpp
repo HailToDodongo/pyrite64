@@ -35,9 +35,10 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const T3DM::Materia
 
   uint64_t cc = t3dMat.colorCombiner;
 
-  part.material.drawFlags = t3dMat.drawFlags;
+  part.material.vertexFX = t3dMat.vertexFxFunc;
   part.material.otherModeH = t3dMat.otherModeValue >> 32;
   part.material.otherModeL = t3dMat.otherModeValue & 0xFFFFFFFF;
+  part.material.flags = t3dMat.drawFlags;
 
   if (cc & RDPQ_COMBINER_2PASS) {
     part.material.otherModeH |= G_CYC_2CYCLE;
@@ -47,7 +48,6 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const T3DM::Materia
   if (t3dMat.otherModeValue & RDP::SOM::ALPHA_COMPARE) {
     part.material.lightDir[0].w = 0.5f;
   }
-
 
   part.material.cc0Color = { getBits(cc, 52, 55), getBits(cc, 28, 31), getBits(cc, 47, 51), getBits(cc, 15, 17) };
   part.material.cc0Alpha = { getBits(cc, 44, 46), getBits(cc, 12, 14), getBits(cc, 41, 43), getBits(cc, 9, 11)  };

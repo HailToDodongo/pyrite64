@@ -48,7 +48,7 @@ void main()
   mat4 matMV = quantizeMat4(cameraMat * material.modelMat);
   mat4 matMVP = projMat * matMV;
 
-  mat3 matNorm = mat3(material.modelMat);
+  mat3 matNorm = mat3(matMV);
   matNorm[0] = normalize(matNorm[0]);
   matNorm[1] = normalize(matNorm[1]);
   matNorm[2] = normalize(matNorm[2]);
@@ -62,6 +62,9 @@ void main()
   // Directional light
   vec3 norm = inNormal;
   vec3 normScreen = matNorm * norm;
+
+  gl_Position = matMVP * vec4(vec3(inPosition), 1.0);
+  posScreen = gl_Position.xy / gl_Position.w;
 
   cc_shade = inColor;
 
@@ -86,11 +89,13 @@ void main()
   // cc_shade.rgb = norm * 0.5 + 0.5; // TEST
   cc_shade_flat = cc_shade;
 
-  // @TODO: handle vertex effect
-  vec2 uvGen = uvPixel;// geoModeSelect(G_TEX_GEN, uvPixel, normScreen.xy * 0.5 + 0.5);
+  vec2 texSize = material.high.xy - material.low.xy + 1;
+  texSize *= 0.5;
+  normScreen.y = -normScreen.y;
 
-  // turn UVs ionto pixel-space, apply first tile settings
-  ivec4 texSize = ivec4(textureSize(tex0, 0), textureSize(tex1, 0));
+  vec2 uvGen = normScreen.xy * texSize + (texSize*0.75);
+  uvGen = vertexFxSelect(T3D_VERTEX_FX_SPHERICAL_UV, uvPixel, uvGen);
+
   // we simulate UVs in pixel-space, since there is only one UV set, we scale by the first texture size
   uv = uvGen.xyxy;// * texSize.xyxy;
   // apply material.shift from top left of texture:
@@ -100,12 +105,6 @@ void main()
   uv = uv - (material.shift * 0.5) - material.low;
 
   tileSize = abs(material.high) - abs(material.low);
-
-  // @TODO: uvgen (f3d + t3d)
-  // forward CC (@TODO: do part of this here? e.g. prim/env/shade etc.)
-
-  gl_Position = matMVP * vec4(vec3(inPosition), 1.0);
-  posScreen = gl_Position.xy / gl_Position.w;
 
   if((DRAW_FLAGS & DRAW_SHADER_COLLISION) != 0) {
     cc_shade_flat.rgb = norm * 0.5 + 0.5;
