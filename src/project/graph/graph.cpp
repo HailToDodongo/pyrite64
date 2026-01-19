@@ -136,12 +136,13 @@ namespace Project::Graph
     {
       auto p64Node = (Node::Base*)node.get();
 
-      f.setPos(nodeSelfPosMap[p64Node->uuid] + 2); // after type and out count
+      auto posSelf = nodeSelfPosMap[p64Node->uuid];
+      f.setPos(posSelf + 2); // after type and out count
       auto &outgoing = nodeOutgoingMap[p64Node->uuid];
       for(size_t i = 0; i < outgoing.size(); ++i)
       {
-        uint32_t destPos = nodeSelfPosMap[outgoing[i]];
-        f.write<uint16_t>(destPos);
+        int32_t relPos = nodeSelfPosMap[outgoing[i]] - posSelf;
+        f.write<int16_t>(relPos);
       }
     }
 

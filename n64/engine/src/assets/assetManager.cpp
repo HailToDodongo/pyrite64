@@ -67,6 +67,7 @@ namespace
     [AssetType::CODE_OBJ]    = {nullptr,                  nullptr                 },
     [AssetType::CODE_GLOBAL] = {nullptr,                  nullptr                 },
     [AssetType::PREFAB]      = {(LoadFunc)assetLoad,      (FreeFunc)free          },
+    [AssetType::NODE_GRAPH]  = {(LoadFunc)assetLoad,      (FreeFunc)free          },
   };
 
   constinit AssetTable* assetTable{nullptr};

@@ -16,7 +16,7 @@ src += $(wildcard src/scene/*.cpp) $(wildcard src/audio/*.cpp) $(wildcard src/as
 src += $(wildcard src/collision/*.cpp) $(wildcard src/debug/*.cpp)
 src += $(wildcard src/scene/components/*.cpp) $(wildcard src/renderer/*.cpp)
 src += $(wildcard src/renderer/hdr/*.cpp) $(wildcard src/renderer/bigtex/*.cpp)
-src += $(wildcard src/renderer/particles/*.cpp)
+src += $(wildcard src/renderer/particles/*.cpp) $(wildcard src/script/*.cpp)
 src += $(wildcard src/libdragon/*.cpp)
 
 # HDR / Bloom ucode

@@ -15,6 +15,7 @@
 #include "scene/components/audio2d.h"
 #include "scene/components/constraint.h"
 #include "scene/components/culling.h"
+#include "scene/components/nodeGraph.h"
 
 // some template magic to auto-detect if a function exists in a component
 #define HAS_FUNC_TPL(NAME_HAS, NAME_GET, FUNC) \
@@ -58,6 +59,7 @@ namespace P64
     SET_COMP(CollBody),
     SET_COMP(Audio2D),
     SET_COMP(Constraint),
-    SET_COMP(Culling)
+    SET_COMP(Culling),
+    SET_COMP(NodeGraph),
   };
 }

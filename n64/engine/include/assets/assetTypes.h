@@ -15,4 +15,5 @@ namespace P64::Assets::Type
   constexpr uint8_t CODE_OBJ = 5;
   constexpr uint8_t CODE_GLOBAL = 6;
   constexpr uint8_t PREFAB = 7;
+  constexpr uint8_t NODE_GRAPH = 8;
 }
