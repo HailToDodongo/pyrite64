@@ -144,8 +144,6 @@ namespace P64::Comp
 
     t3d_matrix_set(mat, true);
 
-    bool separate = (data->flags & FLAG_CULLING) || (data->meshIdxCount != 0);
-
     //debugf("[%d] data->meshIdxCount: %u separate: %d\n", obj.id, data->meshIdxCount, separate);
 
     if (data->flags & FLAG_CULLING) {

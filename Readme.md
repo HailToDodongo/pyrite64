@@ -1,5 +1,11 @@
 # Pyrite64
 
+<p align="center">
+<img src="./data/img/titleLogo.png" width="430">
+</p>
+
+An N64 game-engine and editor using libdragon and tiny3d.<br>
+
 ## WARNING:
 **This Project is still not ready for general use!**
 
@@ -51,6 +57,14 @@ For tiny3d, also run:
 ```sh
 ./build.sh
 ```
+
+## Building Games
+
+### Editor
+(@TODO write docs)
+
+### CLI
+(@TODO write docs)
 
 ## Credits & License
 © 2025-2026 - Max Bebök (HailToDodongo)<br>
