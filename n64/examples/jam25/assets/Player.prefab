@@ -1,0 +1,115 @@
+{
+  "obj": {
+    "children": [],
+    "components": [
+      {
+        "data": {
+          "layerIdx": 0,
+          "material": {
+            "depth": 0,
+            "env": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "fresnel": 0,
+            "fresnelColor": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "lighting": true,
+            "prim": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "setDepth": false,
+            "setEnv": false,
+            "setFresnel": false,
+            "setLighting": false,
+            "setPrim": true
+          },
+          "model": 1480057396441694021
+        },
+        "id": 10,
+        "name": "Model",
+        "uuid": 2142405350790453093
+      },
+      {
+        "data": {
+          "halfExtend": [
+            22.0,
+            22.0,
+            22.0
+          ],
+          "isFixed": false,
+          "isTrigger": false,
+          "maskRead": 31,
+          "maskWrite": 9,
+          "offset": [
+            0.0,
+            24.0,
+            0.0
+          ],
+          "type": 1
+        },
+        "id": 5,
+        "name": "Collision-Body",
+        "uuid": 17911711743765564434
+      },
+      {
+        "data": {
+          "args": {
+            "camPitch": "",
+            "camPitchVelocity": "",
+            "camTarget": "",
+            "camTargetOffset": "",
+            "camTargetOffsetYaw": "",
+            "camYaw": "",
+            "camYawTarget": "",
+            "camYawVelocity": "",
+            "dustTimer": "",
+            "floorCast": "",
+            "hurtVelocity": "",
+            "isJumpEnd": "",
+            "lastMoveDir": "",
+            "moveVelocity": "",
+            "targetMoveYaw": ""
+          },
+          "script": 13942767222428474859
+        },
+        "id": 0,
+        "name": "Code",
+        "uuid": 10732132723724657709
+      }
+    ],
+    "enabled": true,
+    "id": 15,
+    "name": "Player",
+    "pos": [
+      0.0,
+      0.0,
+      194.30795288085938
+    ],
+    "propOverrides": {},
+    "rot": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "selectable": true,
+    "uuid": 958445916,
+    "uuidPrefab": 0
+  },
+  "uuid": 3372488998
+}

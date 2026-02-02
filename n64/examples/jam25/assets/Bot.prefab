@@ -1,0 +1,24 @@
+{"uuid":643897098,"obj":{"id":1,
+"name":"Bot",
+"uuid":2353005945,
+"selectable":true,
+"enabled":true,
+"isGroup":false,
+"uuidPrefab":0,"pos":[35.618080139160156,0.0,73.73957824707031],"rot":[0.0,0.7071065306663513,0.0,0.7071070075035095],"scale":[0.9689699411392212,1.0,0.9689699411392212],"propOverrides":{}
+,"components":[{"id":1,
+"uuid":7764188377837846551,
+"name":"Model","data":{"model":9595630529416898165}
+},
+{"id":0,
+"uuid":13224791012213080026,
+"name":"Code","data":{"script":14192199802322357731,"args":{"Active":" 0",
+"moveVelocity":"",
+"turnVelocity":"",
+"active":"1"}}
+},
+{"id":5,
+"uuid":3778714151176027946,
+"name":"Collision-Body","data":{"halfExtend":[20.0,20.0,20.0],"offset":[0.0,16.0,0.0],
+"type":1}
+}],"children":[]}
+}

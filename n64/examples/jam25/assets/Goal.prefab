@@ -1,0 +1,154 @@
+{
+  "obj": {
+    "children": [],
+    "components": [
+      {
+        "data": {
+          "culling": false,
+          "layerIdx": 1,
+          "material": {
+            "depth": 0,
+            "env": [
+              1.0,
+              0.17741936445236206,
+              0.9933664798736572,
+              1.0
+            ],
+            "fresnel": 0,
+            "fresnelColor": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "lighting": false,
+            "prim": [
+              0.7713968753814697,
+              0.2540322542190552,
+              1.0,
+              1.0
+            ],
+            "setDepth": false,
+            "setEnv": true,
+            "setFresnel": false,
+            "setLighting": false,
+            "setPrim": true
+          },
+          "meshFilter": "Outer",
+          "model": 5873588011152101620
+        },
+        "id": 1,
+        "name": "Model (Static)",
+        "uuid": 1292144841195497982
+      },
+      {
+        "data": {
+          "culling": false,
+          "layerIdx": 1,
+          "material": {
+            "depth": 0,
+            "env": [
+              0.876813530921936,
+              0.0035932587925344706,
+              0.8911290168762207,
+              0.9647058844566345
+            ],
+            "fresnel": 0,
+            "fresnelColor": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "lighting": false,
+            "prim": [
+              0.8293442726135254,
+              0.33870965242385864,
+              1.0,
+              0.9803921580314636
+            ],
+            "setDepth": false,
+            "setEnv": true,
+            "setFresnel": false,
+            "setLighting": false,
+            "setPrim": true
+          },
+          "meshFilter": "Inner",
+          "model": 5873588011152101620
+        },
+        "id": 1,
+        "name": " Copy",
+        "uuid": 3153656564097790663
+      },
+      {
+        "data": {
+          "halfExtend": [
+            15.0,
+            15.0,
+            15.0
+          ],
+          "isFixed": false,
+          "isTrigger": true,
+          "maskRead": 8,
+          "maskWrite": 0,
+          "offset": [
+            0.0,
+            20.0,
+            0.0
+          ],
+          "type": 1
+        },
+        "id": 5,
+        "name": "Collision-Body",
+        "uuid": 4751107092302757394
+      },
+      {
+        "data": {
+          "args": {
+            "noDialog": "0",
+            "sceneId": "8",
+            "texExpPack": "13383390974258263293"
+          },
+          "script": 13947773430842915973
+        },
+        "id": 0,
+        "name": "Code",
+        "uuid": 3872373312472777256
+      },
+      {
+        "data": {
+          "asset": 3546436722396576303,
+          "autoRun": false,
+          "repeatable": false
+        },
+        "id": 9,
+        "name": "Node Graph",
+        "uuid": 8877302676670451240
+      }
+    ],
+    "enabled": true,
+    "id": 1,
+    "name": "Goal",
+    "pos": [
+      -60.0,
+      0.0,
+      300.0
+    ],
+    "propOverrides": {},
+    "rot": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "selectable": true,
+    "uuid": 1392473973,
+    "uuidPrefab": 0
+  },
+  "uuid": 1245864117
+}

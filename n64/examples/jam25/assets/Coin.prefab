@@ -1,0 +1,65 @@
+{
+  "obj": {
+    "children": [],
+    "components": [
+      {
+        "data": {
+          "args": {
+            "floorCast": "",
+            "noCast": "0"
+          },
+          "script": 14983157826919407508
+        },
+        "id": 0,
+        "name": "Code",
+        "uuid": 14364518929117375858
+      },
+      {
+        "data": {
+          "halfExtend": [
+            10.0,
+            10.0,
+            10.0
+          ],
+          "isFixed": false,
+          "isTrigger": true,
+          "maskRead": 0,
+          "maskWrite": 1,
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "type": 1
+        },
+        "id": 5,
+        "name": "Collision-Body",
+        "uuid": 7891004927505572530
+      }
+    ],
+    "enabled": true,
+    "id": 15,
+    "name": "Coin",
+    "pos": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "propOverrides": {},
+    "rot": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "selectable": true,
+    "uuid": 794755115,
+    "uuidPrefab": 0
+  },
+  "uuid": 1066636061
+}

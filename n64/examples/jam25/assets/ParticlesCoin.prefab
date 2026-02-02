@@ -1,0 +1,12 @@
+{"uuid":885116429,"obj":{"id":51,
+"name":"ParticlesCoin",
+"uuid":321737428,
+"selectable":true,
+"enabled":true,
+"isGroup":false,
+"uuidPrefab":0,"pos":[74.80006408691406,24.902957916259766,171.92547607421875],"rot":[0.0,0.0,0.0,1.0],"scale":[1.0,1.0,1.0],"propOverrides":{}
+,"components":[{"id":0,
+"uuid":18102435918497042376,
+"name":"Code","data":{"script":14519059909162406021,"args":{}}
+}],"children":[]}
+}

@@ -1,0 +1,14 @@
+{"uuid":2150773366,"obj":{"id":1,
+"name":"Title-Card",
+"uuid":1005739031,
+"selectable":true,
+"enabled":true,
+"isGroup":false,
+"uuidPrefab":0,"pos":[-253.67893981933594,214.938720703125,-97.22168731689453],"rot":[0.0,0.0,0.0,1.0],"scale":[1.0,1.0,1.0],"components":[{"id":0,
+"uuid":13360702034957471751,
+"name":"Code","data":{"script":14225195654018163175,"args":{"texBg":"13383390974258263293",
+"name":"Test-Map",
+"texGrad":"7895361896447789170",
+"timer":"0"}}
+}],"children":[]}
+}

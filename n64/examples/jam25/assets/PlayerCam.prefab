@@ -1,0 +1,62 @@
+{
+  "obj": {
+    "children": [],
+    "components": [
+      {
+        "data": {
+          "aspect": 0.0,
+          "far": 500.0,
+          "fov": 75.0,
+          "near": 15.0,
+          "vpOffset": [
+            0,
+            0
+          ],
+          "vpSize": [
+            320,
+            240
+          ]
+        },
+        "id": 3,
+        "name": "Camera",
+        "uuid": 591397515709753079
+      },
+      {
+        "data": {
+          "args": {
+            "iconCoin": "7862731364426322112",
+            "iconHealth": "7008574988794858050"
+          },
+          "script": 14399702542144614172
+        },
+        "id": 0,
+        "name": "Code",
+        "uuid": 6507494994126332152
+      }
+    ],
+    "enabled": true,
+    "id": 7,
+    "name": "PlayerCam",
+    "pos": [
+      -6.179775238037109,
+      79.23812866210938,
+      231.6162567138672
+    ],
+    "propOverrides": {},
+    "rot": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "selectable": true,
+    "uuid": 899220285,
+    "uuidPrefab": 0
+  },
+  "uuid": 3582011595
+}

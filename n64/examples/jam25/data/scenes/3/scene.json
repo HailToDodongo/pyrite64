@@ -1,0 +1,419 @@
+{
+  "conf": {
+    "clearColor": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "doClearColor": false,
+    "doClearDepth": true,
+    "fbFormat": 0,
+    "fbHeight": 240,
+    "fbWidth": 320,
+    "filter": 1,
+    "frameLimit": 0,
+    "layers2D": [
+      {
+        "blender": 0,
+        "depthCompare": false,
+        "depthWrite": false,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "2D"
+      }
+    ],
+    "layers3D": [
+      {
+        "blender": 0,
+        "depthCompare": true,
+        "depthWrite": true,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "3D Opaque"
+      },
+      {
+        "blender": 5242944,
+        "depthCompare": true,
+        "depthWrite": false,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "3D Transp."
+      }
+    ],
+    "layersPtx": [
+      {
+        "blender": 0,
+        "depthCompare": true,
+        "depthWrite": true,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "PTX Opaque"
+      }
+    ],
+    "name": "Test-HDR",
+    "renderPipeline": 1
+  },
+  "graph": {
+    "children": [
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "aspect": 0.0,
+              "far": 1000.0,
+              "fov": 75.0,
+              "near": 10.0,
+              "vpOffset": [
+                0,
+                0
+              ],
+              "vpSize": [
+                320,
+                240
+              ]
+            },
+            "id": 3,
+            "name": "Camera",
+            "uuid": 6861070724920102890
+          },
+          {
+            "data": {
+              "color": [
+                0.21960784494876862,
+                0.21960784494876862,
+                0.21960784494876862,
+                1.0
+              ],
+              "index": 0,
+              "type": 0
+            },
+            "id": 2,
+            "name": "Light",
+            "uuid": 5369227321237037028
+          }
+        ],
+        "enabled": true,
+        "id": 6,
+        "name": "Cam",
+        "pos": [
+          0.0,
+          119.62730407714844,
+          148.7613525390625
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 575301774,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [],
+        "enabled": true,
+        "id": 3,
+        "name": "Title-Card (3)",
+        "pos": [
+          -253.67893981933594,
+          214.938720703125,
+          -97.22168731689453
+        ],
+        "propOverrides": {
+          "17807472640229936847": "9:HDR Test"
+        },
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 1256502480,
+        "uuidPrefab": 2150773366
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "",
+              "model": 67300967874118795
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 13442071981727641374
+          },
+          {
+            "data": {
+              "meshFilter": "",
+              "modelUUID": 67300967874118795
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 3651014272897512695
+          },
+          {
+            "data": {
+              "audioUUID": 12408831556710010008,
+              "autoPlay": true,
+              "loop": true,
+              "volume": 0.5
+            },
+            "id": 6,
+            "name": "Audio (2D)",
+            "uuid": 8319079502621694004
+          }
+        ],
+        "enabled": true,
+        "id": 7,
+        "name": "New Object (7)",
+        "pos": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "selectable": true,
+        "uuid": 1879164825,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "args": {
+                "sceneId": "5",
+                "sceneLoadId": ""
+              },
+              "script": 14843118101605764375
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 11510411095933357027
+          },
+          {
+            "data": {
+              "halfExtend": [
+                30.0,
+                30.0,
+                30.0
+              ],
+              "isFixed": false,
+              "isTrigger": true,
+              "maskRead": 1,
+              "maskWrite": 1,
+              "offset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "type": 0
+            },
+            "id": 5,
+            "name": "Collision-Body",
+            "uuid": 13688852649584821961
+          }
+        ],
+        "enabled": true,
+        "id": 8,
+        "name": "Load",
+        "pos": [
+          -100.0,
+          30.0,
+          -40.0
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 2389200001,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [],
+        "enabled": true,
+        "id": 9,
+        "name": "Player (9)",
+        "pos": [
+          0.0,
+          0.0,
+          194.30795288085938
+        ],
+        "propOverrides": {
+          "11272843812465326562": "1:1.000000,1.000000,1.000000",
+          "13911321452997764027": "1:-27.265146,0.000000,151.549210",
+          "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+        },
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 3554183365,
+        "uuidPrefab": 3372488998
+      },
+      {
+        "children": [],
+        "components": [],
+        "enabled": true,
+        "id": 10,
+        "name": "Coin (10)",
+        "pos": [
+          -60.339683532714844,
+          0.00048828125,
+          48.68293762207031
+        ],
+        "propOverrides": {
+          "11272843812465326562": "1:1.000000,1.000000,1.000000",
+          "13911321452997764027": "1:-217.826309,0.000522,32.914337",
+          "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+        },
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 3158561178,
+        "uuidPrefab": 1066636061
+      }
+    ],
+    "components": [],
+    "enabled": true,
+    "id": 0,
+    "name": "Scene",
+    "pos": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "propOverrides": {},
+    "rot": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "selectable": true,
+    "uuid": 4252910706,
+    "uuidPrefab": 0
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "obj": {
+    "children": [],
+    "components": [
+      {
+        "data": {
+          "culling": false,
+          "layerIdx": 0,
+          "material": {
+            "depth": 0,
+            "env": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "fresnel": 2,
+            "fresnelColor": [
+              0.7782257795333862,
+              0.7782257795333862,
+              0.7782257795333862,
+              1.0
+            ],
+            "lighting": true,
+            "prim": [
+              1.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "setDepth": false,
+            "setEnv": false,
+            "setFresnel": true,
+            "setLighting": false,
+            "setPrim": true
+          },
+          "meshFilter": "",
+          "model": 10939121960889249575
+        },
+        "id": 1,
+        "name": "Model",
+        "uuid": 8855416690646441623
+      },
+      {
+        "data": {
+          "halfExtend": [
+            30.0,
+            30.0,
+            30.0
+          ],
+          "isFixed": false,
+          "isTrigger": true,
+          "maskRead": 1,
+          "maskWrite": 0,
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "type": 1
+        },
+        "id": 5,
+        "name": "Collision-Body",
+        "uuid": 17155583793980512750
+      },
+      {
+        "data": {
+          "args": {
+            "": "10",
+            "Coin-Amount": "",
+            "coinAmount": "5",
+            "fadeTimer": "",
+            "state": ""
+          },
+          "script": 14790936481723831464
+        },
+        "id": 0,
+        "name": "Code",
+        "uuid": 16810290497791999707
+      },
+      {
+        "data": {
+          "halfExtend": [
+            16.0,
+            16.0,
+            16.0
+          ],
+          "isFixed": true,
+          "isTrigger": false,
+          "maskRead": 0,
+          "maskWrite": 2,
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "type": 1
+        },
+        "id": 5,
+        "name": "Collision-Body",
+        "uuid": 1503277676867244821
+      }
+    ],
+    "enabled": true,
+    "id": 52,
+    "name": "Void",
+    "pos": [
+      -203.84361267089844,
+      34.22049331665039,
+      130.26246643066406
+    ],
+    "propOverrides": {},
+    "rot": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "scale": [
+      2.0,
+      2.0,
+      2.0
+    ],
+    "selectable": true,
+    "uuid": 3124238361,
+    "uuidPrefab": 0
+  },
+  "uuid": 3258852297
+}

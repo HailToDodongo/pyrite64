@@ -1,0 +1,8 @@
+{
+  "name": "Cathode Quest 64",
+  "pathEmu": "ares",
+  "pathN64Inst": "/usr",
+  "romName": "gj25_cathode_quest",
+  "sceneIdOnBoot": 10,
+  "sceneIdOnReset": 10
+}

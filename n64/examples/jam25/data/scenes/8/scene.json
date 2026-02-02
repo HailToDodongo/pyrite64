@@ -1,0 +1,5770 @@
+{
+  "conf": {
+    "clearColor": [
+      0.9596773982048035,
+      0.9931711554527283,
+      1.0,
+      1.0
+    ],
+    "doClearColor": false,
+    "doClearDepth": false,
+    "fbFormat": 1,
+    "fbHeight": 240,
+    "fbWidth": 320,
+    "filter": 1,
+    "frameLimit": 0,
+    "layers2D": [
+      {
+        "blender": 0,
+        "depthCompare": false,
+        "depthWrite": false,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "2D"
+      }
+    ],
+    "layers3D": [
+      {
+        "blender": 0,
+        "depthCompare": true,
+        "depthWrite": true,
+        "fog": true,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 1,
+        "fogMax": 800.0,
+        "fogMin": 200.0,
+        "name": "3D Opaque"
+      },
+      {
+        "blender": 5242944,
+        "depthCompare": true,
+        "depthWrite": false,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "3D Transparent"
+      }
+    ],
+    "layersPtx": [
+      {
+        "blender": 0,
+        "depthCompare": true,
+        "depthWrite": true,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "PTX Opaque"
+      }
+    ],
+    "name": "Map-Paper",
+    "renderPipeline": 0
+  },
+  "graph": {
+    "children": [
+      {
+        "children": [],
+        "components": [],
+        "enabled": true,
+        "id": 1,
+        "name": "Title-Card",
+        "pos": [
+          -223.67893981933594,
+          214.938720703125,
+          -97.22168731689453
+        ],
+        "propOverrides": {
+          "11272843812465326562": "1:1.000000,1.000000,1.000000",
+          "13911321452997764027": "1:738.110962,47.075111,-517.725708",
+          "17807472640229936847": "9:Cardboard Course",
+          "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+        },
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 637814201,
+        "uuidPrefab": 2150773366
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.24193549156188965,
+                  0.8716182112693787,
+                  1.0,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.07661288976669312,
+                  0.5978800058364868,
+                  1.0,
+                  1.0
+                ],
+                "setDepth": true,
+                "setEnv": true,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "",
+              "model": 7363787437567682035
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 1310710276006877091
+          },
+          {
+            "data": {
+              "objectUUID": 2173695464,
+              "type": 2,
+              "usePos": true,
+              "useRot": false,
+              "useScale": false
+            },
+            "id": 7,
+            "name": "Constraint",
+            "uuid": 248284922238830065
+          },
+          {
+            "data": {
+              "args": {},
+              "script": 14308266316553859632
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 4246125755566121125
+          },
+          {
+            "data": {
+              "audioUUID": 5667936998528252754,
+              "autoPlay": true,
+              "loop": true,
+              "volume": 0.5
+            },
+            "id": 6,
+            "name": "Audio (2D)",
+            "uuid": 9253502580557858614
+          }
+        ],
+        "enabled": true,
+        "id": 2,
+        "name": "Skybox",
+        "pos": [
+          881.8087768554688,
+          45.875221252441406,
+          -698.220458984375
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 840786720,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "color": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "index": 0,
+                  "type": 0
+                },
+                "id": 2,
+                "name": "Light",
+                "uuid": 16497944062403456447
+              }
+            ],
+            "enabled": true,
+            "id": 5,
+            "name": "Ambient",
+            "pos": [
+              837.1200561523438,
+              60.93910217285156,
+              -531.5885009765625
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0000001192092896,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 2060130803,
+            "uuidPrefab": 0
+          }
+        ],
+        "components": [],
+        "enabled": true,
+        "id": 4,
+        "name": "Lighting",
+        "pos": [
+          687.2054443359375,
+          -0.00048828125,
+          -505.2388000488281
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 1454920783,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  1.0,
+                  0.24193549156188965,
+                  0.24193549156188965,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.8842352032661438,
+                  1.0,
+                  0.2822580933570862,
+                  0.0
+                ],
+                "setDepth": false,
+                "setEnv": true,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "",
+              "model": 2076335883273801836
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 9957073822721311902
+          },
+          {
+            "data": {
+              "meshFilter": "",
+              "modelUUID": 2076335883273801836
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 11499915691241701040
+          }
+        ],
+        "enabled": true,
+        "id": 3,
+        "name": "Static Map",
+        "pos": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": false,
+        "uuid": 2435712035,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.14434833824634552,
+                      0.3334895968437195,
+                      0.7782257795333862,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      0.2549102306365967,
+                      0.46039125323295593,
+                      0.9435483813285828,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": true,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": true
+                  },
+                  "meshFilter": "block00",
+                  "model": 13215419027432979116
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 18014099263363252898
+              },
+              {
+                "data": {
+                  "meshFilter": "block00",
+                  "modelUUID": 13215419027432979116
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 1988278420214648730
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    110.0,
+                    110.0,
+                    110.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "type": 0
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 8859718526900346609
+              }
+            ],
+            "enabled": true,
+            "id": 12,
+            "name": "Box",
+            "pos": [
+              630.0,
+              -40.0,
+              10.0
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3796388952,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [],
+                "enabled": true,
+                "id": 9,
+                "name": "Coin (19)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-390.146301,84.305389,17.631454",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 3745966252,
+                "uuidPrefab": 1066636061
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.26192232966423035,
+                      0.7782257795333862,
+                      0.14434833824634552,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      0.5492475032806396,
+                      0.9435483813285828,
+                      0.2549102306365967,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": true,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": true
+                  },
+                  "meshFilter": "block01",
+                  "model": 13215419027432979116
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 18014099263363252898
+              },
+              {
+                "data": {
+                  "meshFilter": "block01",
+                  "modelUUID": 13215419027432979116
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 1988278420214648730
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    160.0,
+                    160.0,
+                    160.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "type": 1
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 8859718526900346609
+              },
+              {
+                "data": {
+                  "args": {
+                    "axisX": "1",
+                    "axisY": "0",
+                    "axisZ": "0",
+                    "radius": "1",
+                    "speed": "0.5",
+                    "texExpPack": "13383390974258263293",
+                    "type": "0"
+                  },
+                  "script": 14292327376580313433
+                },
+                "id": 0,
+                "name": "Code",
+                "uuid": 12795128468772524066
+              }
+            ],
+            "enabled": true,
+            "id": 6,
+            "name": "Platform Gap",
+            "pos": [
+              -386.4417419433594,
+              0.0,
+              10.080581665039063
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1458972029,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.6129032373428345,
+                      0.07661290466785431,
+                      0.439906507730484,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      0.9395161271095276,
+                      0.21593719720840454,
+                      0.5835621356964111,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": true,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": true
+                  },
+                  "meshFilter": "block02",
+                  "model": 13215419027432979116
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 18014099263363252898
+              },
+              {
+                "data": {
+                  "meshFilter": "block02",
+                  "modelUUID": 13215419027432979116
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 1988278420214648730
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    130.0,
+                    40.0,
+                    200.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "type": 0
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 8859718526900346609
+              }
+            ],
+            "enabled": true,
+            "id": 7,
+            "name": "Map (9)",
+            "pos": [
+              14.739311218261719,
+              176.90289306640625,
+              -1121.90283203125
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.9999973773956299,
+              1.0,
+              0.9999973773956299
+            ],
+            "selectable": true,
+            "uuid": 3842058762,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.7782257795333862,
+                      0.6504279375076294,
+                      0.14434833824634552,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      0.9637096524238586,
+                      0.8203377723693848,
+                      0.25258517265319824,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": true,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": true
+                  },
+                  "meshFilter": "block00",
+                  "model": 13215419027432979116
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 18014099263363252898
+              },
+              {
+                "data": {
+                  "meshFilter": "block00",
+                  "modelUUID": 13215419027432979116
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 1988278420214648730
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    110.0,
+                    110.0,
+                    110.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "type": 0
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 8859718526900346609
+              }
+            ],
+            "enabled": true,
+            "id": 59,
+            "name": "Box",
+            "pos": [
+              629.7677001953125,
+              583.5744018554688,
+              10.0
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 2167759415,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [],
+                "enabled": true,
+                "id": 93,
+                "name": "Coin (19)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-566.989990,84.305389,-31.770905",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 3273234627,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [],
+                "enabled": true,
+                "id": 103,
+                "name": "Coin (19)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-641.093567,84.305389,44.802780",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 1247557437,
+                "uuidPrefab": 1066636061
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.261251300573349,
+                      0.8306451439857483,
+                      0.38982412219047546,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      0.1925143003463745,
+                      0.7379032373428345,
+                      0.1695987433195114,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": true,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": true
+                  },
+                  "meshFilter": "block01",
+                  "model": 13215419027432979116
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 18014099263363252898
+              },
+              {
+                "data": {
+                  "meshFilter": "block01",
+                  "modelUUID": 13215419027432979116
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 1988278420214648730
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    160.0,
+                    160.0,
+                    160.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "type": 1
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 8859718526900346609
+              },
+              {
+                "data": {
+                  "args": {
+                    "axisX": "0",
+                    "axisY": "0",
+                    "axisZ": "1",
+                    "radius": "1",
+                    "speed": "0.5",
+                    "texExpPack": "13383390974258263293",
+                    "type": "0"
+                  },
+                  "script": 14292327376580313433
+                },
+                "id": 0,
+                "name": "Code",
+                "uuid": 12795128468772524066
+              }
+            ],
+            "enabled": true,
+            "id": 82,
+            "name": "Platform Gap",
+            "pos": [
+              -606.5125732421875,
+              0.0,
+              10.080581665039063
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 451301594,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [],
+                "enabled": true,
+                "id": 94,
+                "name": "Coin (19)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-779.884827,84.305359,210.802048",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 988552989,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [],
+                "enabled": true,
+                "id": 97,
+                "name": "Coin (19)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-921.916687,84.305359,210.802048",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 2658450112,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [],
+                "enabled": true,
+                "id": 98,
+                "name": "Coin (19)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-921.916687,84.305359,352.833893",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 3304957323,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [],
+                "enabled": true,
+                "id": 99,
+                "name": "Coin (19)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-773.709473,84.305359,352.833893",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 2120470531,
+                "uuidPrefab": 1066636061
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.9637096524238586,
+                      0.6982444524765015,
+                      0.19818221032619476,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      0.8427419662475586,
+                      0.4799891412258148,
+                      0.10534274578094482,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": true,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": true
+                  },
+                  "meshFilter": "block01",
+                  "model": 13215419027432979116
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 18014099263363252898
+              },
+              {
+                "data": {
+                  "meshFilter": "block01",
+                  "modelUUID": 13215419027432979116
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 1988278420214648730
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    160.0,
+                    160.0,
+                    160.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "type": 1
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 8859718526900346609
+              },
+              {
+                "data": {
+                  "args": {
+                    "axisX": "1",
+                    "axisY": "0",
+                    "axisZ": "0",
+                    "radius": "1",
+                    "speed": "0.4",
+                    "texExpPack": "13383390974258263293",
+                    "type": "0"
+                  },
+                  "script": 14292327376580313433
+                },
+                "id": 0,
+                "name": "Code",
+                "uuid": 12795128468772524066
+              }
+            ],
+            "enabled": true,
+            "id": 9,
+            "name": "Platform Gap",
+            "pos": [
+              -847.7291259765625,
+              0.0,
+              279.844970703125
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1382082734,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [],
+                "enabled": true,
+                "id": 96,
+                "name": "Coin (19)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-775.821899,84.305389,-324.228821",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 1512723384,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [],
+                "enabled": true,
+                "id": 100,
+                "name": "Coin (19)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-775.821899,84.305389,-183.432007",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 2619461375,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [],
+                "enabled": true,
+                "id": 101,
+                "name": "Coin (19)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-924.029053,84.305389,-183.432007",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 3177433522,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [],
+                "enabled": true,
+                "id": 102,
+                "name": "Coin (19)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-924.029053,84.305389,-326.698975",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 3080904312,
+                "uuidPrefab": 1066636061
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.17579342424869537,
+                      0.8225806355476379,
+                      0.8069325685501099,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      0.2549102306365967,
+                      0.9435483813285828,
+                      0.9435483813285828,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": true,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": true
+                  },
+                  "meshFilter": "block01",
+                  "model": 13215419027432979116
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 18014099263363252898
+              },
+              {
+                "data": {
+                  "meshFilter": "block01",
+                  "modelUUID": 13215419027432979116
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 1988278420214648730
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    160.0,
+                    160.0,
+                    160.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "type": 1
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 8859718526900346609
+              },
+              {
+                "data": {
+                  "args": {
+                    "axisX": "1",
+                    "axisY": "0",
+                    "axisZ": "0",
+                    "radius": "1",
+                    "speed": "-0.5",
+                    "texExpPack": "13383390974258263293",
+                    "type": "0"
+                  },
+                  "script": 14292327376580313433
+                },
+                "id": 0,
+                "name": "Code",
+                "uuid": 12795128468772524066
+              }
+            ],
+            "enabled": true,
+            "id": 95,
+            "name": "Platform Gap",
+            "pos": [
+              -851.1611328125,
+              0.0,
+              -251.50082397460938
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1161314674,
+            "uuidPrefab": 0
+          }
+        ],
+        "components": [],
+        "enabled": true,
+        "id": 11,
+        "name": "MapParts",
+        "pos": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "propOverrides": {},
+        "rot": [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 3228097394,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [],
+        "enabled": true,
+        "id": 8,
+        "name": "PlayerCam (3)",
+        "pos": [
+          13.82022476196289,
+          79.23812866210938,
+          231.6162567138672
+        ],
+        "propOverrides": {
+          "11272843812465326562": "1:1.000000,1.000000,1.000000",
+          "13911321452997764027": "1:-6.179775,79.238129,231.616257",
+          "6744764348870861464": "7:800.000000",
+          "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+        },
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 1933734530,
+        "uuidPrefab": 3582011595
+      },
+      {
+        "children": [],
+        "components": [],
+        "enabled": true,
+        "id": 23,
+        "name": "Player (6)",
+        "pos": [
+          30.0,
+          0.0,
+          194.30795288085938
+        ],
+        "propOverrides": {
+          "11272843812465326562": "1:1.000000,1.000000,1.000000",
+          "13911321452997764027": "1:635.696167,82.543579,11.090084",
+          "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+        },
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 3594945343,
+        "uuidPrefab": 3372488998
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 17189054405578697160
+                  }
+                ],
+                "enabled": true,
+                "id": 49,
+                "name": "Coin (5)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-208.876251,44.491219,979.457520",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 1240588466,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 10980543627071833085
+                  }
+                ],
+                "enabled": true,
+                "id": 50,
+                "name": "Coin (5)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-418.299530,44.491219,979.457520",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 180845053,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 13621190125689506029
+                  }
+                ],
+                "enabled": true,
+                "id": 52,
+                "name": "Coin (5)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:203.538589,44.491219,571.613037",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 3333928301,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 2535665655976334285
+                  }
+                ],
+                "enabled": true,
+                "id": 53,
+                "name": "Coin (5)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:411.119873,44.491219,571.613037",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 2703091936,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 13621190125689506029
+                  }
+                ],
+                "enabled": true,
+                "id": 20,
+                "name": "Coin (5)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-2.209908,44.491219,673.567383",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 1118650971,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 13621190125689506029
+                  }
+                ],
+                "enabled": true,
+                "id": 21,
+                "name": "Coin (5)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-2.209908,44.491219,873.813049",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 2291014272,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 13621190125689506029
+                  }
+                ],
+                "enabled": true,
+                "id": 22,
+                "name": "Coin (5)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:97.908569,44.491219,1182.444458",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 2458041336,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 13621190125689506029
+                  }
+                ],
+                "enabled": true,
+                "id": 25,
+                "name": "Coin (5)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-103.246338,44.491219,362.991638",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 4121060837,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 13621190125689506029
+                  }
+                ],
+                "enabled": true,
+                "id": 63,
+                "name": "Coin (5)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:193.788254,44.491219,873.813049",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 4125136841,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 13621190125689506029
+                  }
+                ],
+                "enabled": true,
+                "id": 64,
+                "name": "Coin (5)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-194.887314,44.491219,1182.444458",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 1012343944,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 13621190125689506029
+                  }
+                ],
+                "enabled": true,
+                "id": 65,
+                "name": "Coin (5)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-204.422058,44.491219,673.567383",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 287716253,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 13621190125689506029
+                  }
+                ],
+                "enabled": true,
+                "id": 66,
+                "name": "Coin (5)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:203.538589,44.491219,367.509186",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 3116869615,
+                "uuidPrefab": 1066636061
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.3241415321826935,
+                      0.46891260147094727,
+                      0.9032257795333862,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      0.21593719720840454,
+                      0.6244092583656311,
+                      0.9395161271095276,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": true,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": true
+                  },
+                  "meshFilter": "seesaw",
+                  "model": 13215419027432979116
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 18014099263363252898
+              },
+              {
+                "data": {
+                  "meshFilter": "seesaw",
+                  "modelUUID": 13215419027432979116
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 1988278420214648730
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    700.0,
+                    700.0,
+                    700.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "type": 1
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 8859718526900346609
+              },
+              {
+                "data": {
+                  "args": {},
+                  "script": 14958562766051048049
+                },
+                "id": 0,
+                "name": "Code",
+                "uuid": 5729149501054112053
+              }
+            ],
+            "enabled": true,
+            "id": 24,
+            "name": "Seesaw",
+            "pos": [
+              -2.6933135986328125,
+              -1.4116744995117188,
+              773.9633178710938
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              0.800000011920929,
+              0.800000011920929,
+              0.800000011920929
+            ],
+            "selectable": true,
+            "uuid": 1349267565,
+            "uuidPrefab": 0
+          }
+        ],
+        "components": [],
+        "enabled": true,
+        "id": 58,
+        "name": "Void Seesaw",
+        "pos": [
+          -203.84361267089844,
+          34.22049331665039,
+          130.26246643066406
+        ],
+        "propOverrides": {
+          "11272843812465326562": "1:2.000000,2.000000,2.000000",
+          "13911321452997764027": "1:10.000000,70.000000,300.000000",
+          "15615708542372730715": "9:5",
+          "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+        },
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "selectable": true,
+        "uuid": 3337629800,
+        "uuidPrefab": 3258852297
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 15506154880841487427
+                  }
+                ],
+                "enabled": true,
+                "id": 19,
+                "name": "Coin (14)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-0.212616,92.185135,-413.220795",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 3603152109,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 288,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 15506154880841487427
+                  }
+                ],
+                "enabled": true,
+                "id": 36,
+                "name": "Coin (15)",
+                "pos": [
+                  10.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-0.212616,-128.502731,-413.220795",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 4006537947,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 1852403523,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 15506154880841487427
+                  }
+                ],
+                "enabled": true,
+                "id": 17,
+                "name": "Coin (16)",
+                "pos": [
+                  10.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:114.503464,-15.646902,-413.220795",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 2549511727,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 349521444,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 15506154880841487427
+                  }
+                ],
+                "enabled": true,
+                "id": 18,
+                "name": "Coin (17)",
+                "pos": [
+                  20.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:-115.287872,-15.646902,-413.220795",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 2950847205,
+                "uuidPrefab": 1066636061
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.30682802200317383,
+                      0.11986209452152252,
+                      0.7822580337524414,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      0.5634933114051819,
+                      0.32193028926849365,
+                      0.8870967626571655,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": true,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": true
+                  },
+                  "meshFilter": "blockRot00",
+                  "model": 13215419027432979116
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 18014099263363252898
+              },
+              {
+                "data": {
+                  "meshFilter": "blockRot00",
+                  "modelUUID": 13215419027432979116
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 1988278420214648730
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    90.0,
+                    90.0,
+                    110.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "type": 0
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 8859718526900346609
+              },
+              {
+                "data": {
+                  "args": {
+                    "active": " 0",
+                    "speed": "0.7"
+                  },
+                  "script": 14223520606171785222
+                },
+                "id": 0,
+                "name": "Code",
+                "uuid": 18082983918923162226
+              }
+            ],
+            "enabled": true,
+            "id": 14,
+            "name": "CylinderRot 1",
+            "pos": [
+              -0.1903076171875,
+              -17.33977508544922,
+              -422.0199890136719
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.1642160415649414
+            ],
+            "selectable": true,
+            "uuid": 4128963787,
+            "uuidPrefab": 0
+          }
+        ],
+        "components": [],
+        "enabled": true,
+        "id": 16,
+        "name": "Void - Cylinder",
+        "pos": [
+          -203.84361267089844,
+          34.22049331665039,
+          130.26246643066406
+        ],
+        "propOverrides": {
+          "11272843812465326562": "1:2.000000,2.000000,2.000000",
+          "13911321452997764027": "1:0.000000,60.000000,-310.000000",
+          "15615708542372730715": "9:10",
+          "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+        },
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "selectable": true,
+        "uuid": 3003872224,
+        "uuidPrefab": 3258852297
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 29,
+            "name": "Coin (19)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-843.066772,107.544220,13.213097",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 13218904,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 0,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 2598515685482621056
+              }
+            ],
+            "enabled": true,
+            "id": 10,
+            "name": "Coin (19)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-745.059265,63.826008,-78.490097",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1736889274,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 0,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 2598515685482621056
+              }
+            ],
+            "enabled": true,
+            "id": 13,
+            "name": "Coin (19)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-937.947083,63.826008,-82.312683",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3650046009,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 0,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 2598515685482621056
+              }
+            ],
+            "enabled": true,
+            "id": 26,
+            "name": "Coin (19)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-937.963196,63.826008,105.983521",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 700069233,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 0,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 2598515685482621056
+              }
+            ],
+            "enabled": true,
+            "id": 57,
+            "name": "Coin (19)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-742.319763,63.826008,105.983704",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3639797637,
+            "uuidPrefab": 1066636061
+          }
+        ],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.7066589593887329,
+                  0.7782257795333862,
+                  0.14434833824634552,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  0.8324777483940125,
+                  0.9435483813285828,
+                  0.2549102306365967,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": true,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "block01",
+              "model": 13215419027432979116
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 18014099263363252898
+          },
+          {
+            "data": {
+              "meshFilter": "block01",
+              "modelUUID": 13215419027432979116
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 1988278420214648730
+          },
+          {
+            "data": {
+              "halfExtend": [
+                160.0,
+                160.0,
+                160.0
+              ],
+              "offset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "type": 1
+            },
+            "id": 8,
+            "name": "Culling",
+            "uuid": 8859718526900346609
+          }
+        ],
+        "enabled": true,
+        "id": 28,
+        "name": "Platform Gap (26)",
+        "pos": [
+          -845.9656372070313,
+          10.0,
+          10.0
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.7071066498756409,
+          0.0,
+          0.70710688829422
+        ],
+        "scale": [
+          1.2899593114852905,
+          1.2899998426437378,
+          1.2899593114852905
+        ],
+        "selectable": true,
+        "uuid": 630002348,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 30,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-197.623474,68.755028,120.912781",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 478967035,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 31,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-199.790054,68.755028,-116.983536",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 602047185,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 32,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:199.765503,68.755028,-116.983536",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 308358724,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 33,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:199.765503,68.755028,118.157211",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 2558935524,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 34,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-0.471951,68.755028,228.379089",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1646071915,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 35,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-0.471951,68.755028,-228.124664",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 464591450,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 39,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-0.959377,272.553802,-167.829071",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 774534736,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 40,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:138.410156,341.918427,86.811447",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1827037035,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 41,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:0.807415,578.000000,-79.368805",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 2570471303,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 42,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:0.807415,578.000000,78.616386",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 105269701,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 43,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:69.696259,578.000000,40.038635",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 52541208,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 44,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:69.696259,578.000000,-42.628086",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3433753012,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 46,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-71.755577,578.000000,40.957100",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3584259978,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 45,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-71.755577,578.000000,-42.628086",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3784626845,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 47,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-102.124878,436.677216,-58.320328",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1538070483,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 68,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:9.563347,438.363831,-1210.000000",
+              "14002388133320080928": "9:1",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000",
+              "9682573030051617279": "9:3"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3580369624,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": false,
+            "id": 69,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:8.169777,539.969055,-1210.000000",
+              "14002388133320080928": "9:1",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000",
+              "9682573030051617279": "9:2"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 925348312,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 70,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:9.563347,295.060272,-1210.000000",
+              "14002388133320080928": "9:1",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000",
+              "9682573030051617279": "9:3"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 395302549,
+            "uuidPrefab": 1066636061
+          }
+        ],
+        "components": [],
+        "enabled": true,
+        "id": 27,
+        "name": "Static Coins",
+        "pos": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "propOverrides": {},
+        "rot": [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 4225399579,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 0,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 36,
+            "name": "Coin (14)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:389.928558,92.185471,6.040610",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3966302059,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 349521444,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 17,
+            "name": "Coin (15)",
+            "pos": [
+              10.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:389.928558,-128.502625,6.040610",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 2377329536,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 349521444,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 18,
+            "name": "Coin (16)",
+            "pos": [
+              10.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:389.930023,-15.646605,-108.675179",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 2374000854,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 349521444,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 13,
+            "name": "Coin (17)",
+            "pos": [
+              20.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:389.928314,-15.646605,121.115326",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 2481549834,
+            "uuidPrefab": 1066636061
+          }
+        ],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.8225806355476379,
+                  0.5649357438087463,
+                  0.0796046033501625,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  0.9193548560142517,
+                  0.6455394625663757,
+                  0.1297476440668106,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": true,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "blockRot00",
+              "model": 13215419027432979116
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 18014099263363252898
+          },
+          {
+            "data": {
+              "meshFilter": "blockRot00",
+              "modelUUID": 13215419027432979116
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 1988278420214648730
+          },
+          {
+            "data": {
+              "halfExtend": [
+                110.0,
+                90.0,
+                90.0
+              ],
+              "offset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "type": 0
+            },
+            "id": 8,
+            "name": "Culling",
+            "uuid": 8859718526900346609
+          },
+          {
+            "data": {
+              "args": {
+                "active": " 0",
+                "speed": "0.5"
+              },
+              "script": 14223520606171785222
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 18082983918923162226
+          }
+        ],
+        "enabled": true,
+        "id": 15,
+        "name": "CylinderRot 0",
+        "pos": [
+          386.0936279296875,
+          -17.339466094970703,
+          6.0181427001953125
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.7071068286895752,
+          0.0,
+          0.7071067094802856
+        ],
+        "scale": [
+          0.9999920725822449,
+          1.0,
+          0.9999920725822449
+        ],
+        "selectable": false,
+        "uuid": 2536842505,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.31880855560302734,
+                      0.6129032373428345,
+                      0.07661290466785431,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      0.49019694328308105,
+                      0.9395161271095276,
+                      0.21593719720840454,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": true,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": true
+                  },
+                  "meshFilter": "center",
+                  "model": 13215419027432979116
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 18014099263363252898
+              },
+              {
+                "data": {
+                  "meshFilter": "center",
+                  "modelUUID": 13215419027432979116
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 1988278420214648730
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    205.0,
+                    300.0,
+                    205.0
+                  ],
+                  "offset": [
+                    0.0,
+                    250.0,
+                    0.0
+                  ],
+                  "type": 0
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 8859718526900346609
+              }
+            ],
+            "enabled": true,
+            "id": 38,
+            "name": "Center Piece",
+            "pos": [
+              -0.5739326477050781,
+              39.445106506347656,
+              -0.0738067626953125
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 116224703,
+            "uuidPrefab": 0
+          }
+        ],
+        "components": [],
+        "enabled": true,
+        "id": 37,
+        "name": "Void Center",
+        "pos": [
+          -203.84361267089844,
+          34.22049331665039,
+          130.26246643066406
+        ],
+        "propOverrides": {
+          "11272843812465326562": "1:6.260000,6.260000,6.260000",
+          "13911321452997764027": "1:0.000000,40.000000,0.000000",
+          "15615708542372730715": "9:20",
+          "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+        },
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "selectable": true,
+        "uuid": 2148478032,
+        "uuidPrefab": 3258852297
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 0,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 51,
+            "name": "Coin (14)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-3.353888,195.359940,-690.008423",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 601831224,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 349521444,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 54,
+            "name": "Coin (15)",
+            "pos": [
+              10.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-3.353875,-113.670113,-836.659607",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 2010414990,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 349521444,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 55,
+            "name": "Coin (16)",
+            "pos": [
+              10.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-181.161255,44.338966,-761.611267",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3811092533,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 349521444,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 56,
+            "name": "Coin (17)",
+            "pos": [
+              20.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:175.012436,44.390617,-761.721375",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 2256830355,
+            "uuidPrefab": 1066636061
+          }
+        ],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.6048387289047241,
+                  0.5524031519889832,
+                  0.4536290466785431,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  0.9435483813285828,
+                  0.8485553860664368,
+                  0.6696150302886963,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": true,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "blockRot00",
+              "model": 13215419027432979116
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 18014099263363252898
+          },
+          {
+            "data": {
+              "meshFilter": "blockRot00",
+              "modelUUID": 13215419027432979116
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 1988278420214648730
+          },
+          {
+            "data": {
+              "halfExtend": [
+                120.0,
+                90.0,
+                130.0
+              ],
+              "offset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "type": 0
+            },
+            "id": 8,
+            "name": "Culling",
+            "uuid": 8859718526900346609
+          },
+          {
+            "data": {
+              "args": {
+                "active": " 0",
+                "speed": "0.8"
+              },
+              "script": 14223520606171785222
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 18082983918923162226
+          }
+        ],
+        "enabled": true,
+        "id": 48,
+        "name": "CylinderRot 0",
+        "pos": [
+          -0.0,
+          40.0,
+          -760.0
+        ],
+        "propOverrides": {},
+        "rot": [
+          -3.795180964516476e-05,
+          0.9755611419677734,
+          0.21972821652889252,
+          -0.00016850026440806687
+        ],
+        "scale": [
+          1.5499814748764038,
+          1.5499992370605469,
+          1.5499838590621948
+        ],
+        "selectable": true,
+        "uuid": 2870101356,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [],
+        "enabled": true,
+        "id": 60,
+        "name": "Goal (60)",
+        "pos": [
+          -60.0,
+          0.0,
+          300.0
+        ],
+        "propOverrides": {
+          "11272843812465326562": "1:1.000000,1.000000,1.000000",
+          "13911321452997764027": "1:628.035461,685.433105,3.987335",
+          "6189339733111030771": "9:1",
+          "847835718806442552": "9:4",
+          "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+        },
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 3508954763,
+        "uuidPrefab": 1245864117
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "",
+              "model": 14061694646240479583
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 17528814242325218933
+          },
+          {
+            "data": {
+              "meshFilter": "",
+              "modelUUID": 14061694646240479583
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 3907054344854827222
+          },
+          {
+            "data": {
+              "args": {
+                "axisX": "0",
+                "axisY": "1",
+                "axisZ": "0",
+                "coinAmount": "",
+                "name": "",
+                "radius": "230",
+                "speed": "900",
+                "texBg": "0",
+                "texGrad": "0",
+                "type": "2"
+              },
+              "script": 14292327376580313433
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 10469320593810992953
+          }
+        ],
+        "enabled": true,
+        "id": 61,
+        "name": "Platform (6)",
+        "pos": [
+          0.0,
+          380.0,
+          0.0
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 2517368958,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 82,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:530.007507,110.876480,569.795227",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1581629162,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 105,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:530.007507,202.917374,569.795227",
+              "14002388133320080928": "9:1",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 2440185215,
+            "uuidPrefab": 1066636061
+          }
+        ],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "",
+              "model": 14061694646240479583
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 17528814242325218933
+          },
+          {
+            "data": {
+              "meshFilter": "",
+              "modelUUID": 14061694646240479583
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 3907054344854827222
+          }
+        ],
+        "enabled": true,
+        "id": 62,
+        "name": "Platform (6)",
+        "pos": [
+          530.0,
+          70.21723175048828,
+          570.0
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 3858499599,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 0,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 76,
+            "name": "Coin (14)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-255.182220,493.837769,-1075.302124",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3591693639,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 0,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 77,
+            "name": "Coin (15)",
+            "pos": [
+              10.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-250.000000,470.000000,-670.000000",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3039178085,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 1852403523,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 78,
+            "name": "Coin (16)",
+            "pos": [
+              10.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-422.813293,360.793579,-868.394226",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3302631948,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 0,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 79,
+            "name": "Coin (17)",
+            "pos": [
+              20.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-54.938972,475.445801,-874.846436",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 3036793261,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 0,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 89,
+            "name": "Coin (17)",
+            "pos": [
+              20.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-452.663452,475.445801,-874.846436",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1182989158,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 0,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 90,
+            "name": "Coin (17)",
+            "pos": [
+              20.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-244.221039,506.160828,-882.000000",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1464407481,
+            "uuidPrefab": 1066636061
+          }
+        ],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.44354838132858276,
+                  0.44354838132858276,
+                  0.44354838132858276,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  0.6451612710952759,
+                  0.6451612710952759,
+                  0.6451612710952759,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": true,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "blockRot01",
+              "model": 13215419027432979116
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 18014099263363252898
+          },
+          {
+            "data": {
+              "meshFilter": "blockRot01",
+              "modelUUID": 13215419027432979116
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 1988278420214648730
+          },
+          {
+            "data": {
+              "halfExtend": [
+                130.0,
+                100.0,
+                130.0
+              ],
+              "offset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "type": 0
+            },
+            "id": 8,
+            "name": "Culling",
+            "uuid": 8859718526900346609
+          },
+          {
+            "data": {
+              "args": {
+                "active": " 0",
+                "axisX": "0",
+                "axisY": "0",
+                "axisZ": "1",
+                "radius": "1",
+                "speed": "1",
+                "type": "0"
+              },
+              "script": 14292327376580313433
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 18082983918923162226
+          }
+        ],
+        "enabled": true,
+        "id": 75,
+        "name": "CylinderRot Top 0",
+        "pos": [
+          -247.4713592529297,
+          495.0,
+          -876.618896484375
+        ],
+        "propOverrides": {},
+        "rot": [
+          -0.7071066498756409,
+          0.0,
+          0.0,
+          0.70710688829422
+        ],
+        "scale": [
+          1.9529982805252075,
+          1.9529953002929688,
+          2.2736976146698
+        ],
+        "selectable": true,
+        "uuid": 2904024167,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 0,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 72,
+            "name": "Coin (14)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-254.543030,534.259399,-432.055664",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 923174512,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 288,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 19,
+            "name": "Coin (15)",
+            "pos": [
+              10.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-254.543030,313.569489,-432.055664",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 2148031368,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 1852403523,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 73,
+            "name": "Coin (16)",
+            "pos": [
+              10.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-145.360992,426.425293,-467.257935",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1025050631,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "objectUUID": 349521444,
+                  "type": 1,
+                  "usePos": false,
+                  "useRot": false,
+                  "useScale": false
+                },
+                "id": 7,
+                "name": "Constraint",
+                "uuid": 15506154880841487427
+              }
+            ],
+            "enabled": true,
+            "id": 74,
+            "name": "Coin (17)",
+            "pos": [
+              20.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-364.067139,426.425293,-396.743896",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 508447150,
+            "uuidPrefab": 1066636061
+          }
+        ],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.6298965811729431,
+                  0.9032257795333862,
+                  0.18210196495056152,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  0.5076251029968262,
+                  0.8064516186714172,
+                  0.10731013864278793,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": true,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "blockRot00",
+              "model": 13215419027432979116
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 18014099263363252898
+          },
+          {
+            "data": {
+              "meshFilter": "blockRot00",
+              "modelUUID": 13215419027432979116
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 1988278420214648730
+          },
+          {
+            "data": {
+              "halfExtend": [
+                140.0,
+                100.0,
+                120.0
+              ],
+              "offset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "type": 0
+            },
+            "id": 8,
+            "name": "Culling",
+            "uuid": 8859718526900346609
+          },
+          {
+            "data": {
+              "args": {
+                "active": " 0",
+                "speed": "1"
+              },
+              "script": 14223520606171785222
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 18082983918923162226
+          }
+        ],
+        "enabled": true,
+        "id": 71,
+        "name": "CylinderRot Top 1",
+        "pos": [
+          -247.5,
+          427.5,
+          -450.0
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.15531137585639954,
+          0.0,
+          0.9878655672073364
+        ],
+        "scale": [
+          0.9999979734420776,
+          1.0,
+          1.1642155647277832
+        ],
+        "selectable": true,
+        "uuid": 2472113726,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": false,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": false
+                  },
+                  "meshFilter": "",
+                  "model": 14061694646240479583
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 17528814242325218933
+              },
+              {
+                "data": {
+                  "meshFilter": "",
+                  "modelUUID": 14061694646240479583
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 3907054344854827222
+              },
+              {
+                "data": {
+                  "args": {
+                    "axisX": "0",
+                    "axisY": "1",
+                    "axisZ": "0",
+                    "coinAmount": "",
+                    "name": "",
+                    "radius": "420",
+                    "speed": "1",
+                    "texBg": "0",
+                    "texGrad": "0",
+                    "type": "1"
+                  },
+                  "script": 14292327376580313433
+                },
+                "id": 0,
+                "name": "Code",
+                "uuid": 10469320593810992953
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    70.0,
+                    30.0,
+                    70.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "type": 0
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 18132675770173719008
+              }
+            ],
+            "enabled": true,
+            "id": 67,
+            "name": "Platform (6)",
+            "pos": [
+              10.0,
+              397.22698974609375,
+              -1210.0
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 418891991,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": false,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": false
+                  },
+                  "meshFilter": "",
+                  "model": 14061694646240479583
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 17528814242325218933
+              },
+              {
+                "data": {
+                  "meshFilter": "",
+                  "modelUUID": 14061694646240479583
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 3907054344854827222
+              },
+              {
+                "data": {
+                  "args": {
+                    "axisX": "0",
+                    "axisY": "1",
+                    "axisZ": "0",
+                    "coinAmount": "",
+                    "name": "",
+                    "radius": "400",
+                    "speed": "1000",
+                    "texBg": "0",
+                    "texGrad": "0",
+                    "type": "2"
+                  },
+                  "script": 14292327376580313433
+                },
+                "id": 0,
+                "name": "Code",
+                "uuid": 10469320593810992953
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    70.0,
+                    30.0,
+                    70.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "type": 0
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 6842402311593419666
+              }
+            ],
+            "enabled": true,
+            "id": 80,
+            "name": "Platform (6)",
+            "pos": [
+              10.0,
+              513.8464965820313,
+              -1210.0
+            ],
+            "propOverrides": {},
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1331826971,
+            "uuidPrefab": 0
+          }
+        ],
+        "components": [],
+        "enabled": true,
+        "id": 81,
+        "name": "Void - Platfor Up",
+        "pos": [
+          -203.84361267089844,
+          34.22049331665039,
+          130.26246643066406
+        ],
+        "propOverrides": {
+          "11272843812465326562": "1:2.000000,2.000000,2.000000",
+          "13911321452997764027": "1:10.000000,220.000000,-1200.000000",
+          "15615708542372730715": "9:5",
+          "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+        },
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "selectable": true,
+        "uuid": 1671719087,
+        "uuidPrefab": 3258852297
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 15506154880841487427
+                  }
+                ],
+                "enabled": true,
+                "id": 84,
+                "name": "Coin (14)",
+                "pos": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:297.333435,700.643982,6.042706",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 2109876149,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 349521444,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 15506154880841487427
+                  }
+                ],
+                "enabled": true,
+                "id": 85,
+                "name": "Coin (15)",
+                "pos": [
+                  10.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:386.284119,477.144257,6.042706",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 2284497510,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 349521444,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 15506154880841487427
+                  }
+                ],
+                "enabled": true,
+                "id": 86,
+                "name": "Coin (16)",
+                "pos": [
+                  10.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:340.800751,591.439514,-118.997536",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 3384983685,
+                "uuidPrefab": 1066636061
+              },
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "objectUUID": 349521444,
+                      "type": 1,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 15506154880841487427
+                  }
+                ],
+                "enabled": true,
+                "id": 87,
+                "name": "Coin (17)",
+                "pos": [
+                  20.0,
+                  0.0,
+                  0.0
+                ],
+                "propOverrides": {
+                  "11272843812465326562": "1:1.000000,1.000000,1.000000",
+                  "13911321452997764027": "1:340.793365,591.438538,131.474792",
+                  "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+                },
+                "rot": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "scale": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "selectable": true,
+                "uuid": 418785146,
+                "uuidPrefab": 1066636061
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.8225806355476379,
+                      0.5649357438087463,
+                      0.0796046033501625,
+                      1.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "lighting": true,
+                    "prim": [
+                      0.9193548560142517,
+                      0.6455394625663757,
+                      0.1297476440668106,
+                      1.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": true,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": true
+                  },
+                  "meshFilter": "blockRot00",
+                  "model": 13215419027432979116
+                },
+                "id": 1,
+                "name": "Model",
+                "uuid": 18014099263363252898
+              },
+              {
+                "data": {
+                  "meshFilter": "blockRot00",
+                  "modelUUID": 13215419027432979116
+                },
+                "id": 4,
+                "name": "Collision-Mesh",
+                "uuid": 1988278420214648730
+              },
+              {
+                "data": {
+                  "halfExtend": [
+                    200.0,
+                    200.0,
+                    200.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "type": 1
+                },
+                "id": 8,
+                "name": "Culling",
+                "uuid": 8859718526900346609
+              },
+              {
+                "data": {
+                  "args": {
+                    "active": " 0",
+                    "speed": "0.5"
+                  },
+                  "script": 14223520606171785222
+                },
+                "id": 0,
+                "name": "Code",
+                "uuid": 18082983918923162226
+              }
+            ],
+            "enabled": true,
+            "id": 83,
+            "name": "CylinderRot 0",
+            "pos": [
+              336.24017333984375,
+              587.6387329101563,
+              6.0181427001953125
+            ],
+            "propOverrides": {},
+            "rot": [
+              -0.1331183761358261,
+              0.6944634914398193,
+              0.13311830163002014,
+              0.6944634318351746
+            ],
+            "scale": [
+              1.0899741649627686,
+              1.090000033378601,
+              1.4703469276428223
+            ],
+            "selectable": true,
+            "uuid": 2966944698,
+            "uuidPrefab": 0
+          }
+        ],
+        "components": [],
+        "enabled": true,
+        "id": 88,
+        "name": "Void (88)",
+        "pos": [
+          -203.84361267089844,
+          34.22049331665039,
+          130.26246643066406
+        ],
+        "propOverrides": {
+          "11272843812465326562": "1:1.440000,1.440000,1.440000",
+          "13911321452997764027": "1:-0.000000,570.000000,-0.000000",
+          "15615708542372730715": "9:10",
+          "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+        },
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "selectable": true,
+        "uuid": 904746348,
+        "uuidPrefab": 3258852297
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 92,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-540.094421,105.015648,985.177307",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 1256636885,
+            "uuidPrefab": 1066636061
+          },
+          {
+            "children": [],
+            "components": [],
+            "enabled": true,
+            "id": 104,
+            "name": "Coin (30)",
+            "pos": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "propOverrides": {
+              "11272843812465326562": "1:1.000000,1.000000,1.000000",
+              "13911321452997764027": "1:-540.094421,169.516144,985.177307",
+              "14002388133320080928": "9:1",
+              "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
+            },
+            "rot": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "selectable": true,
+            "uuid": 4049856761,
+            "uuidPrefab": 1066636061
+          }
+        ],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "",
+              "model": 14061694646240479583
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 17528814242325218933
+          },
+          {
+            "data": {
+              "meshFilter": "",
+              "modelUUID": 14061694646240479583
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 3907054344854827222
+          }
+        ],
+        "enabled": true,
+        "id": 91,
+        "name": "Platform (6)",
+        "pos": [
+          -540.1019287109375,
+          72.0135726928711,
+          985.382080078125
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 118103086,
+        "uuidPrefab": 0
+      }
+    ],
+    "components": [],
+    "enabled": true,
+    "id": 0,
+    "name": "Scene",
+    "pos": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "propOverrides": {},
+    "rot": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "selectable": true,
+    "uuid": 4252910706,
+    "uuidPrefab": 0
+  }
+}
