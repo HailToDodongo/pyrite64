@@ -72,11 +72,11 @@ void Editor::AssetsBrowser::draw() {
     ImGui::SameLine();
     ImGui::BeginChild("END", ImVec2(sceneOptionsWidth, 0), ImGuiChildFlags_Borders);
 
-    ImGui::Text(message(Message::ON_BOOT));
+    ImGui::Text(message(Message::SCENE_ON_BOOT));
     ImGui::SetNextItemWidth(-FLT_MIN);
     ImGui::VectorComboBox("##Boot", scenes, ctx.project->conf.sceneIdOnBoot);
 
-    ImGui::Text(message(Message::ON_RESET));
+    ImGui::Text(message(Message::SCENE_ON_RESET));
     ImGui::SetNextItemWidth(-FLT_MIN);
     ImGui::VectorComboBox("##Reset", scenes, ctx.project->conf.sceneIdOnReset);
 

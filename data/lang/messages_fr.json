@@ -1,6 +1,17 @@
 {
-  "no_asset_selected": "Aucun asset sélectionné",
-  "asset_file": "Fichier : %s",
-  "on_boot": "Au démarrage",
-  "on_reset": "Au redémarrage"
+  "asset": {
+    "none_selected": "Aucun asset sélectionné",
+    "file": "Fichier : %s",
+    "settings": "Paramètres",
+    "image_format": "Format :"
+  },
+  "model": {
+    "base_scale": "Échelle",
+    "create_bvh": "Créer BVH",
+    "collision": "Collision"
+  },
+  "scene": {
+    "on_boot": "Au démarrage",
+    "on_reset": "Au redémarrage"
+  }
 }

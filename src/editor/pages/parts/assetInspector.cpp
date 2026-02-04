@@ -19,7 +19,7 @@ Editor::AssetInspector::AssetInspector() {
 
 void Editor::AssetInspector::draw() {
   if (ctx.selAssetUUID == 0) {
-    ImGui::Text(message(Message::NO_ASSET_SELECTED));
+    ImGui::Text(message(Message::ASSET_NONE_SELECTED));
     return;
   }
 
@@ -38,21 +38,21 @@ void Editor::AssetInspector::draw() {
   }
 
   ImGui::Text(message(Message::ASSET_FILE), asset->name.c_str());
-  if (hasAssetConf && ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen))
+  if (hasAssetConf && ImGui::CollapsingHeader(message(Message::ASSET_SETTINGS), ImGuiTreeNodeFlags_DefaultOpen))
   {
     ImTable::start("Settings");
 
     if (asset->type == FileType::IMAGE)
     {
-      ImTable::addComboBox("Format", asset->conf.format, Utils::TEX_TYPES, Utils::TEX_TYPE_COUNT);
+      ImTable::addComboBox(message(Message::IMAGE_COMBOBOX_FORMAT), asset->conf.format, Utils::TEX_TYPES, Utils::TEX_TYPE_COUNT);
     }
     else if (asset->type == FileType::MODEL_3D)
     {
-      if (ImTable::add("Base-Scale", asset->conf.baseScale)) {
+      if (ImTable::add(message(Message::MODEL_BASE_SCALE), asset->conf.baseScale)) {
         ctx.project->getAssets().reloadAssetByUUID(asset->getUUID());
       }
-      ImTable::addCheckBox("Create BVH", asset->conf.gltfBVH);
-      ImTable::addProp("Collision", asset->conf.gltfCollision);
+      ImTable::addCheckBox(message(Message::MODEL_CREATE_BVH), asset->conf.gltfBVH);
+      ImTable::addProp(message(Message::MODEL_COLLISION), asset->conf.gltfCollision);
     } else if (asset->type == FileType::FONT)
     {
       ImTable::add("Size", asset->conf.baseScale);

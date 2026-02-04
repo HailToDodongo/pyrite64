@@ -12,9 +12,14 @@ namespace Editor
   const char* message(const std::string &id);
 
   namespace Message {
-    extern const std::string NO_ASSET_SELECTED;
+    extern const std::string ASSET_NONE_SELECTED;
     extern const std::string ASSET_FILE;
-    extern const std::string ON_BOOT;
-    extern const std::string ON_RESET;
+    extern const std::string ASSET_SETTINGS;
+    extern const std::string IMAGE_COMBOBOX_FORMAT;
+    extern const std::string MODEL_BASE_SCALE;
+    extern const std::string MODEL_CREATE_BVH;
+    extern const std::string MODEL_COLLISION;
+    extern const std::string SCENE_ON_BOOT;
+    extern const std::string SCENE_ON_RESET;
   }
 }
