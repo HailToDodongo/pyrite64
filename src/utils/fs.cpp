@@ -35,9 +35,21 @@ void Utils::FS::ensureFile(const std::string &path, const std::string &pathTempl
   }
 }
 
+void Utils::FS::copyDir(const std::string &srcPath, const std::string &dstPath)
+{
+  std::filesystem::path fsSrcPath{srcPath};
+  std::filesystem::path fsDstPath{dstPath};
+  std::filesystem::copy(fsSrcPath, fsDstPath, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+}
+
 void Utils::FS::delFile(const std::string &filePath)
 {
   std::filesystem::remove(filePath);
+}
+
+void Utils::FS::delDir(const std::string &dirPath)
+{
+  std::filesystem::remove_all(dirPath);
 }
 
 uint64_t Utils::FS::getFileAge(const std::string &filePath)

@@ -11,10 +11,16 @@ namespace
   Editor::Actions::ActionFn actionCallbacks[0xFF];
 }
 
+namespace Editor::Actions
+{
+  void initGlobalActions();
+}
+
 void Editor::Actions::init() {
   for (auto &cb : actionCallbacks) {
     cb = nullptr;
   }
+  initGlobalActions();
 }
 
 void Editor::Actions::registerAction(Type type, ActionFn fn) {

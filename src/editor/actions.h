@@ -14,6 +14,7 @@ namespace Editor::Actions
     PROJECT_OPEN,
     PROJECT_CLOSE,
     PROJECT_BUILD,
+    PROJECT_CREATE,
     PROJECT_CLEAN,
     ASSETS_RELOAD,
     COPY, PASTE,

@@ -37,8 +37,11 @@ namespace Utils::FS
 
   void ensureDir(const std::string &path);
   void ensureFile(const std::string &path, const std::string &pathTemplate);
+  void copyDir(const std::string &srcPath, const std::string &dstPath);
 
   void delFile(const std::string &filePath);
+  void delDir(const std::string &dirPath);
 
   uint64_t getFileAge(const std::string &filePath);
+
 }

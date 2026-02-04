@@ -1,8 +1,8 @@
 {
-  "name": "GJ25",
+  "name": "Pyrite64 Project",
   "pathEmu": "ares",
-  "pathN64Inst": "/opt/libdragon",
-  "romName": "gj25",
+  "pathN64Inst": "",
+  "romName": "p64_project",
   "sceneIdOnBoot": 1,
   "sceneIdOnReset": 1
 }

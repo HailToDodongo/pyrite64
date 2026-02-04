@@ -12,6 +12,7 @@
 #include "../actions.h"
 #include "../../utils/filePicker.h"
 #include "backends/imgui_impl_sdlgpu3.h"
+#include "parts/createProjectOverlay.h"
 #include "SDL3/SDL_dialog.h"
 
 void ImDrawCallback_ImplSDLGPU3_SetSamplerRepeat(const ImDrawList* parent_list, const ImDrawCmd* cmd);
@@ -29,7 +30,7 @@ namespace
   ) {
     ImGui::PushFont(nullptr, 24);
     ImGui::SetCursorPos({
-      centerPosX - (ImGui::CalcTextSize(text).x / 2),
+      centerPosX - (ImGui::CalcTextSize(text).x / 2) + 6,
       midBgPointY + (btnSizeLast.y / 2) + 10
     });
 
@@ -136,10 +137,7 @@ void Editor::Main::draw()
 
   if(renderButton(texBtnAdd, "Create Project", isHoverAdd, true))
   {
-    Utils::FilePicker::open([](const std::string &path) {
-      if (path.empty()) return;
-      Actions::call(Actions::Type::PROJECT_OPEN, path);
-    }, true, "Choose Folder to create new Project in");
+    CreateProjectOverlay::open();
   }
 
   if (renderButton(texBtnOpen, "Open Project", isHoverLast, false)) {
@@ -161,6 +159,8 @@ void Editor::Main::draw()
     io.DisplaySize.y - 30
   });
   ImGui::Text(creditsStr);
+
+  CreateProjectOverlay::draw();
 
   ImGui::End();
 }

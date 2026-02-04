@@ -27,25 +27,12 @@
 #include "utils/logger.h"
 #include "utils/proc.h"
 
-constinit Context ctx{};
+Context ctx{};
 constinit SDL_GPUSampler *texSamplerRepeat{nullptr};
 
 namespace T3DM
 {
   thread_local Config config{};
-}
-
-namespace {
-
-  constinit std::future<void> futureBuildRun{};
-
-  bool isBuildOrRunning() {
-    if (futureBuildRun.valid()) {
-      auto state = futureBuildRun.wait_for(std::chrono::seconds(0));
-      return state != std::future_status::ready;
-    }
-    return false;
-  }
 }
 
 void ImDrawCallback_ImplSDLGPU3_SetSamplerRepeat(const ImDrawList* parent_list, const ImDrawCmd* cmd) {
@@ -160,105 +147,6 @@ int main(int argc, char** argv)
 
   {
     Editor::Actions::init();
-    Editor::Actions::registerAction(Editor::Actions::Type::PROJECT_OPEN, [](const std::string &path) {
-      Utils::Logger::log("Open Project: " + path);
-      delete ctx.project;
-      try {
-        ctx.project = new Project::Project(path);
-        if(ctx.project && !ctx.project->getScenes().getEntries().empty()) {
-          ctx.project->getScenes().loadScene(ctx.project->conf.sceneIdOnBoot);
-        }
-      } catch (const std::exception &e) {
-        Utils::Logger::log("Failed to open project: " + std::string(e.what()), Utils::Logger::LEVEL_ERROR);
-        ctx.project = nullptr;
-        return false;
-      }
-      return true;
-    });
-
-    Editor::Actions::registerAction(Editor::Actions::Type::PROJECT_CLOSE, [](const std::string&) {
-      delete ctx.project;
-      ctx.project = nullptr;
-      return true;
-    });
-
-    Editor::Actions::registerAction(Editor::Actions::Type::PROJECT_CLEAN, [](const std::string& arg) {
-      if (ctx.isBuildOrRunning)return false;
-      if (!ctx.project)return false;
-      Utils::Logger::log("Clean Project");
-
-      std::string runCmd = "make -C \"" + ctx.project->getPath() + "\" clean";
-
-      ctx.isBuildOrRunning = true;
-      futureBuildRun = std::async(std::launch::async, [] (std::string runCmd)
-      {
-        Utils::Proc::runSyncLogged(runCmd);
-      }, runCmd);
-
-      return true;
-    });
-
-    Editor::Actions::registerAction(Editor::Actions::Type::PROJECT_BUILD, [](const std::string& arg) {
-      if (ctx.isBuildOrRunning)return false;
-      if (!ctx.project)return false;
-
-      ImGui::SetWindowFocus("Log");
-
-      auto z64Path = ctx.project->getPath() + "/" + ctx.project->conf.romName + ".z64";
-      Utils::FS::delFile(z64Path);
-
-      std::string runCmd{};
-      if (arg == "run") {
-        runCmd = ctx.project->conf.pathEmu + " " + z64Path;
-      }
-
-      ctx.isBuildOrRunning = true;
-      futureBuildRun = std::async(std::launch::async, [] (std::string path, std::string runCmd)
-      {
-        if(!Build::buildProject(path)) {
-          // @TODO: error popup
-          return;
-        }
-
-        if (!runCmd.empty()) {
-          Utils::Proc::runSyncLogged(runCmd);
-        }
-      }, ctx.project->getPath(), runCmd);
-
-      return true;
-    });
-
-    Editor::Actions::registerAction(Editor::Actions::Type::ASSETS_RELOAD, [](const std::string&) {
-      if(ctx.project) {
-        ctx.project->getAssets().reload();
-      }
-      return true;
-    });
-
-    Editor::Actions::registerAction(Editor::Actions::Type::COPY, [](const std::string&) {
-      if(!ctx.project)return false;
-      auto scene = ctx.project->getScenes().getLoadedScene();
-      if(!scene)return false;
-
-      auto obj = scene->getObjectByUUID(ctx.selObjectUUID);
-      if(!obj)return false;
-
-      ctx.clipboard.data = obj->serialize().dump();
-      ctx.clipboard.refUUID = obj->parent ? obj->parent->uuid : 0;
-
-      return true;
-    });
-
-    Editor::Actions::registerAction(Editor::Actions::Type::PASTE, [](const std::string&) {
-      if(!ctx.project || ctx.clipboard.data.empty())return false;
-      auto scene = ctx.project->getScenes().getLoadedScene();
-      if(!scene)return false;
-
-      auto obj = scene->addObject(ctx.clipboard.data, ctx.clipboard.refUUID);
-      ctx.selObjectUUID = obj->uuid;
-      return true;
-    });
-
     Utils::Logger::clear();
 
     Renderer::Scene scene{};
@@ -271,7 +159,6 @@ int main(int argc, char** argv)
     while(!done) {
 
       auto frameStart = SDL_GetTicksNS();
-      ctx.isBuildOrRunning = isBuildOrRunning();
       //printf("Frame Start | Time: %.2fms\n", ImGui::GetIO().DeltaTime * 1000.0f);
       SDL_Event event;
       while (SDL_PollEvent(&event))
