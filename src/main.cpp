@@ -15,6 +15,7 @@
 #include "cli.h"
 #include "build/projectBuilder.h"
 #include "editor/actions.h"
+#include "editor/imgui/lang.h"
 #include "editor/imgui/theme.h"
 #include "editor/pages/editorMain.h"
 #include "editor/pages/editorScene.h"
@@ -24,6 +25,7 @@
 #include "tiny3d/tools/gltf_importer/src/structs.h"
 #include "utils/filePicker.h"
 #include "utils/fs.h"
+#include "utils/json.h"
 #include "utils/logger.h"
 #include "utils/proc.h"
 
@@ -147,6 +149,14 @@ int main(int argc, char** argv)
 
   ImGui::applyTheme();
   ImGui::loadFonts(main_scale);
+
+  // Read language from global config file (defaults to english)
+  auto configJSON = Utils::JSON::loadFile("data/config.json");
+  if (configJSON.empty()) {
+    Editor::applyLang( "en");
+  } else {
+    Editor::applyLang(configJSON.value("lang", "en").c_str());
+  }
 
   // Setup Platform/Renderer backends
   ImGui_ImplSDL3_InitForSDLGPU(window);

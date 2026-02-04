@@ -1,0 +1,6 @@
+{
+  "no_asset_selected": "Aucun asset sélectionné",
+  "asset_file": "Fichier : %s",
+  "on_boot": "Au démarrage",
+  "on_reset": "Au redémarrage"
+}

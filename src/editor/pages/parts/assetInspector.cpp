@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "../../imgui/helper.h"
+#include "../../imgui/lang.h"
 #include "../../../context.h"
 #include "../../../utils/textureFormats.h"
 
@@ -18,7 +19,7 @@ Editor::AssetInspector::AssetInspector() {
 
 void Editor::AssetInspector::draw() {
   if (ctx.selAssetUUID == 0) {
-    ImGui::Text("No Asset selected");
+    ImGui::Text(message(Message::NO_ASSET_SELECTED));
     return;
   }
 
@@ -36,7 +37,7 @@ void Editor::AssetInspector::draw() {
     hasAssetConf = false;
   }
 
-  ImGui::Text("File: %s", asset->name.c_str());
+  ImGui::Text(message(Message::ASSET_FILE), asset->name.c_str());
   if (hasAssetConf && ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen))
   {
     ImTable::start("Settings");

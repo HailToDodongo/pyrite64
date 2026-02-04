@@ -94,6 +94,8 @@ add_executable(p64editor src/main.cpp
         src/utils/json.h
         src/editor/imgui/theme.h
         src/editor/imgui/theme.cpp
+        src/editor/imgui/lang.h
+        src/editor/imgui/lang.cpp
         src/editor/imgui/helper.h
         src/utils/filePicker.h
         src/utils/filePicker.cpp
