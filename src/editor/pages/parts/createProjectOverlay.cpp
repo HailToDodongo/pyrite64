@@ -5,6 +5,8 @@
 #include "createProjectOverlay.h"
 #include "../../actions.h"
 #include "../../imgui/helper.h"
+#include <iostream>
+#include <cstdlib>
 
 namespace
 {
@@ -29,6 +31,22 @@ namespace
     }
     return safeName;
   }
+
+  std::string expandHomePath(const std::string &path)
+  {
+    const char* home = std::getenv("HOME");
+    if (!home || !*home) return path;
+
+    if (path.rfind("$HOME", 0) == 0) {
+      return std::string(home) + path.substr(5);
+    }
+
+    if (!path.empty() && path[0] == '~') {
+      return std::string(home) + path.substr(1);
+    }
+
+    return path;
+  }
 }
 
 void Editor::CreateProjectOverlay::open()
@@ -36,7 +54,13 @@ void Editor::CreateProjectOverlay::open()
   ImGui::OpenPopup("Create Project");
   projectName = "New Project";
   projectSafeName = makeNameSafe(projectName);
-  projectPath = SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS);
+  const char* docsPath = SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS);
+  if (docsPath && *docsPath) {
+    projectPath = docsPath;
+  } else {
+    const char* home = std::getenv("HOME");
+    projectPath = (home && *home) ? home : ".";
+  }
 }
 
 bool Editor::CreateProjectOverlay::draw()
@@ -82,7 +106,8 @@ bool Editor::CreateProjectOverlay::draw()
     ImGui::Dummy({0, 4});
     // text in gray
     ImGui::Text("Project will be created in:");
-    std::filesystem::path fullPath = projectPath;
+    std::string expandedPath = expandHomePath(projectPath);
+    std::filesystem::path fullPath = expandedPath;
     fullPath = fullPath / projectSafeName;
     ImGui::TextColored({0.7f, 0.7f, 0.7f, 1.0f}, "%s", fullPath.c_str());
 
