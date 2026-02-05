@@ -206,6 +206,8 @@ add_executable(p64editor src/main.cpp
         src/build/nodeGraphBuilder.cpp
         src/project/component/types/compNodeGraph.cpp
         src/project/component/types/compAnimModel.cpp
+        src/editor/pages/parts/createProjectOverlay.cpp
+        src/editor/globalActions.cpp
 )
 
 target_include_directories(p64editor PRIVATE

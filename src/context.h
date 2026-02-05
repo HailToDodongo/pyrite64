@@ -3,6 +3,8 @@
 * @license MIT
 */
 #pragma once
+#include <future>
+
 #include "project/project.h"
 #include "SDL3/SDL.h"
 
@@ -27,7 +29,17 @@ struct Context
   // Editor state
   uint64_t selAssetUUID{0};
   uint32_t selObjectUUID{0};
-  bool isBuildOrRunning{false};
+
+  std::future<void> futureBuildRun{};
+
+  [[nodiscard]] bool isBuildOrRunning() const
+  {
+    if (futureBuildRun.valid()) {
+      auto state = futureBuildRun.wait_for(std::chrono::seconds(0));
+      return state != std::future_status::ready;
+    }
+    return false;
+  }
 };
 
 extern Context ctx;

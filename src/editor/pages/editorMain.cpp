@@ -12,14 +12,31 @@
 #include "../actions.h"
 #include "../../utils/filePicker.h"
 #include "backends/imgui_impl_sdlgpu3.h"
+#include "parts/createProjectOverlay.h"
 #include "SDL3/SDL_dialog.h"
 
 void ImDrawCallback_ImplSDLGPU3_SetSamplerRepeat(const ImDrawList* parent_list, const ImDrawCmd* cmd);
 
 namespace
 {
+  constexpr float BTN_SPACING = 170;
+
   bool isHoverAdd = false;
   bool isHoverLast = false;
+
+  void renderSubText(
+    float centerPosX, const ImVec2 &btnSizeLast,
+    float midBgPointY, const char* text
+  ) {
+    ImGui::PushFont(nullptr, 24);
+    ImGui::SetCursorPos({
+      centerPosX - (ImGui::CalcTextSize(text).x / 2) + 6,
+      midBgPointY + (btnSizeLast.y / 2) + 10
+    });
+
+    ImGui::Text("%s", text);
+    ImGui::PopFont();
+  }
 }
 
 Editor::Main::Main(SDL_GPUDevice* device)
@@ -86,8 +103,6 @@ void Editor::Main::draw()
   });
   ImGui::Image(ImTextureID(texTitle.getGPUTex()),logoSize);
 
-  constexpr float BTN_SPACING = 170;
-
   auto getBtnPos = [&](ImVec2 size, bool isLeft) {
     return ImVec2{
       centerPos.x - (size.x/2) + (isLeft ? -BTN_SPACING : BTN_SPACING),
@@ -95,35 +110,42 @@ void Editor::Main::draw()
     };
   };
 
+  auto renderButton = [&](Renderer::Texture &img, const char* text, bool& hover, bool isLeft) -> bool
+  {
+    auto btnSizeAdd = img.getSize(hover ? 0.85f : 0.8f);
+    ImGui::SetCursorPos(getBtnPos(btnSizeAdd, isLeft));
+    bool res = ImGui::ImageButton(isLeft ? "L" : "R",
+        ImTextureID(img.getGPUTex()),
+        btnSizeAdd, {0,0}, {1,1}, {0,0,0,0},
+        {1,1,1, hover ? 1 : 0.8f}
+    );
+    hover = ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly);
+
+    if(hover)renderSubText(
+      centerPos.x + (isLeft ? -BTN_SPACING : BTN_SPACING),
+      btnSizeAdd, midBgPointY, text
+    );
+
+
+    return res;
+  };
+
   // Buttons
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.f, 0.f, 0.f, 0.f));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.f, 0.f, 0.f, 0.f));
 
-  auto btnSizeAdd = texBtnAdd.getSize(isHoverAdd ? 0.85f : 0.8f);
-  ImGui::SetCursorPos(getBtnPos(btnSizeAdd, true));
-  ImGui::ImageButton("New Project",
-      ImTextureID(texBtnAdd.getGPUTex()),
-      btnSizeAdd, {0,0}, {1,1}, {0,0,0,0},
-      {1,1,1, isHoverAdd ? 1 : 0.8f}
-  );
-  isHoverAdd = ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly);
+  if(renderButton(texBtnAdd, "Create Project", isHoverAdd, true))
+  {
+    CreateProjectOverlay::open();
+  }
 
-  auto btnSizeLast = texBtnOpen.getSize(isHoverLast ? 0.85f : 0.8f);
-  ImGui::SetCursorPos(getBtnPos(btnSizeLast, false));
-
-  if (ImGui::ImageButton("Open Project",
-      ImTextureID(texBtnOpen.getGPUTex()),
-      btnSizeLast, {0,0}, {1,1}, {0,0,0,0},
-      {1,1,1,isHoverLast ? 1 : 0.8f}
-  )) {
+  if (renderButton(texBtnOpen, "Open Project", isHoverLast, false)) {
     Utils::FilePicker::open([](const std::string &path) {
       if (path.empty()) return;
       Actions::call(Actions::Type::PROJECT_OPEN, path);
-    }, true);
+    }, true, "Choose Project Folder");
   }
-
-  isHoverLast = ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly);
 
   ImGui::PopStyleColor(3);
 
@@ -131,12 +153,14 @@ void Editor::Main::draw()
   ImGui::SetCursorPos({14, io.DisplaySize.y - 30});
   ImGui::Text("Pyrite64 [v0.0.0-alpha]");
 
-  constexpr const char* creditsStr = "© 2025 Max Bebök (HailToDodongo)";
+  constexpr const char* creditsStr = "©2025-2026 ~ Max Bebök (HailToDodongo)";
   ImGui::SetCursorPos({
     io.DisplaySize.x - 14 - ImGui::CalcTextSize(creditsStr).x,
     io.DisplaySize.y - 30
   });
   ImGui::Text(creditsStr);
+
+  CreateProjectOverlay::draw();
 
   ImGui::End();
 }

@@ -1,0 +1,8 @@
+{
+  "name": "Pyrite64 Project",
+  "pathEmu": "ares",
+  "pathN64Inst": "",
+  "romName": "p64_project",
+  "sceneIdOnBoot": 1,
+  "sceneIdOnReset": 1
+}
