@@ -13,6 +13,7 @@
 #include "../../../editor/pages/parts/viewport3D.h"
 #include "../../../renderer/scene.h"
 #include "../../../utils/meshGen.h"
+#include "../../../editor/imgui/lang.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/matrix_decompose.hpp"
@@ -99,19 +100,19 @@ namespace Project::Component::Camera
       if(vpSize.x == 0) vpSize.x = scene->conf.fbWidth;
       if(vpSize.y == 0) vpSize.y = scene->conf.fbHeight;*/
 
-      ImTable::add("Name", entry.name);
-      ImTable::addObjProp("Offset", data.vpOffset);
-      ImTable::addObjProp("Size", data.vpSize);
+      ImTable::add(Editor::message(MSG_OBJECT_CAMERA_NAME), entry.name);
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_CAMERA_OFFSET), data.vpOffset);
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_CAMERA_SIZE), data.vpSize);
 
       //float fov = glm::degrees(data.fov.resolve(obj));
-      ImTable::addObjProp("FOV", data.fov);
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_CAMERA_FOV), data.fov);
       //data.fov.resolve(obj) = glm::radians(fov);
 
 
-      ImTable::addObjProp("Near", data.near);
-      ImTable::addObjProp("Far", data.far);
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_CAMERA_NEAR), data.near);
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_CAMERA_FAR), data.far);
 
-      ImTable::addObjProp("Aspect", data.aspect);
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_CAMERA_ASPECT), data.aspect);
       //ImTable::addComboBox("Type", data.type, LIGHT_TYPES, LIGHT_TYPE_COUNT);
       ImTable::end();
     }

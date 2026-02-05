@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "../../imgui/helper.h"
+#include "../../imgui/lang.h"
 #include "../../../context.h"
 #include "../../../project/component/components.h"
 
@@ -14,7 +15,7 @@ Editor::ObjectInspector::ObjectInspector() {
 
 void Editor::ObjectInspector::draw() {
   if (ctx.selObjectUUID == 0) {
-    ImGui::Text("No Object selected");
+    ImGui::Text(message(MSG_OBJECT_NONE_SELECTED));
     return;
   }
 
@@ -42,20 +43,20 @@ void Editor::ObjectInspector::draw() {
   //if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen))
   {
     if (ImTable::start("General")) {
-      ImTable::add("Name", obj->name);
+      ImTable::add(message(MSG_OBJECT_NAME), obj->name);
 
       int idProxy = obj->id;
-      ImTable::add("ID", idProxy);
+      ImTable::add(message(MSG_OBJECT_ID), idProxy);
       obj->id = static_cast<uint16_t>(idProxy);
 
       //ImTable::add("UUID");
       //ImGui::Text("0x%16lX", obj->uuid);
 
       if(isPrefabInst) {
-        ImTable::add("Prefab");
+        ImTable::add(message(MSG_OBJECT_PREFAB));
 
         auto name = std::string{ICON_MDI_PENCIL " "};
-        name += obj->isPrefabEdit ? ("Back to Instance") : ("Edit '" + srcObj->name + "'");
+        name += obj->isPrefabEdit ? (message(MSG_OBJECT_PREFAB_BACK)) : (std::vformat(message(MSG_OBJECT_PREFAB_EDIT), std::make_format_args(srcObj->name)));
 
         if(ImGui::Button(name.c_str())) {
           obj->isPrefabEdit = !obj->isPrefabEdit;
@@ -70,11 +71,11 @@ void Editor::ObjectInspector::draw() {
     }
   }
 
-  if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+  if (ImGui::CollapsingHeader(message(MSG_OBJECT_TRANSFORM), ImGuiTreeNodeFlags_DefaultOpen)) {
     if (ImTable::start("Transform", obj.get())) {
-      ImTable::addObjProp("Pos", srcObj->pos);
-      ImTable::addObjProp("Scale", srcObj->scale);
-      ImTable::addObjProp("Rot", srcObj->rot);
+      ImTable::addObjProp(message(MSG_OBJECT_POS), srcObj->pos);
+      ImTable::addObjProp(message(MSG_OBJECT_SCALE), srcObj->scale);
+      ImTable::addObjProp(message(MSG_OBJECT_ROT), srcObj->rot);
       ImTable::end();
     }
   }
@@ -91,7 +92,7 @@ void Editor::ObjectInspector::draw() {
     ImGui::PushID(&comp);
 
     auto &def = Project::Component::TABLE[comp.id];
-    auto name = std::string{def.icon} + "  " + comp.name;
+    auto name = std::string{def.icon} + "  " + message(comp.name);
     if (ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
     {
       if(obj->uuidPrefab.value == 0 || obj->isPrefabEdit)
@@ -102,10 +103,10 @@ void Editor::ObjectInspector::draw() {
 
         if(ImGui::BeginPopupContextItem("CompCtx"))
         {
-          if (ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Duplicate")) {
+          if (ImGui::MenuItem((std::string{ICON_MDI_CONTENT_COPY} + message(MSG_OBJECT_COMPONENT_DUPLICATE)).c_str())) {
             compCopy = &comp;
           }
-          if (ImGui::MenuItem(ICON_MDI_TRASH_CAN_OUTLINE " Delete")) {
+          if (ImGui::MenuItem((std::string{ICON_MDI_TRASH_CAN_OUTLINE} + message(MSG_OBJECT_COMPONENT_DELETE)).c_str())) {
             compDelUUID = comp.uuid;
           }
           ImGui::EndPopup();
@@ -133,23 +134,23 @@ void Editor::ObjectInspector::draw() {
 
   if (compCopy) {
     srcObj->addComponent(compCopy->id);
-    srcObj->components.back().name = compCopy->name + " Copy";
+    srcObj->components.back().name = compCopy->name + message(MSG_OBJECT_COMPONENT_COPY);
   }
   if (compDelUUID) {
     srcObj->removeComponent(compDelUUID);
   }
 
-  const char* addLabel = ICON_MDI_PLUS_BOX_OUTLINE " Add Component";
+  auto addLabel = std::string{ICON_MDI_PLUS_BOX_OUTLINE} + message(MSG_OBJECT_COMPONENT_ADD);
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 4);
-  ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(addLabel).x) * 0.5f - 4);
-  if (ImGui::Button(addLabel)) {
+  ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(addLabel.c_str()).x) * 0.5f - 4);
+  if (ImGui::Button(addLabel.c_str())) {
     ImGui::OpenPopup("CompSelect");
   }
 
   if (ImGui::BeginPopupContextItem("CompSelect"))
   {
     for (auto &comp : Project::Component::TABLE) {
-      auto name = std::string{comp.icon} + " " + comp.name;
+      auto name = std::string{comp.icon} + " " + message(comp.name);
       if(ImGui::MenuItem(name.c_str())) {
         srcObj->addComponent(comp.id);
       }

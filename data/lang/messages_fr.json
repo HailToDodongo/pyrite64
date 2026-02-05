@@ -3,12 +3,76 @@
     "none_selected": "Aucun asset sélectionné",
     "file": "Fichier : %s",
     "settings": "Paramètres",
-    "image_format": "Format :"
+    "image_format": "Format :",
+    "compression": "Compression",
+    "compression_level": {
+      "default": "Par défaut",
+      "none": "Aucune",
+      "1": "Niveau 1 - Rapide",
+      "2": "Niveau 2 - Bonne",
+      "3": "Niveau 3 - Haute"
+    },
+    "exclude": "Exclure",
+    "preview": "Aperçu",
+    "preview_count": {
+      "meshes": "Maillages : %d",
+      "triangles": "Triangles : %d",
+      "bones": "Os : %d",
+      "animations": "Animations : %d"
+    }
   },
   "model": {
     "base_scale": "Échelle",
     "create_bvh": "Créer BVH",
     "collision": "Collision"
+  },
+  "font": {
+    "size": "Taille",
+    "id": "ID",
+    "charset": "Caractères"
+  },
+  "audio": {
+    "force_mono": "Forcer mono",
+    "sample_rate": "Échantillonnage",
+    "sample_rate_original": "Original"
+  },
+  "object": {
+    "none_selected": "Aucun objet sélectionné",
+    "name": "Nom",
+    "id": "ID",
+    "prefab": "Prefab",
+    "prefab_back": "Retour à l'instance",
+    "prefab_edit": "Modifier '{0}'",
+    "transform": "Transformation",
+    "pos": "Pos",
+    "scale": "Éch",
+    "rot": "Rot",
+    "component_duplicate": " Dupliquer",
+    "component_delete": " Supprimer",
+    "component_add": " Ajouter un Composant",
+    "component_copy": " (Copie)",
+    "components": {
+      "code": "Code",
+      "static_model": "Modèle (Statique)",
+      "light": "Lumière",
+      "camera": "Caméra",
+      "collision_mesh": "Collision-Maillage",
+      "collision_body": "Collision-Corps",
+      "audio_2d": "Audio (2D)",
+      "constraint": "Contrainte",
+      "culling": "Culling",
+      "node_graph": "Graphe",
+      "animated_model": "Modèle (Animé)"
+    },
+    "camera": {
+      "name": "Nom",
+      "offset": "Décalage",
+      "size": "Dimensions",
+      "fov": "Angle",
+      "near": "Proche",
+      "far": "Distant",
+      "aspect": "Aspect"
+    }
   },
   "scene": {
     "on_boot": "Au démarrage",

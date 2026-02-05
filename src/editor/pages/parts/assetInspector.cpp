@@ -19,7 +19,7 @@ Editor::AssetInspector::AssetInspector() {
 
 void Editor::AssetInspector::draw() {
   if (ctx.selAssetUUID == 0) {
-    ImGui::Text(message(Message::ASSET_NONE_SELECTED));
+    ImGui::Text(message(MSG_ASSET_NONE_SELECTED));
     return;
   }
 
@@ -37,37 +37,37 @@ void Editor::AssetInspector::draw() {
     hasAssetConf = false;
   }
 
-  ImGui::Text(message(Message::ASSET_FILE), asset->name.c_str());
-  if (hasAssetConf && ImGui::CollapsingHeader(message(Message::ASSET_SETTINGS), ImGuiTreeNodeFlags_DefaultOpen))
+  ImGui::Text(message(MSG_ASSET_FILE), asset->name.c_str());
+  if (hasAssetConf && ImGui::CollapsingHeader(message(MSG_ASSET_SETTINGS), ImGuiTreeNodeFlags_DefaultOpen))
   {
     ImTable::start("Settings");
 
     if (asset->type == FileType::IMAGE)
     {
-      ImTable::addComboBox(message(Message::IMAGE_COMBOBOX_FORMAT), asset->conf.format, Utils::TEX_TYPES, Utils::TEX_TYPE_COUNT);
+      ImTable::addComboBox(message(MSG_IMAGE_FORMAT), asset->conf.format, Utils::TEX_TYPES, Utils::TEX_TYPE_COUNT);
     }
     else if (asset->type == FileType::MODEL_3D)
     {
-      if (ImTable::add(message(Message::MODEL_BASE_SCALE), asset->conf.baseScale)) {
+      if (ImTable::add(message(MSG_MODEL_BASE_SCALE), asset->conf.baseScale)) {
         ctx.project->getAssets().reloadAssetByUUID(asset->getUUID());
       }
-      ImTable::addCheckBox(message(Message::MODEL_CREATE_BVH), asset->conf.gltfBVH);
-      ImTable::addProp(message(Message::MODEL_COLLISION), asset->conf.gltfCollision);
+      ImTable::addCheckBox(message(MSG_MODEL_CREATE_BVH), asset->conf.gltfBVH);
+      ImTable::addProp(message(MSG_MODEL_COLLISION), asset->conf.gltfCollision);
     } else if (asset->type == FileType::FONT)
     {
-      ImTable::add("Size", asset->conf.baseScale);
-      ImTable::addProp("ID", asset->conf.fontId);
+      ImTable::add(message(MSG_FONT_SIZE), asset->conf.baseScale);
+      ImTable::addProp(message(MSG_FONT_ID), asset->conf.fontId);
 
-      ImTable::add("Charset");
+      ImTable::add(message(MSG_FONT_CHARSET));
       ImGui::InputTextMultiline("##", &asset->conf.fontCharset.value);
     }
     else if (asset->type == FileType::AUDIO)
     {
-      ImTable::addProp("Force-Mono", asset->conf.wavForceMono);
+      ImTable::addProp(message(MSG_AUDIO_FORCE_MONO), asset->conf.wavForceMono);
 
       //ImTable::addProp("Sample-Rate", asset->conf.wavResampleRate);
-      ImTable::addVecComboBox<ImTable::ComboEntry>("Sample-Rate", {
-          { 0, "Original" },
+      ImTable::addVecComboBox<ImTable::ComboEntry>(message(MSG_AUDIO_SAMPLE_RATE), {
+          { 0, message(MSG_AUDIO_SAMPLE_RATE_ORIGINAL) },
           { 8000, "8000 Hz" },
           { 11025, "11025 Hz" },
           { 16000, "16000 Hz" },
@@ -76,27 +76,28 @@ void Editor::AssetInspector::draw() {
           { 44100, "44100 Hz" },
         }, asset->conf.wavResampleRate.value
       );
-      ImTable::addComboBox("Compression", asset->conf.wavCompression.value, {
-        "None", "VADPCM", "Opus",
+      ImTable::addComboBox(message(MSG_ASSET_COMPRESSION), asset->conf.wavCompression.value, {
+        message(MSG_ASSET_COMPRESSION_NONE), "VADPCM", "Opus",
       });
     }
 
     if (asset->type != FileType::AUDIO)
     {
-      ImTable::addComboBox("Compression", (int&)asset->conf.compression, {
-        "Project Default", "None",
-        "Level 1 - Fast",
-        "Level 2 - Good",
-        "Level 3 - High",
+      ImTable::addComboBox(message(MSG_ASSET_COMPRESSION), (int&)asset->conf.compression, {
+        message(MSG_ASSET_COMPRESSION_DEFAULT),
+        message(MSG_ASSET_COMPRESSION_NONE),
+        message(MSG_ASSET_COMPRESSION_LEVEL_1),
+        message(MSG_ASSET_COMPRESSION_LEVEL_2),
+        message(MSG_ASSET_COMPRESSION_LEVEL_3),
       });
     }
 
-    ImTable::addCheckBox("Exclude", asset->conf.exclude);
+    ImTable::addCheckBox(message(MSG_ASSET_EXCLUDE), asset->conf.exclude);
 
     ImTable::end();
   }
 
-  if (ImGui::CollapsingHeader("Preview", ImGuiTreeNodeFlags_DefaultOpen)) {
+  if (ImGui::CollapsingHeader(message(MSG_ASSET_PREVIEW), ImGuiTreeNodeFlags_DefaultOpen)) {
     if (asset->type == FileType::IMAGE && asset->texture) {
       ImGui::Image(ImTextureRef(asset->texture->getGPUTex()), asset->texture->getSize(4.0f));
       ImGui::Text("%dx%dpx", asset->texture->getWidth(), asset->texture->getHeight());
@@ -106,10 +107,10 @@ void Editor::AssetInspector::draw() {
       for (auto &model : asset->t3dmData.models) {
         triCount += model.triangles.size();
       }
-      ImGui::Text("Meshes: %d", static_cast<int>(asset->t3dmData.models.size()));
-      ImGui::Text("Triangles: %d", triCount);
-      ImGui::Text("Bones: %d", static_cast<int>(asset->t3dmData.skeletons.size()));
-      ImGui::Text("Animations: %d", static_cast<int>(asset->t3dmData.animations.size()));
+      ImGui::Text(message(MSG_ASSET_PREVIEW_COUNT_MESHES), static_cast<int>(asset->t3dmData.models.size()));
+      ImGui::Text(message(MSG_ASSET_PREVIEW_COUNT_TRIANGLES), triCount);
+      ImGui::Text(message(MSG_ASSET_PREVIEW_COUNT_BONES), static_cast<int>(asset->t3dmData.skeletons.size()));
+      ImGui::Text(message(MSG_ASSET_PREVIEW_COUNT_ANIMATIONS), static_cast<int>(asset->t3dmData.animations.size()));
     }
   }
 }

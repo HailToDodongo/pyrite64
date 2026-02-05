@@ -9,6 +9,7 @@
 #include "json.hpp"
 #include "IconsMaterialDesignIcons.h"
 #include "../../build/sceneContext.h"
+#include "../../editor/imgui/lang.h"
 
 namespace Editor
 {
@@ -82,7 +83,7 @@ namespace Project::Component
     CompInfo{
       .id = 0,
       .icon = ICON_MDI_SCRIPT " ",
-      .name = "Code",
+      .name = MSG_OBJECT_COMPONENT_CODE,
       .funcInit = Code::init,
       .funcDraw = Code::draw,
       .funcSerialize = Code::serialize,
@@ -92,7 +93,7 @@ namespace Project::Component
     CompInfo{
       .id = 1,
       .icon = ICON_MDI_CUBE_OUTLINE " ",
-      .name = "Model (Static)",
+      .name = MSG_OBJECT_COMPONENT_STATIC_MODEL,
       .funcInit = Model::init,
       .funcDraw = Model::draw,
       .funcDraw3D = Model::draw3D,
@@ -103,7 +104,7 @@ namespace Project::Component
     CompInfo{
       .id = 2,
       .icon = ICON_MDI_LIGHTBULB_ON_OUTLINE " ",
-      .name = "Light",
+      .name = MSG_OBJECT_COMPONENT_LIGHT,
       .funcInit = Light::init,
       .funcUpdate = Light::update,
       .funcDraw = Light::draw,
@@ -115,7 +116,7 @@ namespace Project::Component
     CompInfo{
       .id = 3,
       .icon = ICON_MDI_VIDEO_VINTAGE " ",
-      .name = "Camera",
+      .name = MSG_OBJECT_COMPONENT_CAMERA,
       .funcInit = Camera::init,
       .funcUpdate = Camera::update,
       .funcDraw = Camera::draw,
@@ -127,7 +128,7 @@ namespace Project::Component
     CompInfo{
       .id = 4,
       .icon = ICON_MDI_LANDSLIDE_OUTLINE " ",
-      .name = "Collision-Mesh",
+      .name = MSG_OBJECT_COMPONENT_COLLISION_MESH,
       .funcInit = CollMesh::init,
       .funcDraw = CollMesh::draw,
       .funcDrawPost3D = CollMesh::draw3D,
@@ -138,7 +139,7 @@ namespace Project::Component
     CompInfo{
       .id = 5,
       .icon = ICON_MDI_CYLINDER " ",
-      .name = "Collision-Body",
+      .name = MSG_OBJECT_COMPONENT_COLLISION_BODY,
       .funcInit = CollBody::init,
       .funcDraw = CollBody::draw,
       .funcDrawPost3D = CollBody::draw3D,
@@ -149,7 +150,7 @@ namespace Project::Component
     CompInfo{
       .id = 6,
       .icon = ICON_MDI_MUSIC " ",
-      .name = "Audio (2D)",
+      .name = MSG_OBJECT_COMPONENT_AUDIO_2D,
       .funcInit = Audio2D::init,
       .funcDraw = Audio2D::draw,
       .funcDrawPost3D = Audio2D::draw3D,
@@ -161,7 +162,7 @@ namespace Project::Component
       .id = 7,
       .prio = -2, // constraint must come before culling and any drawing
       .icon = ICON_MDI_LINK " ",
-      .name = "Constraint",
+      .name = MSG_OBJECT_COMPONENT_CONSTRAINT,
       .funcInit = Constraint::init,
       .funcDraw = Constraint::draw,
       .funcDrawPost3D = Constraint::draw3D,
@@ -173,7 +174,7 @@ namespace Project::Component
       .id = 8,
       .prio = -1, // culling must come before any models
       .icon = ICON_MDI_EYE_OFF_OUTLINE " ",
-      .name = "Culling",
+      .name = MSG_OBJECT_COMPONENT_CULLING,
       .funcInit = Culling::init,
       .funcDraw = Culling::draw,
       .funcDrawPost3D = Culling::draw3D,
@@ -184,7 +185,7 @@ namespace Project::Component
     CompInfo{
       .id = 9,
       .icon = ICON_MDI_GRAPH_OUTLINE " ",
-      .name = "Node Graph",
+      .name = MSG_OBJECT_COMPONENT_NODE_GRAPH,
       .funcInit = NodeGraph::init,
       .funcDraw = NodeGraph::draw,
       .funcDraw3D = NodeGraph::draw3D,
@@ -195,7 +196,7 @@ namespace Project::Component
     CompInfo{
       .id = 10,
       .icon = ICON_MDI_HUMAN " ",
-      .name = "Model (Animated)",
+      .name = MSG_OBJECT_COMPONENT_ANIMATED_MODEL,
       .funcInit = AnimModel::init,
       .funcDraw = AnimModel::draw,
       .funcDraw3D = AnimModel::draw3D,

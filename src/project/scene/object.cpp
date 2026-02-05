@@ -6,6 +6,8 @@
 
 #include "scene.h"
 #include <algorithm>
+
+#include "../../editor/imgui/lang.h"
 #include "../../utils/hash.h"
 #include "../../utils/jsonBuilder.h"
 #include "../../utils/json.h"
@@ -66,7 +68,7 @@ void Project::Object::addComponent(int compID) {
     .uuid = Utils::Hash::sha256_64bit(
       std::to_string(rand()) + std::to_string(compID)
     ),
-    .name = std::string{def.name},
+    .name = std::string{Editor::message(def.name)},
     .data = def.funcInit(*this)
   });
 }

@@ -52,13 +52,3 @@ const char* Editor::message(const std::string &id) {
   }
   return id.c_str();
 }
-
-const std::string Editor::Message::ASSET_NONE_SELECTED = "asset.none_selected";
-const std::string Editor::Message::ASSET_FILE = "asset.file";
-const std::string Editor::Message::ASSET_SETTINGS = "asset.settings";
-const std::string Editor::Message::IMAGE_COMBOBOX_FORMAT = "asset.image_format";
-const std::string Editor::Message::MODEL_BASE_SCALE = "model.base_scale";
-const std::string Editor::Message::MODEL_CREATE_BVH = "model.create_bvh";
-const std::string Editor::Message::MODEL_COLLISION = "model.collision";
-const std::string Editor::Message::SCENE_ON_BOOT = "scene.on_boot";
-const std::string Editor::Message::SCENE_ON_RESET = "scene.on_reset";
