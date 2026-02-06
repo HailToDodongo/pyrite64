@@ -1,5 +1,7 @@
 build/
+dist/
 cmake-*
 .idea
 imgui.ini
 p64editor
+pyrite64

@@ -540,7 +540,10 @@ void Editor::Viewport3D::draw()
     }
   }
 
+  float camDist = glm::length(camera.posOffset);
   if (ImViewGuizmo::Rotate(camera.posOffset, camera.rot, gizPos)) {
-
+    if (camDist > 0.0001f) {
+      camera.posOffset = glm::normalize(camera.posOffset) * camDist;
+    }
   }
 }

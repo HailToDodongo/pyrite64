@@ -42,10 +42,10 @@ After than, and for every subsequent build, run:
 cmake --build . --parallel 8
 ```
 
-Once finished, a program called `p64editor` should be placed in the root directory of the repo.
-The program itself can be placed anywhere on the system, however the `./data` directory must stay next to it.
+Once finished, a program called `pyrite64` should be placed in the root directory of the repo.
+The program itself can be placed anywhere on the system, however the `./data` and `./n64` directory must stay next to it.
 
-To open the editor simply execute `./p64editor`.
+To open the editor simply execute `./pyrite64`.
 
 (@TODO: provide pre-builds for windows/macos/linux)
 

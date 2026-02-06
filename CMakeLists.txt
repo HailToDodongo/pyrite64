@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 4.0)
-project(p64editor)
+cmake_minimum_required(VERSION 3.28)
+project(pyrite64)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,7 +24,7 @@ add_subdirectory(vendored/glm EXCLUDE_FROM_ALL)
 add_compile_definitions(IMGUI_USE_WCHAR32)
 
 # Create your game executable target as usual
-add_executable(p64editor src/main.cpp
+add_executable(pyrite64 src/main.cpp
         # SHA256
         vendored/SHA256/src/SHA256.cpp
         vendored/SHA256/include/SHA256.h
@@ -210,7 +210,7 @@ add_executable(p64editor src/main.cpp
         src/editor/globalActions.cpp
 )
 
-target_include_directories(p64editor PRIVATE
+target_include_directories(pyrite64 PRIVATE
     vendored
     vendored/imgui
     vendored/IconFontCppHeaders
@@ -226,11 +226,28 @@ target_include_directories(p64editor PRIVATE
 )
 
 
-# target_link_libraries(p64editor PRIVATE SDL3::SDL3)
+# target_link_libraries(pyrite64 PRIVATE SDL3::SDL3)
 
-target_compile_definitions(p64editor PRIVATE IMGUI_DEFINE_MATH_OPERATORS GLM_FORCE_QUAT_DATA_XYZW)
+target_compile_definitions(pyrite64 PRIVATE IMGUI_DEFINE_MATH_OPERATORS GLM_FORCE_QUAT_DATA_XYZW)
 
-set_target_properties(p64editor PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")
+set_target_properties(pyrite64 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")
 
 # Link to the actual SDL3 library.
-target_link_libraries(p64editor PRIVATE SDL3::SDL3 SDL3_image::SDL3_image glm::glm)
+target_link_libraries(pyrite64 PRIVATE SDL3::SDL3 SDL3_image::SDL3_image glm::glm)
+
+add_dependencies(pyrite64 copy_tiny3d)
+
+# Copy over tiny3d, this is to make sure that during bundling it is still kept
+add_custom_command(
+    OUTPUT ${CMAKE_SOURCE_DIR}/n64/tiny3d
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/vendored/tiny3d
+            ${CMAKE_SOURCE_DIR}/n64/tiny3d
+    DEPENDS ${CMAKE_SOURCE_DIR}/vendored/tiny3d
+    COMMENT "Copying tiny3d to data/n64/tiny3d"
+)
+
+add_custom_target(copy_tiny3d ALL
+    DEPENDS ${CMAKE_SOURCE_DIR}/n64/tiny3d
+)
+

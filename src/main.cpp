@@ -29,6 +29,8 @@
 #include "utils/logger.h"
 #include "utils/proc.h"
 
+#include <cctype>
+
 Context ctx{};
 constinit SDL_GPUSampler *texSamplerRepeat{nullptr};
 
@@ -86,6 +88,13 @@ int main(int argc, char** argv)
   SDL_SetWindowIcon(window, IMG_Load("data/img/windowIcon.png"));
   SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
   SDL_ShowWindow(window);
+
+  // Ensure text input events are enabled
+  bool useTextInputFallback = false;
+  if (!SDL_StartTextInput(window)) {
+    useTextInputFallback = true;
+    fprintf(stderr, "Warning: SDL_StartTextInput failed: %s\n", SDL_GetError());
+  }
 
   // Create GPU Device
   ctx.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_METALLIB,true,nullptr);
@@ -216,6 +225,18 @@ int main(int argc, char** argv)
             presentMode = (presentMode == SDL_GPU_PRESENTMODE_VSYNC) ? SDL_GPU_PRESENTMODE_IMMEDIATE : SDL_GPU_PRESENTMODE_VSYNC;
             printf("Switched Present Mode to: %s\n", (presentMode == SDL_GPU_PRESENTMODE_VSYNC) ? "VSync" : "Immediate");
             SDL_SetGPUSwapchainParameters(ctx.gpu, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, presentMode);
+          }
+
+          // Fallback for environments that don't emit SDL_EVENT_TEXT_INPUT (e.g., some WSL setups).
+          if (useTextInputFallback && ImGui::GetIO().WantTextInput) {
+            SDL_Keymod modstate = (SDL_Keymod)SDL_GetModState();
+            const bool hasTextModifiers = (modstate & (SDL_KMOD_CTRL | SDL_KMOD_ALT | SDL_KMOD_GUI)) != 0;
+            if (!hasTextModifiers) {
+              SDL_Keycode keycode = SDL_GetKeyFromScancode(event.key.scancode, modstate, false);
+              if (keycode >= 32 && keycode < 127) {
+                ImGui::GetIO().AddInputCharacter((unsigned int)keycode);
+              }
+            }
           }
         }
         // Check: io.WantCaptureMouse, io.WantCaptureKeyboard
