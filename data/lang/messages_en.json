@@ -1,5 +1,56 @@
 {
   "window_title": "Pyrite64 - Editor",
+  "home": {
+    "create": "Create Project",
+    "open": "Open Project",
+    "choose_folder": "Choose Project Folder"
+  },
+  "new_project": {
+    "title": "Create New Project",
+    "name": "Project Name:",
+    "path": "Project Path:",
+    "default_name": "New Project",
+    "choose_folder": "Choose Folder to create new Project in",
+    "create_folder": "Project will be created in:",
+    "create": "Create",
+    "cancel": "Cancel"
+  },
+  "tabs": {
+    "3d_viewport": "3D-Viewport",
+    "scene": "Scene",
+    "graph": "Graph",
+    "layers": "Layers",
+    "asset": "Asset",
+    "object": "Object",
+    "files": "Files",
+    "log": "Log"
+  },
+  "menubar": {
+    "project": {
+      "name": "Project",
+      "save": " Save",
+      "settings": " Settings",
+      "close": " Close"
+    },
+    "build": {
+      "name": "Build",
+      "build": " Build",
+      "clean": "Clean"
+    },
+    "view": {
+      "name": "View",
+      "reset": "Reset Layout"
+    }
+  },
+  "project_settings": {
+    "title": " Project Settings",
+    "general": "General",
+    "name": "Name",
+    "rom_name": "ROM-Name",
+    "environment": "Environment",
+    "emulator": "Emulator",
+    "save": "Save"
+  },
   "asset": {
     "none_selected": "No Asset selected",
     "file": "File: %s",
@@ -273,57 +324,6 @@
       "create": "Create",
       "cancel": "Cancel"
     }
-  },
-  "new_project": {
-    "title": "Create New Project",
-    "name": "Project Name:",
-    "path": "Project Path:",
-    "default_name": "New Project",
-    "choose_folder": "Choose Folder to create new Project in",
-    "create_folder": "Project will be created in:",
-    "create": "Create",
-    "cancel": "Cancel"
-  },
-  "home": {
-    "create": "Create Project",
-    "open": "Open Project",
-    "choose_folder": "Choose Project Folder"
-  },
-  "tabs": {
-    "3d_viewport": "3D-Viewport",
-    "scene": "Scene",
-    "graph": "Graph",
-    "layers": "Layers",
-    "asset": "Asset",
-    "object": "Object",
-    "files": "Files",
-    "log": "Log"
-  },
-  "menubar": {
-    "project": {
-      "name": "Project",
-      "save": " Save",
-      "settings": " Settings",
-      "close": " Close"
-    },
-    "build": {
-      "name": "Build",
-      "build": " Build",
-      "clean": "Clean"
-    },
-    "view": {
-      "name": "View",
-      "reset": "Reset Layout"
-    }
-  },
-  "project_settings": {
-    "title": " Project Settings",
-    "general": "General",
-    "name": "Name",
-    "rom_name": "ROM-Name",
-    "environment": "Environment",
-    "emulator": "Emulator",
-    "save": "Save"
   },
   "graph": {
     "create": "Create New",

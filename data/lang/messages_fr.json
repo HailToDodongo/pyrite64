@@ -1,5 +1,56 @@
 {
   "window_title": "Pyrite64 - Éditeur",
+  "home": {
+    "create": "Créer un Projet",
+    "open": "Ouvrir un Projet",
+    "choose_folder": "Sélectionnez le dossier du projet"
+  },
+  "new_project": {
+    "title": "Créer un Nouveau Projet",
+    "name": "Nom du projet :",
+    "path": "Chemin du projet :",
+    "default_name": "Nouveau Projet",
+    "choose_folder": "Choisissez un dossier où créer le nouveau projet",
+    "create_folder": "Le projet sera créé dans :",
+    "create": "Créer",
+    "cancel": "Annuler"
+  },
+  "tabs": {
+    "3d_viewport": "Vue-3D",
+    "scene": "Scène",
+    "graph": "Graphe",
+    "layers": "Calques",
+    "asset": "Ressource",
+    "object": "Objet",
+    "files": "Fichiers",
+    "log": "Journal"
+  },
+  "menubar": {
+    "project": {
+      "name": "Projet",
+      "save": " Enregistrer",
+      "settings": " Paramètres",
+      "close": " Fermer"
+    },
+    "build": {
+      "name": "Construire",
+      "build": " Construire",
+      "clean": "Nettoyer"
+    },
+    "view": {
+      "name": "Vue",
+      "reset": "Réinitialiser"
+    }
+  },
+  "project_settings": {
+    "title": " Paramètres du Projet",
+    "general": "Général",
+    "name": "Nom",
+    "rom_name": "ROM",
+    "environment": "Environnement",
+    "emulator": "Émulateur",
+    "save": "Enregistrer"
+  },
   "asset": {
     "none_selected": "Aucune ressource sélectionnée",
     "file": "Fichier : %s",
@@ -273,57 +324,6 @@
       "create": "Créer",
       "cancel": "Annuler"
     }
-  },
-  "new_project": {
-    "title": "Créer un Nouveau Projet",
-    "name": "Nom du projet :",
-    "path": "Chemin du projet :",
-    "default_name": "Nouveau Projet",
-    "choose_folder": "Choisissez un dossier où créer le nouveau projet",
-    "create_folder": "Le projet sera créé dans :",
-    "create": "Créer",
-    "cancel": "Annuler"
-  },
-  "home": {
-    "create": "Créer un Projet",
-    "open": "Ouvrir un Projet",
-    "choose_folder": "Sélectionnez le dossier du projet"
-  },
-  "tabs": {
-    "3d_viewport": "Vue-3D",
-    "scene": "Scène",
-    "graph": "Graphe",
-    "layers": "Calques",
-    "asset": "Ressource",
-    "object": "Objet",
-    "files": "Fichiers",
-    "log": "Journal"
-  },
-  "menubar": {
-    "project": {
-      "name": "Projet",
-      "save": " Enregistrer",
-      "settings": " Paramètres",
-      "close": " Fermer"
-    },
-    "build": {
-      "name": "Construire",
-      "build": " Construire",
-      "clean": "Nettoyer"
-    },
-    "view": {
-      "name": "Vue",
-      "reset": "Réinitialiser"
-    }
-  },
-  "project_settings": {
-    "title": " Paramètres du Projet",
-    "general": "Général",
-    "name": "Nom",
-    "rom_name": "ROM",
-    "environment": "Environnement",
-    "emulator": "Émulateur",
-    "save": "Enregistrer"
   },
   "graph": {
     "create": "Créer Nouveau",
