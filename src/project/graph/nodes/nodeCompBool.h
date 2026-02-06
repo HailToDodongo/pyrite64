@@ -6,6 +6,7 @@
 
 #include "baseNode.h"
 #include "../../../utils/hash.h"
+#include "../../../editor/imgui/lang.h"
 
 namespace Project::Graph::Node
 {
@@ -14,12 +15,17 @@ namespace Project::Graph::Node
     private:
 
     public:
-      constexpr static const char* NAME = ICON_MDI_CALL_SPLIT " If-Else";
+      constexpr static const char* ICON = ICON_MDI_CALL_SPLIT;
+      constexpr static const char* NAME = MSG_GRAPH_NODE_COMPBOOL;
+
+      static std::string getname() {
+        return std::string{ICON} + Editor::message(NAME);
+      }
 
       CompBool()
       {
         uuid = Utils::Hash::randomU64();
-        setTitle(NAME);
+        setTitle(getname());
         setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(0xFF, 0x99, 0x55, 0xFF), ImColor(0,0,0,255), 4.0f));
 
         addIN<TypeLogic>("", ImFlow::ConnectionFilter::SameType(), PIN_STYLE_LOGIC);
@@ -27,8 +33,8 @@ namespace Project::Graph::Node
         valInputTypes.push_back(0);
         valInputTypes.push_back(1);
 
-        addOUT<TypeLogic>("True", PIN_STYLE_LOGIC);
-        addOUT<TypeLogic>("False", PIN_STYLE_LOGIC);
+        addOUT<TypeLogic>(Editor::message(MSG_GRAPH_NODE_COMPBOOL_TRUE), PIN_STYLE_LOGIC);
+        addOUT<TypeLogic>(Editor::message(MSG_GRAPH_NODE_COMPBOOL_FALSE), PIN_STYLE_LOGIC);
       }
 
       void draw() override {

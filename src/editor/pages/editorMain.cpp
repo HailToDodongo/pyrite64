@@ -11,6 +11,7 @@
 #include "imgui.h"
 #include "../actions.h"
 #include "../../utils/filePicker.h"
+#include "../imgui/lang.h"
 #include "backends/imgui_impl_sdlgpu3.h"
 #include "parts/createProjectOverlay.h"
 #include "SDL3/SDL_dialog.h"
@@ -135,16 +136,16 @@ void Editor::Main::draw()
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.f, 0.f, 0.f, 0.f));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.f, 0.f, 0.f, 0.f));
 
-  if(renderButton(texBtnAdd, "Create Project", isHoverAdd, true))
+  if(renderButton(texBtnAdd, message(MSG_HOME_CREATE_PROJECT), isHoverAdd, true))
   {
     CreateProjectOverlay::open();
   }
 
-  if (renderButton(texBtnOpen, "Open Project", isHoverLast, false)) {
+  if (renderButton(texBtnOpen, message(MSG_HOME_OPEN_PROJECT), isHoverLast, false)) {
     Utils::FilePicker::open([](const std::string &path) {
       if (path.empty()) return;
       Actions::call(Actions::Type::PROJECT_OPEN, path);
-    }, true, "Choose Project Folder");
+    }, true, message(MSG_HOME_CHOOSE_FOLDER));
   }
 
   ImGui::PopStyleColor(3);

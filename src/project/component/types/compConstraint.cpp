@@ -5,6 +5,7 @@
 #include "../components.h"
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/lang.h"
 #include "../../../utils/json.h"
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
@@ -79,20 +80,20 @@ namespace Project::Component::Constraint
     Data &data = *static_cast<Data*>(entry.data.get());
 
     if (ImTable::start("Comp", &obj)) {
-      ImTable::add("Name", entry.name);
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_CONSTRAINT_NAME), entry.name);
 
       std::vector<ImTable::ComboEntry> typeList{
-        {TYPE_COPY_OBJ, "Copy Trans. (Object)"},
-        {TYPE_COPY_CAM, "Copy Trans. (Camera)"},
-        {TYPE_REL_OFFSET, "Relative Offset"},
+        {TYPE_COPY_OBJ, Editor::message(MSG_OBJECT_COMPONENT_CONSTRAINT_TYPES_COPY_OBJ)},
+        {TYPE_COPY_CAM, Editor::message(MSG_OBJECT_COMPONENT_CONSTRAINT_TYPES_COPY_CAM)},
+        {TYPE_REL_OFFSET, Editor::message(MSG_OBJECT_COMPONENT_CONSTRAINT_TYPES_REL_OFFSET)},
       };
 
-      ImTable::addVecComboBox("Type", typeList, data.type.value);
+      ImTable::addVecComboBox(Editor::message(MSG_OBJECT_COMPONENT_CONSTRAINT_TYPE), typeList, data.type.value);
 
       // @TODO: do this in scene itself
       auto &map = ctx.project->getScenes().getLoadedScene()->objectsMap;
       std::vector<ImTable::ComboEntry> objList;
-      objList.push_back({0, "<Parent>"});
+      objList.push_back({0, Editor::message(MSG_OBJECT_COMPONENT_CONSTRAINT_PARENT)});
 
       for (auto &[id, object] : map) {
         objList.push_back({
@@ -103,14 +104,14 @@ namespace Project::Component::Constraint
 
       if(data.type.value != TYPE_COPY_CAM)
       {
-        ImTable::addVecComboBox("Ref. Object", objList, data.objectUUID.value);
+        ImTable::addVecComboBox(Editor::message(MSG_OBJECT_COMPONENT_CONSTRAINT_REF_OBJ), objList, data.objectUUID.value);
       }
 
       if(data.type.value == TYPE_COPY_OBJ || data.type.value == TYPE_COPY_CAM)
       {
-        ImTable::addProp("Position", data.usePos);
-        ImTable::addProp("Scale",    data.useScale);
-        ImTable::addProp("Rotation", data.useRot);
+        ImTable::addProp(Editor::message(MSG_OBJECT_COMPONENT_CONSTRAINT_POS), data.usePos);
+        ImTable::addProp(Editor::message(MSG_OBJECT_COMPONENT_CONSTRAINT_SCALE),    data.useScale);
+        ImTable::addProp(Editor::message(MSG_OBJECT_COMPONENT_CONSTRAINT_ROT), data.useRot);
       }
 
       ImTable::end();

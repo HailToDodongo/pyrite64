@@ -5,6 +5,7 @@
 #include "../components.h"
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/lang.h"
 #include "../../../utils/json.h"
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
@@ -86,10 +87,10 @@ namespace Project::Component::AnimModel
     auto scene = ctx.project->getScenes().getLoadedScene();
 
     if (ImTable::start("Comp", &obj)) {
-      ImTable::add("Name", entry.name);
-      ImTable::add("Model");
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_NAME), entry.name);
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_MODEL));
 
-      if (ImGui::VectorComboBox("Model", modelList, data.model.value)) {
+      if (ImGui::VectorComboBox(Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_MODEL), modelList, data.model.value)) {
         data.obj3D.removeMesh();
       }
 
@@ -98,7 +99,7 @@ namespace Project::Component::AnimModel
         layerNames.push_back(layer.name.value.c_str());
       }
 
-      ImTable::addObjProp<int32_t>("Draw-Layer", data.layerIdx, [&layerNames](int32_t *layer)
+      ImTable::addObjProp<int32_t>(Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_DRAW_LAYER), data.layerIdx, [&layerNames](int32_t *layer)
         {
           return ImGui::Combo("##", layer, layerNames.data(), layerNames.size());
         }, nullptr);
@@ -106,20 +107,25 @@ namespace Project::Component::AnimModel
 
       ImTable::end();
 
-      if(ImGui::CollapsingSubHeader("Material Sets", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Mat", &obj))
+      if(ImGui::CollapsingSubHeader(Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_MATERIAL_SETS), ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Mat", &obj))
       {
-        ImTable::addObjProp<int32_t>("Depth", data.material.depth, [](int32_t *depth)
+        ImTable::addObjProp<int32_t>(Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_DEPTH), data.material.depth, [](int32_t *depth)
         {
-          std::array<const char*, 4> items = {"None", "Read", "Write", "Read+Write"};
+          std::array<const char*, 4> items = {
+            Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_DEPTHS_NONE),
+            Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_DEPTHS_READ),
+            Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_DEPTHS_WRITE),
+            Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_DEPTHS_RW)
+          };
           return ImGui::Combo("##", depth, items.data(), items.size());
         }, &data.material.setDepth);
 
-        ImTable::addObjProp("Prim-Color", data.material.prim, &data.material.setPrim);
-        ImTable::addObjProp("Env-Color", data.material.env, &data.material.setEnv);
-        ImTable::addObjProp("Fresnel", data.material.fresnel, &data.material.setFresnel);
+        ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_PRIM_COLOR), data.material.prim, &data.material.setPrim);
+        ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_ENV_COLOR), data.material.env, &data.material.setEnv);
+        ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_FRESNEL), data.material.fresnel, &data.material.setFresnel);
         if(data.material.fresnel.resolve(obj.propOverrides) != 0)
         {
-          ImTable::addObjProp("Fres-Color", data.material.fresnelColor);
+          ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_ANIMATED_MODEL_FRES_COLOR), data.material.fresnelColor);
         }
         // ImTable::addObjProp("Lighting", data.material.lighting, &data.material.setLighting);
 

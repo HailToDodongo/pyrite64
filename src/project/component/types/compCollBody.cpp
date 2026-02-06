@@ -5,6 +5,7 @@
 #include "../components.h"
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/lang.h"
 #include "../../../utils/json.h"
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
@@ -89,23 +90,27 @@ namespace Project::Component::CollBody
     Data &data = *static_cast<Data*>(entry.data.get());
 
     if (ImTable::start("Comp", &obj)) {
-      ImTable::add("Name", entry.name);
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_BODY_NAME), entry.name);
 
       auto &ext = data.halfExtend.resolve(obj.propOverrides);
 
-      ImTable::addComboBox("Type", data.type.value, {"Box", "Sphere", "Cylinder"});
+      ImTable::addComboBox(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_BODY_TYPE), data.type.value, {
+        Editor::message(MSG_OBJECT_COMPONENT_COLLISION_BODY_TYPES_BOX),
+        Editor::message(MSG_OBJECT_COMPONENT_COLLISION_BODY_TYPES_SPHERE),
+        Editor::message(MSG_OBJECT_COMPONENT_COLLISION_BODY_TYPES_CYLINDER)
+      });
       if(data.type.resolve(obj.propOverrides) == TYPE_SPHERE) {
-        ImTable::add("Size", ext.y);
+        ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_BODY_SIZE), ext.y);
         ext.x = ext.y;
         ext.z = ext.y;
       } else {
-        ImTable::addObjProp("Size", data.halfExtend);
+        ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_BODY_SIZE), data.halfExtend);
       }
-      ImTable::addObjProp("Offset", data.offset);
-      ImTable::addObjProp("Trigger", data.isTrigger);
-      ImTable::addObjProp("Fixed-Pos", data.isFixed);
-      ImTable::addBitMask8("Mask Read", data.maskRead.resolve(obj.propOverrides));
-      ImTable::addBitMask8("Mask Write", data.maskWrite.resolve(obj.propOverrides));
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_BODY_OFFSET), data.offset);
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_BODY_TRIGGER), data.isTrigger);
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_BODY_FIXED_POS), data.isFixed);
+      ImTable::addBitMask8(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_BODY_MASK_READ), data.maskRead.resolve(obj.propOverrides));
+      ImTable::addBitMask8(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_BODY_MASK_WRITE), data.maskWrite.resolve(obj.propOverrides));
 
       ImTable::end();
     }

@@ -62,9 +62,17 @@ int main(int argc, char** argv)
   }
   SDL_GetTicks();
 
+  // Read language from global config file (defaults to english)
+  auto configJSON = Utils::JSON::loadFile("data/config.json");
+  if (configJSON.empty()) {
+    Editor::applyLang( "en");
+  } else {
+    Editor::applyLang(configJSON.value("lang", "en").c_str());
+  }
+
   float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
   SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
-  SDL_Window* window = SDL_CreateWindow("Pyrite64 - Editor", (int)(1280 * main_scale), (int)(800 * main_scale), window_flags);
+  SDL_Window* window = SDL_CreateWindow(Editor::message(MSG_WINDOW_TITLE), (int)(1280 * main_scale), (int)(800 * main_scale), window_flags);
   ctx.window = window;
 
   srand(time(NULL) + SDL_GetTicks());
@@ -136,14 +144,6 @@ int main(int argc, char** argv)
 
   ImGui::applyTheme();
   ImGui::loadFonts(main_scale);
-
-  // Read language from global config file (defaults to english)
-  auto configJSON = Utils::JSON::loadFile("data/config.json");
-  if (configJSON.empty()) {
-    Editor::applyLang( "en");
-  } else {
-    Editor::applyLang(configJSON.value("lang", "en").c_str());
-  }
 
   // Setup Platform/Renderer backends
   ImGui_ImplSDL3_InitForSDLGPU(window);

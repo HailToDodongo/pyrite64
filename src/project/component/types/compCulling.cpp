@@ -5,6 +5,7 @@
 #include "../components.h"
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/lang.h"
 #include "../../../utils/json.h"
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
@@ -65,19 +66,22 @@ namespace Project::Component::Culling
     Data &data = *static_cast<Data*>(entry.data.get());
 
     if (ImTable::start("Comp", &obj)) {
-      ImTable::add("Name", entry.name);
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_CULLING_NAME), entry.name);
 
       auto &ext = data.halfExtend.resolve(obj.propOverrides);
 
-      ImTable::addComboBox("Type", data.type.value, {"Box", "Sphere"});
+      ImTable::addComboBox(Editor::message(MSG_OBJECT_COMPONENT_CULLING_TYPE), data.type.value, {
+        Editor::message(MSG_OBJECT_COMPONENT_CULLING_TYPES_BOX),
+        Editor::message(MSG_OBJECT_COMPONENT_CULLING_TYPES_SPHERE)
+      });
       if(data.type.resolve(obj.propOverrides) == TYPE_SPHERE) {
-        ImTable::add("Size", ext.y);
+        ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_CULLING_SIZE), ext.y);
         ext.x = ext.y;
         ext.z = ext.y;
       } else {
-        ImTable::addObjProp("Size", data.halfExtend);
+        ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_CULLING_SIZE), data.halfExtend);
       }
-      ImTable::addObjProp("Offset", data.offset);
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_CULLING_OFFSET), data.offset);
       ImTable::end();
     }
   }

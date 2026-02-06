@@ -6,6 +6,7 @@
 
 #include "baseNode.h"
 #include "../../../utils/hash.h"
+#include "../../../editor/imgui/lang.h"
 
 namespace Project::Graph::Node
 {
@@ -15,12 +16,17 @@ namespace Project::Graph::Node
       float time{};
 
     public:
-      constexpr static const char* NAME = ICON_MDI_CLOCK_OUTLINE " Wait";
+      constexpr static const char* ICON = ICON_MDI_CLOCK_OUTLINE;
+      constexpr static const char* NAME = MSG_GRAPH_NODE_WAIT;
+
+      static std::string getname() {
+        return std::string{ICON} + Editor::message(NAME);
+      }
 
       Wait()
       {
         uuid = Utils::Hash::randomU64();
-        setTitle(NAME);
+        setTitle(getname());
         setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(90,191,93,255), ImColor(0,0,0,255), 3.5f));
 
         addIN<TypeLogic>("", ImFlow::ConnectionFilter::SameType(), PIN_STYLE_LOGIC);
@@ -29,7 +35,7 @@ namespace Project::Graph::Node
 
       void draw() override {
         ImGui::SetNextItemWidth(50.f);
-        ImGui::InputFloat("sec.", &time);
+        ImGui::InputFloat(Editor::message(MSG_GRAPH_NODE_WAIT_SEC), &time);
 
         //showIN("", 0, ImFlow::ConnectionFilter::SameType(), PIN_STYLE_LOGIC);
       }

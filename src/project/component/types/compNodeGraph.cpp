@@ -5,6 +5,7 @@
 #include "../components.h"
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/lang.h"
 #include "../../../utils/json.h"
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
@@ -69,34 +70,34 @@ namespace Project::Component::NodeGraph
     Data &data = *static_cast<Data*>(entry.data.get());
 
     if (ImTable::start("Comp", &obj)) {
-      ImTable::add("Name", entry.name);
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_NODE_GRAPH_NAME), entry.name);
       auto &assetList = ctx.project->getAssets().getTypeEntries(FileType::NODE_GRAPH);
-      ImTable::addVecComboBox("File", assetList, data.asset.value);
+      ImTable::addVecComboBox(Editor::message(MSG_OBJECT_COMPONENT_NODE_GRAPH_FILE), assetList, data.asset.value);
 
-      ImTable::addObjProp("Auto Run", data.autoRun);
-      ImTable::addObjProp("Repeatable", data.repeatable);
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_NODE_GRAPH_AUTORUN), data.autoRun);
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_NODE_GRAPH_REPEATABLE), data.repeatable);
 
       ImTable::add("Action");
-      if(ImGui::Button(ICON_MDI_PENCIL " Edit")) {
+      if(ImGui::Button((std::string{ICON_MDI_PENCIL} + Editor::message(MSG_OBJECT_COMPONENT_NODE_GRAPH_EDIT)).c_str())) {
         Editor::Actions::call(Editor::Actions::Type::OPEN_NODE_GRAPH, std::to_string(data.asset.resolve(obj)));
       }
 
       ImGui::SameLine();
-      if(ImGui::Button(ICON_MDI_PLUS " Create")) {
+      if(ImGui::Button((std::string{ICON_MDI_PLUS} + Editor::message(MSG_OBJECT_COMPONENT_NODE_GRAPH_CREATE)).c_str())) {
         ImGui::OpenPopup("NewGraph");
       }
 
       if(ImGui::BeginPopup("NewGraph"))
       {
         static char scriptName[128] = "NodeGraph";
-        ImGui::Text("Enter name:");
+        ImGui::Text(Editor::message(MSG_OBJECT_COMPONENT_NODE_GRAPH_ENTER_NAME));
         ImGui::InputText("##Name", scriptName, sizeof(scriptName));
-        if (ImGui::Button("Create")) {
+        if (ImGui::Button(Editor::message(MSG_OBJECT_COMPONENT_NODE_GRAPH_BTN_CREATE))) {
           data.asset.value = ctx.project->getAssets().createNodeGraph(scriptName);
           ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Cancel")) {
+        if (ImGui::Button(Editor::message(MSG_OBJECT_COMPONENT_NODE_GRAPH_BTN_CANCEL))) {
           ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();

@@ -5,6 +5,7 @@
 #include "../components.h"
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/lang.h"
 #include "../../../utils/json.h"
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
@@ -102,8 +103,8 @@ namespace Project::Component::Model
     auto scene = ctx.project->getScenes().getLoadedScene();
 
     if (ImTable::start("Comp", &obj)) {
-      ImTable::add("Name", entry.name);
-      ImTable::add("Model");
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_NAME), entry.name);
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_MODEL));
 
       if (ImGui::VectorComboBox("Model", modelList, data.model.value)) {
         data.obj3D.removeMesh();
@@ -114,26 +115,26 @@ namespace Project::Component::Model
         layerNames.push_back(layer.name.value.c_str());
       }
 
-      ImTable::addObjProp<int32_t>("Draw-Layer", data.layerIdx, [&layerNames](int32_t *layer)
+      ImTable::addObjProp<int32_t>(Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_DRAW_LAYER), data.layerIdx, [&layerNames](int32_t *layer)
         {
           return ImGui::Combo("##", layer, layerNames.data(), layerNames.size());
         }, nullptr);
 
-      ImTable::addObjProp("Culling", data.culling);
+      ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_CULLING), data.culling);
 
       if(data.culling.resolve(obj.propOverrides)) {
         auto modelAsset = ctx.project->getAssets().getEntryByUUID(data.model.value);
         if(modelAsset && !modelAsset->conf.gltfBVH) {
           ImGui::SameLine();
-          ImGui::TextColored({1.0f, 0.5f, 0.5f, 1.0f}, "Warning: BVH not enabled!");
+          ImGui::TextColored({1.0f, 0.5f, 0.5f, 1.0f}, Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_NO_BVH));
         }
       }
 
       ImTable::end();
 
-      if(ImGui::CollapsingSubHeader("Mesh Filter", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Filter", &obj))
+      if(ImGui::CollapsingSubHeader(Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_MESH_FILTER), ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Filter", &obj))
       {
-        bool changed = ImTable::addObjProp("Filter", data.filter.meshFilter);
+        bool changed = ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_FILTER), data.filter.meshFilter);
 
         auto t3dm = ctx.project->getAssets().getEntryByUUID(data.model.value);
         if(t3dm)
@@ -153,20 +154,25 @@ namespace Project::Component::Model
         ImTable::end();
       }
 
-      if(ImGui::CollapsingSubHeader("Material Sets", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Mat", &obj))
+      if(ImGui::CollapsingSubHeader(Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_MATERIAL_SETS), ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Mat", &obj))
       {
-        ImTable::addObjProp<int32_t>("Depth", data.material.depth, [](int32_t *depth)
+        ImTable::addObjProp<int32_t>(Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_DEPTH), data.material.depth, [](int32_t *depth)
         {
-          std::array<const char*, 4> items = {"None", "Read", "Write", "Read+Write"};
+          std::array<const char*, 4> items = {
+            Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_DEPTHS_NONE),
+            Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_DEPTHS_READ),
+            Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_DEPTHS_WRITE),
+            Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_DEPTHS_RW)
+          };
           return ImGui::Combo("##", depth, items.data(), items.size());
         }, &data.material.setDepth);
 
-        ImTable::addObjProp("Prim-Color", data.material.prim, &data.material.setPrim);
-        ImTable::addObjProp("Env-Color", data.material.env, &data.material.setEnv);
-        ImTable::addObjProp("Fresnel", data.material.fresnel, &data.material.setFresnel);
+        ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_PRIM_COLOR), data.material.prim, &data.material.setPrim);
+        ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_ENV_COLOR), data.material.env, &data.material.setEnv);
+        ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_FRESNEL), data.material.fresnel, &data.material.setFresnel);
         if(data.material.fresnel.resolve(obj.propOverrides) != 0)
         {
-          ImTable::addObjProp("Fres-Color", data.material.fresnelColor);
+          ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_STATIC_MODEL_FRES_COLOR), data.material.fresnelColor);
         }
         // ImTable::addObjProp("Lighting", data.material.lighting, &data.material.setLighting);
 

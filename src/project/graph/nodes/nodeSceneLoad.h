@@ -8,6 +8,7 @@
 #include "../../../context.h"
 #include "../../../utils/hash.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/lang.h"
 
 namespace Project::Graph::Node
 {
@@ -21,12 +22,17 @@ namespace Project::Graph::Node
       }
 
     public:
-      constexpr static const char* NAME = ICON_MDI_EARTH_BOX " Load Scene";
+      constexpr static const char* ICON = ICON_MDI_EARTH_BOX;
+      constexpr static const char* NAME = MSG_GRAPH_NODE_SCENELOAD;
+
+      static std::string getname() {
+        return std::string{ICON} + Editor::message(NAME);
+      }
 
       SceneLoad()
       {
         uuid = Utils::Hash::randomU64();
-        setTitle(NAME);
+        setTitle(getname());
         setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(90,191,93,255), ImColor(0,0,0,255), 3.5f));
 
         addIN<TypeLogic>("", ImFlow::ConnectionFilter::SameType(), PIN_STYLE_LOGIC);

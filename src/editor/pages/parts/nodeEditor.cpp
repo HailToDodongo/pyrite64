@@ -8,6 +8,7 @@
 #include "../../../context.h"
 #include "../../../utils/logger.h"
 #include "../../imgui/helper.h"
+#include "../../imgui/lang.h"
 
 #include "ImNodeFlow.h"
 #include "json.hpp"
@@ -45,11 +46,11 @@ Editor::NodeEditor::NodeEditor(uint64_t assetUUID)
     : "{}"
   );
   //name = "Node-Editor - ";
-  name = currentAsset ? currentAsset->name : "*New Graph*";
+  name = currentAsset ? currentAsset->name : message(MSG_GRAPH_NEW);
 
   auto createPopup = [](Project::Graph::Graph &graph, ImFlow::Pin* pin)
   {
-    ImGui::Text("Create New");
+    ImGui::Text(message(MSG_GRAPH_CREATE));
     ImGui::Separator();
     auto &names = Project::Graph::Graph::getNodeNames();
     for(size_t i = 0; i < names.size(); ++i) {
@@ -76,7 +77,7 @@ Editor::NodeEditor::NodeEditor(uint64_t assetUUID)
   graph.graph.rightClickPopUpContent([&](ImFlow::BaseNode* node)
   {
     if(node) {
-      if(ImGui::Selectable(ICON_MDI_CONTENT_COPY " Duplicate")) {
+      if(ImGui::Selectable((std::string{ICON_MDI_CONTENT_COPY} + message(MSG_GRAPH_DUPLICATE)).c_str())) {
         auto nodeP64 = (Project::Graph::Node::Base*)(node);
         auto newPos = node->getPos() + ImVec2{node->getSize().x, 20};
         nlohmann::json jNode;
@@ -85,7 +86,7 @@ Editor::NodeEditor::NodeEditor(uint64_t assetUUID)
         newNode->deserialize(jNode);
         ImGui::CloseCurrentPopup();
       }
-      if(ImGui::Selectable(ICON_MDI_TRASH_CAN_OUTLINE " Remove")) {
+      if(ImGui::Selectable((std::string{ICON_MDI_TRASH_CAN_OUTLINE} + message(MSG_GRAPH_REMOVE)).c_str())) {
         node->destroy();
         ImGui::CloseCurrentPopup();
       }

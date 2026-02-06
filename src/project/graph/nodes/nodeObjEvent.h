@@ -7,6 +7,7 @@
 #include "baseNode.h"
 #include "../../../context.h"
 #include "../../../utils/hash.h"
+#include "../../../editor/imgui/lang.h"
 
 namespace Project::Graph::Node
 {
@@ -18,12 +19,17 @@ namespace Project::Graph::Node
       std::string eventValue{};
 
     public:
-      constexpr static const char* NAME = ICON_MDI_EMAIL_FAST_OUTLINE " Send Event";
+      constexpr static const char* ICON = ICON_MDI_EMAIL_FAST_OUTLINE;
+      constexpr static const char* NAME = MSG_GRAPH_NODE_OBJEVENT;
+
+      static std::string getname() {
+        return std::string{ICON} + Editor::message(NAME);
+      }
 
       ObjEvent()
       {
         uuid = Utils::Hash::randomU64();
-        setTitle(NAME);
+        setTitle(getname());
         setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(90,191,93,255), ImColor(0,0,0,255), 3.5f));
 
         addIN<TypeLogic>("", ImFlow::ConnectionFilter::SameType(), PIN_STYLE_LOGIC);
@@ -34,7 +40,7 @@ namespace Project::Graph::Node
         if(ImTable::start("Node", nullptr, 100.0f)) {
 
           std::vector<ImTable::ComboEntry> entries;
-          entries.push_back({0, "< Self >"});
+          entries.push_back({0, Editor::message(MSG_GRAPH_NODE_OBJEVENT_SELF)});
 
           auto scene = ctx.project->getScenes().getLoadedScene();
           if(scene)
@@ -44,10 +50,10 @@ namespace Project::Graph::Node
             }
           }
 
-          ImTable::add("Object");
+          ImTable::add(Editor::message(MSG_GRAPH_NODE_OBJEVENT_OBJECT));
           ImGui::VectorComboBox("##", entries, objectId);
-          ImTable::add("Type", eventType);
-          ImTable::add("Value", eventValue);
+          ImTable::add(Editor::message(MSG_GRAPH_NODE_OBJEVENT_TYPE), eventType);
+          ImTable::add(Editor::message(MSG_GRAPH_NODE_OBJEVENT_VALUE), eventValue);
           ImTable::end();
         }
       }

@@ -1,4 +1,5 @@
 {
+  "window_title": "Pyrite64 - Editor",
   "asset": {
     "none_selected": "No Asset selected",
     "file": "File: %s",
@@ -52,30 +53,339 @@
     "component_add": " Add Component",
     "component_copy": " Copy",
     "components": {
-      "code": "Code",
-      "static_model": "Model (Static)",
-      "light": "Light",
-      "camera": "Camera",
-      "collision_mesh": "Collision-Mesh",
-      "collision_body": "Collision-Body",
-      "audio_2d": "Audio (2D)",
-      "constraint": "Constraint",
-      "culling": "Culling",
-      "node_graph": "Node Graph",
-      "animated_model": "Model (Animated)"
-    },
-    "camera": {
-      "name": "Name",
-      "offset": "Offset",
-      "size": "Size",
-      "fov": "FOV",
-      "near": "Near",
-      "far": "Far",
-      "aspect": "Aspect"
+      "code": {
+        "title": "Code",
+        "name": "Name",
+        "script": "Script",
+        "select": "<Select Script>",
+        "args": "Arguments:",
+        "arg_none": "(None)"
+      },
+      "static_model": {
+        "title": "Model (Static)",
+        "name": "Name",
+        "model": "Model",
+        "draw_layer": "Draw-Layer",
+        "culling": "Culling",
+        "no_bvh": "Warning: BVH not enabled!",
+        "mesh_filter": "Mesh Filter",
+        "filter": "Filter",
+        "material_sets": "Material Sets",
+        "depth": "Depth",
+        "depths": {
+          "none": "None",
+          "read": "Read",
+          "write": "Write",
+          "rw": "Read+Write"
+        },
+        "prim_color": "Prim-Color",
+        "env_color": "Env-Color",
+        "fresnel": "Fresnel",
+        "fres_color": "Fres-Color"
+      },
+      "light": {
+        "title": "Light",
+        "name": "Name",
+        "type": "Type",
+        "types": {
+          "ambient": "Ambient",
+          "directional": "Directional",
+          "point": "Point"
+        },
+        "index": "Index",
+        "color": "Color"
+      },
+      "camera": {
+        "title": "Camera",
+        "name": "Name",
+        "offset": "Offset",
+        "size": "Size",
+        "fov": "FOV",
+        "near": "Near",
+        "far": "Far",
+        "aspect": "Aspect"
+      },
+      "collision_mesh": {
+        "title": "Collision-Mesh",
+        "name": "Name",
+        "model": "Model",
+        "select": "<Select Model>",
+        "mesh_filter": "Mesh Filter",
+        "filter": "Filter"
+      },
+      "collision_body": {
+        "title": "Collision-Body",
+        "name": "Name",
+        "type":  "Type",
+        "types": {
+          "box": "Box",
+          "sphere": "Sphere",
+          "cylinder": "Cylinder"
+        },
+        "size": "Size",
+        "offset": "Offset",
+        "trigger": "Trigger",
+        "fixed_pos": "Fixed-Pos",
+        "mask_read": "Mask Read",
+        "mask_write": "Mask Write"
+      },
+      "audio_2d": {
+        "title": "Audio (2D)",
+        "name": "Name",
+        "audio": "Audio",
+        "volume": "Volume",
+        "loop": "Loop",
+        "autoplay": "Auto-Play"
+      },
+      "constraint": {
+        "title": "Constraint",
+        "name": "Name",
+        "type": "Type",
+        "types": {
+          "copy_obj": "Copy Trans. (Object)",
+          "copy_cam": "Copy Trans. (Camera)",
+          "rel_offset": "Relative Offset"
+        },
+        "parent": "<Parent>",
+        "ref_obj": "Ref. Object",
+        "pos": "Position",
+        "scale": "Scale",
+        "rot": "Rotation"
+      },
+      "culling": {
+        "title": "Culling",
+        "name": "Name",
+        "type": "Type",
+        "types": {
+          "box": "Box",
+          "sphere": "Sphere"
+        },
+        "size": "Size",
+        "offset": "Offset"
+      },
+      "node_graph": {
+        "title": "Node Graph",
+        "name": "Name",
+        "file": "File",
+        "autorun": "Auto Run",
+        "repeatable": "Repeatable",
+        "edit": " Edit",
+        "create": " Create",
+        "enter_name": "Enter name:",
+        "btn_create": "Create",
+        "btn_cancel": "Cancel"
+      },
+      "animated_model": {
+        "title": "Model (Animated)",
+        "name": "Name",
+        "model": "Model",
+        "draw_layer": "Draw-Layer",
+        "material_sets": "Material Sets",
+        "depth": "Depth",
+        "depths": {
+          "none": "None",
+          "read": "Read",
+          "write": "Write",
+          "rw": "Read+Write"
+        },
+        "prim_color": "Prim-Color",
+        "env_color": "Env-Color",
+        "fresnel": "Fresnel",
+        "fres_color": "Fres-Color"
+      }
     }
   },
+  "scene_graph": {
+    "add": " Add Object",
+    "to_prefab": " To prefab",
+    "delete": " Delete"
+  },
   "scene": {
-    "on_boot": "On Boot",
-    "on_reset": "On Reset"
+    "settings": "Settings",
+    "name": "Name",
+    "pipeline": "Pipeline",
+    "pipelines": {
+      "default": "Default",
+      "hdr_bloom": "HDR-Bloom",
+      "hires_tex": "HiRes-Tex (256x)"
+    },
+    "fps_limit": "FPS-Limit",
+    "fps_unlimited": "Unlimited",
+    "framebuffer": "Framebuffer",
+    "width": "Width",
+    "height": "Height",
+    "format": "Format",
+    "color": "Color",
+    "clear_color": "Clear Color",
+    "clear_depth": "Clear Depth",
+    "filter": "Filter",
+    "filters": {
+      "none": "None",
+      "resample": "Resample",
+      "dedither": "Dedither",
+      "resample_aa": "Resample / AA",
+      "resample_aa_dedither": "Resample / AA / Dedither"
+    }
+  },
+  "layers": {
+    "add": " Add",
+    "duplicate": " Duplicate",
+    "delete": " Delete",
+    "copy": " Copy",
+    "3d": "3D Layers",
+    "particle": "Particle Layers",
+    "2d": "2D Layers",
+    "reset": "Reset",
+    "new_layer": "New Layer",
+    "name": "Name",
+    "z_compare": "Z-Compare",
+    "z_write": "Z-Write",
+    "blending": "Blending",
+    "blenders": {
+      "none": "None (Opaque)",
+      "multiply": "Multiply (Alpha)",
+      "additive": "Additive"
+    },
+    "fog": "Fog",
+    "fog_mode": "Fog-Mode",
+    "fog_modes": {
+      "clear": "Clear-Color",
+      "custom": "Custom Color",
+      "unchanged": "Leave Unchanged"
+    },
+    "fog_color": "Fog Color",
+    "fog_min": "Fog Min",
+    "fog_max": "Fog Max"
+  },
+  "browser" : {
+    "scenes": "  Scenes",
+    "assets": "  Assets",
+    "scripts": "  Scripts",
+    "prefabs": "  Prefabs",
+    "tooltip": "File: %s",
+    "scene_tooltip": "Scene: %s\nID: %d",
+    "scene": {
+      "on_boot": "On Boot",
+      "on_reset": "On Reset"
+    },
+    "new_script": {
+      "name": "Enter script name:",
+      "create": "Create",
+      "cancel": "Cancel"
+    }
+  },
+  "new_project": {
+    "title": "Create New Project",
+    "name": "Project Name:",
+    "path": "Project Path:",
+    "default_name": "New Project",
+    "choose_folder": "Choose Folder to create new Project in",
+    "create_folder": "Project will be created in:",
+    "create": "Create",
+    "cancel": "Cancel"
+  },
+  "home": {
+    "create": "Create Project",
+    "open": "Open Project",
+    "choose_folder": "Choose Project Folder"
+  },
+  "tabs": {
+    "3d_viewport": "3D-Viewport",
+    "scene": "Scene",
+    "graph": "Graph",
+    "layers": "Layers",
+    "asset": "Asset",
+    "object": "Object",
+    "files": "Files",
+    "log": "Log"
+  },
+  "menubar": {
+    "project": {
+      "name": "Project",
+      "save": " Save",
+      "settings": " Settings",
+      "close": " Close"
+    },
+    "build": {
+      "name": "Build",
+      "build": " Build",
+      "clean": "Clean"
+    },
+    "view": {
+      "name": "View",
+      "reset": "Reset Layout"
+    }
+  },
+  "project_settings": {
+    "title": " Project Settings",
+    "general": "General",
+    "name": "Name",
+    "rom_name": "ROM-Name",
+    "environment": "Environment",
+    "emulator": "Emulator",
+    "save": "Save"
+  },
+  "graph": {
+    "create": "Create New",
+    "new": "*New Graph*",
+    "duplicate": " Duplicate",
+    "remove": " Remove",
+    "nodes": {
+      "start": {
+        "name": " Start",
+        "on_start": "On Start"
+      },
+      "wait": {
+        "name": " Wait",
+        "sec": "sec."
+      },
+      "objdel": {
+        "name": " Delete Object",
+        "self": "< Self >"
+      },
+      "objevent": {
+        "name": " Send Event",
+        "self": "< Self >",
+        "object": "Object",
+        "type": "Type",
+        "value": "Value"
+      },
+      "compare": {
+        "name": " Compare",
+        "oper": "Oper.",
+        "true": "True",
+        "false": "False"
+      },
+      "value": {
+        "name": " Value"
+      },
+      "repeat": {
+        "name": " Repeat",
+        "loop": "Loop",
+        "exit": "Exit"
+      },
+      "function": {
+        "name": " Function"
+      },
+      "compbool": {
+        "name": " If-Else",
+        "true": "True",
+        "false": "False"
+      },
+      "sceneload": {
+        "name": " Load Scene"
+      },
+      "arg": {
+        "name": " Argument",
+        "index": "Index"
+      },
+      "switchcase": {
+        "name": " Switch-Case",
+        "add": "Add"
+      },
+      "note": {
+        "name": " Note"
+      }
+    }
   }
 }

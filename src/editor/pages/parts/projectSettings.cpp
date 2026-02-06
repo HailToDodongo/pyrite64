@@ -9,26 +9,28 @@
 #include "../../../utils/logger.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "../../imgui/helper.h"
+#include "../../imgui/lang.h"
 
 bool Editor::ProjectSettings::draw()
 {
-  if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen)) {
+  if (ImGui::CollapsingHeader(message(MSG_PROJECT_SETTINGS_GENERAL), ImGuiTreeNodeFlags_DefaultOpen)) {
     ImTable::start("General");
-    ImTable::add("Name", ctx.project->conf.name);
-    ImTable::add("ROM-Name", ctx.project->conf.romName);
+    ImTable::add(message(MSG_PROJECT_SETTINGS_NAME), ctx.project->conf.name);
+    ImTable::add(message(MSG_PROJECT_SETTINGS_ROM_NAME), ctx.project->conf.romName);
     ImTable::end();
   }
-  if (ImGui::CollapsingHeader("Environment", ImGuiTreeNodeFlags_DefaultOpen)) {
+  if (ImGui::CollapsingHeader(message(MSG_PROJECT_SETTINGS_ENV), ImGuiTreeNodeFlags_DefaultOpen)) {
     ImTable::start("Environment");
-    ImTable::addPath("Emulator", ctx.project->conf.pathEmu);
+    ImTable::addPath(message(MSG_PROJECT_SETTINGS_EMULATOR), ctx.project->conf.pathEmu);
     ImTable::addPath("N64_INST", ctx.project->conf.pathN64Inst, true, "$N64_INST");
     ImTable::end();
   }
 
   // close button, positioned to bottom right corner
-  ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 54);
+  const char* saveLabel = message(MSG_PROJECT_SETTINGS_SAVE);
+  ImGui::SetCursorPosX(ImGui::GetWindowWidth() - ImGui::CalcTextSize(saveLabel).x - 23);
   ImGui::SetCursorPosY(ImGui::GetWindowHeight() - 36);
-  if (ImGui::Button("Save")) {
+  if (ImGui::Button(saveLabel)) {
     ctx.project->save();
     return true;
   }

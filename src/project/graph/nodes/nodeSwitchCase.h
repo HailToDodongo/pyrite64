@@ -6,6 +6,7 @@
 
 #include "baseNode.h"
 #include "../../../utils/hash.h"
+#include "../../../editor/imgui/lang.h"
 
 namespace Project::Graph::Node
 {
@@ -15,12 +16,17 @@ namespace Project::Graph::Node
       std::vector<uint32_t> cases{};
 
     public:
-      constexpr static const char* NAME = ICON_MDI_CALL_SPLIT " Switch-Case";
+      constexpr static const char* ICON = ICON_MDI_CALL_SPLIT;
+      constexpr static const char* NAME = MSG_GRAPH_NODE_SWITCHCASE;
+
+      static std::string getname() {
+        return std::string{ICON} + Editor::message(NAME);
+      }
 
       SwitchCase()
       {
         uuid = Utils::Hash::randomU64();
-        setTitle(NAME);
+        setTitle(getname());
         setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(0xFF, 0x99, 0x55, 0xFF), ImColor(0,0,0,255), 4.0f));
 
         addIN<TypeLogic>("", ImFlow::ConnectionFilter::SameType(), PIN_STYLE_LOGIC);
@@ -40,7 +46,7 @@ namespace Project::Graph::Node
           ++idx;
         }
 
-        if(ImGui::Button("Add")) {
+        if(ImGui::Button(Editor::message(MSG_GRAPH_NODE_SWITCHCASE_ADD))) {
           cases.push_back(0);
           addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
         }

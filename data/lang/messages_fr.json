@@ -1,6 +1,7 @@
 {
+  "window_title": "Pyrite64 - Éditeur",
   "asset": {
-    "none_selected": "Aucun asset sélectionné",
+    "none_selected": "Aucune ressource sélectionnée",
     "file": "Fichier : %s",
     "settings": "Paramètres",
     "image_format": "Format :",
@@ -40,7 +41,7 @@
     "none_selected": "Aucun objet sélectionné",
     "name": "Nom",
     "id": "ID",
-    "prefab": "Prefab",
+    "prefab": "Préfab",
     "prefab_back": "Retour à l'instance",
     "prefab_edit": "Modifier '{0}'",
     "transform": "Transformation",
@@ -52,30 +53,339 @@
     "component_add": " Ajouter un Composant",
     "component_copy": " (Copie)",
     "components": {
-      "code": "Code",
-      "static_model": "Modèle (Statique)",
-      "light": "Lumière",
-      "camera": "Caméra",
-      "collision_mesh": "Collision-Maillage",
-      "collision_body": "Collision-Corps",
-      "audio_2d": "Audio (2D)",
-      "constraint": "Contrainte",
-      "culling": "Culling",
-      "node_graph": "Graphe",
-      "animated_model": "Modèle (Animé)"
-    },
-    "camera": {
-      "name": "Nom",
-      "offset": "Décalage",
-      "size": "Dimensions",
-      "fov": "Angle",
-      "near": "Proche",
-      "far": "Distant",
-      "aspect": "Aspect"
+      "code": {
+        "title": "Code",
+        "name": "Nom",
+        "script": "Script",
+        "select": "<Choisir Script>",
+        "args": "Arguments :",
+        "arg_none": "(Aucun)"
+      },
+      "static_model": {
+        "title": "Modèle (Statique)",
+        "name": "Nom",
+        "model": "Modèle",
+        "draw_layer": "Calque",
+        "culling": "Culling",
+        "no_bvh": "Attention: pas de BVH !",
+        "mesh_filter": "Filtrer Maillage",
+        "filter": "Filtre",
+        "material_sets": "Matériaux",
+        "depth": "Profondeur",
+        "depths": {
+          "none": "Rien",
+          "read": "Lire",
+          "write": "Écrire",
+          "rw": "Lire+Écrire"
+        },
+        "prim_color": "Couleur-Prim",
+        "env_color": "Couleur-Env",
+        "fresnel": "Fresnel",
+        "fres_color": "Couleur-Fres"
+      },
+      "light": {
+        "title": "Lumière",
+        "name": "Nom",
+        "type": "Type",
+        "types": {
+          "ambient": "Ambiante",
+          "directional": "Directionnelle",
+          "point": "Point"
+        },
+        "index": "Index",
+        "color": "Couleur"
+      },
+      "camera": {
+        "title": "Caméra",
+        "name": "Nom",
+        "offset": "Décalage",
+        "size": "Dimensions",
+        "fov": "Angle",
+        "near": "Proche",
+        "far": "Distant",
+        "aspect": "Aspect"
+      },
+      "collision_mesh": {
+        "title": "Collision-Maillage",
+        "name": "Nom",
+        "model": "Modèle",
+        "select": "<Choisir Modèle>",
+        "mesh_filter": "Filtrer Maillage",
+        "filter": "Filtre"
+      },
+      "collision_body": {
+        "title": "Collision-Corps",
+        "name": "Nom",
+        "type":  "Type",
+        "types": {
+          "box": "Cube",
+          "sphere": "Sphère",
+          "cylinder": "Cylindre"
+        },
+        "size": "Taille",
+        "offset": "Décalage",
+        "trigger": "Déclencheur",
+        "fixed_pos": "Pos-Fixe",
+        "mask_read": "Lire Masque",
+        "mask_write": "Écrire Masque"
+      },
+      "audio_2d": {
+        "title": "Audio (2D)",
+        "name": "Nom",
+        "audio": "Audio",
+        "volume": "Volume",
+        "loop": "Boucler",
+        "autoplay": "Lecture-Auto"
+      },
+      "constraint": {
+        "title": "Contrainte",
+        "name": "Nom",
+        "type": "Type",
+        "types": {
+          "copy_obj": "Copier Trans. (Objet)",
+          "copy_cam": "Copier Trans. (Caméra)",
+          "rel_offset": "Décalage Relatif"
+        },
+        "parent": "<Parent>",
+        "ref_obj": "Réf. Objet",
+        "pos": "Position",
+        "scale": "Échelle",
+        "rot": "Rotation"
+      },
+      "culling": {
+        "title": "Culling",
+        "name": "Nom",
+        "type": "Type",
+        "types": {
+          "box": "Cube",
+          "sphere": "Sphère"
+        },
+        "size": "Taille",
+        "offset": "Décalage"
+      },
+      "node_graph": {
+        "title": "Graphe",
+        "name": "Nom",
+        "file": "Fichier",
+        "autorun": "Exec. Auto",
+        "repeatable": "Répétable",
+        "edit": " Modifier",
+        "create": " Créer",
+        "enter_name": "Saisir nom :",
+        "btn_create": "Créer",
+        "btn_cancel": "Annuler"
+      },
+      "animated_model": {
+        "title": "Modèle (Animé)",
+        "name": "Nom",
+        "model": "Modèle",
+        "draw_layer": "Calque",
+        "material_sets": "Matériaux",
+        "depth": "Profondeur",
+        "depths": {
+          "none": "Rien",
+          "read": "Lire",
+          "write": "Écrire",
+          "rw": "Lire+Écrire"
+        },
+        "prim_color": "Couleur-Prim",
+        "env_color": "Couleur-Env",
+        "fresnel": "Fresnel",
+        "fres_color": "Couleur-Fres"
+      }
     }
   },
+  "scene_graph": {
+    "add": " Ajouter Objet",
+    "to_prefab": " Vers préfab",
+    "delete": " Supprimer"
+  },
   "scene": {
-    "on_boot": "Au démarrage",
-    "on_reset": "Au redémarrage"
+    "settings": "Paramètres",
+    "name": "Nom",
+    "pipeline": "Pipeline",
+    "pipelines": {
+      "default": "Par défaut",
+      "hdr_bloom": "HDR-Bloom",
+      "hires_tex": "HiRes-Tex (256x)"
+    },
+    "fps_limit": "Limite FPS",
+    "fps_unlimited": "Illimité",
+    "framebuffer": "Framebuffer",
+    "width": "Largeur",
+    "height": "Hauteur",
+    "format": "Format",
+    "color": "Couleur",
+    "clear_color": "Effacer Couleur",
+    "clear_depth": "Effacer Profondeur",
+    "filter": "Filtre",
+    "filters": {
+      "none": "Aucun",
+      "resample": "Resample",
+      "dedither": "Dedither",
+      "resample_aa": "Resample / AA",
+      "resample_aa_dedither": "Resample / AA / Dedither"
+    }
+  },
+  "layers": {
+    "add": " Ajouter",
+    "duplicate": " Dupliquer",
+    "delete": " Supprimer",
+    "copy": " (Copie)",
+    "3d": "Calques 3D",
+    "particle": "Calques Particules",
+    "2d": "Calques 2D",
+    "reset": "Réinitialiser",
+    "new_layer": "Nouveau Calque",
+    "name": "Nom",
+    "z_compare": "Z-Compare",
+    "z_write": "Z-Write",
+    "blending": "Fusion",
+    "blenders": {
+      "none": "Aucune (Opaque)",
+      "multiply": "Multiplier (Alpha)",
+      "additive": "Addition"
+    },
+    "fog": "Brouillard",
+    "fog_mode": "Mode de brouillard",
+    "fog_modes": {
+      "clear": "Couleur d'effacement",
+      "custom": "Couleur personnalisée",
+      "unchanged": "Laisser inchangé"
+    },
+    "fog_color": "Couleur du brouillard",
+    "fog_min": "Min brouillard",
+    "fog_max": "Max brouillard"
+  },
+  "browser" : {
+    "scenes": "  Scènes",
+    "assets": "  Ressources",
+    "scripts": "  Scripts",
+    "prefabs": "  Préfabs",
+    "tooltip": "Fichier : %s",
+    "scene_tooltip": "Scène : %s\nID : %d",
+    "scene": {
+      "on_boot": "Au démarrage",
+      "on_reset": "Au redémarrage"
+    },
+    "new_script": {
+      "name": "Nom du script :",
+      "create": "Créer",
+      "cancel": "Annuler"
+    }
+  },
+  "new_project": {
+    "title": "Créer un Nouveau Projet",
+    "name": "Nom du projet :",
+    "path": "Chemin du projet :",
+    "default_name": "Nouveau Projet",
+    "choose_folder": "Choisissez un dossier où créer le nouveau projet",
+    "create_folder": "Le projet sera créé dans :",
+    "create": "Créer",
+    "cancel": "Annuler"
+  },
+  "home": {
+    "create": "Créer un Projet",
+    "open": "Ouvrir un Projet",
+    "choose_folder": "Sélectionnez le dossier du projet"
+  },
+  "tabs": {
+    "3d_viewport": "Vue-3D",
+    "scene": "Scène",
+    "graph": "Graphe",
+    "layers": "Calques",
+    "asset": "Ressource",
+    "object": "Objet",
+    "files": "Fichiers",
+    "log": "Journal"
+  },
+  "menubar": {
+    "project": {
+      "name": "Projet",
+      "save": " Enregistrer",
+      "settings": " Paramètres",
+      "close": " Fermer"
+    },
+    "build": {
+      "name": "Construire",
+      "build": " Construire",
+      "clean": "Nettoyer"
+    },
+    "view": {
+      "name": "Vue",
+      "reset": "Réinitialiser"
+    }
+  },
+  "project_settings": {
+    "title": " Paramètres du Projet",
+    "general": "Général",
+    "name": "Nom",
+    "rom_name": "ROM",
+    "environment": "Environnement",
+    "emulator": "Émulateur",
+    "save": "Enregistrer"
+  },
+  "graph": {
+    "create": "Créer Nouveau",
+    "new": "*Nouveau Graphe*",
+    "duplicate": " Dupliquer",
+    "remove": " Supprimer",
+    "nodes": {
+      "start": {
+        "name": " Démarrage",
+        "on_start": "Au démarrage"
+      },
+      "wait": {
+        "name": " Attendre",
+        "sec": "sec."
+      },
+      "objdel": {
+        "name": " Supprimer Objet",
+        "self": "< Cet objet >"
+      },
+      "objevent": {
+        "name": " Envoyer Événement",
+        "self": "< Cet object >",
+        "object": "Objet",
+        "type": "Type",
+        "value": "Valeur"
+      },
+      "compare": {
+        "name": " Comparer",
+        "oper": "Opér.",
+        "true": "Vrai",
+        "false": "Faux"
+      },
+      "value": {
+        "name": " Valeur"
+      },
+      "repeat": {
+        "name": " Répéter",
+        "loop": "Boucle",
+        "exit": "Fin"
+      },
+      "function": {
+        "name": " Fonction"
+      },
+      "compbool": {
+        "name": " Si-Sinon",
+        "true": "Vrai",
+        "false": "Faux"
+      },
+      "sceneload": {
+        "name": " Charger Scène"
+      },
+      "arg": {
+        "name": " Argument",
+        "index": "Index"
+      },
+      "switchcase": {
+        "name": " Aiguillage",
+        "add": "Ajouter"
+      },
+      "note": {
+        "name": " Note"
+      }
+    }
   }
 }

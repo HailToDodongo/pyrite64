@@ -9,6 +9,7 @@
 #include "imgui_internal.h"
 #include "../actions.h"
 #include "../../context.h"
+#include "../imgui/lang.h"
 
 #define IMVIEWGUIZMO_IMPLEMENTATION 1
 #include "ImGuizmo.h"
@@ -84,28 +85,28 @@ void Editor::Scene::draw()
     dockBottomID = ImGui::DockBuilderSplitNode(dockSpaceID, ImGuiDir_Down, 0.25f, nullptr, &dockSpaceID);
 
     // Center
-    ImGui::DockBuilderDockWindow("3D-Viewport", dockSpaceID);
+    ImGui::DockBuilderDockWindow(message(MSG_TAB_3D_VIEWPORT), dockSpaceID);
     // ImGui::DockBuilderDockWindow("Node-Editor", dockSpaceID);
 
     // Left
     //ImGui::DockBuilderDockWindow("Project", dockLeftID);
-    ImGui::DockBuilderDockWindow("Scene", dockLeftID);
-    ImGui::DockBuilderDockWindow("Graph", dockLeftID);
-    ImGui::DockBuilderDockWindow("Layers", dockLeftID);
+    ImGui::DockBuilderDockWindow(message(MSG_TAB_SCENE), dockLeftID);
+    ImGui::DockBuilderDockWindow(message(MSG_TAB_GRAPH), dockLeftID);
+    ImGui::DockBuilderDockWindow(message(MSG_TAB_LAYERS), dockLeftID);
 
     // Right
-    ImGui::DockBuilderDockWindow("Asset", dockRightID);
-    ImGui::DockBuilderDockWindow("Object", dockRightID);
+    ImGui::DockBuilderDockWindow(message(MSG_TAB_ASSET), dockRightID);
+    ImGui::DockBuilderDockWindow(message(MSG_TAB_OBJECT), dockRightID);
 
     // Bottom
-    ImGui::DockBuilderDockWindow("Files", dockBottomID);
-    ImGui::DockBuilderDockWindow("Log", dockBottomID);
+    ImGui::DockBuilderDockWindow(message(MSG_TAB_FILES), dockBottomID);
+    ImGui::DockBuilderDockWindow(message(MSG_TAB_LOG), dockBottomID);
 
     ImGui::DockBuilderFinish(dockSpaceID);
   }
 
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2, 2));
-  ImGui::Begin("3D-Viewport");
+  ImGui::Begin(message(MSG_TAB_3D_VIEWPORT));
     viewport3d.draw();
   ImGui::End();
   ImGui::PopStyleVar(1);
@@ -122,35 +123,35 @@ void Editor::Scene::draw()
     nodeEditors.erase(nodeEditors.begin() + delIndices[i]);
   }
 
-  ImGui::Begin("Object");
+  ImGui::Begin(message(MSG_TAB_OBJECT));
     objectInspector.draw();
   ImGui::End();
 
-  ImGui::Begin("Asset");
+  ImGui::Begin(message(MSG_TAB_ASSET));
     assetInspector.draw();
   ImGui::End();
 
-  ImGui::Begin("Files");
+  ImGui::Begin(message(MSG_TAB_FILES));
     assetsBrowser.draw();
   ImGui::End();
 
   if (ctx.project->getScenes().getLoadedScene()) {
 
-    ImGui::Begin("Graph");
+    ImGui::Begin(message(MSG_TAB_GRAPH));
       sceneGraph.draw();
     ImGui::End();
 
-    ImGui::Begin("Scene");
+    ImGui::Begin(message(MSG_TAB_SCENE));
       sceneInspector.draw();
     ImGui::End();
 
-    ImGui::Begin("Layers");
+    ImGui::Begin(message(MSG_TAB_LAYERS));
       layerInspector.draw();
     ImGui::End();
 
   }
 
-  ImGui::Begin("Log");
+  ImGui::Begin(message(MSG_TAB_LOG));
     logWindow.draw();
   ImGui::End();
 
@@ -164,7 +165,7 @@ void Editor::Scene::draw()
     // Thick borders
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-    ImGui::Begin(ICON_MDI_COG " Project Settings", &projectSettingsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
+    ImGui::Begin((std::string{ICON_MDI_COG} + message(MSG_PROJECT_SETTINGS_TITLE)).c_str(), &projectSettingsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
     if (projectSettings.draw()) {
       projectSettingsOpen = false;
     }
@@ -184,24 +185,24 @@ void Editor::Scene::draw()
 
   if(ImGui::BeginMenuBar())
   {
-    if(ImGui::BeginMenu("Project"))
+    if(ImGui::BeginMenu(message(MSG_MENUBAR_PROJECT)))
     {
-      if(ImGui::MenuItem(ICON_MDI_CONTENT_SAVE_OUTLINE " Save"))ctx.project->save();
-      if(ImGui::MenuItem(ICON_MDI_COG " Settings"))projectSettingsOpen = true;
-      if(ImGui::MenuItem(ICON_MDI_CLOSE " Close"))Actions::call(Actions::Type::PROJECT_CLOSE);
+      if(ImGui::MenuItem((std::string{ICON_MDI_CONTENT_SAVE_OUTLINE} + message(MSG_MENUBAR_PROJECT_SAVE)).c_str()))ctx.project->save();
+      if(ImGui::MenuItem((std::string{ICON_MDI_COG} + message(MSG_MENUBAR_PROJECT_SETTINGS)).c_str()))projectSettingsOpen = true;
+      if(ImGui::MenuItem((std::string{ICON_MDI_CLOSE} + message(MSG_MENUBAR_PROJECT_CLOSE)).c_str()))Actions::call(Actions::Type::PROJECT_CLOSE);
       ImGui::EndMenu();
     }
 
-    if(ImGui::BeginMenu("Build"))
+    if(ImGui::BeginMenu(message(MSG_MENUBAR_BUILD)))
     {
-      if(ImGui::MenuItem(ICON_MDI_PLAY " Build"))Actions::call(Actions::Type::PROJECT_BUILD);
-      if(ImGui::MenuItem("Clean"))Actions::call(Actions::Type::PROJECT_CLEAN);
+      if(ImGui::MenuItem((std::string{ICON_MDI_PLAY} + message(MSG_MENUBAR_BUILD_BUILD)).c_str()))Actions::call(Actions::Type::PROJECT_BUILD);
+      if(ImGui::MenuItem(message(MSG_MENUBAR_BUILD_CLEAN)))Actions::call(Actions::Type::PROJECT_CLEAN);
       ImGui::EndMenu();
     }
 
-    if(ImGui::BeginMenu("View"))
+    if(ImGui::BeginMenu(message(MSG_MENUBAR_VIEW)))
     {
-      if(ImGui::MenuItem("Reset Layout"))dockSpaceInit = false;
+      if(ImGui::MenuItem(message(MSG_MENUBAR_VIEW_RESET)))dockSpaceInit = false;
       ImGui::EndMenu();
     }
 

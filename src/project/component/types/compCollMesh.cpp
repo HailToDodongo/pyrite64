@@ -5,6 +5,7 @@
 #include "../components.h"
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/lang.h"
 #include "../../../utils/json.h"
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
@@ -105,8 +106,8 @@ namespace Project::Component::CollMesh
     auto &modelList = assets.getTypeEntries(FileType::MODEL_3D);
 
     if (ImTable::start("Comp", &obj)) {
-      ImTable::add("Name", entry.name);
-      ImTable::add("Model");
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_MESH_NAME), entry.name);
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_MESH_MODEL));
       //ImGui::InputScalar("##UUID", ImGuiDataType_U64, &data.scriptUUID);
 
       int idx = modelList.size();
@@ -120,7 +121,7 @@ namespace Project::Component::CollMesh
       auto getter = [](void*, int idx) -> const char*
       {
         auto &scriptList = ctx.project->getAssets().getTypeEntries(FileType::MODEL_3D);
-        if (idx < 0 || idx >= scriptList.size())return "<Select Model>";
+        if (idx < 0 || idx >= scriptList.size())return Editor::message(MSG_OBJECT_COMPONENT_COLLISION_MESH_SELECT);
         return scriptList[idx].name.c_str();
       };
 
@@ -136,9 +137,9 @@ namespace Project::Component::CollMesh
 
       ImTable::end();
 
-      if(selModel && ImGui::CollapsingSubHeader("Mesh Filter", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Filter", &obj))
+      if(selModel && ImGui::CollapsingSubHeader(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_MESH_MESH_FILTER), ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Filter", &obj))
       {
-        bool changed = ImTable::addObjProp("Filter", data.filter.meshFilter);
+        bool changed = ImTable::addObjProp(Editor::message(MSG_OBJECT_COMPONENT_COLLISION_MESH_FILTER), data.filter.meshFilter);
 
         if(changed || data.filter.cache.empty()) {
           data.filter.filterT3DM(selModel->t3dmData.models, obj, false);

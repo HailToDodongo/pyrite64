@@ -7,6 +7,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "../../imgui/helper.h"
+#include "../../imgui/lang.h"
 
 #define __LIBDRAGON_N64SYS_H 1
 #define PhysicalAddr(a) (uint64_t)(a)
@@ -22,12 +23,13 @@ namespace
   {
     ImGui::Text("%s", layerName.c_str());
     ImGui::SameLine();
-    std::string addLabel = ICON_MDI_PLUS_BOX_OUTLINE " Add##" + layerName;
+    std::string addLabel = std::string{ICON_MDI_PLUS_BOX_OUTLINE} + Editor::message(MSG_LAYERS_ADD);
+    std::string addLabelId = addLabel + "##" + layerName;
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 3);
-    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(addLabel.c_str()).x / 2) - 4);
-    if (ImGui::Button(addLabel.c_str())) {
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(addLabel.c_str()).x) - 17);
+    if (ImGui::Button(addLabelId.c_str())) {
       Project::LayerConf layer{};
-      layer.name.value = "New Layer";
+      layer.name.value = Editor::message(MSG_LAYERS_NEW_LAYER);
       layers.push_back(layer);
     }
 
@@ -45,33 +47,33 @@ namespace
 
       if (open) {
         ImTable::start("Settings");
-        ImTable::addProp("Name", layer.name);
-        ImTable::addProp("Z-Compare", layer.depthCompare);
-        ImTable::addProp("Z-Write", layer.depthWrite);
+        ImTable::addProp(Editor::message(MSG_LAYERS_NAME), layer.name);
+        ImTable::addProp(Editor::message(MSG_LAYERS_ZCOMPARE), layer.depthCompare);
+        ImTable::addProp(Editor::message(MSG_LAYERS_ZWRITE), layer.depthWrite);
 
         std::vector<ImTable::ComboEntry> blenders{
-          {0, "None (Opaque)"},
-          {RDPQ_BLENDER_MULTIPLY, "Multiply (Alpha)"},
-          {RDPQ_BLENDER_ADDITIVE, "Additive"},
+          {0, Editor::message(MSG_LAYERS_BLENDERS_NONE)},
+          {RDPQ_BLENDER_MULTIPLY, Editor::message(MSG_LAYERS_BLENDERS_MULTIPLY)},
+          {RDPQ_BLENDER_ADDITIVE, Editor::message(MSG_LAYERS_BLENDERS_ADDITIVE)},
         };
-        ImTable::addVecComboBox("Blending", blenders, layer.blender.value);
+        ImTable::addVecComboBox(Editor::message(MSG_LAYERS_BLENDING), blenders, layer.blender.value);
 
-        ImTable::addProp("Fog", layer.fog);
+        ImTable::addProp(Editor::message(MSG_LAYERS_FOG), layer.fog);
         if(layer.fog.value)
         {
           std::vector<ImTable::ComboEntry> fogColorModes{
-              {1, "Clear-Color"},
-              {2, "Custom Color"},
-              {3, "Leave Unchanged"},
+              {1, Editor::message(MSG_LAYERS_FOG_MODES_CLEAR)},
+              {2, Editor::message(MSG_LAYERS_FOG_MODES_CUSTOM)},
+              {3, Editor::message(MSG_LAYERS_FOG_MODES_UNCHANGED)},
             };
-          ImTable::addVecComboBox("Fog-Mode", fogColorModes, layer.fogColorMode.value);
+          ImTable::addVecComboBox(Editor::message(MSG_LAYERS_FOG_MODE), fogColorModes, layer.fogColorMode.value);
 
           if(layer.fogColorMode.value == 2) {
-            ImTable::addColor("Fog Color", layer.fogColor.value);
+            ImTable::addColor(Editor::message(MSG_LAYERS_FOG_COLOR), layer.fogColor.value);
           }
 
-          ImTable::addProp("Fog Min", layer.fogMin);
-          ImTable::addProp("Fog Max", layer.fogMax);
+          ImTable::addProp(Editor::message(MSG_LAYERS_FOG_MIN), layer.fogMin);
+          ImTable::addProp(Editor::message(MSG_LAYERS_FOG_MAX), layer.fogMax);
         }
 
         ImTable::end();
@@ -81,12 +83,12 @@ namespace
     }
 
     if(ImGui::BeginPopupContextItem(layerName.c_str())) {
-      if(ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Duplicate")) {
+      if(ImGui::MenuItem((std::string{ICON_MDI_CONTENT_COPY} + Editor::message(MSG_LAYERS_DUPLICATE)).c_str())) {
         auto clone = layers[ctxLayerIndex];
-        clone.name.value += " Copy";
+        clone.name.value += Editor::message(MSG_LAYERS_COPY);
         layers.insert(layers.begin() + ctxLayerIndex + 1, clone);
       }
-      if(layers.size() > 1 && ImGui::MenuItem(ICON_MDI_TRASH_CAN_OUTLINE " Delete")) {
+      if(layers.size() > 1 && ImGui::MenuItem((std::string{ICON_MDI_TRASH_CAN_OUTLINE} + Editor::message(MSG_LAYERS_DELETE)).c_str())) {
         layers.erase(layers.begin() + ctxLayerIndex);
       }
       ImGui::EndPopup();
@@ -101,16 +103,16 @@ void Editor::LayerInspector::draw() {
   auto scene = ctx.project->getScenes().getLoadedScene();
   if(!scene)return;
 
-  drawLayers(scene->conf.layers3D, "3D Layers");
+  drawLayers(scene->conf.layers3D, Editor::message(MSG_LAYERS_3D));
   ImGui::Dummy({0, 2});
 
-  drawLayers(scene->conf.layersPtx, "Particle Layers");
+  drawLayers(scene->conf.layersPtx, Editor::message(MSG_LAYERS_PARTICLE));
   ImGui::Dummy({0, 2});
 
-  drawLayers(scene->conf.layers2D, "2D Layers");
+  drawLayers(scene->conf.layers2D, Editor::message(MSG_LAYERS_2D));
   ImGui::Dummy({0, 2});
 
-  std::string resetLabel = "Reset";
+  std::string resetLabel = Editor::message(MSG_LAYERS_RESET);
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 4);
   ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(resetLabel.c_str()).x) * 0.5f - 4);
   if (ImGui::Button(resetLabel.c_str())) {

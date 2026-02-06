@@ -5,6 +5,7 @@
 #include "../components.h"
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/lang.h"
 #include "../../../utils/json.h"
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
@@ -23,12 +24,6 @@ namespace
   constexpr int LIGHT_TYPE_DIRECTIONAL = 1;
   constexpr int LIGHT_TYPE_POINT = 2;
   constexpr int LIGHT_TYPE_COUNT = 3;
-
-  constexpr const char* const LIGHT_TYPES[LIGHT_TYPE_COUNT] = {
-    "Ambient",
-    "Directional",
-    "Point"
-  };
 
   glm::vec3 rotToDir(Project::Object &obj) {
     return glm::normalize(obj.rot.resolve(obj.propOverrides) * glm::vec3{0,0,-1});
@@ -96,10 +91,15 @@ namespace Project::Component::Light
 
     if (ImTable::start("Comp", &obj))
     {
-      ImTable::add("Name", entry.name);
-      ImTable::addComboBox("Type", data.type.value, LIGHT_TYPES, LIGHT_TYPE_COUNT);
-      ImTable::add("Index", data.index.value);
-      ImTable::addColor("Color", data.color.value, true);
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_LIGHT_NAME), entry.name);
+      const char* const LIGHT_TYPES[LIGHT_TYPE_COUNT] = {
+        Editor::message(MSG_OBJECT_COMPONENT_LIGHT_TYPES_AMBIENT),
+        Editor::message(MSG_OBJECT_COMPONENT_LIGHT_TYPES_DIRECTIONAL),
+        Editor::message(MSG_OBJECT_COMPONENT_LIGHT_TYPES_POINT)
+      };
+      ImTable::addComboBox(Editor::message(MSG_OBJECT_COMPONENT_LIGHT_TYPE), data.type.value, LIGHT_TYPES, LIGHT_TYPE_COUNT);
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_LIGHT_INDEX), data.index.value);
+      ImTable::addColor(Editor::message(MSG_OBJECT_COMPONENT_LIGHT_COLOR), data.color.value, true);
 
       ImTable::end();
     }

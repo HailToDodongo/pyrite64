@@ -7,6 +7,7 @@
 #include "imgui.h"
 #include "../../../context.h"
 #include "../../imgui/helper.h"
+#include "../../imgui/lang.h"
 #include "IconsMaterialDesignIcons.h"
 #include "imgui_internal.h"
 
@@ -170,16 +171,16 @@ namespace
     {
       if (ImGui::BeginPopupContextItem("NodePopup"))
       {
-        if (ImGui::MenuItem(ICON_MDI_CUBE_OUTLINE " Add Object")) {
+        if (ImGui::MenuItem((std::string{ICON_MDI_CUBE_OUTLINE} + Editor::message(MSG_SCENE_GRAPH_ADD)).c_str())) {
           ctx.selObjectUUID = scene.addObject(obj)->uuid;
         }
 
         if (obj.parent) {
-          if (!obj.isPrefabInstance() && ImGui::MenuItem(ICON_MDI_PACKAGE_VARIANT_CLOSED_PLUS " To Prefab")) {
+          if (!obj.isPrefabInstance() && ImGui::MenuItem((std::string{ICON_MDI_PACKAGE_VARIANT_CLOSED_PLUS} + Editor::message(MSG_SCENE_GRAPH_TO_PREFAB)).c_str())) {
             scene.createPrefabFromObject(obj.uuid);
           }
 
-          if (ImGui::MenuItem(ICON_MDI_TRASH_CAN " Delete"))deleteObj = &obj;
+          if (ImGui::MenuItem((std::string{ICON_MDI_TRASH_CAN} + Editor::message(MSG_SCENE_GRAPH_DELETE)).c_str()))deleteObj = &obj;
         }
         ImGui::EndPopup();
       }

@@ -6,6 +6,7 @@
 
 #include "baseNode.h"
 #include "../../../utils/hash.h"
+#include "../../../editor/imgui/lang.h"
 
 namespace Project::Graph::Node
 {
@@ -24,11 +25,16 @@ namespace Project::Graph::Node
       };
 
       void updateTitle() {
-        setTitle(std::string(COMP_TYPES[compType]) + " Compare");
+        setTitle(std::string(COMP_TYPES[compType]) + Editor::message(NAME));
       }
 
     public:
-      constexpr static const char* NAME = ICON_MDI_LESS_THAN_OR_EQUAL " Compare";
+      constexpr static const char* ICON = ICON_MDI_LESS_THAN_OR_EQUAL;
+      constexpr static const char* NAME = MSG_GRAPH_NODE_COMPARE;
+
+      static std::string getname() {
+        return std::string{ICON} + Editor::message(NAME);
+      }
 
       Compare()
       {
@@ -40,13 +46,13 @@ namespace Project::Graph::Node
         addIN<TypeValue>("", ImFlow::ConnectionFilter::SameType(), PIN_STYLE_VALUE);
         addIN<TypeValue>("", ImFlow::ConnectionFilter::SameType(), PIN_STYLE_VALUE);
 
-        addOUT<TypeLogic>("True", PIN_STYLE_LOGIC);
-        addOUT<TypeLogic>("False", PIN_STYLE_LOGIC);
+        addOUT<TypeLogic>(Editor::message(MSG_GRAPH_NODE_COMPARE_TRUE), PIN_STYLE_LOGIC);
+        addOUT<TypeLogic>(Editor::message(MSG_GRAPH_NODE_COMPARE_FALSE), PIN_STYLE_LOGIC);
       }
 
       void draw() override {
         if(ImTable::start("Node", nullptr, 80.0f)) {
-          if(ImTable::addComboBox("Oper.", compType, COMP_TYPES.data(), COMP_TYPES.size())) {
+          if(ImTable::addComboBox(Editor::message(MSG_GRAPH_NODE_COMPARE_OPER), compType, COMP_TYPES.data(), COMP_TYPES.size())) {
             updateTitle();
           }
           ImTable::end();

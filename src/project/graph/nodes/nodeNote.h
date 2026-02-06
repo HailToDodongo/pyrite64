@@ -6,6 +6,7 @@
 
 #include "baseNode.h"
 #include "../../../utils/hash.h"
+#include "../../../editor/imgui/lang.h"
 
 namespace Project::Graph::Node
 {
@@ -16,12 +17,17 @@ namespace Project::Graph::Node
       ImVec2 size{200, 100}; // Size of the group node
 
     public:
-      constexpr static const char* NAME = ICON_MDI_CLIPBOARD_OUTLINE " Note";
+      constexpr static const char* ICON = ICON_MDI_CLIPBOARD_OUTLINE;
+      constexpr static const char* NAME = MSG_GRAPH_NODE_NOTE;
+
+      static std::string getname() {
+        return std::string{ICON} + Editor::message(NAME);
+      }
 
       Note()
       {
         uuid = Utils::Hash::randomU64();
-        setTitle(NAME);
+        setTitle(getname());
         // Remove visible style, set fully transparent background and border
         setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(0, 0, 0, 0x20), ImColor(0xFF, 0xFF, 0xFF, 0xFF), 0.0f));
       }

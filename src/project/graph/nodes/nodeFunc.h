@@ -6,6 +6,7 @@
 
 #include "baseNode.h"
 #include "../../../utils/hash.h"
+#include "../../../editor/imgui/lang.h"
 
 namespace Project::Graph::Node
 {
@@ -16,11 +17,16 @@ namespace Project::Graph::Node
       std::string arg0{"0"};
 
     public:
-      constexpr static const char* NAME = ICON_MDI_FUNCTION " Function";
+      constexpr static const char* ICON = ICON_MDI_FUNCTION;
+      constexpr static const char* NAME = MSG_GRAPH_NODE_FUNCTION;
+
+      static std::string getname() {
+        return std::string{ICON} + Editor::message(NAME);
+      }
 
       void updateTitle() {
         if(funcName.empty()) {
-          setTitle(NAME);
+          setTitle(getname());
         } else {
           setTitle(ICON_MDI_FUNCTION " " + funcName);// + "(" + arg0 + ")");
         }

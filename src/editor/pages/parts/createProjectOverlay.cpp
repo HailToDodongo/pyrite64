@@ -5,6 +5,7 @@
 #include "createProjectOverlay.h"
 #include "../../actions.h"
 #include "../../imgui/helper.h"
+#include "../../imgui/lang.h"
 
 namespace
 {
@@ -34,7 +35,7 @@ namespace
 void Editor::CreateProjectOverlay::open()
 {
   ImGui::OpenPopup("Create Project");
-  projectName = "New Project";
+  projectName = message(MSG_NEW_PROJECT_DEFAULT_NAME);
   projectSafeName = makeNameSafe(projectName);
   projectPath = SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS);
 }
@@ -54,21 +55,21 @@ bool Editor::CreateProjectOverlay::draw()
   {
     ImGui::Dummy({0, 2});
     ImGui::PushFont(nullptr, 24);
-      const char* title = "Create New Project";
+      const char* title = message(MSG_NEW_PROJECT_TITLE);
       float titleWidth = ImGui::CalcTextSize(title).x;
       ImGui::SetCursorPosX((ImGui::GetWindowWidth() - titleWidth) * 0.5f);
-      ImGui::Text("Create New Project");
+      ImGui::Text(title);
     ImGui::PopFont();
 
     ImGui::Dummy({0, 10});
 
-    ImGui::Text("Project Name:");
+    ImGui::Text(message(MSG_NEW_PROJECT_NAME));
     if(ImGui::InputText("##name", &projectName)) {
       projectSafeName = makeNameSafe(projectName);
     }
     ImGui::Dummy({0, 4});
 
-    ImGui::Text("Project Path:");
+    ImGui::Text(message(MSG_NEW_PROJECT_PATH));
     ImGui::InputText("##path", &projectPath);
     ImGui::SameLine();
     if (ImGui::Button(ICON_MDI_FOLDER_SEARCH_OUTLINE, {30, 0}))
@@ -76,12 +77,12 @@ bool Editor::CreateProjectOverlay::draw()
       Utils::FilePicker::open([](const std::string &path) {
         if (path.empty()) return;
         projectPath = path;
-      }, true, "Choose Folder to create new Project in");
+      }, true, message(MSG_NEW_PROJECT_CHOOSE_FOLDER));
     }
 
     ImGui::Dummy({0, 4});
     // text in gray
-    ImGui::Text("Project will be created in:");
+    ImGui::Text(message(MSG_NEW_PROJECT_CREATE_FOLDER));
     std::filesystem::path fullPath = projectPath;
     fullPath = fullPath / projectSafeName;
     ImGui::TextColored({0.7f, 0.7f, 0.7f, 1.0f}, "%s", fullPath.c_str());
@@ -92,7 +93,7 @@ bool Editor::CreateProjectOverlay::draw()
     // right aligned
     ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 220);
 
-    if (ImGui::Button("Cancel", {100, 0})) {
+    if (ImGui::Button(message(MSG_NEW_PROJECT_CANCEL), {100, 0})) {
       projectName.clear();
       projectSafeName.clear();
       projectPath.clear();
@@ -108,7 +109,7 @@ bool Editor::CreateProjectOverlay::draw()
 
     bool canCreate = !projectName.empty() && !projectPath.empty();
     if(!canCreate)ImGui::BeginDisabled();
-    if (ImGui::Button("Create", {100, 0})) {
+    if (ImGui::Button(message(MSG_NEW_PROJECT_CREATE), {100, 0})) {
       nlohmann::json args{};
       args["path"] = fullPath;
       args["name"] = projectName;

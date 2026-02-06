@@ -5,6 +5,7 @@
 #include "../components.h"
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/lang.h"
 #include "../../../utils/json.h"
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
@@ -87,7 +88,7 @@ namespace Project::Component::Code
   const char* getter(void* user_data, int idx)
   {
     auto &scriptList = ctx.project->getAssets().getTypeEntries(FileType::CODE_OBJ);
-    if (idx < 0 || idx >= (int)scriptList.size())return "<Select Script>";
+    if (idx < 0 || idx >= (int)scriptList.size())return Editor::message(MSG_OBJECT_COMPONENT_CODE_SELECT);
     return scriptList[idx].name.c_str();
   }
 
@@ -99,17 +100,17 @@ namespace Project::Component::Code
     auto &scriptList = assets.getTypeEntries(FileType::CODE_OBJ);
 
     if (ImTable::start("Comp", &obj)) {
-      ImTable::add("Name", entry.name);
-      int idx = ImTable::addVecComboBox("Script", scriptList, data.scriptUUID);
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_CODE_NAME), entry.name);
+      int idx = ImTable::addVecComboBox(Editor::message(MSG_OBJECT_COMPONENT_CODE_SCRIPT), scriptList, data.scriptUUID);
       //ImGui::InputScalar("##UUID", ImGuiDataType_U64, &data.scriptUUID);
 
       if (idx < (int)scriptList.size()) {
         const auto &script = scriptList[idx];
         data.scriptUUID = script.getUUID();
 
-        ImTable::add("Arguments:");
+        ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_CODE_ARGS));
         if (script.params.fields.empty()) {
-          ImGui::Text("(None)");
+          ImGui::Text(Editor::message(MSG_OBJECT_COMPONENT_CODE_ARG_NONE));
         }
 
         for (auto &field : script.params.fields)

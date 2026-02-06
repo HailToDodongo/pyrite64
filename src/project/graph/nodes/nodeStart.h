@@ -6,6 +6,7 @@
 
 #include "baseNode.h"
 #include "../../../utils/hash.h"
+#include "../../../editor/imgui/lang.h"
 
 namespace Project::Graph::Node
 {
@@ -15,12 +16,17 @@ namespace Project::Graph::Node
 
 
     public:
-      constexpr static const char* NAME = ICON_MDI_PLAY " Start";
+      constexpr static const char* ICON = ICON_MDI_PLAY;
+      constexpr static const char* NAME = MSG_GRAPH_NODE_START;
+
+      static std::string getname() {
+        return std::string{ICON} + Editor::message(NAME);
+      }
 
       Start()
       {
         uuid = Utils::Hash::randomU64();
-        setTitle(NAME);
+        setTitle(getname());
         setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(0xEE, 0xEE, 0xEE, 0xFF), ImColor(0,0,0,255), 4.0f));
 
         addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
@@ -29,7 +35,7 @@ namespace Project::Graph::Node
       }
 
       void draw() override {
-        ImGui::Text("On Start");
+        ImGui::Text(Editor::message(MSG_GRAPH_NODE_START_ONSTART));
         //ImGui::Text("On Event");
         //ImGui::Text("On Collision");
       }

@@ -7,6 +7,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "../../imgui/helper.h"
+#include "../../imgui/lang.h"
 
 Editor::SceneInspector::SceneInspector() {
 }
@@ -15,24 +16,28 @@ void Editor::SceneInspector::draw() {
   auto scene = ctx.project->getScenes().getLoadedScene();
   if(!scene)return;
 
-  if (ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+  if (ImGui::CollapsingHeader(message(MSG_SCENE_SETTINGS), ImGuiTreeNodeFlags_DefaultOpen)) {
     ImTable::start("Settings");
-    ImTable::addProp("Name", scene->conf.name);
+    ImTable::addProp(message(MSG_SCENE_NAME), scene->conf.name);
 
-    constexpr const char* OPTIONS[] = {"Default", "HDR-Bloom", "HiRes-Tex (256x)"};
+    const char* OPTIONS[] = {
+      message(MSG_SCENE_PIPELINES_DEFAULT),
+      message(MSG_SCENE_PIPELINES_HDR_BLOOM),
+      message(MSG_SCENE_PIPELINES_HIRES_TEX)
+    };
     ImTable::addComboBox(
-      "Pipeline",
+      message(MSG_SCENE_PIPELINE),
       scene->conf.renderPipeline.value,
       OPTIONS, 3
     );
 
     std::vector<ImTable::ComboEntry> fpsEntries{
-      {0, "Unlimited"},
+      {0, message(MSG_SCENE_FPS_UNLIMITED)},
       {1, "30 / 25"},
       {2, "20 / 16.6"},
       {3, "15 / 12.5"},
     };
-    ImTable::addVecComboBox("FPS-Limit", fpsEntries, scene->conf.frameLimit.value);
+    ImTable::addVecComboBox(message(MSG_SCENE_FPS_LIMIT), fpsEntries, scene->conf.frameLimit.value);
 
     ImTable::end();
   }
@@ -48,35 +53,35 @@ void Editor::SceneInspector::draw() {
     fbDisabled = true;
   }
 
-  if (ImGui::CollapsingHeader("Framebuffer", ImGuiTreeNodeFlags_DefaultOpen)) {
+  if (ImGui::CollapsingHeader(message(MSG_SCENE_FRAMEBUFFER), ImGuiTreeNodeFlags_DefaultOpen)) {
     ImTable::start("Framebuffer");
 
     if(fbDisabled)ImGui::BeginDisabled();
-    ImTable::add("Width", scene->conf.fbWidth);
-    ImTable::add("Height", scene->conf.fbHeight);
+    ImTable::add(message(MSG_SCENE_WIDTH), scene->conf.fbWidth);
+    ImTable::add(message(MSG_SCENE_HEIGHT), scene->conf.fbHeight);
 
     constexpr const char* const FORMATS[] = {"RGBA16","RGBA32"};
-    ImTable::addComboBox("Format", scene->conf.fbFormat, FORMATS, 2);
+    ImTable::addComboBox(message(MSG_SCENE_FORMAT), scene->conf.fbFormat, FORMATS, 2);
 
     if(fbDisabled)ImGui::EndDisabled();
-      ImTable::addColor("Color", scene->conf.clearColor.value, false);
+      ImTable::addColor(message(MSG_SCENE_COLOR), scene->conf.clearColor.value, false);
       scene->conf.clearColor.value.a = 1.0f;
     if(fbDisabled)ImGui::BeginDisabled();
 
-    ImTable::addProp("Clear Color", scene->conf.doClearColor);
+    ImTable::addProp(message(MSG_SCENE_CLEAR_COLOR), scene->conf.doClearColor);
 
     if(fbDisabled)ImGui::EndDisabled();
 
-    ImTable::addProp("Clear Depth", scene->conf.doClearDepth);
+    ImTable::addProp(message(MSG_SCENE_CLEAR_DEPTH), scene->conf.doClearDepth);
 
-    constexpr std::array<const char*, 5> FILTERS = {
-      "None",
-      "Resample",
-      "Dedither",
-      "Resample / AA",
-      "Resample / AA / Dedither"
+    const std::array<const char*, 5> FILTERS = {
+      message(MSG_SCENE_FILTERS_NONE),
+      message(MSG_SCENE_FILTERS_RESAMPLE),
+      message(MSG_SCENE_FILTERS_DEDITHER),
+      message(MSG_SCENE_FILTERS_RESAMPLE_AA),
+      message(MSG_SCENE_FILTERS_RESAMPLE_AA_DEDITHER)
     };
-    ImTable::addComboBox("Filter", scene->conf.filter.value, FILTERS.data(), FILTERS.size());
+    ImTable::addComboBox(message(MSG_SCENE_FILTER), scene->conf.filter.value, FILTERS.data(), FILTERS.size());
 
     ImTable::end();
   }

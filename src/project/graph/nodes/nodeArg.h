@@ -6,6 +6,7 @@
 
 #include "baseNode.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/lang.h"
 #include "../../../utils/hash.h"
 
 namespace Project::Graph::Node
@@ -16,12 +17,17 @@ namespace Project::Graph::Node
       uint16_t value{};
 
     public:
-      constexpr static const char* NAME = ICON_MDI_NUMERIC " Argument";
+      constexpr static const char* ICON = ICON_MDI_NUMERIC;
+      constexpr static const char* NAME = MSG_GRAPH_NODE_ARG;
+
+      static std::string getname() {
+        return std::string{ICON} + Editor::message(NAME);
+      }
 
       Arg()
       {
         uuid = Utils::Hash::randomU64();
-        setTitle(NAME);
+        setTitle(getname());
         setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(0xFF, 0x99, 0x55, 0xFF), ImColor(0,0,0,255), 4.0f));
 
         addOUT<TypeValue>("", PIN_STYLE_VALUE);
@@ -29,7 +35,7 @@ namespace Project::Graph::Node
 
       void draw() override {
         ImGui::SetNextItemWidth(50);
-        ImGui::InputScalar("Index", ImGuiDataType_U16, &value);
+        ImGui::InputScalar(Editor::message(MSG_GRAPH_NODE_ARG_INDEX), ImGuiDataType_U16, &value);
       }
 
       void serialize(nlohmann::json &j) override {

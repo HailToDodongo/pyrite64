@@ -5,6 +5,7 @@
 #include "../components.h"
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/lang.h"
 #include "../../../utils/json.h"
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
@@ -75,13 +76,13 @@ namespace Project::Component::Audio2D
     Data &data = *static_cast<Data*>(entry.data.get());
 
     if (ImTable::start("Comp", &obj)) {
-      ImTable::add("Name", entry.name);
+      ImTable::add(Editor::message(MSG_OBJECT_COMPONENT_AUDIO_2D_NAME), entry.name);
 
       auto &audioList = ctx.project->getAssets().getTypeEntries(FileType::AUDIO);
-      ImTable::addVecComboBox("Audio", audioList, data.audioUUID.value);
-      ImTable::addProp("Volume", data.volume);
-      ImTable::addProp("Loop", data.loop);
-      ImTable::addProp("Auto-Play", data.autoPlay);
+      ImTable::addVecComboBox(Editor::message(MSG_OBJECT_COMPONENT_AUDIO_2D_AUDIO), audioList, data.audioUUID.value);
+      ImTable::addProp(Editor::message(MSG_OBJECT_COMPONENT_AUDIO_2D_VOLUME), data.volume);
+      ImTable::addProp(Editor::message(MSG_OBJECT_COMPONENT_AUDIO_2D_LOOP), data.loop);
+      ImTable::addProp(Editor::message(MSG_OBJECT_COMPONENT_AUDIO_2D_AUTOPLAY), data.autoPlay);
 
       ImTable::end();
     }

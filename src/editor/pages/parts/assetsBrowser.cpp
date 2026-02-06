@@ -21,7 +21,7 @@ namespace
 
   struct TabDef
   {
-    const char* name;
+    std::string name;
     std::vector<FileType> fileTypes{};
     bool showScenes{false};
   };
@@ -40,19 +40,19 @@ void Editor::AssetsBrowser::draw() {
 
   const std::array<TabDef, 4> TABS{
     TabDef{
-      .name = ICON_MDI_EARTH_BOX "  Scenes",
+      .name = std::string{ICON_MDI_EARTH_BOX} + message(MSG_BROWSER_SCENES),
       .showScenes = true
     },
     TabDef{
-      .name = ICON_MDI_FILE "  Assets",
+      .name = std::string{ICON_MDI_FILE} + message(MSG_BROWSER_ASSETS),
       .fileTypes = {FileType::IMAGE, FileType::AUDIO, FileType::MODEL_3D, FileType::FONT}
     },
     TabDef{
-      .name = ICON_MDI_SCRIPT_OUTLINE "  Scripts",
+      .name = std::string{ICON_MDI_SCRIPT_OUTLINE} + message(MSG_BROWSER_SCRIPTS),
       .fileTypes = {FileType::CODE_OBJ, FileType::CODE_GLOBAL, FileType::NODE_GRAPH}
     },
     TabDef{
-      .name = ICON_MDI_PACKAGE_VARIANT_CLOSED "  Prefabs",
+      .name = std::string{ICON_MDI_PACKAGE_VARIANT_CLOSED} + message(MSG_BROWSER_PREFABS),
       .fileTypes = {FileType::PREFAB}
     },
   };
@@ -60,7 +60,7 @@ void Editor::AssetsBrowser::draw() {
   ImGui::BeginChild("LEFT", ImVec2(94, 0), ImGuiChildFlags_Borders);
   for (int i=0; i<TABS.size(); ++i) {
     bool isActive = i == activeTab;
-    if (ImGui::Selectable(TABS[i].name, isActive))activeTab = i;
+    if (ImGui::Selectable(TABS[i].name.c_str(), isActive))activeTab = i;
   }
   ImGui::EndChild();
 
@@ -72,11 +72,11 @@ void Editor::AssetsBrowser::draw() {
     ImGui::SameLine();
     ImGui::BeginChild("END", ImVec2(sceneOptionsWidth, 0), ImGuiChildFlags_Borders);
 
-    ImGui::Text(message(MSG_SCENE_ON_BOOT));
+    ImGui::Text(message(MSG_BROWSER_SCENE_ON_BOOT));
     ImGui::SetNextItemWidth(-FLT_MIN);
     ImGui::VectorComboBox("##Boot", scenes, ctx.project->conf.sceneIdOnBoot);
 
-    ImGui::Text(message(MSG_SCENE_ON_RESET));
+    ImGui::Text(message(MSG_BROWSER_SCENE_ON_RESET));
     ImGui::SetNextItemWidth(-FLT_MIN);
     ImGui::VectorComboBox("##Reset", scenes, ctx.project->conf.sceneIdOnReset);
 
@@ -210,7 +210,7 @@ void Editor::AssetsBrowser::draw() {
 
       if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
       {
-        ImGui::SetTooltip("File: %s", asset.name.c_str());
+        ImGui::SetTooltip(message(MSG_BROWSER_TOOLTIP), asset.name.c_str());
       }
     }
   }
@@ -236,7 +236,7 @@ void Editor::AssetsBrowser::draw() {
 
       if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
       {
-        ImGui::SetTooltip("Scene: %s\nID: %d", scene.name.c_str(), scene.id);
+        ImGui::SetTooltip(message(MSG_BROWSER_SCENE_TOOLTIP), scene.name.c_str(), scene.id);
       }
     }
   }
@@ -265,14 +265,14 @@ void Editor::AssetsBrowser::draw() {
   if(ImGui::BeginPopup("NewScript"))
   {
     static char scriptName[128] = "New_Script";
-    ImGui::Text("Enter script name:");
+    ImGui::Text(message(MSG_BROWSER_NEW_SCRIPT_NAME));
     ImGui::InputText("##Name", scriptName, sizeof(scriptName));
-    if (ImGui::Button("Create")) {
+    if (ImGui::Button(message(MSG_BROWSER_NEW_SCRIPT_CREATE))) {
       ctx.project->getAssets().createScript(scriptName);
       ImGui::CloseCurrentPopup();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Cancel")) {
+    if (ImGui::Button(message(MSG_BROWSER_NEW_SCRIPT_CANCEL))) {
       ImGui::CloseCurrentPopup();
     }
     ImGui::EndPopup();

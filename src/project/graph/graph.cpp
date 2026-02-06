@@ -28,7 +28,7 @@ namespace
   struct TableEntry
   {
     NodeCreateFunc create;
-    const char* name;
+    std::string (*getname)();
   };
 
   uint32_t getIndexLeft(ImFlow::Pin* pin)
@@ -58,7 +58,7 @@ namespace
 
 #define TABLE_ENTRY(name) TableEntry{ \
     [](ImFlow::ImNodeFlow &m, const ImVec2& pos) { return m.addNode<Node::name>(pos); }, \
-    Node::name::NAME \
+    Node::name::getname \
   }
 
 namespace Project::Graph::Node
@@ -90,7 +90,7 @@ namespace Project::Graph
     static std::vector<std::string> names = {};
     if(names.empty()) {
       for(const auto &entry : NODE_TABLE) {
-        names.emplace_back(entry.name);
+        names.emplace_back(entry.getname());
       }
     }
     return names;
