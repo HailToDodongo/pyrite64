@@ -77,10 +77,10 @@ std::string Utils::Proc::getSelfPath()
   szPath[count] = '\0';
 #endif
 
-  return std::filesystem::path{szPath}; // to finish the folder path with (back)slash
+  return std::filesystem::path{szPath}.string(); // to finish the folder path with (back)slash
 }
 
 std::string Utils::Proc::getSelfDir()
 {
-  return std::filesystem::path{getSelfPath()}.parent_path() / "";
+  return (std::filesystem::path{getSelfPath()}.parent_path() / "").string();
 }

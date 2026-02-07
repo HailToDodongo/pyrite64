@@ -9,6 +9,7 @@
 #include <bit>
 #include <stdexcept>
 #include <cstdint>
+#include <filesystem>
 
 #include "glm/vec3.hpp"
 #include "glm/vec4.hpp"
@@ -166,8 +167,8 @@ namespace Utils
         return dataSize;
       }
 
-      void writeToFile(const std::string &filename) {
-        FILE* file = fopen(filename.c_str(), "wb");
+      void writeToFile(const std::filesystem::path &filename) {
+        FILE* file = fopen(filename.string().c_str(), "wb");
         fwrite(data.data(), 1, dataSize, file);
         fflush(file);
         fclose(file);

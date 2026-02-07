@@ -13,7 +13,7 @@
 namespace
 {
   constinit bool isPickerOpen{false};
-  constinit std::mutex mtxResult{};
+  std::mutex mtxResult{};
   constinit std::atomic_bool hasResult{false};
   constinit std::string result{};
 

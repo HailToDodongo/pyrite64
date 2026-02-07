@@ -184,7 +184,7 @@ bool Build::buildProject(const std::string &path)
     Utils::FS::loadTextFile("data/build/baseMakefile.mk"),
     {
       {"{{N64_INST}}",          project.conf.pathN64Inst},
-      {"{{ENGINE_PATH}}",       enginePath},
+      {"{{ENGINE_PATH}}",       enginePath.string()},
       {"{{ROM_NAME}}",          project.conf.romName},
       {"{{PROJECT_NAME}}",      project.conf.name},
       {"{{ASSET_LIST}}",        Utils::join(sceneCtx.files, " ")},
@@ -225,7 +225,7 @@ bool Build::buildProject(const std::string &path)
 }
 
 
-bool Build::assetBuildNeeded(const Project::AssetManagerEntry &asset, const std::string &outPath)
+bool Build::assetBuildNeeded(const Project::AssetManagerEntry &asset, const std::filesystem::path &outPath)
 {
   auto ageSrc = Utils::FS::getFileAge(asset.path);
   auto ageDst = Utils::FS::getFileAge(outPath);

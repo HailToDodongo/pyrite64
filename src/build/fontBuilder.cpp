@@ -34,7 +34,7 @@ bool Build::buildFontAssets(Project::Project &project, SceneCtx &sceneCtx)
     int compr = (int)font.conf.compression - 1;
     if(compr < 0)compr = 1; // @TODO: pull default compression level
 
-    std::string charsetFile{};
+    std::filesystem::path charsetFile{};
     if(!font.conf.fontCharset.value.empty()) {
       charsetFile = outDir / (font.name + "_charset.txt");
       Utils::FS::saveTextFile(charsetFile, font.conf.fontCharset.value);
@@ -43,11 +43,11 @@ bool Build::buildFontAssets(Project::Project &project, SceneCtx &sceneCtx)
     std::string cmd = mkFont.string() + " -c " + std::to_string(compr);
     cmd += " -o " + outDir.string();
     cmd += " -s " + std::to_string(font.conf.baseScale);
-    if(!charsetFile.empty())cmd += " --charset " + charsetFile;;
+    if(!charsetFile.empty())cmd += " --charset " + charsetFile.string();
     cmd += " " + font.path;
 
     bool res = Utils::Proc::runSyncLogged(cmd);
-    Utils::FS::delFile(charsetFile);
+    std::filesystem::remove(charsetFile);
     if(!res)return false;
   }
   return true;

@@ -248,6 +248,14 @@ set_target_properties(pyrite64 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOUR
 # Link to the actual SDL3 library.
 target_link_libraries(pyrite64 PRIVATE SDL3::SDL3 SDL3_image::SDL3_image glm::glm)
 
+if(MINGW)
+    target_link_options(pyrite64 PRIVATE
+        -static-libgcc
+        -static-libstdc++
+        --static
+    )
+endif()
+
 add_dependencies(pyrite64 copy_tiny3d)
 
 # Copy over tiny3d, this is to make sure that during bundling it is still kept

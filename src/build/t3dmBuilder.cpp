@@ -41,7 +41,7 @@ bool Build::buildT3DCollision(
   entry.conf.uuid = newUUID;
 
   printf("Building T3DM Collision: %s\n", outPath.string().c_str());
-  printf(" aasset: %d | %d\n", sceneCtx.files.size(), sceneCtx.assetUUIDToIdx.size());
+  //printf(" asset: %d | %d\n", sceneCtx.files.size(), sceneCtx.assetUUIDToIdx.size());
 
   auto collData = Build::buildCollision(model->path, model->conf.baseScale, meshes);
   collData.writeToFile(outPath.string());
@@ -94,7 +94,7 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
         customChunks.emplace_back('0', buildCollision(model.path, T3DM::config.globalScale).getData());
       }
 
-      T3DM::writeT3DM(t3dm, t3dmPath.c_str(), projectPath, customChunks);
+      T3DM::writeT3DM(t3dm, t3dmPath.string().c_str(), projectPath, customChunks);
 
       int compr = (int)model.conf.compression - 1;
       if(compr < 0)compr = 1; // @TODO: pull default compression level

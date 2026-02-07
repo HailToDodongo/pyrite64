@@ -16,6 +16,10 @@ namespace Utils::JSON
     }
     return nlohmann::json::parse(jsonData);
   }
+
+  inline nlohmann::json loadFile(const std::filesystem::path &path) {
+    return  loadFile(path.string());
+  }
   /*
   template<typename RES, typename T>
   inline std::vector<RES> readArray(

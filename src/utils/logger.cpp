@@ -8,7 +8,7 @@
 
 namespace
 {
-  constinit std::mutex mtx{};
+  std::mutex mtx{};
   constinit std::string buff{};
 
   constinit Utils::Logger::LogOutputFunc outputFunc = nullptr;

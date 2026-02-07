@@ -80,7 +80,7 @@ namespace ImGui
     };
 
     ImGui::Combo(name.c_str(), &idx, getter, (void*)&items, (int)items.size());
-    if(idx >= items.size())idx = 0;
+    if(idx >= (int)items.size())idx = 0;
     id = items[idx].getId();
     return idx;
   }

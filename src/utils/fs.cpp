@@ -18,28 +18,24 @@ std::vector<std::string> Utils::FS::scanDirs(const std::string &basePath)
   return dirs;
 }
 
-void Utils::FS::ensureDir(const std::string &path)
+void Utils::FS::ensureDir(const std::filesystem::path &path)
 {
-  std::filesystem::path fsPath{path};
-  if(!std::filesystem::exists(fsPath)) {
-    std::filesystem::create_directories(fsPath);
+  if(!std::filesystem::exists(path)) {
+    std::filesystem::create_directories(path);
   }
 }
 
-void Utils::FS::ensureFile(const std::string &path, const std::string &pathTemplate)
+void Utils::FS::ensureFile(const std::filesystem::path &path, const std::filesystem::path &pathTemplate)
 {
-  std::filesystem::path fsPath{path};
-  if(!std::filesystem::exists(fsPath)) {
-    std::filesystem::create_directories(fsPath.parent_path());
-    std::filesystem::copy_file(pathTemplate, fsPath);
+  if(!std::filesystem::exists(path)) {
+    std::filesystem::create_directories(path.parent_path());
+    std::filesystem::copy_file(pathTemplate, path);
   }
 }
 
-void Utils::FS::copyDir(const std::string &srcPath, const std::string &dstPath)
+void Utils::FS::copyDir(const std::filesystem::path &srcPath, const std::filesystem::path &dstPath)
 {
-  std::filesystem::path fsSrcPath{srcPath};
-  std::filesystem::path fsDstPath{dstPath};
-  std::filesystem::copy(fsSrcPath, fsDstPath, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+  std::filesystem::copy(srcPath, dstPath, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
 }
 
 void Utils::FS::delFile(const std::string &filePath)
@@ -52,12 +48,11 @@ void Utils::FS::delDir(const std::string &dirPath)
   std::filesystem::remove_all(dirPath);
 }
 
-uint64_t Utils::FS::getFileAge(const std::string &filePath)
+uint64_t Utils::FS::getFileAge(const std::filesystem::path &filePath)
 {
-  std::filesystem::path fsPath{filePath};
-  if(!std::filesystem::exists(fsPath)) {
+  if(!std::filesystem::exists(filePath)) {
     return 0;
   }
-  auto ftime = std::filesystem::last_write_time(fsPath);
+  auto ftime = std::filesystem::last_write_time(filePath);
   return ftime.time_since_epoch().count();
 }

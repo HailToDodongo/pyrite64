@@ -168,7 +168,7 @@ void Project::AssetManager::reload() {
       auto ext = path.extension().string();
 
       std::string outPath{};
-      outPath = getAssetROMPath(path, projectBase);
+      outPath = getAssetROMPath(path.string(), projectBase);
 
       FileType type = FileType::UNKNOWN;
       if (ext == ".png") {

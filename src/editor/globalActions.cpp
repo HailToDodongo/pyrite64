@@ -70,9 +70,9 @@ namespace Editor::Actions
 
       // clear some temp files
       std::filesystem::path newPath{args["path"]};
-      Utils::FS::delFile(newPath / "p64_project.z64");
-      Utils::FS::delDir(newPath / "build");
-      Utils::FS::delDir(newPath / "filesystem");
+      std::filesystem::remove(newPath / "p64_project.z64");
+      std::filesystem::remove_all(newPath / "build");
+      std::filesystem::remove_all(newPath / "filesystem");
 
       // open project.json and patch name
       auto configPath = (newPath / "project.json").string();
