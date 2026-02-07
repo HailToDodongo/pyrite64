@@ -25,11 +25,16 @@ namespace Editor
       bool isMouseHover{false};
       bool isMouseDown{false};
       Utils::RequestVal<uint32_t> pickedObjID{};
+      bool pickAdditive{false};
+      bool selectionPending{false};
+      bool selectionDragging{false};
 
       float vpOffsetY{};
       glm::vec2 mousePos{};
       glm::vec2 mousePosStart{};
       glm::vec2 mousePosClick{};
+      glm::vec2 selectionStart{};
+      glm::vec2 selectionEnd{};
 
       std::shared_ptr<Renderer::Mesh> meshGrid{};
       Renderer::Object objGrid{};

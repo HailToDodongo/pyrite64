@@ -4,6 +4,7 @@
 */
 #include "sceneGraph.h"
 
+#include <algorithm>
 #include "imgui.h"
 #include "../../../context.h"
 #include "../../imgui/helper.h"
@@ -14,6 +15,7 @@
 namespace
 {
   Project::Object* deleteObj{nullptr};
+  bool deleteSelection{false};
 
   struct DragDropTask {
     uint32_t sourceUUID{0};
@@ -88,13 +90,13 @@ namespace
       flag |= ImGuiTreeNodeFlags_Leaf;
     }
 
-    bool isSelected = ctx.selObjectUUID == obj.uuid;
+    bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected) {
       flag |= ImGuiTreeNodeFlags_Selected;
     }
 
     if (isSelected && obj.parent && keyDelete) {
-      deleteObj = &obj;
+      deleteSelection = true;
     }
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 3.f));
@@ -162,7 +164,12 @@ namespace
     }
 
     if (nodeIsClicked) {
-      ctx.selObjectUUID = obj.uuid;
+      bool isCtrlDown = ImGui::GetIO().KeyCtrl;
+      if (isCtrlDown) {
+        ctx.toggleObjectSelection(obj.uuid);
+      } else {
+        ctx.setObjectSelection(obj.uuid);
+      }
       //ImGui::SetWindowFocus("Object");
       //ImGui::SetWindowFocus("Graph");
     }
@@ -175,7 +182,7 @@ namespace
           Editor::UndoRedo::SnapshotScope snapshot(Editor::UndoRedo::getHistory(), "Add Object");
           auto added = scene.addObject(obj);
           if (added) {
-            ctx.selObjectUUID = added->uuid;
+            ctx.setObjectSelection(added->uuid);
           }
         }
 
@@ -204,6 +211,8 @@ void Editor::SceneGraph::draw()
   if (!scene)return;
 
   dragDropTask = {};
+  deleteObj = nullptr;
+  deleteSelection = false;
   bool isFocus = ImGui::IsWindowFocused();
 
   ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 16.0f);
@@ -213,6 +222,14 @@ void Editor::SceneGraph::draw()
   drawObjectNode(*scene, root, keyDelete);
 
   ImGui::PopStyleVar(1);
+
+  bool isCtrlDown = ImGui::GetIO().KeyCtrl;
+  if (!isCtrlDown
+      && ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)
+      && ImGui::IsMouseClicked(ImGuiMouseButton_Left)
+      && !ImGui::IsAnyItemHovered()) {
+    ctx.clearObjectSelection();
+  }
 
   if(dragDropTask.sourceUUID && dragDropTask.targetUUID) {
     //printf("dragDropTarget %08X -> %08X (%d)\n", dragDropTask.sourceUUID, dragDropTask.targetUUID, dragDropTask.isInsert);
@@ -224,9 +241,46 @@ void Editor::SceneGraph::draw()
     );
   }
 
-  if (deleteObj) {
-    Editor::UndoRedo::SnapshotScope snapshot(Editor::UndoRedo::getHistory(), "Delete Object");
-    scene->removeObject(*deleteObj);
-    deleteObj = nullptr;
+  if (deleteSelection || deleteObj) {
+    if (deleteObj && !ctx.isObjectSelected(deleteObj->uuid)) {
+      ctx.setObjectSelection(deleteObj->uuid);
+    }
+
+    auto &history = Editor::UndoRedo::getHistory();
+    if (history.isSnapshotActive()) {
+      history.endSnapshot();
+    }
+
+    Editor::UndoRedo::SnapshotScope snapshot(history, "Delete Object");
+    auto selected = ctx.getSelectedObjectUUIDs();
+    std::vector<std::shared_ptr<Project::Object>> selectedObjs{};
+    selectedObjs.reserve(selected.size());
+    for (auto uuid : selected) {
+      auto selObj = scene->getObjectByUUID(uuid);
+      if (!selObj || !selObj->parent) continue;
+      selectedObjs.push_back(selObj);
+    }
+
+    auto depthOf = [](Project::Object *obj) {
+      int depth = 0;
+      while (obj && obj->parent) {
+        ++depth;
+        obj = obj->parent;
+      }
+      return depth;
+    };
+
+    std::sort(selectedObjs.begin(), selectedObjs.end(), [&](
+      const std::shared_ptr<Project::Object> &a,
+      const std::shared_ptr<Project::Object> &b
+    ) {
+      return depthOf(a.get()) > depthOf(b.get());
+    });
+
+    for (auto &selObj : selectedObjs) {
+      if (!selObj || !selObj->parent) continue;
+      scene->removeObject(*selObj);
+    }
+    ctx.clearObjectSelection();
   }
 }

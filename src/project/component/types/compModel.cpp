@@ -227,7 +227,7 @@ namespace Project::Component::Model
     auto &meshes = data.filter.filterT3DM(asset->t3dmData.models, obj, true);
     data.obj3D.draw(pass, cmdBuff, meshes);
 
-    bool isSelected = ctx.selObjectUUID == obj.uuid;
+    bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)
     {
       Utils::AABB aabb = data.aabb;

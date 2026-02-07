@@ -4,6 +4,7 @@
 */
 #include "undoRedo.h"
 #include "../context.h"
+#include "../utils/logger.h"
 
 namespace
 {
@@ -64,6 +65,7 @@ namespace Editor::UndoRedo
     undoStack.pop_back();
     
     cmd->undo();
+    Utils::Logger::log("Undo: " + cmd->getDescription(), Utils::Logger::LEVEL_INFO);
     redoStack.push_back(std::move(cmd));
     
     return true;
@@ -77,6 +79,7 @@ namespace Editor::UndoRedo
     redoStack.pop_back();
     
     cmd->execute();
+    Utils::Logger::log("Redo: " + cmd->getDescription(), Utils::Logger::LEVEL_INFO);
     undoStack.push_back(std::move(cmd));
     
     return true;

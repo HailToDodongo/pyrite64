@@ -125,7 +125,7 @@ namespace Project::Component::Camera
     constexpr float LINE_LEN = 0.7f;
     glm::u8vec4 col{0xFF};
 
-    bool isSelected = ctx.selObjectUUID == obj.uuid;
+    bool isSelected = ctx.isObjectSelected(obj.uuid);
 /*
     if(isSelected)
     {
@@ -137,6 +137,9 @@ namespace Project::Component::Camera
       }
     }
 */
+    if (isSelected) {
+      col = {0xFF, 0xB0, 0x2E, 0xFF};
+    }
     Utils::Mesh::addSprite(*vp.getSprites(), obj.pos.resolve(obj.propOverrides), obj.uuid, 3, col);
   }
 }

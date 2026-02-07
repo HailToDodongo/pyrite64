@@ -90,6 +90,10 @@ namespace Project::Component::Audio2D
   void draw3D(Object& obj, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPURenderPass* pass)
   {
     Data &data = *static_cast<Data*>(entry.data.get());
-    Utils::Mesh::addSprite(*vp.getSprites(), obj.pos.resolve(obj.propOverrides), obj.uuid, 4);
+    glm::u8vec4 col{0xFF};
+    if (ctx.isObjectSelected(obj.uuid)) {
+      col = {0xFF, 0xB0, 0x2E, 0xFF};
+    }
+    Utils::Mesh::addSprite(*vp.getSprites(), obj.pos.resolve(obj.propOverrides), obj.uuid, 4, col);
   }
 }

@@ -180,7 +180,7 @@ namespace Project::Component::AnimModel
 
     data.obj3D.draw(pass, cmdBuff);
 
-    bool isSelected = ctx.selObjectUUID == obj.uuid;
+    bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)
     {
       Utils::AABB aabb = data.aabb;

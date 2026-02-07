@@ -113,7 +113,7 @@ namespace Project::Component::Light
     constexpr float LINE_LEN = 75.0f;
     glm::u8vec4 col = data.color.resolve(obj.propOverrides) * 255.0f;
 
-    bool isSelected = ctx.selObjectUUID == obj.uuid;
+    bool isSelected = ctx.isObjectSelected(obj.uuid);
 
     auto pos = obj.pos.resolve(obj.propOverrides);
     if(isSelected)
@@ -126,6 +126,9 @@ namespace Project::Component::Light
       }
     }
 
+    if (isSelected) {
+      col = {0xFF, 0xB0, 0x2E, 0xFF};
+    }
     Utils::Mesh::addSprite(*vp.getSprites(), pos, obj.uuid, data.type.resolve(obj.propOverrides), col);
   }
 }

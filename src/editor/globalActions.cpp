@@ -3,6 +3,8 @@
 * @license MIT
 */
 #include "actions.h"
+
+#include <unordered_set>
 #include "../project/project.h"
 #include "../editor/imgui/notification.h"
 #include "../utils/logger.h"
@@ -141,23 +143,57 @@ namespace Editor::Actions
       auto scene = ctx.project->getScenes().getLoadedScene();
       if(!scene)return false;
 
-      auto obj = scene->getObjectByUUID(ctx.selObjectUUID);
-      if(!obj)return false;
+      const auto &selected = ctx.getSelectedObjectUUIDs();
+      if (selected.empty()) return false;
 
-      ctx.clipboard.data = obj->serialize().dump();
-      ctx.clipboard.refUUID = obj->parent ? obj->parent->uuid : 0;
+      std::unordered_set<uint32_t> selectedSet(selected.begin(), selected.end());
+      std::vector<std::shared_ptr<Project::Object>> toCopy{};
+      toCopy.reserve(selected.size());
+
+      for (auto uuid : selected) {
+        auto obj = scene->getObjectByUUID(uuid);
+        if(!obj) continue;
+
+        bool parentSelected = false;
+        for (auto parent = obj->parent; parent; parent = parent->parent) {
+          if (selectedSet.contains(parent->uuid)) {
+            parentSelected = true;
+            break;
+          }
+        }
+        if (!parentSelected) {
+          toCopy.push_back(obj);
+        }
+      }
+
+      if (toCopy.empty()) return false;
+
+      ctx.clipboard.entries.clear();
+      ctx.clipboard.entries.reserve(toCopy.size());
+      for (const auto &obj : toCopy) {
+        Context::Clipboard::Entry entry{};
+        entry.data = obj->serialize().dump();
+        entry.refUUID = obj->parent ? obj->parent->uuid : 0;
+        ctx.clipboard.entries.push_back(std::move(entry));
+      }
 
       return true;
     });
 
     registerAction(Type::PASTE, [](const std::string&) {
-      if(!ctx.project || ctx.clipboard.data.empty())return false;
+      if(!ctx.project || ctx.clipboard.entries.empty())return false;
       auto scene = ctx.project->getScenes().getLoadedScene();
       if(!scene)return false;
 
       Editor::UndoRedo::SnapshotScope snapshot(Editor::UndoRedo::getHistory(), "Paste Object");
-      auto obj = scene->addObject(ctx.clipboard.data, ctx.clipboard.refUUID);
-      ctx.selObjectUUID = obj->uuid;
+      ctx.clearObjectSelection();
+      for (const auto &entry : ctx.clipboard.entries) {
+        std::string data = entry.data;
+        auto obj = scene->addObject(data, entry.refUUID);
+        if (obj) {
+          ctx.addObjectSelection(obj->uuid);
+        }
+      }
       return true;
     });
   }

@@ -3,7 +3,9 @@
 * @license MIT
 */
 #pragma once
+#include <algorithm>
 #include <future>
+#include <vector>
 
 #include "project/project.h"
 #include "utils/toolchain.h"
@@ -22,8 +24,12 @@ struct Context
 
   struct Clipboard
   {
-    std::string data{};
-    uint64_t refUUID{0};
+    struct Entry {
+      std::string data{};
+      uint64_t refUUID{0};
+    };
+
+    std::vector<Entry> entries{};
   };
 
   Clipboard clipboard{};
@@ -31,6 +37,7 @@ struct Context
   // Editor state
   uint64_t selAssetUUID{0};
   uint32_t selObjectUUID{0};
+  std::vector<uint32_t> selObjectUUIDs{};
 
   std::future<void> futureBuildRun{};
 
@@ -41,6 +48,89 @@ struct Context
       return state != std::future_status::ready;
     }
     return false;
+  }
+
+  void clearObjectSelection()
+  {
+    selObjectUUID = 0;
+    selObjectUUIDs.clear();
+  }
+
+  void setObjectSelection(uint32_t uuid)
+  {
+    selObjectUUIDs.clear();
+    if (uuid != 0) {
+      selObjectUUIDs.push_back(uuid);
+      selObjectUUID = uuid;
+      return;
+    }
+    selObjectUUID = 0;
+  }
+
+  void addObjectSelection(uint32_t uuid)
+  {
+    if (uuid == 0) return;
+    if (!isObjectSelected(uuid)) {
+      selObjectUUIDs.push_back(uuid);
+    }
+    selObjectUUID = uuid;
+  }
+
+  void removeObjectSelection(uint32_t uuid)
+  {
+    if (uuid == 0) return;
+    auto it = std::remove(selObjectUUIDs.begin(), selObjectUUIDs.end(), uuid);
+    if (it != selObjectUUIDs.end()) {
+      selObjectUUIDs.erase(it, selObjectUUIDs.end());
+    }
+
+    if (selObjectUUID == uuid) {
+      selObjectUUID = selObjectUUIDs.empty() ? 0 : selObjectUUIDs.back();
+    }
+  }
+
+  void toggleObjectSelection(uint32_t uuid)
+  {
+    if (isObjectSelected(uuid)) {
+      removeObjectSelection(uuid);
+    } else {
+      addObjectSelection(uuid);
+    }
+  }
+
+  [[nodiscard]] bool isObjectSelected(uint32_t uuid) const
+  {
+    if (uuid == 0) return false;
+    return std::find(selObjectUUIDs.begin(), selObjectUUIDs.end(), uuid) != selObjectUUIDs.end();
+  }
+
+  [[nodiscard]] const std::vector<uint32_t>& getSelectedObjectUUIDs() const
+  {
+    return selObjectUUIDs;
+  }
+
+  // Ensure that the selected object UUIDs are valid in the current scene, and update selObjectUUID accordingly
+  void sanitizeObjectSelection(Project::Scene* scene)
+  {
+    if (!scene) {
+      clearObjectSelection();
+      return;
+    }
+
+    auto keepIt = std::remove_if(
+      selObjectUUIDs.begin(),
+      selObjectUUIDs.end(),
+      [scene](uint32_t uuid) {
+        return !scene->getObjectByUUID(uuid);
+      }
+    );
+    if (keepIt != selObjectUUIDs.end()) {
+      selObjectUUIDs.erase(keepIt, selObjectUUIDs.end());
+    }
+
+    if (!isObjectSelected(selObjectUUID)) {
+      selObjectUUID = selObjectUUIDs.empty() ? 0 : selObjectUUIDs.back();
+    }
   }
 };
 

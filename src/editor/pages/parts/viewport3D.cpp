@@ -13,6 +13,7 @@
 #include "../../../renderer/scene.h"
 #include "../../../renderer/uniforms.h"
 #include "../../../utils/meshGen.h"
+#include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "SDL3/SDL_gpu.h"
 #include "IconsMaterialDesignIcons.h"
@@ -189,6 +190,8 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
   auto scene = ctx.project->getScenes().getLoadedScene();
   if (!scene)return;
 
+  ctx.sanitizeObjectSelection(scene);
+
   SDL_GPURenderPass* renderPass3D = SDL_BeginGPURenderPass(
     cmdBuff, fb.getTargetInfo(), fb.getTargetInfoCount(), &fb.getDepthTargetInfo()
   );
@@ -204,7 +207,11 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
     if(!comp)
     {
       if(!hadDraw) {
-        Utils::Mesh::addSprite(*getSprites(), obj.pos.resolve(obj.propOverrides), obj.uuid, 2);
+        glm::u8vec4 spriteCol{0xFF, 0xFF, 0xFF, 0xFF};
+        if (ctx.isObjectSelected(obj.uuid)) {
+          spriteCol = {0xFF, 0xB0, 0x2E, 0xFF};
+        }
+        Utils::Mesh::addSprite(*getSprites(), obj.pos.resolve(obj.propOverrides), obj.uuid, 2, spriteCol);
       }
       hadDraw = false;
       return;
@@ -284,10 +291,20 @@ void Editor::Viewport3D::draw()
     uint32_t newUUID = pickedObjID.consume();
     auto newObj = scene->getObjectByUUID(newUUID);
     if(newObj && !newObj->selectable) {
-      newUUID = ctx.selObjectUUID;
+      newUUID = 0;
     }
 
-    ctx.selObjectUUID = newUUID;
+    if (newUUID == 0) {
+      if (!pickAdditive) {
+        ctx.clearObjectSelection();
+      }
+    } else {
+      if (pickAdditive) {
+        ctx.toggleObjectSelection(newUUID);
+      } else {
+        ctx.setObjectSelection(newUUID);
+      }
+    }
   }
   auto obj = scene->getObjectByUUID(ctx.selObjectUUID);
 
@@ -321,11 +338,67 @@ void Editor::Viewport3D::draw()
   bool isShiftDown = ImGui::GetIO().KeyShift;
   if(isShiftDown)moveSpeed *= 4.0f;
 
-  bool overGizmo = obj && ImGuizmo::IsOver();
+  bool hasSelection = !ctx.getSelectedObjectUUIDs().empty();
+  bool overGizmo = hasSelection && ImGuizmo::IsOver();
 
-  if (!overGizmo && isMouseHover && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-    pickedObjID.request();
-    mousePosClick = mousePos;
+  bool leftClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+  bool leftDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+  bool leftReleased = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
+
+  if (!overGizmo && isMouseHover && leftClicked) {
+    selectionPending = true;
+    selectionDragging = false;
+    selectionStart = mousePos;
+    selectionEnd = mousePos;
+  }
+
+  if (selectionPending && leftDown) {
+    selectionEnd = mousePos;
+    if (!selectionDragging) {
+      glm::vec2 delta = selectionEnd - selectionStart;
+      if (glm::length(delta) > 4.0f) {
+        selectionDragging = true;
+        pickAdditive = ImGui::GetIO().KeyCtrl;
+      }
+    }
+  }
+
+  if (selectionPending && leftReleased) {
+    bool additiveSelect = ImGui::GetIO().KeyCtrl;
+    if (selectionDragging) {
+      glm::vec2 rectMin = glm::min(selectionStart, selectionEnd);
+      glm::vec2 rectMax = glm::max(selectionStart, selectionEnd);
+      glm::vec2 viewportSize{currSize.x, currSize.y};
+      rectMin = glm::clamp(rectMin, glm::vec2{0,0}, viewportSize);
+      rectMax = glm::clamp(rectMax, glm::vec2{0,0}, viewportSize);
+
+      if (!additiveSelect) {
+        ctx.clearObjectSelection();
+      }
+
+      auto &rootObj = scene->getRootObject();
+      glm::vec4 viewport{0.0f, 0.0f, currSize.x, currSize.y};
+      iterateObjects(rootObj, [&](Project::Object &objIter, Project::Component::Entry *comp) {
+        if (comp) return;
+        if (!objIter.selectable) return;
+
+        glm::vec3 worldPos = objIter.pos.resolve(objIter.propOverrides);
+        glm::vec3 proj = glm::project(worldPos, uniGlobal.cameraMat, uniGlobal.projMat, viewport);
+        if (proj.z < 0.0f || proj.z > 1.0f) return;
+
+        glm::vec2 screenPos{proj.x, currSize.y - proj.y};
+        if (screenPos.x >= rectMin.x && screenPos.x <= rectMax.x
+            && screenPos.y >= rectMin.y && screenPos.y <= rectMax.y) {
+          ctx.addObjectSelection(objIter.uuid);
+        }
+      });
+    } else {
+      pickedObjID.request();
+      mousePosClick = mousePos;
+      pickAdditive = additiveSelect;
+    }
+    selectionPending = false;
+    selectionDragging = false;
   }
 
   if(isMouseHover)
@@ -343,11 +416,51 @@ void Editor::Viewport3D::draw()
     }
 
     // Handle object deletion when Delete is pressed while the viewport is focused and an object is selected
+    bool deletedSelection = false;
     if (ImGui::IsWindowFocused() && obj && ImGui::IsKeyPressed(ImGuiKey_Delete)) {
-      Editor::UndoRedo::SnapshotScope snapshot(Editor::UndoRedo::getHistory(), "Delete Object");
-      scene->removeObject(*obj);
-      ctx.selObjectUUID = 0;
+      auto &history = Editor::UndoRedo::getHistory();
+      if (history.isSnapshotActive()) {
+        history.endSnapshot();
+        gizmoTransformActive = false;
+      }
+
+      Editor::UndoRedo::SnapshotScope snapshot(history, "Delete Object");
+      auto selected = ctx.getSelectedObjectUUIDs();
+      std::vector<std::shared_ptr<Project::Object>> selectedObjs{};
+      selectedObjs.reserve(selected.size());
+      for (auto uuid : selected) {
+        auto selObj = scene->getObjectByUUID(uuid);
+        if (!selObj || !selObj->parent) continue;
+        selectedObjs.push_back(selObj);
+      }
+
+      auto depthOf = [](Project::Object *obj) {
+        int depth = 0;
+        while (obj && obj->parent) {
+          ++depth;
+          obj = obj->parent;
+        }
+        return depth;
+      };
+
+      std::sort(selectedObjs.begin(), selectedObjs.end(), [&](
+        const std::shared_ptr<Project::Object> &a,
+        const std::shared_ptr<Project::Object> &b
+      ) {
+        return depthOf(a.get()) > depthOf(b.get());
+      });
+
+      for (auto &selObj : selectedObjs) {
+        if (!selObj || !selObj->parent) continue;
+        scene->removeObject(*selObj);
+      }
+      ctx.clearObjectSelection();
       obj = nullptr;
+      deletedSelection = true;
+    }
+
+    if (deletedSelection) {
+      hasSelection = false;
     }
 
     if (newMouseDown) {
@@ -459,7 +572,7 @@ void Editor::Viewport3D::draw()
         Editor::UndoRedo::SnapshotScope snapshot(Editor::UndoRedo::getHistory(), "Add Prefab");
         auto added = scene->addPrefabInstance(prefabUUID);
         if (added) {
-          ctx.selObjectUUID = added->uuid;
+          ctx.setObjectSelection(added->uuid);
         }
       }
     }
@@ -468,28 +581,73 @@ void Editor::Viewport3D::draw()
 
   isMouseHover = ImGui::IsItemHovered();
 
+  if (selectionDragging) {
+    glm::vec2 rectMin = glm::min(selectionStart, selectionEnd);
+    glm::vec2 rectMax = glm::max(selectionStart, selectionEnd);
+    glm::vec2 viewportSize{currSize.x, currSize.y};
+
+    rectMin = glm::clamp(rectMin, glm::vec2{0,0}, viewportSize);
+    rectMax = glm::clamp(rectMax, glm::vec2{0,0}, viewportSize);
+
+    ImVec2 rectStartScreen{currPos.x + rectMin.x, currPos.y + rectMin.y};
+    ImVec2 rectEndScreen{currPos.x + rectMax.x, currPos.y + rectMax.y};
+    auto drawList = ImGui::GetWindowDrawList();
+    ImU32 fillCol = ImGui::GetColorU32(ImGuiCol_DragDropTarget, 0.15f);
+    ImU32 borderCol = ImGui::GetColorU32(ImGuiCol_DragDropTarget, 0.85f);
+    drawList->AddRectFilled(rectStartScreen, rectEndScreen, fillCol);
+    drawList->AddRect(rectStartScreen, rectEndScreen, borderCol, 0.0f, 0, 1.5f);
+  }
+
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
   ImGuizmo::SetDrawlist(draw_list);
   ImGuizmo::SetRect(currPos.x, currPos.y, currSize.x, currSize.y);
 
-  if (obj) {
+  if (hasSelection) {
     // If the transform gizmo is being used and we were not previously transforming, start a snapshot
     if (ImGuizmo::IsUsing() && !gizmoTransformActive) {
       gizmoTransformActive = true;
       Editor::UndoRedo::getHistory().beginSnapshot("Transform Object");
     }
 
+    std::vector<Project::Object*> selectedObjects{};
+    selectedObjects.reserve(ctx.getSelectedObjectUUIDs().size());
+    for (auto uuid : ctx.getSelectedObjectUUIDs()) {
+      auto selObj = scene->getObjectByUUID(uuid);
+      if (selObj) {
+        selectedObjects.push_back(selObj.get());
+      }
+    }
+
     glm::mat4 gizmoMat{};
     glm::vec3 skew{0,0,0};
     glm::vec4 persp{0,0,0,1};
 
+    bool isMultiSelect = selectedObjects.size() > 1;
     bool isOverride = false;
-    gizmoMat = glm::recompose(
-      obj->scale.resolve(obj->propOverrides, &isOverride),
-      obj->rot.resolve(obj->propOverrides),
-      obj->pos.resolve(obj->propOverrides),
-    skew, persp);
+
+    glm::vec3 center{0.0f, 0.0f, 0.0f};
+    if (!isMultiSelect) {
+      gizmoMat = glm::recompose(
+        obj->scale.resolve(obj->propOverrides, &isOverride),
+        obj->rot.resolve(obj->propOverrides),
+        obj->pos.resolve(obj->propOverrides),
+        skew, persp);
+    } else {
+      for (auto *selObj : selectedObjects) {
+        center += selObj->pos.resolve(selObj->propOverrides);
+      }
+      center /= (float)selectedObjects.size();
+      gizmoMat = glm::recompose(
+        glm::vec3{1.0f},
+        glm::quat{1,0,0,0},
+        center,
+        skew,
+        persp
+      );
+    }
+
+    glm::mat4 oldGizmoMat = gizmoMat;
 
     glm::vec3 snap(10.0f);
     if (gizmoOp == 1) {
@@ -517,40 +675,166 @@ void Editor::Viewport3D::draw()
       nullptr,
       isSnap ? glm::value_ptr(snap) : nullptr
     )) {
-      if(!obj->uuidPrefab.value || isOverride)
-      {
-        std::unordered_map<uint64_t, glm::vec3> relPosMap{};
-        if(!isOnlySelf)
+      auto ensureOverride = [](Project::Object *selObj, auto &prop) {
+        if (selObj->propOverrides.find(prop.id) == selObj->propOverrides.end()) {
+          selObj->addPropOverride(prop);
+        }
+      };
+
+      if (!isMultiSelect) {
+        if(!obj->uuidPrefab.value || isOverride)
         {
-          auto oldGizmoMat = glm::recompose(
+          std::unordered_map<uint64_t, glm::vec3> relPosMap{};
+          if(!isOnlySelf)
+          {
+            auto oldGizmoMat = glm::recompose(
+              obj->scale.resolve(obj->propOverrides),
+              obj->rot.resolve(obj->propOverrides),
+              obj->pos.resolve(obj->propOverrides),
+              skew, persp);
+
+            for(auto& child : obj->children)
+            {
+              relPosMap[child->uuid] = glm::inverse(oldGizmoMat) * glm::vec4(
+                child->pos.resolve(child->propOverrides), 1.0f
+              );
+            }
+          }
+
+          glm::decompose(
+            gizmoMat,
             obj->scale.resolve(obj->propOverrides),
             obj->rot.resolve(obj->propOverrides),
             obj->pos.resolve(obj->propOverrides),
-            skew, persp);
+            skew, persp
+          );
 
-          for(auto& child : obj->children)
+          if(!isOnlySelf)
           {
-            relPosMap[child->uuid] = glm::inverse(oldGizmoMat) * glm::vec4(
-              child->pos.resolve(child->propOverrides), 1.0f
-            );
+            for(auto& child : obj->children)
+            {
+              auto it = relPosMap.find(child->uuid);
+              if(it == relPosMap.end())continue;
+              child->pos.resolve(child->propOverrides) = gizmoMat * glm::vec4(it->second, 1.0f);
+            }
           }
         }
+      } else {
+        auto deltaMat = gizmoMat * glm::inverse(oldGizmoMat);
 
-        glm::decompose(
-          gizmoMat,
-          obj->scale.resolve(obj->propOverrides),
-          obj->rot.resolve(obj->propOverrides),
-          obj->pos.resolve(obj->propOverrides),
-          skew, persp
-        );
+        if (gizmoOp == 2) {
+          glm::vec3 gizScaleOld{1.0f};
+          glm::vec3 gizScaleNew{1.0f};
+          glm::vec3 gizPosOld{0.0f};
+          glm::vec3 gizPosNew{0.0f};
+          glm::quat gizRotOld{};
+          glm::quat gizRotNew{};
+          glm::vec3 gizSkew{0.0f};
+          glm::vec4 gizPersp{0.0f, 0.0f, 0.0f, 1.0f};
 
-        if(!isOnlySelf)
-        {
-          for(auto& child : obj->children)
-          {
-            auto it = relPosMap.find(child->uuid);
-            if(it == relPosMap.end())continue;
-            child->pos.resolve(child->propOverrides) = gizmoMat * glm::vec4(it->second, 1.0f);
+          glm::decompose(oldGizmoMat, gizScaleOld, gizRotOld, gizPosOld, gizSkew, gizPersp);
+          glm::decompose(gizmoMat, gizScaleNew, gizRotNew, gizPosNew, gizSkew, gizPersp);
+
+          auto safeDiv = [](float a, float b) {
+            return (std::abs(b) > 0.000001f) ? (a / b) : 1.0f;
+          };
+          glm::vec3 scaleDelta{
+            safeDiv(gizScaleNew.x, gizScaleOld.x),
+            safeDiv(gizScaleNew.y, gizScaleOld.y),
+            safeDiv(gizScaleNew.z, gizScaleOld.z)
+          };
+
+          for (auto *selObj : selectedObjects) {
+            if (selObj->isPrefabInstance() && !selObj->isPrefabEdit) {
+              ensureOverride(selObj, selObj->pos);
+              ensureOverride(selObj, selObj->rot);
+              ensureOverride(selObj, selObj->scale);
+            }
+
+            auto &objPos = selObj->pos.resolve(selObj->propOverrides);
+            auto &objScale = selObj->scale.resolve(selObj->propOverrides);
+            auto &objRot = selObj->rot.resolve(selObj->propOverrides);
+
+            glm::vec3 oldPos = objPos;
+            glm::vec3 oldScale = objScale;
+            glm::quat oldRot = objRot;
+
+            std::unordered_map<uint64_t, glm::vec3> relPosMap{};
+            if(!isOnlySelf)
+            {
+              auto oldObjMat = glm::recompose(oldScale, oldRot, oldPos, skew, persp);
+
+              for(auto& child : selObj->children)
+              {
+                relPosMap[child->uuid] = glm::inverse(oldObjMat) * glm::vec4(
+                  child->pos.resolve(child->propOverrides), 1.0f
+                );
+              }
+            }
+
+            objPos = center + ((oldPos - center) * scaleDelta);
+            objScale = oldScale * scaleDelta;
+
+            if(!isOnlySelf)
+            {
+              auto newObjMat = glm::recompose(objScale, objRot, objPos, skew, persp);
+              for(auto& child : selObj->children)
+              {
+                auto it = relPosMap.find(child->uuid);
+                if(it == relPosMap.end())continue;
+                child->pos.resolve(child->propOverrides) = newObjMat * glm::vec4(it->second, 1.0f);
+              }
+            }
+          }
+        } else {
+          for (auto *selObj : selectedObjects) {
+            if (selObj->isPrefabInstance() && !selObj->isPrefabEdit) {
+              ensureOverride(selObj, selObj->pos);
+              ensureOverride(selObj, selObj->rot);
+              ensureOverride(selObj, selObj->scale);
+            }
+
+            std::unordered_map<uint64_t, glm::vec3> relPosMap{};
+            if(!isOnlySelf)
+            {
+              auto oldObjMat = glm::recompose(
+                selObj->scale.resolve(selObj->propOverrides),
+                selObj->rot.resolve(selObj->propOverrides),
+                selObj->pos.resolve(selObj->propOverrides),
+                skew, persp);
+
+              for(auto& child : selObj->children)
+              {
+                relPosMap[child->uuid] = glm::inverse(oldObjMat) * glm::vec4(
+                  child->pos.resolve(child->propOverrides), 1.0f
+                );
+              }
+            }
+
+            auto oldObjMat = glm::recompose(
+              selObj->scale.resolve(selObj->propOverrides),
+              selObj->rot.resolve(selObj->propOverrides),
+              selObj->pos.resolve(selObj->propOverrides),
+              skew, persp);
+            auto newObjMat = deltaMat * oldObjMat;
+
+            glm::decompose(
+              newObjMat,
+              selObj->scale.resolve(selObj->propOverrides),
+              selObj->rot.resolve(selObj->propOverrides),
+              selObj->pos.resolve(selObj->propOverrides),
+              skew, persp
+            );
+
+            if(!isOnlySelf)
+            {
+              for(auto& child : selObj->children)
+              {
+                auto it = relPosMap.find(child->uuid);
+                if(it == relPosMap.end())continue;
+                child->pos.resolve(child->propOverrides) = newObjMat * glm::vec4(it->second, 1.0f);
+              }
+            }
           }
         }
       }
