@@ -12,35 +12,44 @@ namespace
   {
     private:
       Project::Scene* scene;
-      std::string beforeState;
-      std::string afterState;
-      std::string description;
-      uint32_t selBefore;
-      uint32_t selAfter;
+      std::string beforeState; // Scene state before the change
+      std::string afterState; // Scene state after the change
+      std::string description; // Description of the change for undo/redo menu
+      uint32_t selBefore; // Primary selected object before the change
+      uint32_t selAfter; // Primary selected object after the change
+      std::vector<uint32_t> selUUIDsBefore; // All selected object UUIDs before the change
+      std::vector<uint32_t> selUUIDsAfter; // All selected object UUIDs after the change
 
     public:
       SceneSnapshotCommand(Project::Scene* targetScene, std::string before, std::string after, std::string desc,
-                           uint32_t selBefore, uint32_t selAfter)
+                           uint32_t selBefore, uint32_t selAfter,
+                           std::vector<uint32_t> selUUIDsBefore, std::vector<uint32_t> selUUIDsAfter)
         : scene(targetScene),
           beforeState(std::move(before)),
           afterState(std::move(after)),
           description(std::move(desc)),
           selBefore(selBefore),
-          selAfter(selAfter)
+          selAfter(selAfter),
+          selUUIDsBefore(std::move(selUUIDsBefore)),
+          selUUIDsAfter(std::move(selUUIDsAfter))
       {}
 
       void execute() override
       {
         if (!scene) return;
         scene->deserialize(afterState);
-        ctx.selObjectUUID = scene->getObjectByUUID(selAfter) ? selAfter : 0;
+        ctx.selObjectUUIDs = selUUIDsAfter;
+        ctx.selObjectUUID = selAfter;
+        ctx.sanitizeObjectSelection(scene);
       }
 
       void undo() override
       {
         if (!scene) return;
         scene->deserialize(beforeState);
-        ctx.selObjectUUID = scene->getObjectByUUID(selBefore) ? selBefore : 0;
+        ctx.selObjectUUIDs = selUUIDsBefore;
+        ctx.selObjectUUID = selBefore;
+        ctx.sanitizeObjectSelection(scene);
       }
 
       std::string getDescription() const override
@@ -94,6 +103,7 @@ namespace Editor::UndoRedo
     snapshotDescription.clear();
     snapshotScene = nullptr;
     snapshotSelUUID = 0;
+    snapshotSelUUIDs.clear();
   }
 
   bool History::beginSnapshot(const std::string& description)
@@ -108,6 +118,7 @@ namespace Editor::UndoRedo
       snapshotDescription = description;
       snapshotScene = scene;
       snapshotSelUUID = ctx.selObjectUUID;
+      snapshotSelUUIDs = ctx.selObjectUUIDs;
     }
 
     ++snapshotDepth;
@@ -126,6 +137,7 @@ namespace Editor::UndoRedo
       snapshotDescription = description;
       snapshotScene = scene;
       snapshotSelUUID = ctx.selObjectUUID;
+      snapshotSelUUIDs = ctx.selObjectUUIDs;
     }
 
     ++snapshotDepth;
@@ -170,7 +182,9 @@ namespace Editor::UndoRedo
       std::move(after),
       std::move(description),
       snapshotSelUUID,
-      ctx.selObjectUUID
+      ctx.selObjectUUID,
+      std::move(snapshotSelUUIDs),
+      ctx.selObjectUUIDs
     ));
 
     if (undoStack.size() > maxHistorySize) {
