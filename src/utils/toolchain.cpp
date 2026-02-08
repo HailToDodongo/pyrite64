@@ -21,14 +21,10 @@ void Utils::Toolchain::scan()
   #if defined(_WIN32)
 
     // Scan "C:\" directories for anything containing "msys"
-    for (const auto &entry : std::filesystem::directory_iterator("C:\\")) {
-      if (entry.is_directory()) {
-        std::string dirName = entry.path().filename().string();
-        if (dirName.find("msys") != std::string::npos) {
-          state.mingwPath = entry.path();
-          break;
-        }
-      }
+    state.mingwPath = std::filesystem::path{"C:\\msys64"};
+    if(!std::filesystem::exists(state.mingwPath)) {
+      state.mingwPath.clear();
+      return;
     }
 
     //printf("Mingw Path: %s\n", state.mingwPath.string().c_str());

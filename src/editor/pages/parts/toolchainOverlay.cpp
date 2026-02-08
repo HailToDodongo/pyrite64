@@ -43,7 +43,7 @@ namespace
 
     ImGui::PushFont(nullptr, 24);
     ImGui::TextColored(
-      done ? ImGui::GetStyleColorVec4(ImGuiCol_Text) : ImVec4(1.0f, 0.2f, 0.2f, 1.0f),
+      done ? ImVec4(0.2f, 1.0f, 0.2f, 1.0f) : ImVec4(1.0f, 0.2f, 0.2f, 1.0f),
       "%s", icon
     );
     ImGui::PopFont();
@@ -121,29 +121,52 @@ bool Editor::ToolchainOverlay::draw()
       ImGui::GetCursorPosY() + 40
     };
     
+    bool allDone = true;
     for (int i = 0; i < 4; i++) {
       drawStep(startPos, STEPS[i], STEP_DONE[i], i < 3);
+      allDone = allDone && STEP_DONE[i];
     }
 
-    ImGui::SetCursorPos({70, startPos.y + BUTTON_SIZE.y + 15});
+    float posX = 106;
+    ImGui::SetCursorPos({posX, startPos.y + BUTTON_SIZE.y + 15});
 
     if(!ctx.toolchain.isInstalling()) 
     {
-      ImGui::Text(
-        "The N64 toolchain is missing or not properly installed.\n"
-        "Click the button below to auto-install and update the required components.\n"
-        "This process may take a few minutes, and a console popup will appear during installation.\n"
-      );
-
+      if(allDone) {
+        ImGui::Text(
+          "The N64 toolchain is correctly installed.\n"
+          "If you wish to update it, press the update button below."
+        );
+      } else if(STEP_DONE[0]) {
+        ImGui::Text(
+          "The N64 toolchain is missing or not properly installed.\n"
+          "Click the button below to install and update the required components.\n"
+          "This process may take a few minutes, and a console popup will appear during installation."
+        );
+      } else {
+        ImGui::Text("MSYS2 is not installed, please download and install it from the link below:");
+        ImGui::SetCursorPosX(posX);
+        ImGui::TextLinkOpenURL("https://www.msys2.org/", "https://www.msys2.org/");
+        ImGui::SetCursorPosX(posX);
+        ImGui::Text("During the installation, keep the default path as is at \"C:\\msys64\".");
+      }
+      
       ImGui::SetCursorPos({
         (ImGui::GetWindowWidth() - 150) * 0.5f,
         ImGui::GetCursorPosY() + 20
       });
-      if (ImGui::Button("Auto-Install", {150, 40})) {
-        ctx.toolchain.install();
+
+      if(STEP_DONE[0]) {
+        if (ImGui::Button(allDone ? "Update" : "Install", {150, 40})) {
+          ctx.toolchain.install();
+        }
       }
+
     } else {
-      ImGui::Text("Installing and updating the toolchain, please wait...");
+      ImGui::Text(
+        "Installing and updating the toolchain.\n"
+        "This process may take a few minutes, please wait..."
+      );
     }
   
     // back button
