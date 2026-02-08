@@ -9,6 +9,7 @@
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
 #include "../../../utils/logger.h"
+#include "../../../utils/colors.h"
 #include "../../assetManager.h"
 #include "../../../editor/pages/parts/viewport3D.h"
 #include "../../../renderer/scene.h"
@@ -138,7 +139,7 @@ namespace Project::Component::Camera
     }
 */
     if (isSelected) {
-      col = {0xFF, 0xB0, 0x2E, 0xFF};
+      col = Utils::Colors::kSelectionTint;
     }
     Utils::Mesh::addSprite(*vp.getSprites(), obj.pos.resolve(obj.propOverrides), obj.uuid, 3, col);
   }

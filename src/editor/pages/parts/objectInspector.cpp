@@ -14,6 +14,7 @@
 #include "../../imgui/helper.h"
 #include "../../../context.h"
 #include "../../../project/component/components.h"
+#include "../../selectionUtils.h"
 #include "../../undoRedo.h"
 
 Editor::ObjectInspector::ObjectInspector() {
@@ -31,14 +32,7 @@ void Editor::ObjectInspector::draw() {
   }
 
   if (selectedIds.size() > 1) {
-    std::vector<Project::Object*> selectedObjects{};
-    selectedObjects.reserve(selectedIds.size());
-    for (auto uuid : selectedIds) {
-      auto selObj = scene->getObjectByUUID(uuid);
-      if (selObj) {
-        selectedObjects.push_back(selObj.get());
-      }
-    }
+    auto selectedObjects = Editor::SelectionUtils::collectSelectedObjects(*scene);
 
     if (selectedObjects.empty()) {
       ctx.clearObjectSelection();

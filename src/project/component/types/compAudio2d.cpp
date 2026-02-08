@@ -9,6 +9,7 @@
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
 #include "../../../utils/logger.h"
+#include "../../../utils/colors.h"
 #include "../../assetManager.h"
 #include "../../../editor/pages/parts/viewport3D.h"
 #include "../../../renderer/scene.h"
@@ -91,8 +92,9 @@ namespace Project::Component::Audio2D
   {
     Data &data = *static_cast<Data*>(entry.data.get());
     glm::u8vec4 col{0xFF};
-    if (ctx.isObjectSelected(obj.uuid)) {
-      col = {0xFF, 0xB0, 0x2E, 0xFF};
+    bool isSelected = ctx.isObjectSelected(obj.uuid);
+    if (isSelected) {
+      col = Utils::Colors::kSelectionTint;
     }
     Utils::Mesh::addSprite(*vp.getSprites(), obj.pos.resolve(obj.propOverrides), obj.uuid, 4, col);
   }

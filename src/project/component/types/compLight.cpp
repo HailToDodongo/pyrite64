@@ -9,6 +9,7 @@
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
 #include "../../../utils/logger.h"
+#include "../../../utils/colors.h"
 #include "../../assetManager.h"
 #include "../../../editor/pages/parts/viewport3D.h"
 #include "../../../renderer/scene.h"
@@ -124,10 +125,7 @@ namespace Project::Component::Light
         glm::vec3 dir = rotToDir(obj);
         Utils::Mesh::addLine(*vp.getLines(), pos, pos + (dir * -LINE_LEN), col);
       }
-    }
-
-    if (isSelected) {
-      col = {0xFF, 0xB0, 0x2E, 0xFF};
+      col = Utils::Colors::kSelectionTint;
     }
     Utils::Mesh::addSprite(*vp.getSprites(), pos, obj.uuid, data.type.resolve(obj.propOverrides), col);
   }

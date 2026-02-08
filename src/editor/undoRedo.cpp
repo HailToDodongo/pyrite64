@@ -38,8 +38,7 @@ namespace
       {
         if (!scene) return;
         scene->deserialize(afterState);
-        ctx.selObjectUUIDs = selUUIDsAfter;
-        ctx.selObjectUUID = selAfter;
+        ctx.setObjectSelectionList(selUUIDsAfter, selAfter);
         ctx.sanitizeObjectSelection(scene);
       }
 
@@ -47,8 +46,7 @@ namespace
       {
         if (!scene) return;
         scene->deserialize(beforeState);
-        ctx.selObjectUUIDs = selUUIDsBefore;
-        ctx.selObjectUUID = selBefore;
+        ctx.setObjectSelectionList(selUUIDsBefore, selBefore);
         ctx.sanitizeObjectSelection(scene);
       }
 

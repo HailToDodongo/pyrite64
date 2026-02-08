@@ -67,6 +67,15 @@ struct Context
     selObjectUUID = 0;
   }
 
+  void setObjectSelectionList(const std::vector<uint32_t> &uuids, uint32_t primaryUUID)
+  {
+    selObjectUUIDs = uuids;
+    selObjectUUID = primaryUUID;
+    if (!isObjectSelected(selObjectUUID)) {
+      selObjectUUID = selObjectUUIDs.empty() ? 0 : selObjectUUIDs.back();
+    }
+  }
+
   void addObjectSelection(uint32_t uuid)
   {
     if (uuid == 0) return;

@@ -13,11 +13,13 @@
 #include "../../../renderer/scene.h"
 #include "../../../renderer/uniforms.h"
 #include "../../../utils/meshGen.h"
+#include "../../../utils/colors.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "SDL3/SDL_gpu.h"
 #include "IconsMaterialDesignIcons.h"
 #include "../../undoRedo.h"
+#include "../../selectionUtils.h"
 
 namespace
 {
@@ -209,7 +211,7 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
       if(!hadDraw) {
         glm::u8vec4 spriteCol{0xFF, 0xFF, 0xFF, 0xFF};
         if (ctx.isObjectSelected(obj.uuid)) {
-          spriteCol = {0xFF, 0xB0, 0x2E, 0xFF};
+          spriteCol = Utils::Colors::kSelectionTint;
         }
         Utils::Mesh::addSprite(*getSprites(), obj.pos.resolve(obj.propOverrides), obj.uuid, 2, spriteCol);
       }
@@ -424,39 +426,15 @@ void Editor::Viewport3D::draw()
         gizmoTransformActive = false;
       }
 
-      Editor::UndoRedo::SnapshotScope snapshot(history, "Delete Object");
-      auto selected = ctx.getSelectedObjectUUIDs();
-      std::vector<std::shared_ptr<Project::Object>> selectedObjs{};
-      selectedObjs.reserve(selected.size());
-      for (auto uuid : selected) {
-        auto selObj = scene->getObjectByUUID(uuid);
-        if (!selObj || !selObj->parent) continue;
-        selectedObjs.push_back(selObj);
+      if (Editor::SelectionUtils::deleteSelectedObjects(
+        *scene,
+        history,
+        "Delete Object",
+        false
+      )) {
+        deletedSelection = true;
       }
-
-      auto depthOf = [](Project::Object *obj) {
-        int depth = 0;
-        while (obj && obj->parent) {
-          ++depth;
-          obj = obj->parent;
-        }
-        return depth;
-      };
-
-      std::sort(selectedObjs.begin(), selectedObjs.end(), [&](
-        const std::shared_ptr<Project::Object> &a,
-        const std::shared_ptr<Project::Object> &b
-      ) {
-        return depthOf(a.get()) > depthOf(b.get());
-      });
-
-      for (auto &selObj : selectedObjs) {
-        if (!selObj || !selObj->parent) continue;
-        scene->removeObject(*selObj);
-      }
-      ctx.clearObjectSelection();
       obj = nullptr;
-      deletedSelection = true;
     }
 
     if (deletedSelection) {
@@ -610,14 +588,7 @@ void Editor::Viewport3D::draw()
       Editor::UndoRedo::getHistory().beginSnapshot("Transform Object");
     }
 
-    std::vector<Project::Object*> selectedObjects{};
-    selectedObjects.reserve(ctx.getSelectedObjectUUIDs().size());
-    for (auto uuid : ctx.getSelectedObjectUUIDs()) {
-      auto selObj = scene->getObjectByUUID(uuid);
-      if (selObj) {
-        selectedObjects.push_back(selObj.get());
-      }
-    }
+    auto selectedObjects = Editor::SelectionUtils::collectSelectedObjects(*scene);
 
     glm::mat4 gizmoMat{};
     glm::vec3 skew{0,0,0};

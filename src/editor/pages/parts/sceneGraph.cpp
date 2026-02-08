@@ -11,6 +11,7 @@
 #include "IconsMaterialDesignIcons.h"
 #include "imgui_internal.h"
 #include "../../undoRedo.h"
+#include "../../selectionUtils.h"
 
 namespace
 {
@@ -247,40 +248,6 @@ void Editor::SceneGraph::draw()
     }
 
     auto &history = Editor::UndoRedo::getHistory();
-    if (history.isSnapshotActive()) {
-      history.endSnapshot();
-    }
-
-    Editor::UndoRedo::SnapshotScope snapshot(history, "Delete Object");
-    auto selected = ctx.getSelectedObjectUUIDs();
-    std::vector<std::shared_ptr<Project::Object>> selectedObjs{};
-    selectedObjs.reserve(selected.size());
-    for (auto uuid : selected) {
-      auto selObj = scene->getObjectByUUID(uuid);
-      if (!selObj || !selObj->parent) continue;
-      selectedObjs.push_back(selObj);
-    }
-
-    auto depthOf = [](Project::Object *obj) {
-      int depth = 0;
-      while (obj && obj->parent) {
-        ++depth;
-        obj = obj->parent;
-      }
-      return depth;
-    };
-
-    std::sort(selectedObjs.begin(), selectedObjs.end(), [&](
-      const std::shared_ptr<Project::Object> &a,
-      const std::shared_ptr<Project::Object> &b
-    ) {
-      return depthOf(a.get()) > depthOf(b.get());
-    });
-
-    for (auto &selObj : selectedObjs) {
-      if (!selObj || !selObj->parent) continue;
-      scene->removeObject(*selObj);
-    }
-    ctx.clearObjectSelection();
+    Editor::SelectionUtils::deleteSelectedObjects(*scene, history, "Delete Object");
   }
 }
