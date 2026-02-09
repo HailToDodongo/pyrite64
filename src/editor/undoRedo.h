@@ -38,6 +38,8 @@ namespace Editor::UndoRedo
        * Get a human-readable description of the command.
        */
       virtual std::string getDescription() const = 0;
+
+      virtual uint64_t getMemoryUsage() const = 0;
   };
 
   /**
@@ -123,6 +125,11 @@ namespace Editor::UndoRedo
        * Set maximum history size.
        */
       void setMaxHistorySize(size_t size);
+
+      /**
+       * Returns currently used memory in bytes.
+       */
+      uint64_t getMemoryUsage();
   };
 
   class SnapshotScope

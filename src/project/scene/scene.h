@@ -85,7 +85,7 @@ namespace Project
 
       uint32_t createPrefabFromObject(uint32_t uuid);
 
-      std::string serialize();
+      std::string serialize(bool minify = false);
 
       void resetLayers();
 

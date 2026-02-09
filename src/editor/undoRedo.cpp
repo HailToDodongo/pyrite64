@@ -54,6 +54,14 @@ namespace
       {
         return description;
       }
+
+      uint64_t getMemoryUsage() const override 
+      {
+        return sizeof(SceneSnapshotCommand)
+          + beforeState.size()
+          + afterState.size()
+          + description.size();
+      }
   };
 }
 
@@ -112,7 +120,7 @@ namespace Editor::UndoRedo
     }
 
     if (snapshotDepth == 0) {
-      snapshotBefore = scene->serialize();
+      snapshotBefore = scene->serialize(true);
       snapshotDescription = description;
       snapshotScene = scene;
       snapshotSelUUID = ctx.selObjectUUID;
@@ -162,7 +170,7 @@ namespace Editor::UndoRedo
       return false;
     }
 
-    std::string after = scene->serialize();
+    std::string after = scene->serialize(true);
     std::string before = std::move(snapshotBefore);
     std::string description = std::move(snapshotDescription);
 
@@ -197,7 +205,7 @@ namespace Editor::UndoRedo
     if (!scene) {
       return {};
     }
-    return scene->serialize();
+    return scene->serialize(true);
   }
   
   std::string History::getUndoDescription() const
@@ -230,6 +238,18 @@ namespace Editor::UndoRedo
     }
   }
   
+  uint64_t History::getMemoryUsage()
+  {
+    uint64_t total = 0;
+    for(auto &entry : redoStack) {
+      total += entry->getMemoryUsage();
+    }
+    for(auto &entry : undoStack) {
+      total += entry->getMemoryUsage();
+    }
+    return total;
+  }
+
   History& getHistory()
   {
     return globalHistory;

@@ -220,11 +220,11 @@ uint32_t Project::Scene::createPrefabFromObject(uint32_t uuid)
   return 0;
 }
 
-std::string Project::Scene::serialize() {
+std::string Project::Scene::serialize(bool minify) {
   nlohmann::json doc{};
   doc["conf"] = conf.serialize();
   doc["graph"] = root.serialize();
-  return doc.dump(2);
+  return doc.dump(minify ? -1 : 2);
 }
 
 void Project::Scene::resetLayers()

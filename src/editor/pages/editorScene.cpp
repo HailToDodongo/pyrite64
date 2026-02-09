@@ -243,7 +243,10 @@ void Editor::Scene::draw()
     | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking
   );
 
-  ImGui::Text("%d FPS", (int)roundf(io.Framerate));
+  ImGui::Text("%d FPS | History: %s", 
+    (int)roundf(io.Framerate),
+    Utils::byteSize(UndoRedo::getHistory().getMemoryUsage()).c_str()
+  );
   ImGui::End();
 
   // Global keyboard shortcuts

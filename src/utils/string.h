@@ -81,4 +81,20 @@ namespace Utils
     }
     return result;
   }
+
+  inline std::string byteSize(uint64_t size)
+  {
+    constexpr const char* suffixes[4]{"B", "KB", "MB", "GB"};
+    int suffix = 0; // which suffix to use
+    double count = size;
+    while (count >= 1024 && suffix < 4)
+    {
+      suffix++;
+      count /= 1024;
+    }
+
+    char buf[32]{};
+    sprintf(buf, "%.1f %s", count, suffixes[suffix]); 
+    return std::string{buf};
+  }
 }
