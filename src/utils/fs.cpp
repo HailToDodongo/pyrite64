@@ -33,9 +33,19 @@ void Utils::FS::ensureFile(const std::filesystem::path &path, const std::filesys
   }
 }
 
-void Utils::FS::copyDir(const std::filesystem::path &srcPath, const std::filesystem::path &dstPath)
+void Utils::FS::copyDir(const std::filesystem::path& srcPath, const std::filesystem::path& dstPath)
 {
-  std::filesystem::copy(srcPath, dstPath, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+    try {
+        // Ensure parent directories exist
+        std::filesystem::create_directories(dstPath);
+
+        // Copy template project
+        std::filesystem::copy( srcPath, dstPath, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing );
+
+    } catch (const std::filesystem::filesystem_error& e) {
+        // Log the error instead of crashing
+        printf("Filesystem error: %s\n", e.what());
+    }
 }
 
 void Utils::FS::delFile(const std::string &filePath)
