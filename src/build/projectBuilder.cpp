@@ -85,9 +85,6 @@ bool Build::buildProject(const std::string &path)
     _putenv_s("PATH", "C:\\msys64\\mingw64\\bin;C:\\msys64\\usr\\bin");
   #endif
 
-  auto enginePath = fs::current_path() / "n64" / "engine";
-  enginePath = fs::absolute(enginePath);
-
   auto fsDataPath = fs::absolute(fs::path{path} / "filesystem" / "p64");
   if (!fs::exists(fsDataPath)) {
     fs::create_directories(fsDataPath);
@@ -196,7 +193,6 @@ bool Build::buildProject(const std::string &path)
     Utils::FS::loadTextFile("data/build/baseMakefile.mk"),
     {
       {"{{N64_INST}}",          project.conf.pathN64Inst},
-      {"{{ENGINE_PATH}}",       Utils::FS::toUnixPath(enginePath)},
       {"{{ROM_NAME}}",          project.conf.romName},
       {"{{PROJECT_NAME}}",      project.conf.name},
       {"{{ASSET_LIST}}",        Utils::join(filesSorted, " ")},

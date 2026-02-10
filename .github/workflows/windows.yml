@@ -46,6 +46,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pyrite64-windows
+          include-hidden-files: true
           path: |
             pyrite64.exe
             data

@@ -5,6 +5,7 @@
 #include "undoRedo.h"
 #include "../context.h"
 #include "../utils/logger.h"
+#include "imgui.h"
 
 namespace
 {
@@ -201,6 +202,19 @@ namespace Editor::UndoRedo
 
   std::string History::captureSnapshotState()
   {
+    // static int lastFrame = -1;
+    // static int frameCaptures = 0;
+    // int frame = ImGui::GetFrameCount();
+    // if (lastFrame == -1) {
+    //   lastFrame = frame;
+    // }
+    // if (frame != lastFrame) {
+    //   Utils::Logger::log("Snapshot captures last frame: " + std::to_string(frameCaptures));
+    //   frameCaptures = 0;
+    //   lastFrame = frame;
+    // }
+    // ++frameCaptures;
+
     auto scene = ctx.project ? ctx.project->getScenes().getLoadedScene() : nullptr;
     if (!scene) {
       return {};

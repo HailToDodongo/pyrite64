@@ -14,6 +14,7 @@
 #include "../utils/json.h"
 #include "../utils/proc.h"
 #include "undoRedo.h"
+//#include <stacktrace>
 
 namespace Editor::Actions
 {
@@ -29,7 +30,10 @@ namespace Editor::Actions
            ctx.project->getScenes().loadScene(ctx.project->conf.sceneIdOnBoot);
          }
        } catch (const std::exception &e) {
-         Utils::Logger::log("Failed to open project: " + std::string(e.what()), Utils::Logger::LEVEL_ERROR);
+         auto error = "Failed to open project:\n" + std::string(e.what());
+         //error += "\n" + std::to_string(std::stacktrace::current());
+         Utils::Logger::log(error, Utils::Logger::LEVEL_ERROR);
+         Editor::Noti::add(Editor::Noti::Type::ERROR, error);
          ctx.project = nullptr;
          return false;
        }
@@ -72,6 +76,12 @@ namespace Editor::Actions
       fs::path newPath{args["path"]};
       Utils::Logger::log("Create Project: " + newPath.string());
       std::filesystem::create_directories(newPath);
+
+      // validate directory is empty
+      if (!fs::is_empty(newPath)) {
+        Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to create project, directory is not empty!");
+        return false;
+      }
       
       // copy example project as template
       fs::copy("n64/examples/empty", newPath, 

@@ -39,18 +39,33 @@ Project::Project::Project(const std::string &path)
     throw std::runtime_error("Not a valid project!");
   }
 
-  fs::create_directories(path);
-  fs::create_directories(path + "/data");
-  fs::create_directories(path + "/data/scenes");
-  fs::create_directories(path + "/assets");
-  fs::create_directories(path + "/assets/p64");
-  fs::create_directories(path + "/src");
-  fs::create_directories(path + "/src/p64");
-  fs::create_directories(path + "/src/user");
+  // ensure relevant directories and files exist + some basic self-repair
+  fs::path f{path};
+  fs::create_directories(f);
+  fs::create_directories(f / "data");
+  fs::create_directories(f / "data" / "scenes");
+  fs::create_directories(f / "assets");
+  fs::create_directories(f / "assets" / "p64");
+  fs::create_directories(f / "src");
+  fs::create_directories(f / "src" / "p64");
+  fs::create_directories(f / "src" / "user");
 
-  Utils::FS::ensureFile(path + "/.gitignore", "data/build/baseGitignore");
-  Utils::FS::ensureFile(path + "/Makefile.custom", "data/build/baseMakefile.custom");
-  Utils::FS::ensureFile(path + "/assets/p64/font.ia4.png", "data/build/assets/font.ia4.png");
+  Utils::FS::ensureFile(f / ".gitignore", "data/build/baseGitignore");
+  Utils::FS::ensureFile(f / "Makefile.custom", "data/build/baseMakefile.custom");
+  Utils::FS::ensureFile(f / "assets" / "p64" / "font.ia4.png", "data/build/assets/font.ia4.png");
+
+  // Copy engine directory into project.
+  // This avoids issues if the editor itself is sitting in a directory with spaces (e.g. "C:/Program Files/...").
+  // @TODO: also update the engine on changes by keeping some hash file
+  if(!fs::exists(f / "engine")) {
+    fs::create_directories(f / "engine");
+    // do individual copies to avoid build-files
+    auto opt = fs::copy_options::recursive | fs::copy_options::overwrite_existing;
+    fs::copy_file("n64/engine/Makefile",   f / "engine" / "Makefile", opt);
+    fs::copy_file("n64/engine/.gitignore", f / "engine" / ".gitignore", opt);
+    fs::copy(     "n64/engine/src",        f / "engine" / "src", opt);
+    fs::copy(     "n64/engine/include",    f / "engine" / "include", opt);
+  }
 
   deserialize(configJSON);
   assets.reload();

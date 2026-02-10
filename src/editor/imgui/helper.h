@@ -189,14 +189,34 @@ namespace ImTable
     SnapshotGuard(const std::string& desc) : description(desc) {
       if (!obj) return;
       auto &history = Editor::UndoRedo::getHistory();
-      if (!history.isSnapshotActive()) {
-        beforeState = history.captureSnapshotState();
-      }
+      if (history.isSnapshotActive()) return;
+      if (!shouldCaptureSnapshot()) return;
+      beforeState = getCachedBeforeState(history);
     }
 
     void finish(bool changed) {
       handleSnapshot(description, changed, beforeState.empty() ? nullptr : &beforeState);
     }
+
+    private:
+      static bool shouldCaptureSnapshot() {
+        return ImGui::IsMouseClicked(ImGuiMouseButton_Left)
+          || ImGui::IsMouseClicked(ImGuiMouseButton_Right)
+          || ImGui::IsMouseClicked(ImGuiMouseButton_Middle)
+          || ImGui::IsKeyPressed(ImGuiKey_Enter)
+          || ImGui::IsKeyPressed(ImGuiKey_Space);
+      }
+
+      static std::string getCachedBeforeState(Editor::UndoRedo::History &history) {
+        static int lastFrame = -1;
+        static std::string cached;
+        int frame = ImGui::GetFrameCount();
+        if (frame != lastFrame) {
+          cached = history.captureSnapshotState();
+          lastFrame = frame;
+        }
+        return cached;
+      }
   };
 
   template<typename GetLabel, typename ApplySelection>

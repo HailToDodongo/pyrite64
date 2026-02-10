@@ -10,3 +10,4 @@ Makefile
 # Pyrite64 files
 assets/p64
 src/p64
+engine

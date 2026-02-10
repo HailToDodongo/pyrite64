@@ -35,7 +35,7 @@ bool Editor::Actions::call(Type type, const std::string &arg) {
       return actionCallbacks[static_cast<uint8_t>(type)](arg);
     } catch (const std::exception &e) {
       Utils::Logger::log("Error executing action: " + std::string(e.what()), Utils::Logger::LEVEL_ERROR);
-      Editor::Noti::add(Editor::Noti::Type::ERROR, "Action Failed: " + std::string(e.what()));
+      Editor::Noti::add(Editor::Noti::Type::ERROR, "Action Failed:\n" + std::string(e.what()));
     }
   }
   return false;

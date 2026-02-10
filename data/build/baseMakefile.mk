@@ -5,7 +5,7 @@
 ###################################
 
 BUILD_DIR=build
-ENGINE_DIR={{ENGINE_PATH}}
+ENGINE_DIR=engine
 ROM_NAME={{ROM_NAME}}
 
 export N64_INST={{N64_INST}}
