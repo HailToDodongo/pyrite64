@@ -6,6 +6,8 @@
 #include "../context.h"
 #include <filesystem>
 #include <format>
+#include <chrono>
+#include <unordered_set>
 
 #include "SHA256.h"
 #include "../utils/codeParser.h"
@@ -153,6 +155,8 @@ void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::str
 void Project::AssetManager::reload() {
   for (auto &e : entries)e.clear();
   entriesMap.clear();
+  watchFiles.clear();
+  watchInitialized = false;
 
   auto assetPath = fs::path{project->getPath()} / "assets";
   if (!fs::exists(assetPath)) {
@@ -166,6 +170,7 @@ void Project::AssetManager::reload() {
     if (entry.is_regular_file()) {
       auto path = entry.path();
       auto ext = path.extension().string();
+      watchFiles[path.string()] = Utils::FS::getFileAge(path);
 
       std::string outPath{};
       outPath = getAssetROMPath(path.string(), projectBase);
@@ -252,7 +257,7 @@ void Project::AssetManager::reload() {
   }
 
   auto codePath = getCodePath(project);
-  for (const auto &entry : fs::directory_iterator{codePath}) {
+  for (const auto &entry : fs::recursive_directory_iterator{codePath}) {
     if (entry.is_regular_file()) {
       auto path = entry.path();
       auto ext = path.extension().string();
@@ -263,6 +268,8 @@ void Project::AssetManager::reload() {
       } else {
         continue;
       }
+
+      watchFiles[path.string()] = Utils::FS::getFileAge(path);
 
       auto code = Utils::FS::loadTextFile(path);
 
@@ -317,6 +324,75 @@ void Project::AssetManager::reload() {
   }
 }
 
+bool Project::AssetManager::pollWatch()
+{
+  using Clock = std::chrono::steady_clock;
+  constexpr auto kMinInterval = std::chrono::milliseconds(1000);
+
+  auto now = Clock::now();
+  if (watchInitialized && (now - watchLastCheck) < kMinInterval) {
+    return false;
+  }
+  watchInitialized = true;
+  watchLastCheck = now;
+
+  std::unordered_set<std::string> seen{};
+  bool changed = false;
+
+  auto assetPath = fs::path{project->getPath()} / "assets";
+  if (fs::exists(assetPath)) {
+    for (const auto &entry : fs::recursive_directory_iterator{assetPath}) {
+      if (!entry.is_regular_file()) continue;
+      auto path = entry.path();
+      auto ext = path.extension().string();
+
+      auto pathStr = path.string();
+      seen.insert(pathStr);
+      uint64_t age = Utils::FS::getFileAge(path);
+
+      auto it = watchFiles.find(pathStr);
+      if (it == watchFiles.end() || it->second != age) {
+        changed = true;
+        break;
+      }
+    }
+  }
+
+  auto codePath = getCodePath(project);
+  if (!changed && fs::exists(codePath)) {
+    for (const auto &entry : fs::recursive_directory_iterator{codePath}) {
+      if (!entry.is_regular_file()) continue;
+      auto path = entry.path();
+      if (path.extension().string() != ".cpp") continue;
+
+      auto pathStr = path.string();
+      seen.insert(pathStr);
+      uint64_t age = Utils::FS::getFileAge(path);
+
+      auto it = watchFiles.find(pathStr);
+      if (it == watchFiles.end() || it->second != age) {
+        changed = true;
+        break;
+      }
+    }
+  }
+
+  if (!changed) {
+    for (const auto &pair : watchFiles) {
+      if (seen.find(pair.first) == seen.end()) {
+        changed = true;
+        break;
+      }
+    }
+  }
+
+  if (changed) {
+    reload();
+  }
+
+  return changed;
+}
+
 void Project::AssetManager::reloadAssetByUUID(uint64_t uuid) {
   auto asset = getEntryByUUID(uuid);
   if (!asset)return;
@@ -354,9 +430,30 @@ void Project::AssetManager::save()
   }
 }
 
-void Project::AssetManager::createScript(const std::string &name) {
+void Project::AssetManager::createScript(const std::string &name, const std::string &subDir) {
   auto codePath = getCodePath(project);
-  auto filePath = codePath / (name + ".cpp");
+  fs::path dirPath = codePath;
+
+  if (!subDir.empty()) {
+    fs::path relPath{subDir};
+    if (!relPath.is_absolute()) {
+      relPath = relPath.lexically_normal();
+      bool hasParent = false;
+      for (const auto &part : relPath) {
+        if (part == "..") {
+          hasParent = true;
+          break;
+        }
+      }
+      if (!hasParent) {
+        dirPath /= relPath;
+      }
+    }
+  }
+
+  fs::create_directories(dirPath);
+
+  auto filePath = dirPath / (name + ".cpp");
 
   uint64_t uuid = Utils::Hash::sha256_64bit("CODE:" + filePath.string() + std::to_string(rand()));
   auto uuidStr = std::format("{:016X}", uuid);

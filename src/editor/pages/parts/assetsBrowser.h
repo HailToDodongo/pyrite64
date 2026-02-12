@@ -3,6 +3,9 @@
 * @license MIT
 */
 #pragma once
+#include <array>
+#include <string>
+
 #include "../../../renderer/texture.h"
 
 namespace Editor
@@ -11,6 +14,7 @@ namespace Editor
   {
     private:
       int activeTab{0};
+      std::array<std::string, 4> tabDirs{};
 
     public:
       void draw();

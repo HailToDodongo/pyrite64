@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <chrono>
 
 #include "../renderer/n64Mesh.h"
 #include "../renderer/object.h"
@@ -90,6 +91,10 @@ namespace Project
       Project *project;
       std::array<std::vector<AssetManagerEntry>, static_cast<size_t>(FileType::_SIZE)> entries{};
 
+      std::unordered_map<std::string, uint64_t> watchFiles{};
+      std::chrono::steady_clock::time_point watchLastCheck{};
+      bool watchInitialized{false};
+
       std::string defaultScript{};
       std::shared_ptr<Renderer::Texture> fallbackTex{};
 
@@ -103,6 +108,7 @@ namespace Project
 
       void reload();
       void reloadAssetByUUID(uint64_t uuid);
+      bool pollWatch();
 
       [[nodiscard]] const auto& getEntries() const {
         return entries;
@@ -144,7 +150,7 @@ namespace Project
 
       void save();
 
-      void createScript(const std::string &name);
+      void createScript(const std::string &name, const std::string &subDir = {});
       uint64_t createNodeGraph(const std::string &name);
   };
 }

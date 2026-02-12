@@ -8,8 +8,12 @@
 #include "imgui_internal.h"
 #include "../../imgui/helper.h"
 #include "../../../context.h"
+#include <algorithm>
+#include <filesystem>
+#include <unordered_set>
 
 using FileType = Project::FileType;
+namespace fs = std::filesystem;
 
 namespace
 {
@@ -30,6 +34,28 @@ namespace
     auto &scenes = ctx.project->getScenes().getEntries();
     if (idx < 0 || idx >= scenes.size())return "<Select Scene>";
     return scenes[idx].name.c_str();
+  }
+
+  std::string normalizeDir(std::string dir)
+  {
+    for (auto &c : dir) {
+      if (c == '\\') c = '/';
+    }
+    while (!dir.empty() && dir.front() == '/') dir.erase(dir.begin());
+    while (!dir.empty() && dir.back() == '/') dir.pop_back();
+    return dir;
+  }
+
+  bool startsWith(const std::string &value, const std::string &prefix)
+  {
+    return value.size() >= prefix.size() && value.compare(0, prefix.size(), prefix) == 0;
+  }
+
+  std::string joinDir(const std::string &left, const std::string &right)
+  {
+    if (left.empty()) return right;
+    if (right.empty()) return left;
+    return left + "/" + right;
   }
 
 }
@@ -83,12 +109,62 @@ void Editor::AssetsBrowser::draw() {
   }
 
   const auto &tab = TABS[activeTab];
+  auto &dirState = tabDirs[activeTab];
+  dirState = normalizeDir(dirState);
+
+  fs::path basePath{};
+  fs::path basePathAbs{};
+  const char* baseLabel = nullptr;
+  if (activeTab == TAB_IDX_ASSETS || activeTab == TAB_IDX_PREFABS) {
+    basePath = fs::path(ctx.project->getPath()) / "assets";
+    baseLabel = "Assets";
+  } else if (activeTab == TAB_IDX_SCRIPTS) {
+    basePath = fs::path(ctx.project->getPath()) / "src" / "user";
+    baseLabel = "Scripts";
+  }
+  if (baseLabel) {
+    std::error_code absEc;
+    basePathAbs = fs::absolute(basePath, absEc);
+    if (absEc) {
+      basePathAbs = basePath;
+    }
+  }
 
   auto availWidth = ImGui::GetContentRegionAvail().x - 4;
   if(activeTab == TAB_IDX_SCENES)availWidth -= sceneOptionsWidth;
 
   ImGui::SameLine();
   ImGui::BeginChild("RIGHT");
+
+  if (baseLabel) {
+    std::vector<std::string> crumbParts{};
+    if (!dirState.empty()) {
+      size_t start = 0;
+      while (start < dirState.size()) {
+        size_t sep = dirState.find('/', start);
+        if (sep == std::string::npos) sep = dirState.size();
+        crumbParts.push_back(dirState.substr(start, sep - start));
+        start = sep + 1;
+      }
+    }
+
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 4));
+    if (ImGui::SmallButton(baseLabel)) {
+      dirState.clear();
+    }
+    std::string accum{};
+    for (const auto &part : crumbParts) {
+      ImGui::SameLine();
+      ImGui::TextUnformatted("/");
+      ImGui::SameLine();
+      accum = joinDir(accum, part);
+      if (ImGui::SmallButton(part.c_str())) {
+        dirState = accum;
+      }
+    }
+    ImGui::PopStyleVar();
+    ImGui::Dummy({0, 6});
+  }
 
   float imageSize = 64;
   float itemWidth = imageSize + 18;
@@ -109,108 +185,174 @@ void Editor::AssetsBrowser::draw() {
     currentWidth += itemWidth;
   };
 
-  for(const auto type : tab.fileTypes)
-  {
-    for (const auto &asset : ctx.project->getAssets().getTypeEntries(type))
+  auto drawLabel = [&](const std::string &label, const ImVec2 &startPos) {
+    auto size = ImGui::CalcTextSize(label.c_str());
+    ImVec2 rextMin{startPos.x,                startPos.y + imageSize + 8};
+    ImVec2 rextMax{startPos.x + imageSize+14, startPos.y + imageSize + 8 + 16};
+
+    if((size.x+3) > (rextMax.x - rextMin.x))
     {
+      ImGui::RenderTextEllipsis(
+        ImGui::GetWindowDrawList(), rextMin, rextMax, 0,
+        label.c_str(), label.c_str() + label.size(),
+        nullptr
+      );
+    } else {
+      ImGui::GetWindowDrawList()->AddText(
+        {rextMin.x + ((rextMax.x - rextMin.x) - size.x) * 0.5f,
+         rextMin.y + ((rextMax.y - rextMin.y) - size.y) * 0.5f},
+        ImGui::GetColorU32(ImGuiCol_Text),
+        label.c_str()
+      );
+    }
+  };
+
+  auto drawGridButton = [&](const char* id, ImTextureRef icon, const char* iconTxt,
+    const std::string &label, bool selected, float alpha) {
+    bool clicked = false;
+    if(selected) {
+      ImGui::PushStyleColor(ImGuiCol_Button, {0.5f,0.5f,0.7f,1});
+      ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.5f,0.5f,0.7f,0.8f});
+    }
+
+    ImGui::PushID(id);
+    auto sPos = ImGui::GetCursorScreenPos();
+    drawLabel(label, sPos);
+
+    if(icon._TexID)
+    {
+      clicked = ImGui::ImageButton("##img", icon,
+        {imageSize, imageSize}, {0,0}, {1,1}, {0,0,0,0},
+        {1,1,1, alpha}
+      );
+
+    } else {
+      ImGui::PushFont(nullptr, 40.0f);
+        clicked = ImGui::Button(iconTxt, textBtnSize);
+      ImGui::PopFont();
+    }
+
+    ImGui::PopID();
+
+    if(selected)ImGui::PopStyleColor(2);
+    return clicked;
+  };
+
+  std::vector<std::string> folders{};
+  std::unordered_set<std::string> folderSet{};
+  std::vector<const Project::AssetManagerEntry*> assets{};
+
+  if (baseLabel) {
+    for(const auto type : tab.fileTypes)
+    {
+      for (const auto &asset : ctx.project->getAssets().getTypeEntries(type))
+      {
+        std::error_code ec;
+        std::error_code absEc;
+        auto assetPathAbs = fs::absolute(fs::path(asset.path), absEc);
+        if (absEc) {
+          assetPathAbs = fs::path(asset.path);
+        }
+        auto rel = fs::relative(assetPathAbs, basePathAbs, ec);
+        if (ec) continue;
+        auto relStr = rel.generic_string();
+        if (relStr == ".") continue;
+        if (startsWith(relStr, "..")) {
+          if (dirState.empty()) {
+            assets.push_back(&asset);
+          }
+          continue;
+        }
+
+        if (!dirState.empty()) {
+          auto prefix = dirState + "/";
+          if (!startsWith(relStr, prefix)) {
+            continue;
+          }
+          relStr = relStr.substr(prefix.size());
+        }
+
+        auto slashPos = relStr.find('/');
+        if (slashPos != std::string::npos) {
+          auto folder = relStr.substr(0, slashPos);
+          if (folderSet.insert(folder).second) {
+            folders.push_back(folder);
+          }
+        } else {
+          assets.push_back(&asset);
+        }
+      }
+    }
+
+    std::sort(folders.begin(), folders.end());
+    std::sort(assets.begin(), assets.end(), [](const auto *a, const auto *b) {
+      return a->name < b->name;
+    });
+
+    for (const auto &folder : folders) {
       checkLineBreak();
+      if (drawGridButton(folder.c_str(), ImTextureRef(nullptr), ICON_MDI_FOLDER_OUTLINE, folder, false, 1.0f)) {
+        dirState = joinDir(dirState, folder);
+      }
+      if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+        ImGui::SetTooltip("Folder: %s", joinDir(dirState, folder).c_str());
+      }
+    }
+  }
 
-      auto icon = ImTextureRef(nullptr);
-      const char* iconTxt = ICON_MDI_FILE_OUTLINE;
-      if (asset.texture) {
-        icon = ImTextureRef(asset.texture->getGPUTex());
+  for (const auto *assetPtr : assets)
+  {
+    const auto &asset = *assetPtr;
+    checkLineBreak();
+
+    auto icon = ImTextureRef(nullptr);
+    const char* iconTxt = ICON_MDI_FILE_OUTLINE;
+    if (asset.texture) {
+      icon = ImTextureRef(asset.texture->getGPUTex());
+    } else {
+      if (asset.type == FileType::MODEL_3D) {
+        iconTxt = ICON_MDI_CUBE_OUTLINE;
+      } else if (asset.type == FileType::AUDIO) {
+        iconTxt = ICON_MDI_MUSIC;
+      } else if (asset.type == FileType::FONT) {
+        iconTxt = ICON_MDI_FORMAT_FONT;
+      } else if (asset.type == FileType::PREFAB) {
+        iconTxt = ICON_MDI_PACKAGE_VARIANT_CLOSED;
+      } else if (asset.type == FileType::CODE_OBJ || asset.type == FileType::CODE_GLOBAL) {
+        iconTxt = ICON_MDI_LANGUAGE_CPP;
+      } else if (asset.type == FileType::NODE_GRAPH) {
+        iconTxt = ICON_MDI_GRAPH_OUTLINE;
+      }
+    }
+
+    bool isSelected = (ctx.selAssetUUID == asset.getUUID());
+    bool clicked = drawGridButton(
+      asset.name.c_str(),
+      icon,
+      iconTxt,
+      asset.name,
+      isSelected,
+      asset.conf.exclude ? 0.25f : 1.0f
+    );
+
+    if (clicked) {
+      ctx.selAssetUUID = asset.getUUID() == ctx.selAssetUUID ? 0 : asset.getUUID();
+    }
+
+    if (ImGui::BeginDragDropSource()) {
+      if(icon._TexID) {
+        ImGui::ImageButton(asset.name.c_str(), icon, {imageSize*0.75f, imageSize*0.75f});
       } else {
-        if (asset.type == FileType::MODEL_3D) {
-          iconTxt = ICON_MDI_CUBE_OUTLINE;
-        } else if (asset.type == FileType::AUDIO) {
-          iconTxt = ICON_MDI_MUSIC;
-        } else if (asset.type == FileType::FONT) {
-          iconTxt = ICON_MDI_FORMAT_FONT;
-        } else if (asset.type == FileType::PREFAB) {
-          iconTxt = ICON_MDI_PACKAGE_VARIANT_CLOSED;
-        } else if (asset.type == FileType::CODE_OBJ || asset.type == FileType::CODE_GLOBAL) {
-          iconTxt = ICON_MDI_LANGUAGE_CPP;
-        } else if (asset.type == FileType::NODE_GRAPH) {
-          iconTxt = ICON_MDI_GRAPH_OUTLINE;
-        }
+        ImGui::Button(iconTxt, textBtnSize);
       }
+      ImGui::SetDragDropPayload("ASSET", &asset.conf.uuid, sizeof(asset.conf.uuid));
+      ImGui::EndDragDropSource();
+    }
 
-      bool isSelected = (ctx.selAssetUUID == asset.getUUID());
-      if(isSelected) {
-        ImGui::PushStyleColor(ImGuiCol_Button, {0.5f,0.5f,0.7f,1});
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.5f,0.5f,0.7f,0.8f});
-      }
-
-      bool clicked{false};
-
-      auto sPos = ImGui::GetCursorScreenPos();
-      {
-        auto size = ImGui::CalcTextSize(asset.name.c_str());
-        ImVec2 rextMin{sPos.x,                sPos.y + imageSize + 8};
-        ImVec2 rextMax{sPos.x + imageSize+14, sPos.y + imageSize + 8 + 16};
-
-        auto drawText = asset.name;
-        if((size.x+3) > (rextMax.x - rextMin.x))
-        {
-          ImGui::RenderTextEllipsis(
-            ImGui::GetWindowDrawList(), rextMin, rextMax, 0,
-            asset.name.c_str(), asset.name.c_str() + asset.name.size(),
-            nullptr
-          );
-        } else {
-          ImGui::GetWindowDrawList()->AddText(
-            {rextMin.x + ((rextMax.x - rextMin.x) - size.x) * 0.5f,
-             rextMin.y + ((rextMax.y - rextMin.y) - size.y) * 0.5f},
-            ImGui::GetColorU32(ImGuiCol_Text),
-            asset.name.c_str()
-          );
-        }
-
-        /*ImGui::RenderTextEllipsis(
-          ImGui::GetWindowDrawList(),
-          {sPos.x,                sPos.y + imageSize + 6},
-          {sPos.x + imageSize+18, sPos.y + imageSize + 6 + 16},
-          0,
-          asset.name.c_str(), asset.name.c_str() + asset.name.size(),
-          nullptr
-        );*/
-      }
-
-      if(icon._TexID)
-      {
-        clicked = ImGui::ImageButton(asset.name.c_str(), icon,
-          {imageSize, imageSize}, {0,0}, {1,1}, {0,0,0,0},
-          {1,1,1, asset.conf.exclude ? 0.25f : 1.0f}
-        );
-
-      } else {
-        ImGui::PushFont(nullptr, 40.0f);
-        ImGui::PushID((int)asset.getUUID());
-          clicked = ImGui::Button(iconTxt, textBtnSize);
-        ImGui::PopID();
-        ImGui::PopFont();
-      }
-
-      if (clicked) {
-        ctx.selAssetUUID = asset.getUUID() == ctx.selAssetUUID ? 0 : asset.getUUID();
-      }
-
-      if (ImGui::BeginDragDropSource()) {
-        if(icon._TexID) {
-          ImGui::ImageButton(asset.name.c_str(), icon, {imageSize*0.75f, imageSize*0.75f});
-        } else {
-          ImGui::Button(iconTxt, textBtnSize);
-        }
-        ImGui::SetDragDropPayload("ASSET", &asset.conf.uuid, sizeof(asset.conf.uuid));
-        ImGui::EndDragDropSource();
-      }
-
-      if(isSelected)ImGui::PopStyleColor(2);
-
-      if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-      {
-        ImGui::SetTooltip("File: %s", asset.name.c_str());
-      }
+    if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+      auto tooltipPath = dirState.empty() ? asset.name : (dirState + "/" + asset.name);
+      ImGui::SetTooltip("File: %s", tooltipPath.c_str());
     }
   }
 
@@ -240,6 +382,8 @@ void Editor::AssetsBrowser::draw() {
     }
   }
 
+  static std::string newScriptDir{};
+
   if (activeTab == TAB_IDX_SCRIPTS || activeTab == TAB_IDX_SCENES)
   {
     checkLineBreak();
@@ -251,6 +395,7 @@ void Editor::AssetsBrowser::draw() {
       textBtnSize
     )) {
       if(activeTab == TAB_IDX_SCRIPTS) {
+        newScriptDir = dirState;
         ImGui::OpenPopup("NewScript");
       } else {
         ctx.project->getScenes().add();
@@ -267,7 +412,7 @@ void Editor::AssetsBrowser::draw() {
     ImGui::Text("Enter script name:");
     ImGui::InputText("##Name", scriptName, sizeof(scriptName));
     if (ImGui::Button("Create")) {
-      ctx.project->getAssets().createScript(scriptName);
+      ctx.project->getAssets().createScript(scriptName, newScriptDir);
       ImGui::CloseCurrentPopup();
     }
     ImGui::SameLine();
