@@ -76,6 +76,119 @@ namespace
       conf.exclude = doc["exclude"];
     }
   }
+
+  bool buildAssetEntry(Project::Project *project, const fs::path &path, Project::AssetManagerEntry &entry)
+  {
+    auto projectBase = fs::absolute(project->getPath()).string();
+    auto ext = path.extension().string();
+
+    std::string outPath = getAssetROMPath(path.string(), projectBase);
+
+    Project::FileType type = Project::FileType::UNKNOWN;
+    if (ext == ".png") {
+      type = Project::FileType::IMAGE;
+      outPath = changeExt(outPath, ".sprite");
+    } else if (ext == ".wav" || ext == ".mp3") {
+      type = Project::FileType::AUDIO;
+      outPath = changeExt(outPath, ".wav64");
+    } else if (ext == ".glb" || ext == ".gltf") {
+      type = Project::FileType::MODEL_3D;
+      outPath = changeExt(outPath, ".t3dm");
+    } else if (ext == ".ttf") {
+      type = Project::FileType::FONT;
+      outPath = changeExt(outPath, ".font64");
+    } else if (ext == ".prefab") {
+      type = Project::FileType::PREFAB;
+      outPath = changeExt(outPath, ".pf");
+    } else if (ext == ".p64graph") {
+      type = Project::FileType::NODE_GRAPH;
+      outPath = changeExt(outPath, ".pg");
+    }
+
+    if (type == Project::FileType::UNKNOWN) {
+      return false;
+    }
+
+    auto romPath = outPath;
+    romPath.replace(0, std::string{"filesystem/"}.length(), "rom:/");
+
+    entry = Project::AssetManagerEntry{
+      .name = path.filename().string(),
+      .path = path.string(),
+      .outPath = outPath,
+      .romPath = romPath,
+      .type = type,
+    };
+
+    entry.conf.baseScale = 16;
+
+    auto pathMeta = path;
+    pathMeta += ".conf";
+    if (fs::exists(pathMeta)) {
+      deserialize(entry.conf, pathMeta);
+    }
+
+    if (entry.conf.uuid == 0) {
+      entry.conf.uuid = Utils::Hash::randomU64();
+    }
+
+    if (type == Project::FileType::IMAGE) {
+      if (entry.path.ends_with(".bci.png")) {
+        entry.conf.format = (int)Utils::TexFormat::BCI_256;
+      }
+    }
+
+    if (type == Project::FileType::FONT && entry.conf.fontCharset.value.empty()) {
+      entry.conf.fontCharset.value =
+        " !\"#$%&\'()*+,-./"                 "\n"
+        "0123456789:;<=>?@"                  "\n"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`"  "\n"
+        "abcdefghijklmnopqrstuvwxyz{|}~";
+    }
+
+    return true;
+  }
+
+  bool buildCodeEntry(const fs::path &path, Project::AssetManagerEntry &entry)
+  {
+    auto code = Utils::FS::loadTextFile(path);
+
+    Project::FileType type = Project::FileType::UNKNOWN;
+    auto uuidPos = code.find("::Script::");
+    if (uuidPos == std::string::npos) {
+      type = Project::FileType::CODE_GLOBAL;
+      uuidPos = code.find("::GlobalScript::");
+      if (uuidPos == std::string::npos) {
+        return false;
+      }
+      uuidPos += 16;
+    } else {
+      type = Project::FileType::CODE_OBJ;
+      uuidPos += 10;
+    }
+
+    if (uuidPos + 16 > code.size()) {
+      return false;
+    }
+
+    auto uuidStr = code.substr(uuidPos, 16);
+    uint64_t uuid = 0;
+    try {
+      uuid = std::stoull(uuidStr, nullptr, 16);
+    } catch (...) {
+      return false;
+    }
+
+    entry = Project::AssetManagerEntry{
+      .name = path.filename().string(),
+      .path = path.string(),
+      .type = type,
+      .params = Utils::CPP::parseDataStruct(code, "Data")
+    };
+    entry.conf.uuid = uuid;
+
+    return true;
+  }
 }
 
 std::string Project::AssetConf::serialize() const {
@@ -163,87 +276,30 @@ void Project::AssetManager::reload() {
     fs::create_directory(assetPath);
   }
 
-  auto projectBase = fs::absolute(project->getPath()).string();
-
   // scan all files
   for (const auto &entry : fs::recursive_directory_iterator{assetPath}) {
     if (entry.is_regular_file()) {
       auto path = entry.path();
-      auto ext = path.extension().string();
       watchFiles[path.string()] = Utils::FS::getFileAge(path);
-
-      std::string outPath{};
-      outPath = getAssetROMPath(path.string(), projectBase);
-
-      FileType type = FileType::UNKNOWN;
-      if (ext == ".png") {
-        type = FileType::IMAGE;
-        outPath = changeExt(outPath, ".sprite");
-      } else if (ext == ".wav" || ext == ".mp3") {
-        type = FileType::AUDIO;
-        outPath = changeExt(outPath, ".wav64");
-      } else if (ext == ".glb" || ext == ".gltf") {
-        type = FileType::MODEL_3D;
-        outPath = changeExt(outPath, ".t3dm");
-      } else if (ext == ".ttf") {
-        type = FileType::FONT;
-        outPath = changeExt(outPath, ".font64");
-      } else if (ext == ".prefab") {
-        type = FileType::PREFAB;
-        outPath = changeExt(outPath, ".pf");
-      } else if (ext == ".p64graph") {
-        type = FileType::NODE_GRAPH;
-        outPath = changeExt(outPath, ".pg");
+      AssetManagerEntry assetEntry{};
+      if (!buildAssetEntry(project, path, assetEntry)) {
+        continue;
       }
 
-      auto romPath = outPath;
-      romPath.replace(0, std::string{"filesystem/"}.length(), "rom:/");
-
-      AssetManagerEntry entry{
-        .name = path.filename().string(),
-        .path = path.string(),
-        .outPath = outPath,
-        .romPath = romPath,
-        .type = type,
-      };
-
-      entry.conf.baseScale = 16;
-
-      // check if meta-data exists
-      auto pathMeta = path;
-      pathMeta += ".conf";
-      if (type != FileType::UNKNOWN && fs::exists(pathMeta)) {
-        deserialize(entry.conf, pathMeta);
-      }
-
-      if(entry.conf.uuid == 0) {
-        entry.conf.uuid = Utils::Hash::randomU64();
-      }
-
-      if (type == FileType::IMAGE)
-      {
-        if(entry.path.ends_with(".bci.png")) {
-          entry.conf.format = (int)Utils::TexFormat::BCI_256;
-          outPath = changeExt(outPath, ".bci");
+      if (assetEntry.type == FileType::IMAGE) {
+        if (ctx.window) {
+          reloadEntry(assetEntry, path.string());
         }
-        if(ctx.window)reloadEntry(entry, path.string());
       }
 
-      if( type == FileType::FONT && entry.conf.fontCharset.value.empty())
-      {
-        entry.conf.fontCharset.value =
-          " !\"#$%&\'()*+,-./"                 "\n"
-          "0123456789:;<=>?@"                  "\n"
-          "ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`"  "\n"
-          "abcdefghijklmnopqrstuvwxyz{|}~";
+      if (assetEntry.type == FileType::PREFAB) {
+        reloadEntry(assetEntry, path.string());
+        if (assetEntry.prefab) {
+          assetEntry.conf.uuid = assetEntry.prefab->uuid.value;
+        }
       }
 
-      if (type == FileType::PREFAB) {
-        reloadEntry(entry, path.string());
-        entry.conf.uuid = entry.prefab->uuid.value;
-      }
-
-      entries[(int)type].push_back(entry);
+      entries[(int)assetEntry.type].push_back(assetEntry);
     }
   }
 
@@ -260,49 +316,15 @@ void Project::AssetManager::reload() {
   for (const auto &entry : fs::recursive_directory_iterator{codePath}) {
     if (entry.is_regular_file()) {
       auto path = entry.path();
-      auto ext = path.extension().string();
-
-      FileType type = FileType::UNKNOWN;
-      if (ext == ".cpp") {
-        type = FileType::CODE_OBJ;
-      } else {
-        continue;
-      }
+      if (path.extension().string() != ".cpp") continue;
 
       watchFiles[path.string()] = Utils::FS::getFileAge(path);
-
-      auto code = Utils::FS::loadTextFile(path);
-
-      auto uuidPos = code.find("::Script::");
-      if (uuidPos == std::string::npos)
-      {
-        type = FileType::CODE_GLOBAL;
-        uuidPos = code.find("::GlobalScript::");
-        if (uuidPos == std::string::npos)continue;
-        uuidPos += 16;
-      } else
-      {
-        uuidPos += 10;
-      }
-
-      if (uuidPos + 16 > code.size())continue;
-      auto uuidStr = code.substr(uuidPos, 16);
-      uint64_t uuid = 0;
-      try {
-        uuid = std::stoull(uuidStr, nullptr, 16);
-      } catch (...) {
+      AssetManagerEntry codeEntry{};
+      if (!buildCodeEntry(path, codeEntry)) {
         continue;
       }
 
-      AssetManagerEntry entry{
-        .name = path.filename().string(),
-        .path = path.string(),
-        .type = type,
-        .params = Utils::CPP::parseDataStruct(code, "Data")
-      };
-      entry.conf.uuid = uuid;
-
-      entries[(int)type].push_back(entry);
+      entries[(int)codeEntry.type].push_back(codeEntry);
     }
   }
 
@@ -336,61 +358,167 @@ bool Project::AssetManager::pollWatch()
   watchInitialized = true;
   watchLastCheck = now;
 
-  std::unordered_set<std::string> seen{};
-  bool changed = false;
+  std::unordered_map<std::string, uint64_t> currentFiles{};
+  std::vector<std::string> addedAssets{};
+  std::vector<std::string> modifiedAssets{};
+  std::vector<std::string> addedCode{};
+  std::vector<std::string> modifiedCode{};
+  std::vector<std::string> removedPaths{};
 
   auto assetPath = fs::path{project->getPath()} / "assets";
   if (fs::exists(assetPath)) {
     for (const auto &entry : fs::recursive_directory_iterator{assetPath}) {
       if (!entry.is_regular_file()) continue;
       auto path = entry.path();
-      auto ext = path.extension().string();
-
       auto pathStr = path.string();
-      seen.insert(pathStr);
       uint64_t age = Utils::FS::getFileAge(path);
 
+      currentFiles[pathStr] = age;
       auto it = watchFiles.find(pathStr);
-      if (it == watchFiles.end() || it->second != age) {
-        changed = true;
-        break;
+      if (it == watchFiles.end()) {
+        addedAssets.push_back(pathStr);
+      } else if (it->second != age) {
+        modifiedAssets.push_back(pathStr);
       }
     }
   }
 
   auto codePath = getCodePath(project);
-  if (!changed && fs::exists(codePath)) {
+  if (fs::exists(codePath)) {
     for (const auto &entry : fs::recursive_directory_iterator{codePath}) {
       if (!entry.is_regular_file()) continue;
       auto path = entry.path();
       if (path.extension().string() != ".cpp") continue;
 
       auto pathStr = path.string();
-      seen.insert(pathStr);
       uint64_t age = Utils::FS::getFileAge(path);
 
+      currentFiles[pathStr] = age;
       auto it = watchFiles.find(pathStr);
-      if (it == watchFiles.end() || it->second != age) {
-        changed = true;
-        break;
+      if (it == watchFiles.end()) {
+        addedCode.push_back(pathStr);
+      } else if (it->second != age) {
+        modifiedCode.push_back(pathStr);
       }
     }
   }
+
+  for (const auto &pair : watchFiles) {
+    if (currentFiles.find(pair.first) == currentFiles.end()) {
+      removedPaths.push_back(pair.first);
+    }
+  }
+
+  bool changed = !addedAssets.empty() || !modifiedAssets.empty() ||
+                 !addedCode.empty() || !modifiedCode.empty() ||
+                 !removedPaths.empty();
 
   if (!changed) {
-    for (const auto &pair : watchFiles) {
-      if (seen.find(pair.first) == seen.end()) {
-        changed = true;
-        break;
+    return false;
+  }
+
+  std::unordered_set<int> touchedTypes{};
+  std::vector<std::string> modelReloadPaths{};
+
+  auto removeEntryByPath = [&](const std::string &pathStr) {
+    fs::path pathIn{pathStr};
+    for (size_t typeIdx = 0; typeIdx < entries.size(); ++typeIdx) {
+      auto &typed = entries[typeIdx];
+      for (size_t i = 0; i < typed.size(); ++i) {
+        if (fs::path{typed[i].path} == pathIn) {
+          typed.erase(typed.begin() + i);
+          touchedTypes.insert(static_cast<int>(typeIdx));
+          return true;
+        }
       }
+    }
+    return false;
+  };
+
+  for (const auto &pathStr : removedPaths) {
+    removeEntryByPath(pathStr);
+  }
+
+  auto addOrUpdateAsset = [&](const std::string &pathStr) {
+    AssetManagerEntry newEntry{};
+    if (!buildAssetEntry(project, fs::path{pathStr}, newEntry)) {
+      return;
+    }
+
+    removeEntryByPath(pathStr);
+    entries[static_cast<int>(newEntry.type)].push_back(std::move(newEntry));
+    touchedTypes.insert(static_cast<int>(newEntry.type));
+
+    auto entry = getByPath(pathStr);
+    if (!entry) {
+      return;
+    }
+
+    if (entry->type == FileType::MODEL_3D) {
+      modelReloadPaths.push_back(pathStr);
+      return;
+    }
+
+    if (entry->type == FileType::IMAGE || entry->type == FileType::PREFAB) {
+      reloadEntry(*entry, entry->path);
+      if (entry->type == FileType::PREFAB && entry->prefab) {
+        entry->conf.uuid = entry->prefab->uuid.value;
+      }
+    }
+  };
+
+  auto addOrUpdateCode = [&](const std::string &pathStr) {
+    AssetManagerEntry newEntry{};
+    if (!buildCodeEntry(fs::path{pathStr}, newEntry)) {
+      return;
+    }
+
+    removeEntryByPath(pathStr);
+    entries[static_cast<int>(newEntry.type)].push_back(std::move(newEntry));
+    touchedTypes.insert(static_cast<int>(newEntry.type));
+  };
+
+  for (const auto &pathStr : addedAssets) {
+    addOrUpdateAsset(pathStr);
+  }
+  for (const auto &pathStr : modifiedAssets) {
+    addOrUpdateAsset(pathStr);
+  }
+  for (const auto &pathStr : addedCode) {
+    addOrUpdateCode(pathStr);
+  }
+  for (const auto &pathStr : modifiedCode) {
+    addOrUpdateCode(pathStr);
+  }
+
+  for (const auto &pathStr : modelReloadPaths) {
+    auto entry = getByPath(pathStr);
+    if (entry) {
+      reloadEntry(*entry, entry->path);
     }
   }
 
-  if (changed) {
-    reload();
+  for (size_t typeIdx = 0; typeIdx < entries.size(); ++typeIdx) {
+    if (touchedTypes.find(static_cast<int>(typeIdx)) == touchedTypes.end()) {
+      continue;
+    }
+    auto &typed = entries[typeIdx];
+    std::sort(typed.begin(), typed.end(), [](const AssetManagerEntry &a, const AssetManagerEntry &b) {
+      return a.name < b.name;
+    });
   }
 
-  return changed;
+  entriesMap.clear();
+  for (auto &typed : entries) {
+    int idx = 0;
+    for (auto &entry : typed) {
+      entriesMap[entry.getUUID()] = {(int)entry.type, idx};
+      ++idx;
+    }
+  }
+
+  watchFiles = std::move(currentFiles);
+  return true;
 }
 
 void Project::AssetManager::reloadAssetByUUID(uint64_t uuid) {
