@@ -244,6 +244,9 @@ int main(int argc, char** argv)
       }
 
       Utils::FilePicker::poll();
+      if (ctx.project) {
+        ctx.project->getAssets().pollWatch();
+      }
 
       if(SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
         SDL_Delay(10);
