@@ -47,11 +47,6 @@ namespace
     return dir;
   }
 
-  bool startsWith(const std::string &value, const std::string &prefix)
-  {
-    return value.size() >= prefix.size() && value.compare(0, prefix.size(), prefix) == 0;
-  }
-
   std::string joinDir(const std::string &left, const std::string &right)
   {
     if (left.empty()) return right;
@@ -260,7 +255,7 @@ void Editor::AssetsBrowser::draw() {
         if (ec) continue;
         auto relStr = rel.generic_string();
         if (relStr == ".") continue;
-        if (startsWith(relStr, "..")) {
+        if (relStr.starts_with("..")) {
           if (dirState.empty()) {
             assets.push_back(&asset);
           }
@@ -269,7 +264,7 @@ void Editor::AssetsBrowser::draw() {
 
         if (!dirState.empty()) {
           auto prefix = dirState + "/";
-          if (!startsWith(relStr, prefix)) {
+          if (!relStr.starts_with(prefix)) {
             continue;
           }
           relStr = relStr.substr(prefix.size());
