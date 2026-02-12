@@ -349,7 +349,8 @@ void Project::AssetManager::reload() {
 bool Project::AssetManager::pollWatch()
 {
   using Clock = std::chrono::steady_clock;
-  constexpr auto kMinInterval = std::chrono::milliseconds(1000);
+  // Check for changes every 2 seconds
+  constexpr auto kMinInterval = std::chrono::milliseconds(2000);
 
   auto now = Clock::now();
   if (watchInitialized && (now - watchLastCheck) < kMinInterval) {
@@ -358,6 +359,7 @@ bool Project::AssetManager::pollWatch()
   watchInitialized = true;
   watchLastCheck = now;
 
+  // Snapshot current files so we can diff against watchFiles
   std::unordered_map<std::string, uint64_t> currentFiles{};
   std::vector<std::string> addedAssets{};
   std::vector<std::string> modifiedAssets{};
@@ -365,6 +367,7 @@ bool Project::AssetManager::pollWatch()
   std::vector<std::string> modifiedCode{};
   std::vector<std::string> removedPaths{};
 
+  // Detect added/modified asset files
   auto assetPath = fs::path{project->getPath()} / "assets";
   if (fs::exists(assetPath)) {
     for (const auto &entry : fs::recursive_directory_iterator{assetPath}) {
@@ -383,6 +386,7 @@ bool Project::AssetManager::pollWatch()
     }
   }
 
+  // Detect added/modified script files.
   auto codePath = getCodePath(project);
   if (fs::exists(codePath)) {
     for (const auto &entry : fs::recursive_directory_iterator{codePath}) {
@@ -403,23 +407,26 @@ bool Project::AssetManager::pollWatch()
     }
   }
 
+  // Anything missing from the snapshot is treated as removed
   for (const auto &pair : watchFiles) {
     if (currentFiles.find(pair.first) == currentFiles.end()) {
       removedPaths.push_back(pair.first);
     }
   }
 
+  // Bail out if nothing changed
   bool changed = !addedAssets.empty() || !modifiedAssets.empty() ||
                  !addedCode.empty() || !modifiedCode.empty() ||
                  !removedPaths.empty();
-
   if (!changed) {
     return false;
   }
 
+  // Track which entry lists we need to re-sort
   std::unordered_set<int> touchedTypes{};
   std::vector<std::string> modelReloadPaths{};
 
+  // Remove an entry by absolute path across all lists
   auto removeEntryByPath = [&](const std::string &pathStr) {
     fs::path pathIn{pathStr};
     for (size_t typeIdx = 0; typeIdx < entries.size(); ++typeIdx) {
@@ -439,6 +446,7 @@ bool Project::AssetManager::pollWatch()
     removeEntryByPath(pathStr);
   }
 
+  // Rebuild a single asset entry and reload if needed
   auto addOrUpdateAsset = [&](const std::string &pathStr) {
     AssetManagerEntry newEntry{};
     if (!buildAssetEntry(project, fs::path{pathStr}, newEntry)) {
@@ -467,6 +475,7 @@ bool Project::AssetManager::pollWatch()
     }
   };
 
+  // Rebuild a single script entry
   auto addOrUpdateCode = [&](const std::string &pathStr) {
     AssetManagerEntry newEntry{};
     if (!buildCodeEntry(fs::path{pathStr}, newEntry)) {
@@ -478,6 +487,7 @@ bool Project::AssetManager::pollWatch()
     touchedTypes.insert(static_cast<int>(newEntry.type));
   };
 
+  // Add or update all the assets and scripts that were found
   for (const auto &pathStr : addedAssets) {
     addOrUpdateAsset(pathStr);
   }
@@ -491,6 +501,7 @@ bool Project::AssetManager::pollWatch()
     addOrUpdateCode(pathStr);
   }
 
+  // Reload models after texture updates are applied
   for (const auto &pathStr : modelReloadPaths) {
     auto entry = getByPath(pathStr);
     if (entry) {
@@ -498,6 +509,7 @@ bool Project::AssetManager::pollWatch()
     }
   }
 
+  //sort by name
   for (size_t typeIdx = 0; typeIdx < entries.size(); ++typeIdx) {
     if (touchedTypes.find(static_cast<int>(typeIdx)) == touchedTypes.end()) {
       continue;
@@ -508,6 +520,7 @@ bool Project::AssetManager::pollWatch()
     });
   }
 
+  // Rebuild UUID lookup after edits
   entriesMap.clear();
   for (auto &typed : entries) {
     int idx = 0;
@@ -517,6 +530,7 @@ bool Project::AssetManager::pollWatch()
     }
   }
 
+  // Update watcher snapshot for next poll
   watchFiles = std::move(currentFiles);
   return true;
 }

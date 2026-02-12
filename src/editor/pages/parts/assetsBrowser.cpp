@@ -240,6 +240,8 @@ void Editor::AssetsBrowser::draw() {
 
   std::vector<std::string> folders{};
   std::unordered_set<std::string> folderSet{};
+  // Mark folders that contain assets for the active tab
+  std::unordered_map<std::string, bool> folderHasAssets{};
   std::vector<const Project::AssetManagerEntry*> assets{};
 
   if (baseLabel) {
@@ -272,14 +274,35 @@ void Editor::AssetsBrowser::draw() {
           relStr = relStr.substr(prefix.size());
         }
 
+        // Split into folders vs files at the current depth
         auto slashPos = relStr.find('/');
         if (slashPos != std::string::npos) {
           auto folder = relStr.substr(0, slashPos);
           if (folderSet.insert(folder).second) {
             folders.push_back(folder);
           }
+          folderHasAssets[folder] = true;
         } else {
           assets.push_back(&asset);
+        }
+      }
+    }
+
+    // Also list folders that exist on disk even if empty for this tab
+    if (!basePathAbs.empty()) {
+      fs::path listRoot = basePathAbs;
+      if (!dirState.empty()) {
+        listRoot /= dirState;
+      }
+      std::error_code dirEc;
+      for (auto it = fs::directory_iterator(listRoot, dirEc);
+           !dirEc && it != fs::directory_iterator();
+           it.increment(dirEc)) {
+        const auto &dirEntry = *it;
+        if (!dirEntry.is_directory()) continue;
+        auto name = dirEntry.path().filename().string();
+        if (folderSet.insert(name).second) {
+          folders.push_back(name);
         }
       }
     }
@@ -291,7 +314,9 @@ void Editor::AssetsBrowser::draw() {
 
     for (const auto &folder : folders) {
       checkLineBreak();
-      if (drawGridButton(folder.c_str(), ImTextureRef(nullptr), ICON_MDI_FOLDER_OUTLINE, folder, false, 1.0f)) {
+      // Show a filled folder when it contains assets for this tab, outlined (empty) folder otherwise
+      const char* folderIcon = folderHasAssets[folder] ? ICON_MDI_FOLDER : ICON_MDI_FOLDER_OUTLINE;
+      if (drawGridButton(folder.c_str(), ImTextureRef(nullptr), folderIcon, folder, false, 1.0f)) {
         dirState = joinDir(dirState, folder);
       }
       if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
