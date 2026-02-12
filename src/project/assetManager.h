@@ -150,7 +150,7 @@ namespace Project
 
       void save();
 
-      void createScript(const std::string &name, const std::string &subDir = {});
+      bool createScript(const std::string &name, const std::string &subDir = {});
       uint64_t createNodeGraph(const std::string &name);
   };
 }

@@ -7,6 +7,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "../../imgui/helper.h"
+#include "../../imgui/notification.h"
 #include "../../../context.h"
 #include <algorithm>
 #include <filesystem>
@@ -426,7 +427,17 @@ void Editor::AssetsBrowser::draw() {
         ctx.project->getScenes().add();
       }
     }
+
     ImGui::PopFont();
+  }
+
+  if (activeTab == TAB_IDX_SCRIPTS && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+  {
+    ImGui::SetTooltip("Create new Script");
+  }
+  if (activeTab == TAB_IDX_SCENES && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+  {
+    ImGui::SetTooltip("Create new Scene");
   }
 
   ImGui::Dummy({0, 10});
@@ -437,8 +448,14 @@ void Editor::AssetsBrowser::draw() {
     ImGui::Text("Enter script name:");
     ImGui::InputText("##Name", scriptName, sizeof(scriptName));
     if (ImGui::Button("Create")) {
-      ctx.project->getAssets().createScript(scriptName, newScriptDir);
-      ImGui::CloseCurrentPopup();
+      if (ctx.project->getAssets().createScript(scriptName, newScriptDir)) {
+        ImGui::CloseCurrentPopup();
+      } else {
+        Editor::Noti::add(
+          Editor::Noti::Type::ERROR,
+          "Failed to create script. File Name may not contain any of [/, \\, :, *, ?, \", <, >, |]."
+        );
+      }
     }
     ImGui::SameLine();
     if (ImGui::Button("Cancel")) {

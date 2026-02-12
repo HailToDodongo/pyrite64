@@ -572,7 +572,12 @@ void Project::AssetManager::save()
   }
 }
 
-void Project::AssetManager::createScript(const std::string &name, const std::string &subDir) {
+bool Project::AssetManager::createScript(const std::string &name, const std::string &subDir) {
+  // Catch forbidden characters
+  if (name.find_first_of("/\\:*?\"<>|") != std::string::npos) {
+    return false;
+  }
+
   auto codePath = getCodePath(project);
   fs::path dirPath = codePath;
 
@@ -601,13 +606,20 @@ void Project::AssetManager::createScript(const std::string &name, const std::str
   auto uuidStr = std::format("{:016X}", uuid);
   uuidStr[0] = 'C'; // avoid leading numbers since it's used as a namespace name
 
-  if (fs::exists(filePath))return;
+  if (fs::exists(filePath)) {
+    return false;
+  }
 
   auto code = defaultScript;
   code = Utils::replaceAll(code, "__UUID__", uuidStr);
 
   Utils::FS::saveTextFile(filePath, code);
+  if (!fs::exists(filePath)) {
+    return false;
+  }
+
   reload();
+  return true;
 }
 
 uint64_t Project::AssetManager::createNodeGraph(const std::string &name)
