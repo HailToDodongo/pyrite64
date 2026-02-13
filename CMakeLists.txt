@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
-project(pyrite64)
+
+project(pyrite64 VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -251,6 +252,7 @@ target_include_directories(pyrite64 PRIVATE
 
 # target_link_libraries(pyrite64 PRIVATE SDL3::SDL3)
 
+target_compile_definitions(pyrite64 PRIVATE "PYRITE_VERSION=\"${PROJECT_VERSION}\"")
 target_compile_definitions(pyrite64 PRIVATE IMGUI_DEFINE_MATH_OPERATORS GLM_FORCE_QUAT_DATA_XYZW)
 
 set_target_properties(pyrite64 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")

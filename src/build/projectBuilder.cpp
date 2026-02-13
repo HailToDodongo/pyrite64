@@ -49,9 +49,10 @@ void Build::SceneCtx::addAsset(const Project::AssetManagerEntry &entry)
   stringOffset += entry.romPath.size() + 1;
 }
 
-bool Build::buildProject(const std::string &path)
+bool Build::buildProject(const std::string &configPath)
 {
-  Project::Project project{path};
+  Project::Project project{configPath};
+  auto path = project.getPath();
   Utils::Logger::log("Building project...");
 
   if(project.conf.pathN64Inst.empty())

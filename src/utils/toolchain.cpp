@@ -52,10 +52,22 @@ void Utils::Toolchain::scan()
     
 
   #else
-    // @TODO:
-    state.hasToolchain = true;
-    state.hasLibdragon = true;
-    state.hasTiny3d = true;
+    char* n64InstEnv = getenv("N64_INST");
+    if(n64InstEnv) {
+      state.mingwPath = fs::path{n64InstEnv};
+    }
+    if(state.mingwPath.empty())return;
+
+    state.hasToolchain = fs::exists(state.mingwPath / "bin" / "mips64-elf-gcc");
+    if(!state.hasToolchain)return;
+
+    fs::path n64Path{n64InstEnv};
+    state.hasLibdragon = fs::exists(n64Path / "bin" / "n64tool")
+                       && fs::exists(n64Path / "bin" / "mkdfs")
+                       && fs::exists(n64Path / "include" / "n64.mk");
+    state.hasTiny3d = fs::exists(n64Path / "bin" / "gltf_to_t3d")
+                    && fs::exists(n64Path / "include" / "t3d.mk")
+                    && fs::exists(n64Path / "mips64-elf" / "include" / "t3d");
   #endif
 }
 

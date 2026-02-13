@@ -27,7 +27,7 @@ namespace Editor::Actions
        try {
          ctx.project = new Project::Project(path);
          if(ctx.project && !ctx.project->getScenes().getEntries().empty()) {
-           ctx.project->getScenes().loadScene(ctx.project->conf.sceneIdOnBoot);
+           ctx.project->getScenes().loadScene(ctx.project->conf.sceneIdLastOpened);
          }
        } catch (const std::exception &e) {
          auto error = "Failed to open project:\n" + std::string(e.what());
@@ -94,8 +94,8 @@ namespace Editor::Actions
       fs::remove_all(newPath / "filesystem");
 
       // open project.json and patch name
-      auto configPath = (newPath / "project.json").string();
-      auto configJSON = Utils::JSON::loadFile(newPath / "project.json");
+      auto configPath = (newPath / "project.p64proj").string();
+      auto configJSON = Utils::JSON::loadFile(newPath / "project.p64proj");
       configJSON["name"] = args["name"];
       configJSON["romName"] = args["rom"];
       Utils::FS::saveTextFile(configPath, configJSON.dump(2));
@@ -117,10 +117,10 @@ namespace Editor::Actions
         runCmd = ctx.project->conf.pathEmu + " " + z64Path;
       }
 
-      ctx.futureBuildRun = std::async(std::launch::async, [] (std::string path, std::string runCmd)
+      ctx.futureBuildRun = std::async(std::launch::async, [] (std::string configPath, std::string runCmd)
       {
         auto oldPATH = std::getenv("PATH");
-        bool result = Build::buildProject(path);
+        bool result = Build::buildProject(configPath);
 
         #if defined(_WIN32)
           _putenv_s("PATH", oldPATH);
@@ -136,7 +136,7 @@ namespace Editor::Actions
         if (!runCmd.empty()) {
           Utils::Proc::runSyncLogged(runCmd);
         }
-      }, ctx.project->getPath(), runCmd);
+      }, ctx.project->getConfigPath(), runCmd);
 
       return true;
     });

@@ -3,6 +3,7 @@
   "pathEmu": "ares",
   "pathN64Inst": "",
   "romName": "gj25_cathode_quest",
+  "sceneIdLastOpened": 7,
   "sceneIdOnBoot": 10,
   "sceneIdOnReset": 10
 }

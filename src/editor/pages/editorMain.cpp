@@ -169,7 +169,11 @@ void Editor::Main::draw()
         if(!Actions::call(Actions::Type::PROJECT_OPEN, path)) {
           Editor::Noti::add(Editor::Noti::ERROR, "Could not open project!");
         }
-      }, true, "Choose Project Folder");
+      }, {
+        .title="Choose Project File (.p64proj)",
+        .isDirectory = false,
+        .customFilters = {{"Pyrite64 Project", "p64proj"}}
+      });
     }
   }
 
@@ -188,23 +192,30 @@ void Editor::Main::draw()
       midBgPointY - (texBtnTool.getHeight() * 0.8f / 2) - 50
     });
     
-    ImGui::TextColored({1.0f, 0.2f, 0.2f, 1.0f}, warnText);
+    ImGui::TextColored({1.0f, 0.2f, 0.2f, 1.0f}, "%s", warnText);
     ImGui::PopFont();
     
   }
 
   ImGui::PopStyleColor(3);
 
-  // version
-  ImGui::SetCursorPos({14, io.DisplaySize.y - 30});
-  ImGui::Text("Pyrite64 [v0.0.0-alpha]");
+  // version + credits
+  {
+    constexpr float PADDING = 24;
+    constexpr float FONT_SIZE = 18;
 
-  constexpr const char* creditsStr = "©2025-2026 ~ Max Bebök (HailToDodongo)";
-  ImGui::SetCursorPos({
-    io.DisplaySize.x - 14 - ImGui::CalcTextSize(creditsStr).x,
-    io.DisplaySize.y - 30
-  });
-  ImGui::Text(creditsStr);
+    ImGui::PushFont(nullptr, FONT_SIZE);
+    ImGui::SetCursorPos({PADDING, io.DisplaySize.y - FONT_SIZE - PADDING});
+    ImGui::Text("v" PYRITE_VERSION);
+
+    constexpr const char* creditsStr = "©2025-2026 - Max Bebök (HailToDodongo)";
+    ImGui::SetCursorPos({
+      io.DisplaySize.x - PADDING - ImGui::CalcTextSize(creditsStr).x,
+      io.DisplaySize.y - FONT_SIZE - PADDING
+    });
+    ImGui::Text(creditsStr);
+    ImGui::PopFont();
+  }
 
   CreateProjectOverlay::draw();
   ToolchainOverlay::draw();

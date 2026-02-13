@@ -74,6 +74,12 @@ void Editor::ToolchainOverlay::open()
 
 bool Editor::ToolchainOverlay::draw()
 {
+  #if defined(_WIN32)
+    constexpr bool isWindows = true;
+  #else
+    constexpr bool isWindows = false;
+  #endif
+
   ImGuiIO &io = ImGui::GetIO();
   ImGui::SetNextWindowPos({io.DisplaySize.x / 2, io.DisplaySize.y / 2}, ImGuiCond_Always, {0.5f, 0.5f});
   ImGui::SetNextWindowSize({800, 400}, ImGuiCond_Always);
@@ -103,7 +109,7 @@ bool Editor::ToolchainOverlay::draw()
     ImGui::Dummy({0, 10});
 
     constexpr const char *STEPS[] = {
-      "MSYS2",
+      isWindows ? "MSYS2" : "N64_INST",
       "Toolchain",
       "Libdragon",
       "Tiny3D"
@@ -114,8 +120,9 @@ bool Editor::ToolchainOverlay::draw()
       toolState.hasLibdragon,
       toolState.hasTiny3d
     };
+    constexpr int steps = std::size(STEPS);
 
-    float contentWidth = (BUTTON_SIZE.x * 4) + (BUTTON_SPACING * 3);
+    float contentWidth = (BUTTON_SIZE.x * steps) + (BUTTON_SPACING * (steps-1));
     ImVec2 startPos = {
       (ImGui::GetWindowWidth() - contentWidth) * 0.5f,
       ImGui::GetCursorPosY() + 40
@@ -132,23 +139,53 @@ bool Editor::ToolchainOverlay::draw()
 
     if(!ctx.toolchain.isInstalling()) 
     {
-      if(allDone) {
-        ImGui::Text(
-          "The N64 toolchain is correctly installed.\n"
-          "If you wish to update it, press the update button below."
-        );
-      } else if(STEP_DONE[0]) {
-        ImGui::Text(
-          "The N64 toolchain is missing or not properly installed.\n"
-          "Click the button below to install and update the required components.\n"
-          "This process may take a few minutes, and a console popup will appear during installation."
-        );
-      } else {
-        ImGui::Text("MSYS2 is not installed, please download and install it from the link below:");
-        ImGui::SetCursorPosX(posX);
-        ImGui::TextLinkOpenURL("https://www.msys2.org/", "https://www.msys2.org/");
-        ImGui::SetCursorPosX(posX);
-        ImGui::Text("During the installation, keep the default path as is at \"C:\\msys64\".");
+      if(isWindows)
+      {
+        if(allDone) {
+          ImGui::Text(
+            "The N64 toolchain is correctly installed.\n"
+            "If you wish to update it, press the update button below."
+          );
+        } else if(STEP_DONE[0]) {
+          ImGui::Text(
+            "The N64 toolchain is missing or not properly installed.\n"
+            "Click the button below to install and update the required components.\n"
+            "This process may take a few minutes, and a console popup will appear during installation."
+          );
+        } else {
+          ImGui::Text("MSYS2 is not installed, please download and install it from the link below:");
+          ImGui::SetCursorPosX(posX);
+          ImGui::TextLinkOpenURL("https://www.msys2.org/", "https://www.msys2.org/");
+          ImGui::SetCursorPosX(posX);
+          ImGui::Text("During the installation, keep the default path as is at \"C:\\msys64\".");
+        }
+      } else
+      {
+        if(allDone) {
+          ImGui::Text("The N64 toolchain is correctly installed.");
+        } else
+        {
+          ImGui::Text(
+            "The N64 toolchain is missing or not properly installed.\n"
+            "Automatic installation is currently only available on Windows.\n"
+            "Please follow the guide for libdragon and tiny3d here:\n"
+          );
+
+          ImGui::Dummy({0, 4});
+          ImGui::SetCursorPosX(posX);
+
+          ImGui::TextLinkOpenURL("Libdragon Wiki", "https://github.com/DragonMinded/libdragon/wiki/Installing-libdragon");
+          ImGui::SameLine(); ImGui::Text(" + "); ImGui::SameLine();
+          ImGui::TextLinkOpenURL("Tiny3D Docs", "https://github.com/HailToDodongo/tiny3d?tab=readme-ov-file#build");
+
+          ImGui::Dummy({0, 4});
+          ImGui::SetCursorPosX(posX);
+
+          ImGui::Text(
+            "Make sure to use the 'preview' branch of libdragon,\n"
+            "and set the N64_INST environment variable accordingly."
+          );
+        }
       }
       
       ImGui::SetCursorPos({
@@ -156,7 +193,7 @@ bool Editor::ToolchainOverlay::draw()
         ImGui::GetCursorPosY() + 20
       });
 
-      if(STEP_DONE[0]) {
+      if(STEP_DONE[0] && isWindows) {
         if (ImGui::Button(allDone ? "Update" : "Install", {150, 40})) {
           ctx.toolchain.install();
         }

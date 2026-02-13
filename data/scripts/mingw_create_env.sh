@@ -1,5 +1,9 @@
 # Run in: C:\msys64\mingw64.exe
 
+# Enable bash 'strict mode'
+set -euo pipefail
+IFS=$'\n\t'
+
 echo "Building Libdragon Env..."
 cd ~
 
@@ -23,6 +27,20 @@ else
     # rm -rf $sdkpath
     unzip $zipfile -d $sdkpath
 fi
+
+# Sanity check: Verify that gcc exists
+if [ ! -x "$sdkpath/bin/mips64-elf-gcc.exe" ]; then
+    echo "ERROR: Toolchain installation appears incomplete."
+    echo "Expected file not found: $sdkpath/bin/mips64-elf-gcc.exe"
+    echo "Toolchain ZIP file may be corrupted or only partially downloaded."
+
+    rm -rf "$zipfile" "$sdkpath"
+
+    echo "Please re-run the setup to download and extract the toolchain again."
+    exit 1
+fi
+
+echo "Toolchain installation looks OK."
 
 # download libdragon itself
 if [ -e "libdragon" ]; then

@@ -536,7 +536,7 @@ namespace ImTable
     if (ImGui::Button(ICON_MDI_FOLDER_OUTLINE)) {
       Utils::FilePicker::open([&str](const std::string &path) {
         str = path;
-      }, isDir);
+      }, {.isDirectory = isDir});
     }
     ImGui::PopID();
     ImGui::SameLine();

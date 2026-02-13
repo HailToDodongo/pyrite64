@@ -3,6 +3,7 @@
   "pathEmu": "ares",
   "pathN64Inst": "",
   "romName": "p64_project",
+  "sceneIdLastOpened": 1,
   "sceneIdOnBoot": 1,
   "sceneIdOnReset": 1
 }

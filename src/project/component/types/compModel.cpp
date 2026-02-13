@@ -109,6 +109,20 @@ namespace Project::Component::Model
         data.obj3D.removeMesh();
       }
 
+      if (ImGui::BeginDragDropTarget())
+      {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET"))
+        {
+          uint64_t prefabUUID = *((uint64_t*)payload->Data);
+          auto asset = ctx.project->getAssets().getEntryByUUID(prefabUUID);
+          if(asset && asset->type == FileType::MODEL_3D) {
+            data.model.value = prefabUUID;
+            data.obj3D.removeMesh();
+          }
+        }
+        ImGui::EndDragDropTarget();
+      }
+
       std::vector<const char*> layerNames{};
       for (auto &layer : scene->conf.layers3D) {
         layerNames.push_back(layer.name.value.c_str());

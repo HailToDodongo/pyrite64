@@ -3,6 +3,7 @@
 * @license MIT
 */
 #pragma once
+#include <string>
 
 namespace CLI
 {
@@ -13,5 +14,6 @@ namespace CLI
     GUI
   };
 
+  const std::string& getProjectPath();
   Result run(int argc, char** argv);
 };

@@ -12,14 +12,15 @@
 #include "../utils/jsonBuilder.h"
 
 std::string Project::ProjectConf::serialize() const {
-  Utils::JSON::Builder builder{};
-  builder.set("name", name);
-  builder.set("romName", romName);
-  builder.set("pathEmu", pathEmu);
-  builder.set("pathN64Inst", pathN64Inst);
-  builder.set("sceneIdOnBoot", sceneIdOnBoot);
-  builder.set("sceneIdOnReset", sceneIdOnReset);
-  return builder.toString();
+  return Utils::JSON::Builder{}
+    .set("name", name)
+    .set("romName", romName)
+    .set("pathEmu", pathEmu)
+    .set("pathN64Inst", pathN64Inst)
+    .set("sceneIdOnBoot", sceneIdOnBoot)
+    .set("sceneIdOnReset", sceneIdOnReset)
+    .set("sceneIdLastOpened", sceneIdLastOpened)
+    .toString();
 }
 
 void Project::Project::deserialize(const nlohmann::json &doc) {
@@ -29,11 +30,14 @@ void Project::Project::deserialize(const nlohmann::json &doc) {
   conf.pathN64Inst = doc.value("pathN64Inst", "");
   conf.sceneIdOnBoot = doc.value("sceneIdOnBoot", 1);
   conf.sceneIdOnReset = doc.value("sceneIdOnReset", 1);
+  conf.sceneIdLastOpened = doc.value("sceneIdLastOpened", 1);
 }
 
-Project::Project::Project(const std::string &path)
-  : path{path}, pathConfig{path + "/project.json"}
+Project::Project::Project(const std::string &p64projPath)
+  : pathConfig{p64projPath}
 {
+  path = fs::path(p64projPath).parent_path().string();
+
   auto configJSON = Utils::JSON::loadFile(pathConfig);
   if (configJSON.empty()) {
     throw std::runtime_error("Not a valid project!");
@@ -72,8 +76,14 @@ Project::Project::Project(const std::string &path)
   scenes.reload();
 }
 
-void Project::Project::save() {
+void Project::Project::saveConfig()
+{
   Utils::FS::saveTextFile(pathConfig, conf.serialize());
+}
+
+void Project::Project::save() {
+  saveConfig();
   assets.save();
   scenes.save();
 }
+

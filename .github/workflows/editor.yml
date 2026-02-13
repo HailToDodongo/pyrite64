@@ -52,3 +52,42 @@ jobs:
             data
             n64
             LICENSE
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build gcc g++ \
+            libx11-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxss-dev libxtst-dev
+#            libwayland-dev libwayland-client-dev libwayland-cursor-dev libwayland-egl-dev
+
+      - name: Configure CMake
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --parallel 8
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyrite64-linux
+          include-hidden-files: true
+          path: |
+            pyrite64
+            data
+            n64
+            LICENSE
