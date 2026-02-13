@@ -71,7 +71,7 @@ namespace Project::Component::NodeGraph
     if (ImTable::start("Comp", &obj)) {
       ImTable::add("Name", entry.name);
       auto &assetList = ctx.project->getAssets().getTypeEntries(FileType::NODE_GRAPH);
-      ImTable::addVecComboBox("File", assetList, data.asset.value);
+      ImTable::addAssetVecComboBox("File", assetList, data.asset.value);
 
       ImTable::addObjProp("Auto Run", data.autoRun);
       ImTable::addObjProp("Repeatable", data.repeatable);

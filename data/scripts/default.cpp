@@ -10,6 +10,7 @@ namespace P64::Script::__UUID__
     // - uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t
     // - float
     // - AssetRef<sprite_t>
+    // - ObjectRef
   );
 
   // The following functions are called by the engine at different points in the object's lifecycle.

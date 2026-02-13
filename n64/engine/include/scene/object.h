@@ -201,4 +201,23 @@ namespace P64
        */
       [[nodiscard]] fm_vec3_t outOfLocalSpace(const fm_vec3_t &p) const;
   };
+
+  struct ObjectRef
+  {
+    uint32_t id{};
+
+    [[nodiscard]] Object* get() const;
+
+    [[nodiscard]] Object* operator->() const {
+      return get();
+    }
+
+    [[nodiscard]] operator Object*() const {
+      return get();
+    }
+
+    [[nodiscard]] explicit operator bool() const {
+      return get() != nullptr;
+    }
+  };
 }

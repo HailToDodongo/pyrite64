@@ -87,11 +87,7 @@ namespace Project::Component::AnimModel
 
     if (ImTable::start("Comp", &obj)) {
       ImTable::add("Name", entry.name);
-      ImTable::add("Model");
-
-      if (ImGui::VectorComboBox("Model", modelList, data.model.value)) {
-        data.obj3D.removeMesh();
-      }
+      ImTable::addAssetVecComboBox("Model", modelList, data.model.value, [&data](auto) { data.obj3D.removeMesh(); });
 
       std::vector<const char*> layerNames{};
       for (auto &layer : scene->conf.layers3D) {

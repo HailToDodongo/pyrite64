@@ -25,6 +25,7 @@ namespace
     if (str == "float") return Utils::DataType::f32;
     if (str == "char") return Utils::DataType::string;
     if (str == "AssetRef<sprite_t>") return Utils::DataType::ASSET_SPRITE;
+    if (str == "ObjectRef" || str == "P64::ObjectRef" || str.rfind("ObjectRef<", 0) == 0 || str.find("::ObjectRef<") != std::string::npos) return Utils::DataType::OBJECT_REF;
     return Utils::DataType::s32;
   }
 
@@ -40,6 +41,7 @@ namespace
       case Utils::DataType::s32:
       case Utils::DataType::f32:
       case Utils::DataType::ASSET_SPRITE:
+      case Utils::DataType::OBJECT_REF:
       default:
         return 4;
     }

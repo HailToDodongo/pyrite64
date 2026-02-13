@@ -109,7 +109,9 @@ namespace
     bool isOpen = ImGui::TreeNodeEx(nameID.c_str(), flag);
     ImGui::PopStyleVar(2);
 
-    bool nodeIsClicked = ImGui::IsItemClicked(ImGuiMouseButton_Left);
+    bool nodeIsClicked = ImGui::IsItemHovered()
+      && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
+      && !ImGui::IsMouseDragging(ImGuiMouseButton_Left);
     if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
       ImGui::OpenPopup("NodePopup");
     }

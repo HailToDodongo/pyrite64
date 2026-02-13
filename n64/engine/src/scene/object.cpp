@@ -65,3 +65,8 @@ fm_vec3_t P64::Object::outOfLocalSpace(const fm_vec3_t &p) const
 {
   return rot * (p * scale) + pos;
 }
+
+P64::Object* P64::ObjectRef::get() const
+{
+  return SceneManager::getCurrent().getObjectById((uint16_t)id);
+}

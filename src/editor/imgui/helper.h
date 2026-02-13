@@ -86,6 +86,45 @@ namespace ImGui
     if(idx < (int)items.size())id = items[idx].getId();
     return idx;
   }
+
+  // Generic drag-drop target handler for combo boxes
+  // Validator signature: bool(uint64_t uuid, const char* payloadType)
+  // Returns true if a valid drop was accepted
+  template<typename TId, typename TValidator>
+  bool HandleComboBoxDragDrop(TId& targetId, TValidator validator)
+  {
+    if (!ImGui::BeginDragDropTarget()) return false;
+    
+    bool changed = false;
+    
+    // Handle ASSET payload
+    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET")) {
+      uint64_t uuid = *((uint64_t*)payload->Data);
+      if (validator(uuid, "ASSET")) {
+        auto next = static_cast<TId>(uuid);
+        if (targetId != next) {
+          targetId = next;
+          changed = true;
+        }
+      }
+    }
+    
+    // Handle OBJECT payload  
+    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECT")) {
+      uint32_t uuid = *((uint32_t*)payload->Data);
+      if (validator(uuid, "OBJECT")) {
+        auto next = static_cast<TId>(uuid);
+        if (targetId != next) {
+          targetId = next;
+          changed = true;
+        }
+      }
+    }
+    
+    ImGui::EndDragDropTarget();
+    return changed;
+  }
+
 }
 
 namespace ImTable
@@ -290,6 +329,145 @@ namespace ImTable
   inline int addVecComboBox(const std::string &name, const std::vector<T> &items, auto &id)
   {
     return addVecComboBox(name, items, id, [](auto) {});
+  }
+
+  // addVecComboBox with drag-drop support and custom validator
+  // Validator signature: bool(uint64_t uuid, const char* payloadType)
+  template<typename T, typename TValidator, typename OnChange>
+  inline int addVecComboBoxWithDragDrop(
+    const std::string& name,
+    const std::vector<T>& items,
+    auto& id,
+    TValidator validator,
+    OnChange onChange
+  )
+  {
+    int result = addVecComboBox(name, items, id, onChange);
+    
+    // Capture state BEFORE checking drag-drop (for undo/redo)
+    std::string beforeState;
+    if (obj) {
+      auto &history = Editor::UndoRedo::getHistory();
+      beforeState = history.captureSnapshotState();
+    }
+    
+    // Check for drag-drop after the combo box
+    if (ImGui::HandleComboBoxDragDrop(id, validator)) {
+      // HandleComboBoxDragDrop has already modified 'id' to the new value
+      // Now create snapshot with the before-state we captured
+      if (obj && !beforeState.empty()) {
+        auto &history = Editor::UndoRedo::getHistory();
+        history.beginSnapshotFromState(beforeState, "Edit " + name);
+        onChange(id);
+        history.endSnapshot();
+      } else {
+        onChange(id);
+      }
+    }
+    
+    return result;
+  }
+
+  // Asset-only drag-drop combo box
+  // Validator signature: bool(uint64_t assetUUID)
+  template<typename T, typename TAssetValidator, typename OnChange>
+  inline int addAssetVecComboBox(
+    const std::string& name,
+    const std::vector<T>& items,
+    auto& id,
+    TAssetValidator assetValidator,
+    OnChange onChange
+  )
+  {
+    return addVecComboBoxWithDragDrop(name, items, id,
+      [assetValidator](uint64_t uuid, const char* type) {
+        if (strcmp(type, "ASSET") != 0) return false;
+        return assetValidator(uuid);
+      },
+      onChange
+    );
+  }
+
+  // overload: accept dropped assets that are present in the combo list.
+  template<typename T, typename OnChange>
+  inline int addAssetVecComboBox(
+    const std::string& name,
+    const std::vector<T>& items,
+    auto& id,
+    OnChange onChange
+  )
+  {
+    return addAssetVecComboBox(name, items, id,
+      [&items](uint64_t uuid) {
+        for (const auto &item : items) {
+          if (item.getId() == uuid) return true;
+        }
+        return false;
+      },
+      onChange
+    );
+  }
+
+  // overload without OnChange callback.
+  template<typename T>
+  inline int addAssetVecComboBox(
+    const std::string& name,
+    const std::vector<T>& items,
+    auto& id
+  )
+  {
+    return addAssetVecComboBox(name, items, id, [](auto){});
+  }
+
+  // Object-only drag-drop combo box
+  // Validator signature: bool(uint32_t objectUUID)
+  template<typename T, typename TObjectValidator, typename OnChange>
+  inline int addObjectVecComboBox(
+    const std::string& name,
+    const std::vector<T>& items,
+    auto& id,
+    TObjectValidator objectValidator,
+    OnChange onChange
+  )
+  {
+    return addVecComboBoxWithDragDrop(name, items, id,
+      [objectValidator](uint64_t uuid, const char* type) {
+        if (strcmp(type, "OBJECT") != 0) return false;
+        return objectValidator(static_cast<uint32_t>(uuid));
+      },
+      onChange
+    );
+  }
+
+  // overload: accept dropped objects that are present in the combo list.
+  template<typename T, typename OnChange>
+  inline int addObjectVecComboBox(
+    const std::string& name,
+    const std::vector<T>& items,
+    auto& id,
+    OnChange onChange
+  )
+  {
+    return addObjectVecComboBox(name, items, id,
+      [&items](uint32_t uuid) {
+        for (const auto &item : items) {
+          if (item.getId() == uuid) return true;
+        }
+        return false;
+      },
+      onChange
+    );
+  }
+
+  // overload without OnChange callback.
+  template<typename T>
+  inline int addObjectVecComboBox(
+    const std::string& name,
+    const std::vector<T>& items,
+    auto& id
+  )
+  {
+    return addObjectVecComboBox(name, items, id, [](auto){});
   }
 
   inline bool addComboBox(const std::string &name, int &itemCurrent, const char* const items[], int itemsCount) {
