@@ -191,7 +191,7 @@ namespace Project::Component::CollMesh
 
     data.obj3D.draw(pass, cmdBuff, meshes);
 
-    bool isSelected = ctx.selObjectUUID == obj.uuid;
+    bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)
     {
       auto center = obj.pos.resolve(obj.propOverrides) + (data.aabb.getCenter() * obj.scale.resolve(obj.propOverrides) * (float)0xFFFF);

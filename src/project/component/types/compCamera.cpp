@@ -9,6 +9,7 @@
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
 #include "../../../utils/logger.h"
+#include "../../../utils/colors.h"
 #include "../../assetManager.h"
 #include "../../../editor/pages/parts/viewport3D.h"
 #include "../../../renderer/scene.h"
@@ -125,7 +126,7 @@ namespace Project::Component::Camera
     constexpr float LINE_LEN = 0.7f;
     glm::u8vec4 col{0xFF};
 
-    bool isSelected = ctx.selObjectUUID == obj.uuid;
+    bool isSelected = ctx.isObjectSelected(obj.uuid);
 /*
     if(isSelected)
     {
@@ -137,6 +138,9 @@ namespace Project::Component::Camera
       }
     }
 */
+    if (isSelected) {
+      col = Utils::Colors::kSelectionTint;
+    }
     Utils::Mesh::addSprite(*vp.getSprites(), obj.pos.resolve(obj.propOverrides), obj.uuid, 3, col);
   }
 }

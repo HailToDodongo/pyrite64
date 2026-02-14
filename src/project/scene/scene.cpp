@@ -128,9 +128,7 @@ std::shared_ptr<Project::Object> Project::Scene::addPrefabInstance(uint64_t pref
 }
 
 void Project::Scene::removeObject(Object &obj) {
-  if (ctx.selObjectUUID == obj.uuid) {
-    ctx.selObjectUUID = 0;
-  }
+  ctx.removeObjectSelection(obj.uuid);
 
   std::erase_if(
     obj.parent->children,

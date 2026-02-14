@@ -56,6 +56,7 @@ namespace Editor::UndoRedo
       std::string snapshotDescription;
       Project::Scene* snapshotScene{nullptr};
       uint32_t snapshotSelUUID{0};
+      std::vector<uint32_t> snapshotSelUUIDs{};
       
     public:
       /**
