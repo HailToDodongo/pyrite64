@@ -1,6 +1,6 @@
 {
   "name": "Cathode Quest 64",
-  "pathEmu": "/mnt/c/Users/Kevin/Documents/Ares/ares-v147/ares-147.exe",
+  "pathEmu": "ares",
   "pathN64Inst": "",
   "romName": "gj25_cathode_quest",
   "sceneIdLastOpened": 7,
