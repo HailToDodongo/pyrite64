@@ -8,7 +8,6 @@
 
 #include "../context.h"
 #include "../project/scene/scene.h"
-#include "undoRedo.h"
 
 namespace Editor::SelectionUtils
 {
@@ -42,14 +41,9 @@ namespace Editor::SelectionUtils
 
   bool deleteSelectedObjects(
     Project::Scene &scene,
-    Editor::UndoRedo::History &history,
-    const std::string &description,
-    bool endActiveSnapshot
+    const std::string &description
   )
   {
-    if (endActiveSnapshot && history.isSnapshotActive()) {
-      history.endSnapshot();
-    }
 
     auto selectedRefs = collectSelectedObjectRefs(scene);
     if (selectedRefs.empty()) {
@@ -66,8 +60,6 @@ namespace Editor::SelectionUtils
     if (selectedObjs.empty()) {
       return false;
     }
-
-    Editor::UndoRedo::SnapshotScope snapshot(history, description);
 
     auto depthOf = [](Project::Object *obj) {
       int depth = 0;

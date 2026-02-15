@@ -14,6 +14,8 @@
 #define IMVIEWGUIZMO_IMPLEMENTATION 1
 #include "ImGuizmo.h"
 #include "ImViewGuizmo.h"
+#include "../../utils/ringBuffer.h"
+#include "../imgui/theme.h"
 
 namespace
 {
@@ -21,6 +23,7 @@ namespace
   constexpr float HEIGHT_STATUS_BAR = 24.0f;
 
   constinit bool projectSettingsOpen{false};
+  constinit Utils::RingBuffer<double, 16> fpsRingBuffer{};
 }
 
 Editor::Scene::Scene()
@@ -269,11 +272,20 @@ void Editor::Scene::draw()
     | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking
   );
 
+  fpsRingBuffer.push((double)ctx.timeCpuSelf / 1000.0 / 1000.0);
+
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
-  ImGui::Text("%d FPS | History: %s", 
+  ImGui::PushFont(ImGui::getFontMono());
+  ImVec4 perfColor{1.0f,1.0f,1.0f,0.4f};
+  if (io.Framerate < 45) perfColor = {1.0f, 0.5f, 0.5f, 1.0f};
+  ImGui::TextColored(perfColor, "%d FPS | History: %d/%d %s | CPU: %.2fms",
     (int)roundf(io.Framerate),
-    Utils::byteSize(UndoRedo::getHistory().getMemoryUsage()).c_str()
+    UndoRedo::getHistory().getUndoCount(),
+    UndoRedo::getHistory().getRedoCount(),
+    Utils::byteSize(UndoRedo::getHistory().getMemoryUsage()).c_str(),
+    fpsRingBuffer.average()
   );
+  ImGui::PopFont();
   ImGui::End();
 
   // Global keyboard shortcuts

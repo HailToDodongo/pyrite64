@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-An N64 game-engine and editor using <a href="https://github.com/DragonMinded/libdragon">Libdragon</a> and <a href="https://github.com/HailToDodongo/tiny3d">tiny3d</a>.
+N64 game-engine and editor using <a href="https://github.com/DragonMinded/libdragon">Libdragon</a> and <a href="https://github.com/HailToDodongo/tiny3d">tiny3d</a>.
 </p>
 <br/>
 
@@ -29,14 +29,27 @@ An N64 game-engine and editor using <a href="https://github.com/DragonMinded/lib
 > 
 > Once that is done, a proper release will be made.  Sorry!
 
+Pyrite64 is a visual editor + runtime-engine to create 3D games that can run on a real N64 console or accurate emulators.<br>
+Besides the usual editor, some extra features include:
+- Automatic toolchain installation on Windows
+- 3D-Model import (GLTF) from blender with [fast64](https://github.com/Fast-64/fast64) material support.
+- Support for HDR+Bloom rendering (shown here: www.youtube.com/watch?v=XP8g2ngHftY)
+- Support for big-texture rendering (256x256) (shown here: www.youtube.com/watch?v=rNEo0aQkGnU)
+- Runtime engine handling scene-management, rendering, collision, audio and more.
+- Global asset management with automatic memory cleanup
+- Node-Graph editor to script basic control flow
+
+Note that this project focuses on real hardware, so accurate emulation is required to run/test games on PC.<br>
+Emulators that are accurate enough include [Ares](https://ares-emu.net/) and [gopher64](https://github.com/gopher64/gopher64).
+
 ## Documentation
 
 - Installation & Docs:
   - [Pyrite64 Installation](./docs/setup_editor.md)
   - [Using the Editor](./docs/usage_editor.md)
-  - [@TODO: CLI usage]
+  - [Using the CLI](./docs/usage_editor.md)
 - Development on the editor itself:
-  - [Build (Editor)](./docs/build_editor.md)
+  - [Building the Editor](./docs/build_editor.md)
 
 ## Showcase
 

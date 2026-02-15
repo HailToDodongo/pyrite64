@@ -72,8 +72,7 @@ namespace P64::Script::C0CC4367B29A36ED
     fm_vec3_lerp(&obj.pos, &target, &obj.pos, data->focusTime);
     fm_vec3_lerp(&target, &headPos, &target, data->focusTime);
 
-    cam.setPos(obj.pos);
-    cam.setTarget(target);
+    cam.setLookAt(obj.pos, target);
 
     // Menu logic
     if(upDown == data->lastDirInp) {

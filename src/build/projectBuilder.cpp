@@ -199,7 +199,7 @@ bool Build::buildProject(const std::string &configPath)
       {"{{ASSET_LIST}}",        Utils::join(filesSorted, " ")},
       {"{{USER_CODE_DIRS}}",    userCodeRules},
       {"{{P64_SELF_PATH}}",     Utils::Proc::getSelfPath()},
-      {"{{PROJECT_SELF_PATH}}", fs::absolute(path).string()},
+      {"{{PROJECT_SELF_PATH}}", fs::absolute(configPath).string()},
     }
   );
 

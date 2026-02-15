@@ -11,7 +11,6 @@ void P64::Comp::Camera::initDelete(Object &obj, Camera* data, InitData* initData
 {
   if (initData == nullptr) {
     SceneManager::getCurrent().removeCamera(&data->camera);
-    t3d_viewport_destroy(&data->camera.viewports);
     data->~Camera();
     return;
   }
@@ -20,8 +19,7 @@ void P64::Comp::Camera::initDelete(Object &obj, Camera* data, InitData* initData
 
   SceneManager::getCurrent().addCamera(&data->camera);
   auto &cam = data->camera;
-  cam.setPos(obj.pos);
-  cam.setTarget({0,0,0});
+  cam.setScreenArea(initData->vpOffset[0], initData->vpOffset[1], initData->vpSize[0], initData->vpSize[1]);
   cam.fov  = initData->fov;
   cam.near = initData->near;
   cam.far  = initData->far;
@@ -31,9 +29,5 @@ void P64::Comp::Camera::initDelete(Object &obj, Camera* data, InitData* initData
     cam.aspectRatio = (float)initData->vpSize[0] / (float)initData->vpSize[1];
   }
 
-  cam.viewports = t3d_viewport_create_buffered(3);
-  t3d_viewport_set_area(cam.viewports,
-    initData->vpOffset[0], initData->vpOffset[1],
-    initData->vpSize[0], initData->vpSize[1]
-  );
+  cam.setPosRot(obj.pos, obj.rot);
 }

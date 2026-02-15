@@ -97,7 +97,7 @@ void Utils::Mesh::addLineSphere(Renderer::Mesh &mesh, const glm::vec3 &pos, cons
     addLine(mesh, last, next, color);
     last = next;
   }
-  last = pos + glm::vec3{0, 0, radius};
+  last = pos + glm::vec3{radius, 0, 0};
   for(int i=1; i<=steps; ++i) {
     float angle = i * step;
     glm::vec3 next = pos + glm::vec3{radius * cosf(angle), radius * sinf(angle), 0};

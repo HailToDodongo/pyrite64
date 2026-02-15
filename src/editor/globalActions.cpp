@@ -90,6 +90,7 @@ namespace Editor::Actions
 
       // clear some temp files
       fs::remove(newPath / "p64_project.z64");
+      fs::remove(newPath / "Makefile");
       fs::remove_all(newPath / "build");
       fs::remove_all(newPath / "filesystem");
 
@@ -195,7 +196,7 @@ namespace Editor::Actions
       auto scene = ctx.project->getScenes().getLoadedScene();
       if(!scene)return false;
 
-      Editor::UndoRedo::SnapshotScope snapshot(Editor::UndoRedo::getHistory(), "Paste Object");
+      UndoRedo::getHistory().markChanged("Paste Object");
       ctx.clearObjectSelection();
       for (const auto &entry : ctx.clipboard.entries) {
         std::string data = entry.data;

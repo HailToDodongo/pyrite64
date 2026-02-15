@@ -10,6 +10,7 @@ namespace
 {
   std::mutex mtx{};
   constinit std::string buff{};
+  constexpr size_t MAX_BUFF_SIZE = 1024 * 10; // 10kb
 
   constinit Utils::Logger::LogOutputFunc outputFunc = nullptr;
 }
@@ -58,5 +59,8 @@ void Utils::Logger::clear() {
 
 std::string Utils::Logger::getLog() {
   std::lock_guard lock{mtx};
+  if (buff.length() > MAX_BUFF_SIZE) {
+    buff = buff.substr(buff.length() - MAX_BUFF_SIZE);
+  }
   return buff;
 }

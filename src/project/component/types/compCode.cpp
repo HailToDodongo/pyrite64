@@ -78,6 +78,11 @@ namespace Project::Component::Code
       {
         uint64_t uuid = Utils::parseU64(val);
         ctx.fileObj.write<uint32_t>(ctx.assetUUIDToIdx[uuid]);
+      } else if(field.type == Utils::DataType::OBJECT_REF) {
+        uint32_t uuid = static_cast<uint32_t>(Utils::parseU64(val));
+        auto refObj = ctx.scene->getObjectByUUID(uuid);
+        uint16_t objId = refObj ? refObj->id : 0;
+        ctx.fileObj.write<uint32_t>(objId);
       } else {
         ctx.fileObj.writeAs(val, field.type);
       }
@@ -93,19 +98,17 @@ namespace Project::Component::Code
 
     if (ImTable::start("Comp", &obj)) {
       ImTable::add("Name", entry.name);
-      int idx = ImTable::addVecComboBox("Script", scriptList, data.scriptUUID);
-      //ImGui::InputScalar("##UUID", ImGuiDataType_U64, &data.scriptUUID);
+      ImTable::addAssetVecComboBox("Script", scriptList, data.scriptUUID);
 
-      if (idx < (int)scriptList.size()) {
-        const auto &script = scriptList[idx];
-        data.scriptUUID = script.getUUID();
+      auto script = assets.getEntryByUUID(data.scriptUUID);
+      if (script) {
 
         ImTable::add("Arguments:");
-        if (script.params.fields.empty()) {
+        if (script->params.fields.empty()) {
           ImGui::Text("(None)");
         }
 
-        for (auto &field : script.params.fields)
+        for (auto &field : script->params.fields)
         {
           std::string name{};
           auto metaName = field.attr.find("P64::Name");
@@ -121,7 +124,24 @@ namespace Project::Component::Code
           {
             const auto &assets = ctx.project->getAssets().getTypeEntries(FileType::IMAGE);
             uint64_t uuid = Utils::parseU64(data.args[field.name].value);
-            ImTable::addVecComboBox(name, assets, uuid, [&](uint64_t newId) {
+            ImTable::addAssetVecComboBox(name, assets, uuid, [&](uint64_t newId) {
+              data.args[field.name].value = std::to_string(newId);
+            });
+          } else if(field.type == Utils::DataType::OBJECT_REF) {
+            // @TODO: do this in scene itself
+            auto &map = ctx.project->getScenes().getLoadedScene()->objectsMap;
+            std::vector<ImTable::ComboEntry> objList;
+            objList.push_back({0, "<None>"});
+
+            for (auto &[id, object] : map) {
+              objList.push_back({
+                .value = object->uuid,
+                .name = object->name,
+              });
+            }
+
+            uint32_t uuid = static_cast<uint32_t>(Utils::parseU64(data.args[field.name].value));
+            ImTable::addObjectVecComboBox(name, objList, uuid, [&](uint32_t newId) {
               data.args[field.name].value = std::to_string(newId);
             });
           } else {

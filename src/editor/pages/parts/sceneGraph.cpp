@@ -112,7 +112,9 @@ namespace
     bool isOpen = ImGui::TreeNodeEx(nameID.c_str(), flag);
     ImGui::PopStyleVar(2);
 
-    bool nodeIsClicked = ImGui::IsItemClicked(ImGuiMouseButton_Left);
+    bool nodeIsClicked = ImGui::IsItemHovered()
+      && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
+      && !ImGui::IsMouseDragging(ImGuiMouseButton_Left);
     if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
       ImGui::OpenPopup("NodePopup");
     }
@@ -180,11 +182,11 @@ namespace
       if (ImGui::BeginPopupContextItem("NodePopup"))
       {
         if (ImGui::MenuItem(ICON_MDI_CUBE_OUTLINE " Add Object")) {
-          Editor::UndoRedo::SnapshotScope snapshot(Editor::UndoRedo::getHistory(), "Add Object");
           auto added = scene.addObject(obj);
           if (added) {
             ctx.setObjectSelection(added->uuid);
           }
+          Editor::UndoRedo::getHistory().markChanged("Add Object");
         }
 
         if (obj.parent) {
@@ -234,7 +236,7 @@ void Editor::SceneGraph::draw()
 
   if(dragDropTask.sourceUUID && dragDropTask.targetUUID) {
     //printf("dragDropTarget %08X -> %08X (%d)\n", dragDropTask.sourceUUID, dragDropTask.targetUUID, dragDropTask.isInsert);
-    Editor::UndoRedo::SnapshotScope snapshot(Editor::UndoRedo::getHistory(), "Move Object");
+    UndoRedo::getHistory().markChanged("Move Object");
     scene->moveObject(
       dragDropTask.sourceUUID,
       dragDropTask.targetUUID,
@@ -247,7 +249,7 @@ void Editor::SceneGraph::draw()
       ctx.setObjectSelection(deleteObj->uuid);
     }
 
-    auto &history = Editor::UndoRedo::getHistory();
-    Editor::SelectionUtils::deleteSelectedObjects(*scene, history, "Delete Object");
+    UndoRedo::getHistory().markChanged("Delete Object");
+    Editor::SelectionUtils::deleteSelectedObjects(*scene, "Delete Object");
   }
 }

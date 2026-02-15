@@ -13,19 +13,10 @@ namespace Project {
   class Object;
 }
 
-namespace Editor::UndoRedo {
-  class History;
-}
-
 namespace Editor::SelectionUtils
 {
   std::vector<Project::Object*> collectSelectedObjects(Project::Scene &scene);
   std::vector<std::shared_ptr<Project::Object>> collectSelectedObjectRefs(Project::Scene &scene);
 
-  bool deleteSelectedObjects(
-    Project::Scene &scene,
-    Editor::UndoRedo::History &history,
-    const std::string &description,
-    bool endActiveSnapshot = true
-  );
+  bool deleteSelectedObjects(Project::Scene &scene, const std::string &description);
 }

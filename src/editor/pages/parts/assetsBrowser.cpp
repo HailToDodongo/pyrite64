@@ -30,13 +30,6 @@ namespace
     bool showScenes{false};
   };
 
-  const char* getterScene(void* user_data, int idx)
-  {
-    auto &scenes = ctx.project->getScenes().getEntries();
-    if (idx < 0 || idx >= scenes.size())return "<Select Scene>";
-    return scenes[idx].name.c_str();
-  }
-
   std::string normalizeDir(std::string dir)
   {
     for (auto &c : dir) {
@@ -178,6 +171,8 @@ void Editor::AssetsBrowser::draw() {
 
     ImGui::EndChild();
     ImGui::PopStyleColor(3);
+  } else {
+    ImGui::Dummy({0, 4});
   }
 
   ImGui::BeginChild("ASSETS");
@@ -194,6 +189,8 @@ void Editor::AssetsBrowser::draw() {
     if ((currentWidth+itemWidth*2) > availWidth) {
       currentWidth = 0.0f;
       cursorY += imageSize + 28;
+      if (activeTab == TAB_IDX_SCENES)cursorY -= 12;
+
       ImGui::SetCursorPos({cursorStartX, cursorY});
     } else {
       if (currentWidth != 0)ImGui::SameLine();

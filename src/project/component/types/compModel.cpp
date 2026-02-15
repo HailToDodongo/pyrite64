@@ -103,25 +103,9 @@ namespace Project::Component::Model
 
     if (ImTable::start("Comp", &obj)) {
       ImTable::add("Name", entry.name);
-      ImTable::add("Model");
-
-      if (ImGui::VectorComboBox("Model", modelList, data.model.value)) {
+      ImTable::addAssetVecComboBox("Model", modelList, data.model.value, [&data](auto) {
         data.obj3D.removeMesh();
-      }
-
-      if (ImGui::BeginDragDropTarget())
-      {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET"))
-        {
-          uint64_t prefabUUID = *((uint64_t*)payload->Data);
-          auto asset = ctx.project->getAssets().getEntryByUUID(prefabUUID);
-          if(asset && asset->type == FileType::MODEL_3D) {
-            data.model.value = prefabUUID;
-            data.obj3D.removeMesh();
-          }
-        }
-        ImGui::EndDragDropTarget();
-      }
+      });
 
       std::vector<const char*> layerNames{};
       for (auto &layer : scene->conf.layers3D) {

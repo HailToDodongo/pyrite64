@@ -11,52 +11,58 @@
 
 namespace P64
 {
-  struct Camera
+  class Camera
   {
-    T3DViewport viewports{};
-    fm_vec3_t up{0,1,0};
-    fm_vec3_t pos{};
-    fm_vec3_t target{};
-    float fov{};
-    float near{};
-    float far{};
-    float aspectRatio{};
+    private:
+      T3DViewport viewports{};
+      fm_mat4_t viewMatrix{};
+      fm_vec3_t up{0,1,0};
+      fm_vec3_t pos{};
+      fm_vec3_t target{}; // computed
 
-    uint8_t needsProjUpdate{false};
+      uint8_t needsProjUpdate{false};
+    public:
+      float fov{};
+      float near{};
+      float far{};
+      float aspectRatio{};
 
-    Camera() = default;
-    CLASS_NO_COPY_MOVE(Camera);
+      Camera();
+      CLASS_NO_COPY_MOVE(Camera);
+      ~Camera();
 
-    void update(float deltaTime);
-    void attach();
+      void update(float deltaTime);
+      void attach();
 
-    void setUp(fm_vec3_t newUp) {
-      up = newUp;
-    }
+      void setScreenArea(int x, int y, int width, int height);
 
-    void setPos(fm_vec3_t newPos) {
-      pos = newPos;
-    }
+      /**
+       * Sets new camera values based on a look-at transform.
+       * If you have an arbitrary rotation based camera prefer using 'setPosRot'.
+       * @param newPos camera eye
+       * @param newTarget camera target
+       * @param newUp camera up vector (+Y by default)
+       */
+      void setLookAt(const fm_vec3_t &newPos, const fm_vec3_t &newTarget, const fm_vec3_t &newUp = {0,1,0});
 
-    void setTarget(fm_vec3_t newPos) {
-      target = newPos;
-    }
+      /**
+       * Sets a new camera by position and rotation.
+       * If you have a look-at based camera prefer using 'setLookAt'.
+       * @param pos camera eye
+       * @param rot rotation
+       */
+      void setPosRot(const fm_vec3_t &newPos, const fm_quat_t &rot);
 
-    void move(fm_vec3_t dir) {
-      target += dir;
-      pos += dir;
-    }
+      [[nodiscard]] const fm_vec3_t &getTarget() const { return target; }
+      [[nodiscard]] const fm_vec3_t &getPos() const { return pos; }
 
-    [[nodiscard]] const fm_vec3_t &getTarget() const { return target; }
-    [[nodiscard]] const fm_vec3_t &getPos() const { return pos; }
+      [[nodiscard]] fm_vec3_t getViewDir() const {
+        fm_vec3_t dir{};
+        fm_vec3_sub(&dir, &target, &getPos());
+        fm_vec3_norm(&dir, &dir);
+        return dir;
+      }
 
-    [[nodiscard]] fm_vec3_t getViewDir() const {
-      fm_vec3_t dir{};
-      fm_vec3_sub(&dir, &target, &pos);
-      fm_vec3_norm(&dir, &dir);
-      return dir;
-    }
-
-    fm_vec3_t getScreenPos(const fm_vec3_t &worldPos);
+      fm_vec3_t getScreenPos(const fm_vec3_t &worldPos);
   };
 }

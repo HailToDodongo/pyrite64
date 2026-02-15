@@ -15,31 +15,16 @@ namespace Project
 
 namespace Editor::UndoRedo
 {
-  /**
-   * Base class for all undoable commands.
-   * Commands capture state changes and provide undo/redo functionality.
-   */
-  class Command
+  struct Entry
   {
-    public:
-      virtual ~Command() = default;
-      
-      /**
-       * Execute the command (redo).
-       */
-      virtual void execute() = 0;
-      
-      /**
-       * Undo the command.
-       */
-      virtual void undo() = 0;
-      
-      /**
-       * Get a human-readable description of the command.
-       */
-      virtual std::string getDescription() const = 0;
+    std::string state{};
+    std::string description{};
+    std::vector<uint32_t> selection{};
 
-      virtual uint64_t getMemoryUsage() const = 0;
+    uint64_t getMemoryUsage() const {
+      return state.capacity() + description.capacity()
+      + sizeof(Entry) + selection.capacity() * sizeof(uint32_t);
+    }
   };
 
   /**
@@ -48,15 +33,13 @@ namespace Editor::UndoRedo
   class History
   {
     private:
-      std::vector<std::unique_ptr<Command>> undoStack;
-      std::vector<std::unique_ptr<Command>> redoStack;
+      std::vector<std::unique_ptr<Entry>> undoStack;
+      std::vector<std::unique_ptr<Entry>> redoStack;
       size_t maxHistorySize{100};
-      int snapshotDepth{0};
-      std::string snapshotBefore;
-      std::string snapshotDescription;
       Project::Scene* snapshotScene{nullptr};
       uint32_t snapshotSelUUID{0};
       std::vector<uint32_t> snapshotSelUUIDs{};
+      std::string nextChangedReason{};
       
     public:
       /**
@@ -76,35 +59,20 @@ namespace Editor::UndoRedo
        */
       void clear();
 
-      /**
-       * Begin a scene snapshot (for grouping edits).
-       */
-      bool beginSnapshot(const std::string& description);
+      void markChanged(std::string reason) {
+        nextChangedReason = std::move(reason);
+      }
 
-      /**
-       * Begin a scene snapshot using a pre-captured state.
-       */
-      bool beginSnapshotFromState(const std::string& before, const std::string& description);
+      uint32_t getUndoCount() const { return (uint32_t)undoStack.size(); }
+      uint32_t getRedoCount() const { return (uint32_t)redoStack.size(); }
 
-      /**
-       * End a scene snapshot and push to history if changed.
-       */
-      bool endSnapshot();
+      void begin();
+      void end();
 
-      /**
-       * Capture the current scene state for snapshotting.
-       */
-      std::string captureSnapshotState();
-
-      /**
-       * Check if a snapshot is active.
-       */
-      [[nodiscard]] bool isSnapshotActive() const { return snapshotDepth > 0; }
-      
       /**
        * Check if undo is available.
        */
-      [[nodiscard]] bool canUndo() const { return !undoStack.empty(); }
+      [[nodiscard]] bool canUndo() const { return undoStack.size() > 1; }
       
       /**
        * Check if redo is available.
@@ -132,17 +100,6 @@ namespace Editor::UndoRedo
       uint64_t getMemoryUsage();
   };
 
-  class SnapshotScope
-  {
-    private:
-      History* history{nullptr};
-      bool active{false};
-
-    public:
-      SnapshotScope(History& targetHistory, const std::string& description);
-      ~SnapshotScope();
-  };
-  
   /**
    * Get the global history instance.
    */

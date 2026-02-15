@@ -271,8 +271,7 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     fm_vec3_t camPos = data->camTarget - camOffset;
 
     auto &cam = SceneManager::getCurrent().getActiveCamera();
-    cam.setPos(camPos);
-    cam.setTarget(data->camTarget);
+    cam.setLookAt(camPos, data->camTarget);
 
     // collider attachment
     bcs.center -= data->meshAttach.update(bcs.center);

@@ -104,8 +104,7 @@ namespace P64::Script::C4F4D286D6CB0DE3
     camTarget = camPos + (obj.rot * camTarget);
 
     auto &cam = SceneManager::getCurrent().getActiveCamera();
-    cam.setPos(camPos);
-    cam.setTarget(camTarget);
+    cam.setLookAt(camPos, camTarget);
   }
 
   void onEvent(Object& obj, Data *data, const ObjectEvent &event)

@@ -122,25 +122,84 @@ namespace Project::Component::Camera
   {
     Data &data = *static_cast<Data*>(entry.data.get());
 
-    constexpr float BOX_SIZE = 0.125f;
-    constexpr float LINE_LEN = 0.7f;
-    glm::u8vec4 col{0xFF};
+    auto pos = obj.pos.resolve(obj);
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
-/*
-    if(isSelected)
-    {
-      Utils::Mesh::addLineBox(*vp.getLines(), obj.pos, {BOX_SIZE, BOX_SIZE, BOX_SIZE}, col);
-      if(data.type == LIGHT_TYPE_DIRECTIONAL)
-      {
-        glm::vec3 dir = rotToDir(obj);
-        Utils::Mesh::addLine(*vp.getLines(), obj.pos, obj.pos + (dir * -LINE_LEN), col);
-      }
+
+    // calculate frustum corners in world space
+    float fovY = glm::radians(data.fov.resolve(obj));
+    float aspect = data.aspect.resolve(obj);
+    float nearDist = data.near.resolve(obj);
+    float farDist = nearDist + 85;//data.far.resolve(obj);
+    if (aspect <= 0.0f) {
+      aspect = (float)data.vpSize.resolve(obj).x / (float)data.vpSize.resolve(obj).y;
     }
-*/
-    if (isSelected) {
-      col = Utils::Colors::kSelectionTint;
-    }
-    Utils::Mesh::addSprite(*vp.getSprites(), obj.pos.resolve(obj.propOverrides), obj.uuid, 3, col);
+
+    float tanFovY = tanf(fovY * 0.5f);
+    float nearHeight = 2.0f * tanFovY * nearDist;
+    float nearWidth = nearHeight * aspect;
+    float farHeight = 2.0f * tanFovY * farDist;
+    float farWidth = farHeight * aspect;
+
+    glm::vec3 camPos = pos;
+    auto rot = obj.rot.resolve(obj);
+    glm::vec3 forward = rot * glm::vec3(0,0,-1);
+    glm::vec3 up = rot * glm::vec3(0,1,0);
+    glm::vec3 right = rot * glm::vec3(1,0,0);
+
+    glm::vec3 nc = camPos + forward * nearDist;
+    glm::vec3 fc = camPos + forward * farDist;
+
+    // Near plane corners
+    glm::vec3 ntl = nc + (up * (nearHeight/2.0f)) - (right * (nearWidth/2.0f));
+    glm::vec3 ntr = nc + (up * (nearHeight/2.0f)) + (right * (nearWidth/2.0f));
+    glm::vec3 nbl = nc - (up * (nearHeight/2.0f)) - (right * (nearWidth/2.0f));
+    glm::vec3 nbr = nc - (up * (nearHeight/2.0f)) + (right * (nearWidth/2.0f));
+    // Far plane corners
+    glm::vec3 ftl = fc + (up * (farHeight/2.0f)) - (right * (farWidth/2.0f));
+    glm::vec3 ftr = fc + (up * (farHeight/2.0f)) + (right * (farWidth/2.0f));
+    glm::vec3 fbl = fc - (up * (farHeight/2.0f)) - (right * (farWidth/2.0f));
+    glm::vec3 fbr = fc - (up * (farHeight/2.0f)) + (right * (farWidth/2.0f));
+
+    // Draw frustum edges
+    glm::u8vec4 col = isSelected ? Utils::Colors::kSelectionTint : glm::u8vec4{0xFF};
+    // Near plane
+    Utils::Mesh::addLine(*vp.getLines(), ntl, ntr, col);
+    Utils::Mesh::addLine(*vp.getLines(), ntr, nbr, col);
+    Utils::Mesh::addLine(*vp.getLines(), nbr, nbl, col);
+    Utils::Mesh::addLine(*vp.getLines(), nbl, ntl, col);
+    // Far plane
+    Utils::Mesh::addLine(*vp.getLines(), ftl, ftr, col);
+    Utils::Mesh::addLine(*vp.getLines(), ftr, fbr, col);
+    Utils::Mesh::addLine(*vp.getLines(), fbr, fbl, col);
+    Utils::Mesh::addLine(*vp.getLines(), fbl, ftl, col);
+    // Connect near and far
+    Utils::Mesh::addLine(*vp.getLines(), ntl, ftl, col);
+    Utils::Mesh::addLine(*vp.getLines(), ntr, ftr, col);
+    Utils::Mesh::addLine(*vp.getLines(), nbl, fbl, col);
+    Utils::Mesh::addLine(*vp.getLines(), nbr, fbr, col);
+
+
+    // little triangle marker on top of the upper edge of the far plane
+    glm::vec3 lineDist = ftr - ftl;
+    glm::vec3 triCenter = ftl + (lineDist * 0.5f);
+    triCenter += up * 10.0f;
+    glm::vec3 triLeft = triCenter - (right * 30.0f);
+    glm::vec3 triRight = triCenter + (right * 30.0f);
+    triCenter += up * 30.0f;
+    Utils::Mesh::addLine(*vp.getLines(), triCenter, triLeft, col);
+    Utils::Mesh::addLine(*vp.getLines(), triCenter, triRight, col);
+    Utils::Mesh::addLine(*vp.getLines(), triLeft, triRight, col);
+
+
+    // Connect near plane and camera pos
+    col = glm::u8vec4{0xCC, 0xAA, 0xAA, 0xFF};
+    Utils::Mesh::addLine(*vp.getLines(), camPos, ntl, col);
+    Utils::Mesh::addLine(*vp.getLines(), camPos, ntr, col);
+    Utils::Mesh::addLine(*vp.getLines(), camPos, nbl, col);
+    Utils::Mesh::addLine(*vp.getLines(), camPos, nbr, col);
+
+    auto spriteCol = isSelected ? Utils::Colors::kSelectionTint : glm::u8vec4{0xFF};
+    Utils::Mesh::addSprite(*vp.getSprites(), pos, obj.uuid, 3, spriteCol);
   }
 }

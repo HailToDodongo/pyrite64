@@ -204,4 +204,8 @@ namespace Project::Component
       .funcBuild = AnimModel::build
     }
   };
+
+  extern std::array<CompInfo, TABLE.size()> TABLE_SORTED_BY_NAME;
+
+  void init();
 }

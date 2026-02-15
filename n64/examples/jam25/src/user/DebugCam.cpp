@@ -66,8 +66,7 @@ namespace P64::Script::C48BB14F061323F6
   void draw(Object& obj, Data *data, float deltaTime)
   {
     auto &cam = obj.getScene().getActiveCamera();
-    cam.setPos(data->camPos);
-    cam.setTarget(data->camTarget);
+    cam.setLookAt(data->camPos, data->camTarget);
   }
 
   void onEvent(Object& obj, Data *data, const ObjectEvent &event)

@@ -103,7 +103,7 @@ namespace Project::Component::Constraint
 
       if(data.type.value != TYPE_COPY_CAM)
       {
-        ImTable::addVecComboBox("Ref. Object", objList, data.objectUUID.value);
+        ImTable::addObjectVecComboBox("Ref. Object", objList, data.objectUUID.value);
       }
 
       if(data.type.value == TYPE_COPY_OBJ || data.type.value == TYPE_COPY_CAM)
