@@ -4,7 +4,6 @@
 */
 #include "undoRedo.h"
 #include "../context.h"
-#include "imgui.h"
 
 namespace
 {
@@ -58,7 +57,6 @@ namespace Editor::UndoRedo
     redoStack.clear();
     nextChangedReason.clear();
     snapshotScene = nullptr;
-    snapshotSelUUID = 0;
     snapshotSelUUIDs.clear();
   }
 
@@ -69,14 +67,13 @@ namespace Editor::UndoRedo
     if (undoStack.empty()) {
       // If this is the first change, we need to save the initial state of the scene
       std::string initialState = scene->serialize(true);
-      std::vector<uint32_t> ids{};
+      auto ids = ctx.selObjectUUIDs;
       undoStack.push_back(std::make_unique<Entry>(
         std::move(initialState), "Initial State", ids
       ));
     }
 
     snapshotScene = scene;
-    snapshotSelUUID = ctx.selObjectUUID;
     snapshotSelUUIDs = ctx.selObjectUUIDs;
   }
 
@@ -88,6 +85,10 @@ namespace Editor::UndoRedo
     if (!scene) {
       nextChangedReason.clear();
       return;
+    }
+
+    if (!undoStack.empty()) {
+      undoStack.back()->selection = snapshotSelUUIDs;
     }
 
     redoStack.clear();
@@ -103,7 +104,8 @@ namespace Editor::UndoRedo
 
     if (!undoStack.empty()) {
       // check against last state to avoid pushing duplicate states
-      if (undoStack.back()->state == newEntry->state) {
+      if (undoStack.back()->state == newEntry->state
+          && undoStack.back()->selection == newEntry->selection) {
         return;
       }
     }

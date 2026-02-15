@@ -37,7 +37,6 @@ namespace Editor::UndoRedo
       std::vector<std::unique_ptr<Entry>> redoStack;
       size_t maxHistorySize{100};
       Project::Scene* snapshotScene{nullptr};
-      uint32_t snapshotSelUUID{0};
       std::vector<uint32_t> snapshotSelUUIDs{};
       std::string nextChangedReason{};
       

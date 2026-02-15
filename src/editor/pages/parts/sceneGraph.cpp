@@ -250,6 +250,6 @@ void Editor::SceneGraph::draw()
     }
 
     UndoRedo::getHistory().markChanged("Delete Object");
-    Editor::SelectionUtils::deleteSelectedObjects(*scene, "Delete Object");
+    Editor::SelectionUtils::deleteSelectedObjects(*scene);
   }
 }

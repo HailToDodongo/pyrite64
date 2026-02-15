@@ -422,7 +422,7 @@ void Editor::Viewport3D::draw()
     bool deletedSelection = false;
     if (ImGui::IsWindowFocused() && obj && ImGui::IsKeyPressed(ImGuiKey_Delete)) {
       UndoRedo::getHistory().markChanged("Delete Object");
-      if (Editor::SelectionUtils::deleteSelectedObjects(*scene, "Delete Object")) {
+      if (Editor::SelectionUtils::deleteSelectedObjects(*scene)) {
         deletedSelection = true;
       }
       obj = nullptr;

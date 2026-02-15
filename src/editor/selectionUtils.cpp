@@ -9,6 +9,23 @@
 #include "../context.h"
 #include "../project/scene/scene.h"
 
+namespace
+{
+  std::vector<std::shared_ptr<Project::Object>> collectSelectedObjectRefs(Project::Scene &scene)
+  {
+    const auto &selected = ctx.getSelectedObjectUUIDs();
+    std::vector<std::shared_ptr<Project::Object>> selectedObjects{};
+    selectedObjects.reserve(selected.size());
+    for (auto uuid : selected) {
+      auto obj = scene.getObjectByUUID(uuid);
+      if (obj) {
+        selectedObjects.push_back(obj);
+      }
+    }
+    return selectedObjects;
+  }
+}
+
 namespace Editor::SelectionUtils
 {
   std::vector<Project::Object*> collectSelectedObjects(Project::Scene &scene)
@@ -25,26 +42,8 @@ namespace Editor::SelectionUtils
     return selectedObjects;
   }
 
-  std::vector<std::shared_ptr<Project::Object>> collectSelectedObjectRefs(Project::Scene &scene)
+  bool deleteSelectedObjects(Project::Scene &scene)
   {
-    const auto &selected = ctx.getSelectedObjectUUIDs();
-    std::vector<std::shared_ptr<Project::Object>> selectedObjects{};
-    selectedObjects.reserve(selected.size());
-    for (auto uuid : selected) {
-      auto obj = scene.getObjectByUUID(uuid);
-      if (obj) {
-        selectedObjects.push_back(obj);
-      }
-    }
-    return selectedObjects;
-  }
-
-  bool deleteSelectedObjects(
-    Project::Scene &scene,
-    const std::string &description
-  )
-  {
-
     auto selectedRefs = collectSelectedObjectRefs(scene);
     if (selectedRefs.empty()) {
       return false;

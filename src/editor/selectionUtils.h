@@ -4,8 +4,6 @@
 */
 #pragma once
 
-#include <memory>
-#include <string>
 #include <vector>
 
 namespace Project {
@@ -16,7 +14,6 @@ namespace Project {
 namespace Editor::SelectionUtils
 {
   std::vector<Project::Object*> collectSelectedObjects(Project::Scene &scene);
-  std::vector<std::shared_ptr<Project::Object>> collectSelectedObjectRefs(Project::Scene &scene);
 
-  bool deleteSelectedObjects(Project::Scene &scene, const std::string &description);
+  bool deleteSelectedObjects(Project::Scene &scene);
 }
