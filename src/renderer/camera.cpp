@@ -27,7 +27,22 @@ Renderer::Camera::Camera() {
 
 void Renderer::Camera::update() {
   pos += velocity;
+  pivot += velocity;
   velocity *= 0.9f;
+  
+  if (fabs(zoomSpeed) < 0.01) {
+    return;
+  } 
+
+  float camDist = glm::length(posOffset);
+  glm::vec3 forward = rot * WORLD_FORWARD * zoomSpeed;
+  if (zoomSpeed < 0 || camDist > fabs(zoomSpeed)) {
+    posOffset += forward;
+  } else {
+    pos += forward;
+    pivot += forward;
+  }
+  zoomSpeed *= 0.9f;
 }
 
 void Renderer::Camera::apply(UniformGlobal &uniGlobal)
@@ -84,6 +99,28 @@ void Renderer::Camera::rotateDelta(glm::vec2 screenDelta)
 
 }
 
+void Renderer::Camera::lookDelta(glm::vec2 screenDelta)
+{
+  if (!isRotating) {
+    pivotBase = pivot;
+  }
+
+  rotateDelta(screenDelta);
+  glm::vec3 diff = (pos + posOffset) - pivotBase;
+  pivot = pos - (rot * glm::inverse(rotBase) * diff) + posOffset;
+}
+
+void Renderer::Camera::orbitDelta(glm::vec2 screenDelta)
+{
+  if (!isRotating) {
+    posBase = pos;
+  }
+
+  rotateDelta(screenDelta);
+  glm::vec3 diff = (posBase + posOffset) - pivot;
+  pos = pivot + (rot * glm::inverse(rotBase) * diff) - posOffset;
+}
+
 void Renderer::Camera::moveDelta(glm::vec2 screenDelta) {
   if (!isMoving) {
     posBase = pos;
@@ -107,6 +144,17 @@ void Renderer::Camera::moveDelta(glm::vec2 screenDelta) {
 
   glm::vec3 right = rot * glm::vec3(1, 0, 0);
   glm::vec3 up = rot * glm::vec3(0, 1, 0);
-
+ 
+  glm::vec3 diff = pivot - pos;
   pos = posBase + (right * moveX) + (up * moveY);
+  pivot = pos + diff;
 }
+
+void Renderer::Camera::focus(glm::vec3 position, float distance) {
+  isMoving = false;
+  isRotating = false;
+  pivot = position;
+  posOffset = rot * -WORLD_FORWARD * distance;
+  pos = position + posOffset;
+}
+

@@ -316,15 +316,17 @@ void Editor::Viewport3D::draw()
 
   float moveSpeed = 120.0f * deltaTime;
 
+  bool mouseHeldLeft = ImGui::IsMouseDown(ImGuiMouseButton_Left);
   bool mouseHeldRight = ImGui::IsMouseDown(ImGuiMouseButton_Right);
   bool mouseHeldMiddle = ImGui::IsMouseDown(ImGuiMouseButton_Middle);
-  bool newMouseDown = mouseHeldMiddle || mouseHeldRight;
+  bool newMouseDown = mouseHeldLeft || mouseHeldMiddle || mouseHeldRight;
+  bool isAltDown = ImGui::GetIO().KeyAlt;
   bool isShiftDown = ImGui::GetIO().KeyShift;
   if(isShiftDown)moveSpeed *= 4.0f;
 
   bool overGizmo = obj && ImGuizmo::IsOver();
 
-  if (!overGizmo && isMouseHover && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+  if (!overGizmo && isMouseHover && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !isAltDown) {
     pickedObjID.request();
     mousePosClick = mousePos;
   }
@@ -370,6 +372,10 @@ void Editor::Viewport3D::draw()
         if (ImGui::IsKeyDown(ImGuiKey_G))gizmoOp = 0;
         if (ImGui::IsKeyDown(ImGuiKey_R))gizmoOp = 1;
         if (ImGui::IsKeyDown(ImGuiKey_S))gizmoOp = 2;
+
+        if (ImGui::IsKeyDown(ImGuiKey_F) && obj) {
+          camera.focus(obj->pos.resolve(obj->propOverrides), 100);
+        }
       }
     }
   }
@@ -378,8 +384,7 @@ void Editor::Viewport3D::draw()
     float wheel = io.MouseWheel;
     if (wheel != 0.0f) {
       float wheelSpeed = (isShiftDown ? 4.0f : 1.0f) * 30.0f;
-      glm::vec3 forward = camera.rot * glm::vec3(0, 0, -1);
-      camera.velocity += forward * (wheel * wheelSpeed);
+      camera.zoomSpeed += wheel * wheelSpeed;
     }
   }
 
@@ -437,12 +442,15 @@ void Editor::Viewport3D::draw()
 
   auto dragDelta = mousePos - mousePosStart;
   if (isMouseDown) {
-    if (mouseHeldMiddle) {
+    if (isAltDown && mouseHeldLeft) {
+      camera.stopMoveDelta();
+      camera.orbitDelta(dragDelta);
+    } else if (mouseHeldMiddle) {
       camera.stopRotateDelta();
       camera.moveDelta(-dragDelta * 3.0f);
     } else if (mouseHeldRight) {
       camera.stopMoveDelta();
-      camera.rotateDelta(dragDelta);
+      camera.lookDelta(dragDelta);
     }
   } else {
     camera.stopRotateDelta();
