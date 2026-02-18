@@ -4,8 +4,6 @@ Below are instructions to build the editor on either linux or windows.<br/>
 Note that due to a small dependency on libdragon, GCC is required for now.<br/>
 On Windows, that means building via MSYS2.
 
-## Linux
-=======
 ## Prerequisites
 
 Before building the project, make sure you have the following tools installed:
