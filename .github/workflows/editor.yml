@@ -1,4 +1,4 @@
-name: Windows (MSYS2 UCRT64)
+name: Build Editor on Windows/Linux/macOS and Upload artifacts
 
 on:
   push:
@@ -91,3 +91,30 @@ jobs:
             data
             n64
             LICENSE
+  
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+
+      - name: Update Homebrew 
+        run: | 
+          brew update 
+      
+      - name: Install dependencies 
+        run: | 
+          brew install cmake 
+          brew install ninja
+
+      - name: Configure CMake
+        run: |
+          cmake --preset macos
+
+      - name: Build
+        run: |
+          cmake --build --preset macos

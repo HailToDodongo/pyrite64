@@ -276,3 +276,7 @@ if(MINGW)
         --static
     )
 endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(pyrite64 PRIVATE -Wno-c++11-narrowing)
+endif()

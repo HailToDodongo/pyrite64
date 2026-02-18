@@ -23,6 +23,15 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "macos",
+      "displayName": "MacOS arm64",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
 
@@ -35,6 +44,11 @@
     {
       "name": "linux",
       "configurePreset": "linux",
+      "jobs": 0
+    },
+    {
+      "name": "macos",
+      "configurePreset": "macos",
       "jobs": 0
     }
   ],
@@ -52,6 +66,13 @@
       "steps": [
         { "type": "configure", "name": "linux" },
         { "type": "build",     "name": "linux" }
+      ]
+    },
+    {
+      "name": "macos",
+      "steps": [
+        { "type": "configure", "name": "macos" },
+        { "type": "build",     "name": "macos" }
       ]
     }
   ]
