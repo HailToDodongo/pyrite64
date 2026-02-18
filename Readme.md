@@ -39,6 +39,8 @@ Emulators that are accurate enough include [Ares (v147 or newer)](https://ares-e
 
 ## Documentation
 
+Before starting, please read the [FAQ](./docs/faq.md)!
+
 - Installation & Docs:
   - [Pyrite64 Installation](./docs/setup_editor.md)
   - [Using the Editor](./docs/usage_editor.md)
