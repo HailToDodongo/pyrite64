@@ -573,12 +573,8 @@ void Editor::Viewport3D::draw()
     gizmoTransformActive = false;
   }
 
-  glm::vec3 posOffset = camera.pos - camera.pivot;
-  float camDist = glm::length(posOffset);
-  if (ImViewGuizmo::Rotate(posOffset, camera.rot, gizPos)) {
-    if (camDist > 0.0001f) {
-      posOffset = glm::normalize(posOffset) * camDist;
-      camera.pos = camera.pivot + posOffset;
-    }
+  float camDist = glm::length(camera.pos - camera.pivot);
+  if (ImViewGuizmo::Rotate(camera.pos, camera.rot, gizPos)) {
+    camera.focus(camera.pivot, camDist);
   }
 }

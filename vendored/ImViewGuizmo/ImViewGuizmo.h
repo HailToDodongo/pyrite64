@@ -255,7 +255,7 @@ namespace ImViewGuizmo {
         mat4 viewMatrix = inverse(worldMatrix);
 
         mat4 gizmoViewMatrix = mat4(mat3(viewMatrix));
-        mat4 gizmoProjectionMatrix = ortho(1.f, -1.f, -1.f, 1.f, -100.0f, 100.0f);
+        mat4 gizmoProjectionMatrix = ortho(-1, 1, -1, 1, 1, -1);
         mat4 gizmoMvp = gizmoProjectionMatrix * gizmoViewMatrix;
 
         std::vector<GizmoAxis> axes;
@@ -374,7 +374,7 @@ namespace ImViewGuizmo {
             vec3 up = worldUp; 
             if (axisIndex == 1)
                 up = worldForward;
-            vec3 targetUp = -up;
+            vec3 targetUp = up;
             
             quat targetRotation = quatLookAt(targetDir, targetUp);
 
