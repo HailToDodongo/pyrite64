@@ -57,6 +57,9 @@ typedef struct {
   /** Enable/disable this object's outline */
   bool enabled;
   
+  /** Outline mode: 0 = silhouette (hull back-face), 1 = contour */
+  uint8_t mode;
+  
   /** The pre-expanded vertex buffer for the hull pass.
    *  Built by outline_bake_hull() at load time. */
   T3DModel *hullModel;

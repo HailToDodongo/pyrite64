@@ -138,14 +138,13 @@ void outline_end_hull(void) {
   // Restore normal (back-face) culling
   t3d_state_set_drawflags(T3D_FLAG_CULL_BACK);
 
-  // Restore standard combiner
+  // Restore standard rendering mode; caller is responsible for setting its combiner
   rdpq_mode_begin();
     rdpq_set_mode_standard();
     rdpq_mode_zbuf(true, true);
     rdpq_mode_persp(true);
     rdpq_mode_antialias(AA_NONE);
     rdpq_mode_filter(FILTER_BILINEAR);
-    rdpq_mode_combiner(RDPQ_COMBINER_FLAT);
     rdpq_mode_blender(0);
   rdpq_mode_end();
 }

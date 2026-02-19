@@ -279,7 +279,8 @@ namespace Project::Graph::Node
       }
 
       void build(BuildCtx &ctx) override {
-        auto varName = ctx.globalVar("uint16_t", 0);
+        std::string varName = "gv_state_" + stateName;
+        ctx.globalVar("uint16_t", varName, 0);
         ctx.line(varName + " = " + std::to_string(stateValue) + ";");
       }
   };
@@ -320,7 +321,8 @@ namespace Project::Graph::Node
       }
 
       void build(BuildCtx &ctx) override {
-        auto varName = ctx.globalVar("uint16_t", 0);
+        std::string varName = "gv_state_" + stateName;
+        ctx.globalVar("uint16_t", varName, 0);
         (void)varName; // value is read by connected nodes via the global var
       }
   };
@@ -370,7 +372,8 @@ namespace Project::Graph::Node
       }
 
       void build(BuildCtx &ctx) override {
-        auto varName = ctx.globalVar("uint16_t", 0);
+        std::string varName = "gv_state_" + stateName;
+        ctx.globalVar("uint16_t", varName, 0);
 
         // Generate a switch-like cascade:
         //   if(state == 0) goto S0;

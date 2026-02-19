@@ -143,11 +143,18 @@ namespace Project::Graph::Node
 
       void build(BuildCtx &ctx) override {
         uint32_t hash = Utils::Hash::crc32(blendAnimName.c_str(), blendAnimName.size());
+        // Use connected Blend value if available, otherwise fall back to constant
+        std::string blendExpr;
+        if(ctx.inValUUIDs && !ctx.inValUUIDs->empty() && (*ctx.inValUUIDs)[0] != 0) {
+          blendExpr = "(float)res_" + Utils::toHex64((*ctx.inValUUIDs)[0]) + " / 65535.0f";
+        } else {
+          blendExpr = std::to_string(blendFactor) + "f";
+        }
         ctx.line("// SetAnimBlend: \"" + blendAnimName + "\"")
            .localConst("uint32_t", "blend_hash", hash)
            .line("auto* amodel = inst->obj->getComponent<P64::Component::AnimModel>();")
            .line("if(amodel) {")
-           .line("  amodel->setBlendAnim(blend_hash, " + std::to_string(blendFactor) + "f);")
+           .line("  amodel->setBlendAnim(blend_hash, " + blendExpr + ");")
            .line("}");
       }
   };
@@ -223,8 +230,15 @@ namespace Project::Graph::Node
       }
 
       void build(BuildCtx &ctx) override {
+        // Use connected Speed value if available, otherwise fall back to constant
+        std::string speedExpr;
+        if(ctx.inValUUIDs && !ctx.inValUUIDs->empty() && (*ctx.inValUUIDs)[0] != 0) {
+          speedExpr = "(float)res_" + Utils::toHex64((*ctx.inValUUIDs)[0]) + " / 65535.0f";
+        } else {
+          speedExpr = std::to_string(speed) + "f";
+        }
         ctx.line("auto* amodel = inst->obj->getComponent<P64::Component::AnimModel>();")
-           .line("if(amodel) { amodel->setSpeed(" + std::to_string(speed) + "f); }");
+           .line("if(amodel) { amodel->setSpeed(" + speedExpr + "); }");
       }
   };
 }

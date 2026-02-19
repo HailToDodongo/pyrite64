@@ -76,8 +76,12 @@ namespace Project::Graph::Node
            .line("      t3d_vec3_norm(&dir);")
            .line("      inst->obj->pos.v[0] += dir.v[0] * mv_speed * inst->obj->getScene()->getDeltaTime();")
            .line("      inst->obj->pos.v[1] += dir.v[1] * mv_speed * inst->obj->getScene()->getDeltaTime();")
-           .line("      inst->obj->pos.v[2] += dir.v[2] * mv_speed * inst->obj->getScene()->getDeltaTime();")
-           .line("    } else {");
+           .line("      inst->obj->pos.v[2] += dir.v[2] * mv_speed * inst->obj->getScene()->getDeltaTime();");
+
+        // jump(1) = Moving output (still in motion)
+        ctx.jump(1);
+
+        ctx.line("    } else {");
 
         // jump(0) = Arrived output
         ctx.jump(0);
@@ -548,14 +552,23 @@ namespace Project::Graph::Node
 
       void build(BuildCtx &ctx) override {
         char opChar = OP_CHARS[op % 4];
-        std::string varName = ctx.globalVar("uint16_t", 0);
+        // Name the output variable after this node's UUID (value output convention)
+        auto resVar = "res_" + Utils::toHex64(uuid);
+        ctx.globalVar("uint16_t", resVar, 0);
 
-        // If B input is connected, use that; otherwise use constVal
-        if(ctx.inValUUIDs && ctx.inValUUIDs->size() > 1 && (*ctx.inValUUIDs)[1] != 0) {
-          ctx.line(varName + " = " + varName + " " + opChar + " " + varName + ";");
-        } else {
-          ctx.line(varName + " = " + varName + " " + opChar + " " + std::to_string(constVal) + ";");
+        // Determine operand A (input pin 0)
+        std::string opA = "0";
+        if(ctx.inValUUIDs && !ctx.inValUUIDs->empty() && (*ctx.inValUUIDs)[0] != 0) {
+          opA = "res_" + Utils::toHex64((*ctx.inValUUIDs)[0]);
         }
+
+        // Determine operand B (input pin 1), fall back to constVal
+        std::string opB = std::to_string(constVal);
+        if(ctx.inValUUIDs && ctx.inValUUIDs->size() > 1 && (*ctx.inValUUIDs)[1] != 0) {
+          opB = "res_" + Utils::toHex64((*ctx.inValUUIDs)[1]);
+        }
+
+        ctx.line(resVar + " = (uint16_t)(" + opA + " " + opChar + " " + opB + ");");
       }
   };
 }

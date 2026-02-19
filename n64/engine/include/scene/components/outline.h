@@ -55,6 +55,7 @@ namespace P64::Component
 
       comp->conf.color     = data->color;
       comp->conf.thickness = data->thickness;
+      comp->conf.mode      = data->mode;
       comp->conf.enabled   = data->enabled != 0;
       comp->conf.hullModel = nullptr; // baked later when model is loaded
 
