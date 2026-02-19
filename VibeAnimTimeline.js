@@ -1,5 +1,5 @@
 /**
- * VibeAnimTimeline.ts
+ * VibeAnimTimeline.js
  * Keyframe timeline / sequencer component for the Pyrite64 Vibe Dashboard.
  *
  * Renders a horizontal timeline with:
