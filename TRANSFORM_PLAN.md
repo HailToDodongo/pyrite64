@@ -115,13 +115,14 @@ pyrite64/                          ← existing repo root
 
 ---
 
-## Milestone 3: Animation Timeline
+## Milestone 3: Animation Timeline ✅
 
-**Data model:**
+**Data model:** Implemented in `AnimationClip.ts`
 ```typescript
 interface AnimClip {
   name: string;
   duration: number;          // in seconds
+  loop: boolean;
   tracks: AnimTrack[];
 }
 interface AnimTrack {
@@ -136,28 +137,50 @@ interface Keyframe {
 }
 ```
 
-**N64 export:**  
-Bake at 30fps → fixed-point arrays → emit as C header included by entity .c file.  
-Tiny3d supports skeletal via `T3DModel` — wire into existing model loading.
+**Timeline UI:** Implemented in `AnimationTimeline.ts`
+- Canvas-based keyframe track editor with ruler, playhead, and diamond markers
+- Playback controls: play, pause, stop, loop toggle
+- Interactive scrubber with drag support
+- Click-to-select keyframes, double-click to add new keyframes
+- Zoom controls (50–800 px/sec)
+- Track evaluation with linear/step/bezier interpolation
+
+**N64 export:** Implemented in `N64AnimExporter.ts`
+Bake at 30fps → fixed-point arrays → emit as C header included by entity .c file.
+- 16.16 fixed-point for position/scale
+- 0–65535 range for rotation (maps to 0–360°)
+- Max 120 frames (4s) per clip
+- Include guards and static const arrays
 
 ---
 
-## Milestone 4: Vibe Coding Node
+## Milestone 4: Vibe Coding Node ✅
 
 **Concept:** In the Node-Graph, add a "🎙 Vibe" node. User types natural language:
 > *"patrol between point A and B, play attack animation when player is within 3 units"*
 
 Claude API generates the Node-Graph JSON config (state machine + transitions) which gets deserialized back into the graph canvas.
 
+**Implementation:**
+- `VibeNode.ts` — Enhanced with multi-turn chat support (`chat()` method), conversation history, and `buildChatSystemPrompt()` for conversational AI workflow
+- `VibeChatPanel.ts` — Chat-based UI panel with:
+  - Message history with user/assistant bubble rendering
+  - Inline NodeGraphConfig patch previews with "Apply" buttons
+  - Quick-action buttons (Patrol, Chase, Animate, Collectible, Door/Switch, Damage)
+  - Context-aware entity badge
+  - Keyboard shortcuts (Enter to send, Shift+Enter for newline)
+
 **IPC flow:**
 ```
-VibeNode.ts (renderer)
-  → IPC: 'vibe:generate' + prompt
-    → main process
-      → Anthropic API (claude-sonnet)
-        → returns NodeGraphConfig JSON
-    → IPC reply
-  → deserialize into NodeGraph canvas
+VibeChatPanel.ts (renderer)
+  → VibeNode.chat(prompt, context, chatOpts)
+    → IPC: 'vibe:chat' + prompt + history
+      → main process
+        → Anthropic API (claude-sonnet) with conversation history
+          → returns text + optional NodeGraphConfig JSON
+      → IPC reply
+    → VibeChatPanel renders assistant message
+    → If patch found: render "Apply" button → onApplyPatch callback
 ```
 
 **Key constraint:** Output must be a valid subset of Pyrite64's Node-Graph format — no heap allocations, no dynamic strings. The system prompt enforces this.

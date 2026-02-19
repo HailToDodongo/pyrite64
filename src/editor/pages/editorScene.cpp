@@ -255,7 +255,7 @@ void Editor::Scene::draw()
 
       ImGui::PopFont();
 
-      if(tooltip)ImGui::SetTooltip(tooltip);
+      if(tooltip)ImGui::SetTooltip("%s", tooltip);
 
       ImGui::EndMenuBar();
     }

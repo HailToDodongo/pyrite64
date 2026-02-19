@@ -94,7 +94,7 @@ namespace Utils
     }
 
     char buf[32]{};
-    sprintf(buf, "%.1f %s", count, suffixes[suffix]); 
+    snprintf(buf, sizeof(buf), "%.1f %s", count, suffixes[suffix]); 
     return std::string{buf};
   }
 }
