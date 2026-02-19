@@ -71,7 +71,7 @@ namespace ImViewGuizmo {
 
         // Labels
         float labelSize = 1.0f;
-        const char* axisLabels[3] = {"X", "Y", "Z"};
+        const char* axisLabels[6] = {"X", "x", "Y", "y", "Z", "z"};
         ImU32 labelColor =  IM_COL32(255, 255, 255, 255);
 
         //Big Circle
@@ -329,7 +329,7 @@ namespace ImViewGuizmo {
             if (axis.depth < -0.1f)
                 continue;
             ImVec2 textPos = worldToScreen(axis.direction * style.lineLength);
-            const char* label = style.axisLabels[axis.axisIndex];
+            const char* label = style.axisLabels[axis.id];
             ImVec2 textSize = font->CalcTextSizeA(scaledFontSize, FLT_MAX, 0.f, label);
             drawList->AddText(font, scaledFontSize,{textPos.x - textSize.x * 0.5f, textPos.y - textSize.y * 0.5f}, style.labelColor, label);
         }
