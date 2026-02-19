@@ -1,5 +1,5 @@
 /**
- * GridHelper.ts
+ * GridHelper.js
  * N64-unit grid overlay for the 3D viewport.
  *
  * Renders a 1-unit ground grid (matching N64 coordinate scale)
