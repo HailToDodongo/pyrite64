@@ -78,6 +78,7 @@ export class CameraController {
         if (e.code === 'KeyF') {
             this.mode = this.mode === 'orbit' ? 'fly' : 'orbit';
             this.orbit.enabled = this.mode === 'orbit';
+            if (this.mode === 'fly') this.clock.getDelta(); // flush accumulated delta
         }
         if (e.code === 'Numpad5')
             this.toggleOrtho();

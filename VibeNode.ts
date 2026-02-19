@@ -291,7 +291,7 @@ OUTPUT: Respond ONLY with a single JSON object. No markdown fences. No explanati
 }`.trim();
 }
 
-function extractJSON(text: string): string | null {
+export function extractJSON(text: string): string | null {
   const start = text.indexOf('{');
   const end   = text.lastIndexOf('}');
   if (start === -1 || end === -1) return null;

@@ -218,12 +218,27 @@ export class VibeAgentStatusPanel {
 
       const nodeCount = result.merged.nodes.length;
 
-      row.innerHTML = `
-        <span class="history-icon" style="color:${color}">${icon}</span>
-        <span class="history-prompt">${this.truncate(result.dispatch.prompt, 32)}</span>
-        <span class="history-agents">${agentTag || '—'}</span>
-        <span class="history-detail">${nodeCount}n · ${result.totalMs}ms</span>
-      `;
+      const iconEl = document.createElement('span');
+      iconEl.className = 'history-icon';
+      iconEl.style.color = color;
+      iconEl.textContent = icon;
+
+      const promptEl = document.createElement('span');
+      promptEl.className = 'history-prompt';
+      promptEl.textContent = this.truncate(result.dispatch.prompt, 32);
+
+      const agentsEl = document.createElement('span');
+      agentsEl.className = 'history-agents';
+      agentsEl.textContent = agentTag || '—';
+
+      const detailEl = document.createElement('span');
+      detailEl.className = 'history-detail';
+      detailEl.textContent = `${nodeCount}n · ${result.totalMs}ms`;
+
+      row.appendChild(iconEl);
+      row.appendChild(promptEl);
+      row.appendChild(agentsEl);
+      row.appendChild(detailEl);
 
       row.title = `${result.dispatch.prompt}\nAgents: ${agentTag || 'none'}\nNodes: ${nodeCount}\nTime: ${result.totalMs}ms`;
       this.historyEl.appendChild(row);

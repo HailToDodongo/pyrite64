@@ -353,8 +353,8 @@ export class VibeCreatorPage {
             return;
         // Merge tweaked values into preset config
         const finalConfig = { ...this.selectedPreset.config, ...this.tweakedValues };
-        // Store selection
-        this.selections[this.activeCategory] = this.selectedPreset;
+        // Store selection with merged config so getSelections returns tweaked values
+        this.selections[this.activeCategory] = { ...this.selectedPreset, config: finalConfig };
         this.handlers.presetApply?.(this.selectedPreset, finalConfig);
         this.renderSummary();
         this.renderCards(); // update selected state

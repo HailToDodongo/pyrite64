@@ -25,7 +25,7 @@
  */
 import { VibeSidebar } from './VibeSidebar.js';
 import { VibeChat } from './VibeChat.js';
-import { Viewport3D } from './Viewport3D.js';
+import { Viewport3D, N64_LIMITS } from './Viewport3D.js';
 import { VibeAnimTimeline } from './VibeAnimTimeline.js';
 import { PROMPT_LIBRARY, getGroupedTemplates } from './VibePromptLibrary.js';
 import { VibeAgentPool } from './VibeAgentPool.js';
@@ -290,12 +290,11 @@ export class VibeDashboard {
         }
     }
     onBudgetWarning(w) {
-        // Update sidebar budget strip
-        // (We track live increments; for a real integration you'd query the scene)
+        // Update sidebar budget strip using the warning type to indicate which budget is exceeded
         const snapshot = {
-            tris: { used: 0, max: 64 },
-            verts: { used: 0, max: 800 },
-            rdramKB: { used: 0, max: 4096 },
+            tris:    { used: w.type === 'tris'  ? N64_LIMITS.MAX_TRIS_PER_MESH + 1   : 0, max: N64_LIMITS.MAX_TRIS_PER_MESH },
+            verts:   { used: w.type === 'verts' ? N64_LIMITS.MAX_VERTS_PER_FRAME + 1 : 0, max: N64_LIMITS.MAX_VERTS_PER_FRAME },
+            rdramKB: { used: w.type === 'rdram' ? 4097                               : 0, max: 4096 },
         };
         this.sidebar.updateBudget(snapshot);
         // Notify in chat if critical

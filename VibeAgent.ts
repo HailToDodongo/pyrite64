@@ -21,6 +21,15 @@
  */
 
 import type { NodeGraphConfig, NodeGraphNode, NodeGraphEdge, VibeContext } from './VibeNode.js';
+import { extractJSON } from './VibeNode.js';
+
+// Sanitize a string for safe inclusion in prompts (prevent injection)
+function sanitize(str: string): string {
+  return str.replace(/[\r\n]/g, ' ').replace(/[^\x20-\x7E]/g, '').trim();
+}
+function sanitizeArray(arr: string[]): string[] {
+  return arr.map(sanitize).filter(s => s.length > 0);
+}
 
 // ─── Agent types ──────────────────────────────────────────────────────────────
 
@@ -195,6 +204,9 @@ export abstract class VibeAgent {
     if (!Array.isArray(patch.nodes) || !Array.isArray(patch.edges)) {
       throw new Error(`Invalid patch shape from ${this.name}`);
     }
+    for (const node of patch.nodes) {
+      if (!node.id || !node.type) throw new Error(`Invalid node in patch from ${this.name}: ${JSON.stringify(node)}`);
+    }
     return patch;
   }
 
@@ -216,10 +228,10 @@ export class AnimationAgent extends VibeAgent {
   readonly icon  = '▶';
 
   protected buildDomainPrompt(ctx: VibeContext): string {
-    const anims = ctx.animations.join(', ') || 'none known';
+    const anims = sanitizeArray(ctx.animations).join(', ') || 'none known';
     return `You are the ANIMATION specialist for Pyrite64 (N64 game engine).
 Your job: generate node graph logic specifically for animation clip control.
-Entity: "${ctx.entityName}". Available clips: ${anims}.
+Entity: "${sanitize(ctx.entityName)}". Available clips: ${anims}.
 
 ANIMATION NODE TYPES you may use:
   PlayAnim, StopAnim, SetAnimSpeed, SetAnimBlend, WaitAnimEnd,
@@ -231,7 +243,7 @@ RULES:
 - Loop animations (walk/run/idle) should have loop:true in data.
 - Action animations (attack/jump/die) should have loop:false.
 - Keep blend factors in 0.0–1.0 range (N64 fixed-point).
-Entity context: ${ctx.entityName} in scene with [${ctx.sceneEntities.join(', ')}].`;
+Entity context: ${sanitize(ctx.entityName)} in scene with [${sanitizeArray(ctx.sceneEntities).join(', ')}].`;
   }
 }
 
@@ -245,7 +257,7 @@ export class MovementAgent extends VibeAgent {
   protected buildDomainPrompt(ctx: VibeContext): string {
     return `You are the MOVEMENT specialist for Pyrite64 (N64 game engine).
 Your job: generate node graph logic for entity locomotion and physics.
-Entity: "${ctx.entityName}".
+Entity: "${sanitize(ctx.entityName)}".
 
 MOVEMENT NODE TYPES you may use:
   MoveToward, SetVelocity, SetPosition, ReadStick,
@@ -258,7 +270,7 @@ RULES:
 - For "patrol" patterns, use MoveToward + WaitAnimEnd/Wait + Repeat forever.
 - For "jump", apply positive Y velocity then gravity (negative Y) after delay.
 - Prefer SetVelocity over SetPosition for physics-driven movement.
-Scene entities: [${ctx.sceneEntities.join(', ')}].`;
+Scene entities: [${sanitizeArray(ctx.sceneEntities).join(', ')}].`;
   }
 }
 
@@ -272,7 +284,7 @@ export class AIBehaviorAgent extends VibeAgent {
   protected buildDomainPrompt(ctx: VibeContext): string {
     return `You are the AI BEHAVIOR specialist for Pyrite64 (N64 game engine).
 Your job: generate node graph logic for enemy/NPC decision making and behavior trees.
-Entity: "${ctx.entityName}".
+Entity: "${sanitize(ctx.entityName)}".
 
 AI NODE TYPES you may use:
   OnTick, OnCollide, OnTimer, StateMachine, SetState, GetState,
@@ -286,7 +298,7 @@ RULES:
 - Use OnTimer for periodic checks to reduce OnTick overhead.
 - State 0 = IDLE, State 1 = PATROL, State 2 = CHASE is a good default.
 - Health thresholds can drive "flee" behavior (GetHealth → Compare → SetState).
-Scene entities: [${ctx.sceneEntities.join(', ')}].`;
+Scene entities: [${sanitizeArray(ctx.sceneEntities).join(', ')}].`;
   }
 }
 
@@ -298,10 +310,10 @@ export class AudioAgent extends VibeAgent {
   readonly icon  = '♪';
 
   protected buildDomainPrompt(ctx: VibeContext): string {
-    const sounds = ctx.sounds.join(', ') || 'none known';
+    const sounds = sanitizeArray(ctx.sounds).join(', ') || 'none known';
     return `You are the AUDIO specialist for Pyrite64 (N64 game engine).
 Your job: generate node graph logic for sound effect and music triggering.
-Entity: "${ctx.entityName}". Available sounds: ${sounds}.
+Entity: "${sanitize(ctx.entityName)}". Available sounds: ${sounds}.
 
 AUDIO NODE TYPES you may use:
   PlaySound, OnStart, OnTick, OnCollide, OnTimer, OnAnimEnd,
@@ -327,7 +339,7 @@ export class SceneAgent extends VibeAgent {
   protected buildDomainPrompt(ctx: VibeContext): string {
     return `You are the SCENE MANAGEMENT specialist for Pyrite64 (N64 game engine).
 Your job: generate node graph logic for scene-level events and object lifecycle.
-Entity: "${ctx.entityName}".
+Entity: "${sanitize(ctx.entityName)}".
 
 SCENE NODE TYPES you may use:
   OnStart, OnTick, OnCollide, OnTimer, OnAnimEnd,
@@ -341,7 +353,7 @@ RULES:
 - Spawn waves use Repeat + Spawn + Wait for staggered spawning.
 - Clean up spawned objects with Destroy + OnTimer to avoid memory limits.
 - Score pickups: OnCollide → AddScore → PlaySound → Destroy (this entity).
-Scene entities: [${ctx.sceneEntities.join(', ')}].`;
+Scene entities: [${sanitizeArray(ctx.sceneEntities).join(', ')}].`;
   }
 }
 
@@ -355,7 +367,7 @@ export class BuildAgent extends VibeAgent {
   protected buildDomainPrompt(ctx: VibeContext): string {
     return `You are the BUILD OPTIMIZER for Pyrite64 (N64 game engine).
 Your job: generate minimal, performance-optimal node graphs that stay within N64 budget.
-Entity: "${ctx.entityName}".
+Entity: "${sanitize(ctx.entityName)}".
 
 OPTIMIZATION RULES:
 - Never use OnTick for logic that can be event-driven (use OnCollide, OnTimer, OnButtonPress).
@@ -379,13 +391,4 @@ export function createAllAgents(): Record<AgentRole, VibeAgent> {
     'scene':       new SceneAgent(),
     'build':       new BuildAgent(),
   };
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function extractJSON(text: string): string | null {
-  const start = text.indexOf('{');
-  const end   = text.lastIndexOf('}');
-  if (start === -1 || end === -1 || end < start) return null;
-  return text.slice(start, end + 1);
 }

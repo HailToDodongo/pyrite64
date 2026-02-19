@@ -80,6 +80,8 @@ export const GAME_COMPONENTS = [
             const sound = node('PlaySound', 550, 150, { sound: 'DoorOpen' });
             nodes.push(onEnter, check, anim, sound);
             edges.push(connect(onEnter, 'out', check, 'in'));
+            edges.push(connect(check, 'out', anim, 'in'));
+            edges.push(connect(check, 'out', sound, 'in'));
             return { nodes, edges };
         }
     },
