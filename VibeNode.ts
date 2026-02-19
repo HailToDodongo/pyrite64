@@ -73,8 +73,6 @@ export interface VibeNodeOptions {
 export interface VibeChatOptions extends VibeNodeOptions {
   /** Callback fired when the assistant sends a text reply (may or may not contain a patch). */
   onMessage:   (message: ChatMessage) => void;
-  /** Callback fired when a streaming chunk arrives (partial text). */
-  onPartial?:  (text: string) => void;
 }
 
 export class VibeNode {
