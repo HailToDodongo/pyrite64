@@ -110,7 +110,7 @@ struct Property
     auto it = overrides.find(id);
     if(it != overrides.end()) {
       if(isOverride)*isOverride = true;
-      return it->second.get<T>();
+      return it->second.template get<T>();
     }
     if(isOverride)*isOverride = false;
     return value;

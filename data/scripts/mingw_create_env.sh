@@ -13,9 +13,16 @@ export N64_INST=$sdkpath
 
 echo "Updating MSYS2 environment..."
 
+if pacman -Qu | grep -Eq '^(msys2-runtime|bash|pacman)\s'; then
+    msysUpdate=true
+else
+    msysUpdate=false
+fi
+
 pacman -Syyu --noconfirm
-if pacman -Q pacman | grep -q "->"; then
-    echo "Core MSYS2 update occurred. Please close this window and start the installation again."
+
+if $msysUpdate; then
+    echo "Core MSYS2 components were updated. Please close this window and start the installation again."
     exit 1
 fi
 
@@ -63,7 +70,7 @@ cd libdragon
 
 git checkout preview
 git pull
-make clean && make -C tools clean && make -C examples/brew-volley clean
+make clean && make -C tools clean
 
 # Build libdragon
 if [[ ! -f "$sdkpath/bin/n64tool.exe" || "${FORCE_UPDATE:-}" == "true" ]]; then
@@ -72,6 +79,7 @@ if [[ ! -f "$sdkpath/bin/n64tool.exe" || "${FORCE_UPDATE:-}" == "true" ]]; then
     make install || sudo -E make install
     make -C tools install || sudo -C tools install
     # Build an example as sanity check
+    make -C examples/brew-volley clean
     make -C examples/brew-volley
 else
     echo "Libdragon already installed"    
