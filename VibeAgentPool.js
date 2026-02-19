@@ -1,5 +1,5 @@
 /**
- * VibeAgentPool.ts
+ * VibeAgentPool.js
  * Parallel multi-agent orchestrator for the Pyrite64 Vibe Coding Engine.
  *
  * The pool:
