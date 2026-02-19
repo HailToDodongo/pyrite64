@@ -47,7 +47,7 @@ export class VibeNode {
         // Browser-safe API key access (mock or localStorage)
         const apiKey = window.ANTHROPIC_API_KEY || localStorage.getItem('anthropic_key') || '';
         if (!apiKey) {
-            console.warn('ANTHROPIC_API_KEY not set. Using mock response.');
+            console.warn('ANTHROPIC_API_KEY not set — API call will fail with 401.');
         }
         try {
             const res = await fetch('https://api.anthropic.com/v1/messages', {

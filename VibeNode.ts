@@ -82,10 +82,12 @@ export class VibeNode {
   private async directGenerate(prompt: string, context: VibeContext): Promise<void> {
     const systemPrompt = buildSystemPrompt(context);
     // Browser-safe API key access (mock or localStorage)
-    const apiKey = (window as any).ANTHROPIC_API_KEY || localStorage.getItem('anthropic_key') || '';
+    const apiKey = (typeof window !== 'undefined' ? (window as any).ANTHROPIC_API_KEY : undefined)
+  || (typeof localStorage !== 'undefined' ? localStorage.getItem('anthropic_key') : undefined)
+  || '';
     
     if (!apiKey) {
-      console.warn('ANTHROPIC_API_KEY not set. Using mock response.');
+      console.warn('ANTHROPIC_API_KEY not set — API call will fail with 401.');
     }
 
     try {

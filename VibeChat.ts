@@ -376,8 +376,8 @@ export class VibeChat {
     this.activeAgentRoles = [];
 
     const { merged, succeeded, failed, totalMs } = result;
-    const agentTags = succeeded.map(r => `<span class="agent-tag agent-tag--${r}">${r}</span>`).join(' ');
-    const failNote  = failed.length ? ` <em>(${failed.join(', ')} failed)</em>` : '';
+    const agentTags = succeeded.join(', ');
+    const failNote  = failed.length ? ` (${failed.join(', ')} failed)` : '';
     const nodeNames = merged.nodes.map(n => `**${n.type}**`).slice(0, 3).join(', ');
     const more      = merged.nodes.length > 3 ? ` +${merged.nodes.length - 3} more` : '';
     const text = `[${totalMs}ms] ${agentTags}${failNote} Generated ${merged.nodes.length} nodes (${nodeNames}${more}) with ${merged.edges.length} connections.`;

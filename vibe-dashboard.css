@@ -1054,7 +1054,7 @@ body::before {
 
 .tl-btn:hover {
   background: rgba(255,255,255,0.12);
-  color: var(--text-main);
+  color: var(--text-primary);
 }
 
 .tl-btn.active {

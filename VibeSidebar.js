@@ -304,11 +304,20 @@ export class VibeSidebar {
             item.className = `sidebar-item${entity.id === this.activeEntity ? ' active' : ''}`;
             item.style.paddingLeft = `${14 + depth * 12}px`;
             item.dataset.entityId = entity.id;
-            item.innerHTML = `
-        <span class="item-icon">${TYPE_ICON[entity.type] ?? '○'}</span>
-        <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${entity.name}</span>
-        ${entity.children.length > 0 ? `<span style="font-size:9px; color:var(--text-dim); margin-left:4px;">${entity.children.length}</span>` : ''}
-      `;
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'item-icon';
+            iconSpan.textContent = TYPE_ICON[entity.type] ?? '○';
+            const nameSpan = document.createElement('span');
+            nameSpan.style.cssText = 'flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+            nameSpan.textContent = entity.name;
+            item.appendChild(iconSpan);
+            item.appendChild(nameSpan);
+            if (entity.children.length > 0) {
+                const countSpan = document.createElement('span');
+                countSpan.style.cssText = 'font-size:9px; color:var(--text-dim); margin-left:4px;';
+                countSpan.textContent = String(entity.children.length);
+                item.appendChild(countSpan);
+            }
             item.addEventListener('click', () => {
                 this.activeEntity = entity.id;
                 this.renderEntityTree();
