@@ -48,6 +48,27 @@ void ImDrawCallback_ImplSDLGPU3_SetSamplerRepeat(const ImDrawList* parent_list, 
 
 void cli(argparse::ArgumentParser &prog);
 
+void fatal(const char *fmt, ...)
+{
+  va_list args;
+  va_start(args, fmt);
+  char buffer[1024];
+  vsnprintf(buffer, sizeof(buffer), fmt, args);
+  va_end(args);
+  fprintf(stderr, "Fatal Error: %s\n", buffer);
+
+  SDL_MessageBoxData messageboxdata{};
+  messageboxdata.title = "Fatal Error";
+  messageboxdata.message = buffer;
+  messageboxdata.buttons = nullptr;
+  messageboxdata.numbuttons = 0;
+  messageboxdata.flags = SDL_MESSAGEBOX_ERROR;
+  SDL_ShowMessageBox(&messageboxdata, nullptr);
+
+  exit(-1);
+}
+
+
 // Main code
 int main(int argc, char** argv)
 {
@@ -76,7 +97,7 @@ int main(int argc, char** argv)
 
   if(window == nullptr)
   {
-    printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
+    fatal("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
     return -1;
   }
 
@@ -96,7 +117,7 @@ int main(int argc, char** argv)
   ctx.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, debugMode, nullptr);
   if (ctx.gpu == nullptr)
   {
-    printf("Error: SDL_CreateGPUDevice(): %s\n", SDL_GetError());
+    fatal("Error: Cannot initialize Vulkan GPU\nPyrite currently requires a Vulkan capable GPU to run.\n\nSDL_CreateGPUDevice(): %s\n", SDL_GetError());
     return -1;
   }
 
@@ -109,7 +130,7 @@ int main(int argc, char** argv)
   // Claim window for GPU Device
   if (!SDL_ClaimWindowForGPUDevice(ctx.gpu, window))
   {
-    printf("Error: SDL_ClaimWindowForGPUDevice(): %s\n", SDL_GetError());
+    fatal("Error: SDL_ClaimWindowForGPUDevice(): %s\n", SDL_GetError());
     return -1;
   }
 
