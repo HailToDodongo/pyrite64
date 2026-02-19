@@ -3,7 +3,13 @@ name: Windows (MSYS2 UCRT64)
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
 
 jobs:
   build-windows:
@@ -15,13 +21,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
           lfs: true
 
       - name: Setup MSYS2 (UCRT64)
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@v2.30.0
         with:
           msystem: UCRT64
           update: true
@@ -33,17 +39,14 @@ jobs:
 
       - name: Configure CMake
         run: |
-          mkdir -p build
-          cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --preset windows-gcc
 
       - name: Build
         run: |
-          cd build
-          cmake --build . --parallel 8
+          cmake --build --preset windows-gcc
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: pyrite64-windows
           include-hidden-files: true
@@ -58,7 +61,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
           lfs: true
@@ -72,17 +75,14 @@ jobs:
 
       - name: Configure CMake
         run: |
-          mkdir -p build
-          cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --preset linux
 
       - name: Build
         run: |
-          cd build
-          cmake --build . --parallel 8
+          cmake --build --preset linux
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: pyrite64-linux
           include-hidden-files: true

@@ -15,6 +15,7 @@ namespace Utils
       struct State
       {
         fs::path mingwPath{}; // empty if not found, always empty on linux
+        fs::path toolchainPath{}; // empty if not found
         bool hasToolchain{};
         bool hasLibdragon{};
         bool hasTiny3d{};

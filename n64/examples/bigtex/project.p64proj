@@ -1,0 +1,9 @@
+{
+  "name": "bigtex",
+  "pathEmu": "ares",
+  "pathN64Inst": "",
+  "romName": "bigtex",
+  "sceneIdLastOpened": 1,
+  "sceneIdOnBoot": 1,
+  "sceneIdOnReset": 1
+}

@@ -1,0 +1,59 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28
+  },
+
+  "configurePresets": [
+    {
+      "name": "windows-gcc",
+      "displayName": "Windows x86_64 (GCC)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "linux",
+      "displayName": "Linux x86_64",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+
+  "buildPresets": [
+    {
+      "name": "windows-gcc",
+      "configurePreset": "windows-gcc",
+      "jobs": 0
+    },
+    {
+      "name": "linux",
+      "configurePreset": "linux",
+      "jobs": 0
+    }
+  ],
+
+  "workflowPresets": [
+    {
+      "name": "windows-gcc",
+      "steps": [
+        { "type": "configure", "name": "windows-gcc" },
+        { "type": "build",     "name": "windows-gcc" }
+      ]
+    },
+    {
+      "name": "linux",
+      "steps": [
+        { "type": "configure", "name": "linux" },
+        { "type": "build",     "name": "linux" }
+      ]
+    }
+  ]
+
+}

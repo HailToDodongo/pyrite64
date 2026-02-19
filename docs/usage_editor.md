@@ -9,4 +9,4 @@ Docs are still missing, Sorry!
 @TODO: docs for individual object components
 
 ---
-Next: [Using the CLI](./docs/usage_editor.md)
+Next: [Using the CLI](./cli_editor.md)

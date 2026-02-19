@@ -27,54 +27,48 @@ void Utils::Toolchain::scan()
       return;
     }
 
-    //printf("Mingw Path: %s\n", state.mingwPath.string().c_str());
     if(state.mingwPath.empty())return;
 
-    auto toolPath = state.mingwPath / "pyrite64-sdk";
-    if(fs::exists(toolPath / "bin" / "mips64-elf-gcc.exe")
-     && fs::exists(toolPath / "bin" / "mips64-elf-g++.exe")) {
-      state.hasToolchain = true;
-    }
+    const char* n64InstEnv = std::getenv("N64_INST");
+    // If N64_INST is defined in the system, the user probably already
+    // has a working toolchain installation so try to use it.
+    state.toolchainPath = (n64InstEnv != nullptr)?
+      fs::path{n64InstEnv} : state.mingwPath / "pyrite64-sdk";
 
-    if(fs::exists(toolPath / "bin" / "n64tool.exe")
-     && fs::exists(toolPath / "bin" / "mkdfs.exe")
-     && fs::exists(toolPath / "include" / "n64.mk")
-    ) {
-      state.hasLibdragon = true;
-    }
+    state.hasToolchain = fs::exists(state.toolchainPath / "bin" / "mips64-elf-gcc.exe")
+                       && fs::exists(state.toolchainPath / "bin" / "mips64-elf-g++.exe");
 
-    if(fs::exists(toolPath / "bin" / "gltf_to_t3d.exe")
-     && fs::exists(toolPath / "include" / "t3d.mk")
-     && fs::exists(toolPath / "mips64-elf" / "include" / "t3d")
-    ) {
-      state.hasTiny3d = true;
-    }
-    
+    state.hasLibdragon = fs::exists(state.toolchainPath / "bin" / "n64tool.exe")
+                       && fs::exists(state.toolchainPath / "bin" / "mkdfs.exe")
+                       && fs::exists(state.toolchainPath / "include" / "n64.mk");
+
+    state.hasTiny3d = fs::exists(state.toolchainPath / "bin" / "gltf_to_t3d.exe")
+                    && fs::exists(state.toolchainPath / "include" / "t3d.mk")
+                    && fs::exists(state.toolchainPath / "mips64-elf" / "include" / "t3d");
 
   #else
     char* n64InstEnv = getenv("N64_INST");
     if(n64InstEnv) {
-      state.mingwPath = fs::path{n64InstEnv};
+      state.toolchainPath = fs::path{n64InstEnv};
     }
-    if(state.mingwPath.empty())return;
+    if(state.toolchainPath.empty())return;
 
-    state.hasToolchain = fs::exists(state.mingwPath / "bin" / "mips64-elf-gcc");
+    state.hasToolchain = fs::exists(state.toolchainPath / "bin" / "mips64-elf-gcc");
     if(!state.hasToolchain)return;
 
-    fs::path n64Path{n64InstEnv};
-    state.hasLibdragon = fs::exists(n64Path / "bin" / "n64tool")
-                       && fs::exists(n64Path / "bin" / "mkdfs")
-                       && fs::exists(n64Path / "include" / "n64.mk");
-    state.hasTiny3d = fs::exists(n64Path / "bin" / "gltf_to_t3d")
-                    && fs::exists(n64Path / "include" / "t3d.mk")
-                    && fs::exists(n64Path / "mips64-elf" / "include" / "t3d");
+    state.hasLibdragon = fs::exists(state.toolchainPath / "bin" / "n64tool")
+                       && fs::exists(state.toolchainPath / "bin" / "mkdfs")
+                       && fs::exists(state.toolchainPath / "include" / "n64.mk");
+    state.hasTiny3d = fs::exists(state.toolchainPath / "bin" / "gltf_to_t3d")
+                    && fs::exists(state.toolchainPath / "include" / "t3d.mk")
+                    && fs::exists(state.toolchainPath / "mips64-elf" / "include" / "t3d");
   #endif
 }
 
 namespace
 {
-  void runInstallScript(fs::path mingwPath) {
-    // C:\msys64\usr\bin\mintty.exe /bin/env MSYSTEM=MINGW64 /bin/bash -l %self_path%mingw_create_env.sh
+  void runInstallScript(fs::path mingwPath, bool forceUpdate) {
+    // C:\msys64\usr\bin\mintty.exe --hold=error /bin/env MSYSTEM=MINGW64 /bin/bash -l %self_path%mingw_create_env.sh
     auto minttyPath = mingwPath / "usr" / "bin" / "mintty.exe";
     if (!fs::exists(minttyPath)) {
       printf("Error: mintty.exe not found at expected location: %s\n", minttyPath.string().c_str());
@@ -82,7 +76,9 @@ namespace
       return;
     }
 
-    std::string command = minttyPath.string() + " /bin/env MSYSTEM=MINGW64 /bin/bash -l ";
+    std::string envVars = "MSYSTEM=MINGW64 ";
+    if (forceUpdate) envVars += "FORCE_UPDATE=true ";
+    std::string command = minttyPath.string() + " --hold=error /bin/env " + envVars + "/bin/bash -l ";
     
     fs::path selfPath{Utils::Proc::getSelfPath()};
     selfPath = selfPath.parent_path(); // remove executable name
@@ -103,7 +99,8 @@ void Utils::Toolchain::install()
   }
 
   installing.store(true);
-  std::thread installThread(runInstallScript, state.mingwPath);
+  bool isInstalled = state.hasToolchain && state.hasLibdragon && state.hasTiny3d;
+  std::thread installThread(runInstallScript, state.mingwPath, isInstalled);
   installThread.detach();
 }
 

@@ -1,0 +1,429 @@
+{
+  "conf": {
+    "clearColor": [
+      0.20161288976669312,
+      0.20161288976669312,
+      0.20161288976669312,
+      1.0
+    ],
+    "doClearColor": false,
+    "doClearDepth": true,
+    "fbFormat": 0,
+    "fbHeight": 240,
+    "fbWidth": 320,
+    "filter": 1,
+    "frameLimit": 0,
+    "layers2D": [
+      {
+        "blender": 0,
+        "depthCompare": false,
+        "depthWrite": false,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "2D"
+      }
+    ],
+    "layers3D": [
+      {
+        "blender": 0,
+        "depthCompare": true,
+        "depthWrite": true,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "3D BigTex"
+      },
+      {
+        "blender": 0,
+        "depthCompare": true,
+        "depthWrite": true,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "3D F3D"
+      }
+    ],
+    "layersPtx": [
+      {
+        "blender": 0,
+        "depthCompare": true,
+        "depthWrite": true,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "PTX Opaque"
+      }
+    ],
+    "name": "Scene",
+    "renderPipeline": 2
+  },
+  "graph": {
+    "children": [
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "setDepth": true,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "",
+              "model": 4087262050311154532
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 14038611699962242894
+          },
+          {
+            "data": {
+              "objectUUID": 0,
+              "type": 2,
+              "usePos": true,
+              "useRot": false,
+              "useScale": false
+            },
+            "id": 7,
+            "name": "Constraint",
+            "uuid": 5580080917660548298
+          }
+        ],
+        "enabled": true,
+        "id": 5,
+        "name": "Skybox",
+        "pos": [
+          595.6198120117188,
+          0.0,
+          -126.59672546386719
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          2.049999952316284,
+          2.049999952316284,
+          2.049999952316284
+        ],
+        "selectable": true,
+        "uuid": 1618795258,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "aspect": 0.0,
+              "far": 2000.0,
+              "fov": 65.0,
+              "near": 30.0,
+              "vpOffset": [
+                0,
+                0
+              ],
+              "vpSize": [
+                320,
+                240
+              ]
+            },
+            "id": 3,
+            "name": "Camera",
+            "uuid": 591397515709753079
+          },
+          {
+            "data": {
+              "args": {},
+              "script": 14162608406159107062
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 6093021603435288714
+          }
+        ],
+        "enabled": true,
+        "id": 1,
+        "name": "Camera",
+        "pos": [
+          -252.08924865722656,
+          260.16497802734375,
+          270.0802307128906
+        ],
+        "propOverrides": {},
+        "rot": [
+          -0.3255840241909027,
+          -0.2464853674173355,
+          -0.08833129703998566,
+          0.9085359573364258
+        ],
+        "scale": [
+          0.9999967813491821,
+          0.9999940991401672,
+          0.9999812841415405
+        ],
+        "selectable": true,
+        "uuid": 2593312191,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "index": 0,
+              "type": 0
+            },
+            "id": 2,
+            "name": "Light",
+            "uuid": 17810945128247966012
+          }
+        ],
+        "enabled": true,
+        "id": 3,
+        "name": "Ambient Light",
+        "pos": [
+          98.18965148925781,
+          377.93414306640625,
+          318.3477478027344
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 2808468358,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.9435483813285828,
+                  0.7903199195861816,
+                  0.07989722490310669,
+                  0.9921568632125854
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "",
+              "model": 10357302430525792391
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 1194680501142561258
+          }
+        ],
+        "enabled": true,
+        "id": 2,
+        "name": "Model",
+        "pos": [
+          0.0,
+          -240.0,
+          0.0
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.46999990940094,
+          1.46999990940094,
+          1.46999990940094
+        ],
+        "selectable": true,
+        "uuid": 1407552857,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "",
+              "model": 17660758381478844321
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 5594746944255782197
+          }
+        ],
+        "enabled": true,
+        "id": 4,
+        "name": "Box",
+        "pos": [
+          -0.9058990478515625,
+          -310.46112060546875,
+          0.0
+        ],
+        "propOverrides": {},
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.1699999570846558,
+          1.1699999570846558,
+          1.1699999570846558
+        ],
+        "selectable": true,
+        "uuid": 434447390,
+        "uuidPrefab": 0
+      }
+    ],
+    "components": [],
+    "enabled": true,
+    "id": 0,
+    "name": "Scene",
+    "pos": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "propOverrides": {},
+    "rot": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "selectable": true,
+    "uuid": 4252910706,
+    "uuidPrefab": 0
+  }
+}

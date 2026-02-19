@@ -2,42 +2,47 @@
 
 Below are instructions to build the editor on either linux or windows.<br/>
 Note that due to a small dependency on libdragon, GCC is required for now.<br/>
-On Windows that means building through MSYS2.
+On Windows, that means building via MSYS2.
 
-## Linux
+## Prerequisites
 
 Before building the project, make sure you have the following tools installed:
 - CMake
 - Ninja
 - GCC with at least C++23 support
 
-After checking the repo out, make sure to fetch all the submodules:
+Linux users should follow the conventions of their distribution and package manager.</br>
 
-`git submodule update --init --recursive`
-
-To build the project, first create a build directory, and setup CMake inside of it:
+Windows users need to make sure a recent version of MSYS2 is installed (https://www.msys2.org/).<br>
+Open an MSYS2 terminal in the `UCRT64` environment, and install the UCRT-specific packages for the dependencies:
 ```sh
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -G Ninja
+pacman -S mingw-w64-ucrt-x86_64-gcc
+pacman -S mingw-w64-ucrt-x86_64-cmake
+pacman -S mingw-w64-ucrt-x86_64-ninja
+```
+
+## Build Instructions
+
+After cloning the `pyrite64` repo, make sure to fetch all the submodules:
+```sh
+git submodule update --init --recursive
+```
+
+To configure the project, run:
+```sh
+cmake --preset <preset>
 ```
 
 After that, and for every subsequent build, run:
 ```sh
-cmake --build . --parallel 8
+cmake --build --preset <preset>
 ```
 
-Once finished, a program called `pyrite64` should be placed in the root directory of the repo.<br>
-The program itself can be placed anywhere on the system, however the `./data` and `./n64` directory must stay next to it.
+Where `<preset>` is replaced with the CMake preset name corresponding to your system:
+- `linux` for Linux systems
+- `windows-gcc` for Windows systems with MSYS2
 
-To open the editor simply execute `./pyrite64`.
+Once the build is finished, a program called `pyrite64` (or `pyrite64.exe`) should be placed in the root directory of the repo.<br>
+The program itself can be placed anywhere on the system, however the `./data` and `./n64` directories must stay next to it.
 
-## Windows
-
-Make sure you have a recent version of msys2 installed (https://www.msys2.org/).<br>
-Open a msys2 terminal in the `UCRT64` environment, and install the ucrt specific packages for:
-- `pacman -S mingw-w64-ucrt-x86_64-gcc`
-- `pacman -S mingw-w64-ucrt-x86_64-cmake`
-- `pacman -S mingw-w64-ucrt-x86_64-ninja`
-
-Then navigate to the checked out project.<br>
-After that, you can follow the linux instructions described above.
+To open the editor, simply execute `./pyrite64` (or `.\pyrite64.exe`).

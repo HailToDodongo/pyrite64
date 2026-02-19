@@ -18,16 +18,7 @@ N64 game-engine and editor using <a href="https://github.com/DragonMinded/libdra
   <img src="./docs/img/editor03.jpg" width="350">
 </p>
 
-
 > Note: This project does NOT use any proprietary N64 SDKs or libraries.
-
-> [!CAUTION]
-> **This Project is still not ready for general use!**<br>
-> The source code has been released since it was used and largely developed for a gamejam.<br>
-> However, the process of setting up the editor and support for windows/macos is still WIP.<br>
-> Documentation is also missing.
-> 
-> Once that is done, a proper release will be made.  Sorry!
 
 Pyrite64 is a visual editor + runtime-engine to create 3D games that can run on a real N64 console or accurate emulators.<br>
 Besides the usual editor, some extra features include:
@@ -40,9 +31,15 @@ Besides the usual editor, some extra features include:
 - Node-Graph editor to script basic control flow
 
 Note that this project focuses on real hardware, so accurate emulation is required to run/test games on PC.<br>
-Emulators that are accurate enough include [Ares](https://ares-emu.net/) and [gopher64](https://github.com/gopher64/gopher64).
+Emulators that are accurate enough include [Ares (v147 or newer)](https://ares-emu.net/) and [gopher64](https://github.com/gopher64/gopher64).
+
+> [!WARNING]
+> This project is still in early development, so features are going to be missing.<br>
+> Documentation is also still a work in progress, and breaking API changes are to be expected.
 
 ## Documentation
+
+Before starting, please read the [FAQ](./docs/faq.md)!
 
 - Installation & Docs:
   - [Pyrite64 Installation](./docs/setup_editor.md)
@@ -57,9 +54,16 @@ Emulators that are accurate enough include [Ares](https://ares-emu.net/) and [go
 <a href="https://www.youtube.com/watch?v=zz_wByA_k6E" target="_blank">
     <img src="https://img.youtube.com/vi/zz_wByA_k6E/0.jpg" width="250">
 </a>
+<a href="https://www.youtube.com/watch?v=4BCmKnN5eGA" target="_blank">
+    <img src="https://img.youtube.com/vi/4BCmKnN5eGA/0.jpg" width="250">
+</a>
 <br/>
-Cathode Quest 64 (YouTube)  
+Cathode Quest 64 (YouTube) &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; Pyrite64 Release Video &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    
 </p>
+
+## Links
+For anything N64 homebrew related,<br>
+checkout the N64Brew discord: https://discord.gg/WqFgNWf
 
 ## Credits & License
 © 2025-2026 - Max Bebök (HailToDodongo)<br>
