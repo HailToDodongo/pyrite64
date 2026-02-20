@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Pyrite64
+Comment=N64 Game Engine and Editor
+Exec=pyrite64
+Icon=pyrite64
+Terminal=false
+Categories=Development;Game;
+StartupNotify=true

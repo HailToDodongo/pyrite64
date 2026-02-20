@@ -20,6 +20,7 @@
       "displayName": "Linux x86_64",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
+      "installDir": "$env{HOME}/.local",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
