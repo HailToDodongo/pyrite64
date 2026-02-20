@@ -73,7 +73,7 @@ void fatal(const char *fmt, ...)
 int main(int argc, char** argv)
 {
   Project::Component::init();
-  fs::current_path(Utils::Proc::getSelfDir());
+  fs::current_path(Utils::Proc::getDataRoot());
   ctx.toolchain.scan();
 
   auto cliRes = CLI::run(argc, argv);

@@ -8,6 +8,8 @@
 #include <memory>
 #include <filesystem>
 
+#include <SDL3/SDL_filesystem.h>
+
 #ifdef _WIN32
   #include <windows.h>
 #elif __APPLE__
@@ -58,7 +60,7 @@ bool Utils::Proc::runSyncLogged(const std::string&cmd) {
   return pclose(pipe) == 0;
 }
 
-std::string Utils::Proc::getSelfPath()
+fs::path Utils::Proc::getSelfPath()
 {
 #ifdef _WIN32
   // Windows specific
@@ -79,10 +81,30 @@ std::string Utils::Proc::getSelfPath()
   szPath[count] = '\0';
 #endif
 
-  return fs::path{szPath}.string(); // to finish the folder path with (back)slash
+  return fs::path{szPath};
 }
 
-std::string Utils::Proc::getSelfDir()
+fs::path Utils::Proc::getDataRoot()
 {
-  return (fs::path{getSelfPath()}.parent_path() / "").string();
+  // Check if the data exist in the executable directory.
+  // Check this first because this is where files are during development.
+  fs::path execPath = fs::path(SDL_GetBasePath());
+  if(fs::exists(execPath / "data") && fs::exists(execPath / "n64")) {
+    return execPath;
+  }
+
+  // If not found, check if the data exist in the XDG_DATA_HOME directory.
+  char* prefDir = SDL_GetPrefPath(nullptr, "pyrite64");
+  if (prefDir)
+  {
+    fs::path dataPath = fs::path(prefDir);
+    SDL_free(prefDir);
+    if(fs::exists(dataPath / "data") && fs::exists(dataPath / "n64")) {
+      return dataPath;
+    }
+  }
+
+  // Fallback to executable directory, even if it doesn't contain the data.
+  // This is to avoid returning empty path which could cause issues.
+  return execPath; 
 }
