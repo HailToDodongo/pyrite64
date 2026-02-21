@@ -6,6 +6,7 @@ imgui.ini
 p64editor
 pyrite64
 .vscode
+.vs/
 *.pak
 pyrite64.exe
 *.dll
