@@ -17,15 +17,17 @@ namespace Renderer
 
     public:
       glm::vec3 pos{};
-      glm::vec3 posOffset{};
+      glm::vec3 pivot{};
       glm::quat rot{0,0,0,1};
       glm::vec2 screenSize{1,1};
 
       glm::vec3 velocity{};
+      float zoomSpeed{};
 
       glm::quat rotBase{};
       bool isRotating{false};
       glm::vec3 posBase{};
+      glm::vec3 pivotBase{};
       bool isMoving{false};
       bool isOrtho{false};
 
@@ -36,7 +38,9 @@ namespace Renderer
       void apply(UniformGlobal &uniGlobal);
 
       void rotateDelta(glm::vec2 screenDelta);
-
+      void lookDelta(glm::vec2 screenDelta);
+      void orbitDelta(glm::vec2 screenDelta);
+      
       void stopRotateDelta() {
         isRotating = false;
       }
@@ -46,5 +50,8 @@ namespace Renderer
       void stopMoveDelta() {
         isMoving = false;
       }
+
+      void focus(glm::vec3 position, float distance);
+      float calculateFocusDistance(float height);
   };
 }

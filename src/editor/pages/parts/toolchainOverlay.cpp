@@ -115,7 +115,7 @@ bool Editor::ToolchainOverlay::draw()
       "Tiny3D"
     };
     bool STEP_DONE[] = {
-      !toolState.mingwPath.empty(),
+      (isWindows)? !toolState.mingwPath.empty() : !toolState.toolchainPath.empty(),
       toolState.hasToolchain,
       toolState.hasLibdragon,
       toolState.hasTiny3d
@@ -164,7 +164,11 @@ bool Editor::ToolchainOverlay::draw()
       } else
       {
         if(allDone) {
-          ImGui::Text("The N64 toolchain is correctly installed.");
+          ImGui::Text(
+            "Toolchain found in: %s\n"
+            "The N64 toolchain is correctly installed.\n",
+            ctx.toolchain.getState().toolchainPath.string().c_str()
+          );
         } else
         {
           ImGui::Text(

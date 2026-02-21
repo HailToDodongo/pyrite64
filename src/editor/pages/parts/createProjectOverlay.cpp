@@ -63,6 +63,8 @@ void Editor::CreateProjectOverlay::open()
     projectPath = (home && *home) ? home : ".";
     projectPath = expandHomePath(projectPath);
   }
+  fs::path p = fs::path(projectPath) / "pyrite64";
+  projectPath = p.string();
 }
 
 bool Editor::CreateProjectOverlay::draw()

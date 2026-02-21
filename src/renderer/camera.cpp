@@ -7,6 +7,7 @@
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/geometric.hpp"
+
 //#include "glm/gtx/quaternion.hpp"
 
 namespace
@@ -14,6 +15,7 @@ namespace
   constexpr glm::vec3 WORLD_UP{0,1,0};
   constexpr glm::vec3 WORLD_FORWARD{0,0,-1};
   constexpr float ORTHO_SIZE = 310.0f;
+  constexpr float FOV = 70.0f;
 }
 
 Renderer::Camera::Camera() {
@@ -22,12 +24,27 @@ Renderer::Camera::Camera() {
     glm::radians(-180.0f),
     glm::vec3(1,0,0)
   );
-  posOffset = {0,220,220};
+  focus(glm::vec3(0,220,0), 220);
 }
 
 void Renderer::Camera::update() {
   pos += velocity;
+  pivot += velocity;
   velocity *= 0.9f;
+  
+  if (fabs(zoomSpeed) < 0.01) {
+    return;
+  } 
+
+  float camDist = glm::length(pos - pivot);
+  glm::vec3 forward = rot * WORLD_FORWARD * zoomSpeed;
+  if (zoomSpeed < 0 || camDist > fabs(zoomSpeed)) {
+    pos += forward;
+  } else {
+    pos += forward;
+    pivot += forward;
+  }
+  zoomSpeed *= 0.9f;
 }
 
 void Renderer::Camera::apply(UniformGlobal &uniGlobal)
@@ -35,7 +52,7 @@ void Renderer::Camera::apply(UniformGlobal &uniGlobal)
   float aspect = screenSize.x / screenSize.y;
   float near = 10.0f;
   float far = 10'000.0f;
-  float fov = glm::radians(70.0f);
+  float fov = glm::radians(FOV);
 
   if(isOrtho)
   {
@@ -56,8 +73,8 @@ void Renderer::Camera::apply(UniformGlobal &uniGlobal)
 
   const glm::vec3 direction = glm::normalize(rot * WORLD_FORWARD);
   const glm::vec3 dynamicUp = glm::normalize(rot * WORLD_UP);
-  const glm::vec3 target = pos + posOffset + direction;
-  uniGlobal.cameraMat = glm::lookAt(pos + posOffset, target, dynamicUp);
+  const glm::vec3 target = pos + direction;
+  uniGlobal.cameraMat = glm::lookAt(pos, target, dynamicUp);
 
 
 /*
@@ -84,6 +101,28 @@ void Renderer::Camera::rotateDelta(glm::vec2 screenDelta)
 
 }
 
+void Renderer::Camera::lookDelta(glm::vec2 screenDelta)
+{
+  if (!isRotating) {
+    pivotBase = pivot;
+  }
+
+  rotateDelta(screenDelta);
+  glm::vec3 diff = pos - pivotBase;
+  pivot = pos - rot * glm::inverse(rotBase) * diff;
+}
+
+void Renderer::Camera::orbitDelta(glm::vec2 screenDelta)
+{
+  if (!isRotating) {
+    posBase = pos;
+  }
+
+  rotateDelta(screenDelta);
+  glm::vec3 diff = posBase - pivot;
+  pos = pivot + rot * glm::inverse(rotBase) * diff;
+}
+
 void Renderer::Camera::moveDelta(glm::vec2 screenDelta) {
   if (!isMoving) {
     posBase = pos;
@@ -96,7 +135,7 @@ void Renderer::Camera::moveDelta(glm::vec2 screenDelta) {
       pixelsToWorld = (ORTHO_SIZE * 2.0f) / screenSize.y;
     }
   } else {
-    float dist = glm::length(posOffset);
+    float dist = glm::length(pivot - pos);
     if (dist > 0.001f) {
       pixelsToWorld = dist * 0.001f;
     }
@@ -107,6 +146,22 @@ void Renderer::Camera::moveDelta(glm::vec2 screenDelta) {
 
   glm::vec3 right = rot * glm::vec3(1, 0, 0);
   glm::vec3 up = rot * glm::vec3(0, 1, 0);
-
+ 
+  glm::vec3 diff = pivot - pos;
   pos = posBase + (right * moveX) + (up * moveY);
+  pivot = pos + diff;
+}
+
+void Renderer::Camera::focus(glm::vec3 position, float distance) {
+  isMoving = false;
+  isRotating = false;
+  pivot = position;
+  glm::vec3 posOffset = rot * -WORLD_FORWARD * distance;
+  pos = pivot + posOffset;
+}
+
+float Renderer::Camera::calculateFocusDistance(float height) {
+    float fov = glm::radians(FOV);
+    float dist = screenSize.y * height * 0.5f / tanf(fov * 0.5f);
+    return dist * 1.1f;
 }

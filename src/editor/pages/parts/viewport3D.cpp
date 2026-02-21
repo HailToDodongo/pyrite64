@@ -168,7 +168,6 @@ Editor::Viewport3D::Viewport3D()
   gizStyle.circleRadius = 19.0f;
   gizStyle.labelSize = 1.9f;
   gizStyle.labelColor = IM_COL32(0,0,0,0xFF);
-  camera.pos = {0,0,0};
 }
 
 Editor::Viewport3D::~Viewport3D() {
@@ -335,9 +334,11 @@ void Editor::Viewport3D::draw()
 
   float moveSpeed = 120.0f * deltaTime;
 
+  bool mouseHeldLeft = ImGui::IsMouseDown(ImGuiMouseButton_Left);
   bool mouseHeldRight = ImGui::IsMouseDown(ImGuiMouseButton_Right);
   bool mouseHeldMiddle = ImGui::IsMouseDown(ImGuiMouseButton_Middle);
-  bool newMouseDown = mouseHeldMiddle || mouseHeldRight;
+  bool newMouseDown = mouseHeldLeft || mouseHeldMiddle || mouseHeldRight;
+  bool isAltDown = ImGui::GetIO().KeyAlt;
   bool isShiftDown = ImGui::GetIO().KeyShift;
   if(isShiftDown)moveSpeed *= 4.0f;
 
@@ -451,6 +452,16 @@ void Editor::Viewport3D::draw()
         if (ImGui::IsKeyDown(ImGuiKey_G))gizmoOp = 0;
         if (ImGui::IsKeyDown(ImGuiKey_R))gizmoOp = 1;
         if (ImGui::IsKeyDown(ImGuiKey_S))gizmoOp = 2;
+
+        if (ImGui::IsKeyDown(ImGuiKey_F) && obj) {
+          glm::vec3 objPos = obj->pos.resolve(obj->propOverrides);
+          glm::quat objRot = obj->rot.resolve(obj->propOverrides);
+          glm::vec3 objScale = obj->scale.resolve(obj->propOverrides);
+          glm::vec3 camUp = camera.rot * glm::vec3{0,1,0};
+          float objHeight = glm::dot(camUp, objRot*objScale);
+          float focusDist = camera.calculateFocusDistance(objHeight);
+          camera.focus(objPos, focusDist);
+        }
       }
     }
   }
@@ -459,8 +470,7 @@ void Editor::Viewport3D::draw()
     float wheel = io.MouseWheel;
     if (wheel != 0.0f) {
       float wheelSpeed = (isShiftDown ? 4.0f : 1.0f) * 30.0f;
-      glm::vec3 forward = camera.rot * glm::vec3(0, 0, -1);
-      camera.velocity += forward * (wheel * wheelSpeed);
+      camera.zoomSpeed += wheel * wheelSpeed;
     }
   }
 
@@ -518,12 +528,15 @@ void Editor::Viewport3D::draw()
 
   auto dragDelta = mousePos - mousePosStart;
   if (isMouseDown) {
-    if (mouseHeldMiddle) {
+    if (isAltDown && mouseHeldLeft) {
+      camera.stopMoveDelta();
+      camera.orbitDelta(dragDelta);
+    } else if (mouseHeldMiddle) {
       camera.stopRotateDelta();
       camera.moveDelta(-dragDelta * 3.0f);
     } else if (mouseHeldRight) {
       camera.stopMoveDelta();
-      camera.rotateDelta(dragDelta);
+      camera.lookDelta(dragDelta);
     }
   } else {
     camera.stopRotateDelta();
@@ -814,10 +827,9 @@ void Editor::Viewport3D::draw()
     gizmoTransformActive = false;
   }
 
-  float camDist = glm::length(camera.posOffset);
-  if (ImViewGuizmo::Rotate(camera.posOffset, camera.rot, gizPos)) {
-    if (camDist > 0.0001f) {
-      camera.posOffset = glm::normalize(camera.posOffset) * camDist;
-    }
+  glm::vec3 posOffset = camera.pos - camera.pivot;
+  float camDist = glm::length(posOffset);
+  if (ImViewGuizmo::Rotate(posOffset, camera.rot, gizPos, camDist)) {
+    camera.pos = camera.pivot + posOffset;
   }
 }

@@ -71,7 +71,7 @@ namespace ImViewGuizmo {
 
         // Labels
         float labelSize = 1.0f;
-        const char* axisLabels[3] = {"X", "Y", "Z"};
+        const char* axisLabels[6] = {"X", "x", "Y", "y", "Z", "z"};
         ImU32 labelColor =  IM_COL32(255, 255, 255, 255);
 
         //Big Circle
@@ -127,7 +127,9 @@ namespace ImViewGuizmo {
         bool isAnimating = false;
         float animationStartTime = 0.f;
         vec3 startPos;
+        quat startRot;
         vec3 targetPos;
+        quat targetRot;
         vec3 startUp;
         vec3 targetUp;
 
@@ -219,26 +221,14 @@ namespace ImViewGuizmo {
             float t = std::min(1.0f, elapsedTime / style.snapAnimationDuration);
             t = 1.0f - (1.0f - t) * (1.0f - t);
 
-            vec3 currentDir;
-            if (length(ctx.startPos) > 0.0001f && length(ctx.targetPos) > 0.0001f) {
-                vec3 startDir = normalize(ctx.startPos);
-                vec3 targetDir = normalize(ctx.targetPos);
-                currentDir = normalize(mix(startDir, targetDir, t));
-            } else
-                currentDir = normalize(mix(vec3(0,0,1), normalize(ctx.targetPos), t));
-            float startDistance = length(ctx.startPos);
-            float targetDistance = length(ctx.targetPos);
-            float currentDistance = mix(startDistance, targetDistance, t);
-            cameraPos = currentDir * currentDistance;
-            
-            vec3 currentUp = normalize(mix(ctx.startUp, ctx.targetUp, t));
-            cameraRot = quatLookAt(normalize(cameraPos), currentUp);
+            cameraPos = mix(ctx.startPos, ctx.targetPos, t);
+            cameraRot = slerp(ctx.startRot, ctx.targetRot, t);
 
             wasModified = true;
 
             if (t >= 1.0f) {
                 cameraPos = ctx.targetPos;
-                cameraRot = quatLookAt(normalize(ctx.targetPos), ctx.targetUp);
+                cameraRot = ctx.targetRot;
                 ctx.isAnimating = false;
             }
         }
@@ -255,7 +245,7 @@ namespace ImViewGuizmo {
         mat4 viewMatrix = inverse(worldMatrix);
 
         mat4 gizmoViewMatrix = mat4(mat3(viewMatrix));
-        mat4 gizmoProjectionMatrix = ortho(1.f, -1.f, -1.f, 1.f, -100.0f, 100.0f);
+        mat4 gizmoProjectionMatrix = ortho(-1, 1, -1, 1, 1, -1);
         mat4 gizmoMvp = gizmoProjectionMatrix * gizmoViewMatrix;
 
         std::vector<GizmoAxis> axes;
@@ -339,7 +329,7 @@ namespace ImViewGuizmo {
             if (axis.depth < -0.1f)
                 continue;
             ImVec2 textPos = worldToScreen(axis.direction * style.lineLength);
-            const char* label = style.axisLabels[axis.axisIndex];
+            const char* label = style.axisLabels[axis.id];
             ImVec2 textSize = font->CalcTextSizeA(scaledFontSize, FLT_MAX, 0.f, label);
             drawList->AddText(font, scaledFontSize,{textPos.x - textSize.x * 0.5f, textPos.y - textSize.y * 0.5f}, style.labelColor, label);
         }
@@ -374,9 +364,11 @@ namespace ImViewGuizmo {
             vec3 up = worldUp; 
             if (axisIndex == 1)
                 up = worldForward;
-            vec3 targetUp = -up;
+            vec3 targetUp = up;
             
-            quat targetRotation = quatLookAt(targetDir, targetUp);
+            quat targetRotation = quatLookAt(-targetDir, targetUp);
+            if (dot(cameraRot, targetRotation) < 0)
+                targetRotation = -targetRotation;
 
             if (style.animateSnap && style.snapAnimationDuration > 0.0f) {
                 bool pos_is_different = length2(cameraPos - targetPosition) > 0.0001f;
@@ -386,7 +378,9 @@ namespace ImViewGuizmo {
                     ctx.isAnimating = true;
                     ctx.animationStartTime = static_cast<float>(ImGui::GetTime());
                     ctx.startPos = cameraPos;
+                    ctx.startRot = cameraRot;
                     ctx.targetPos = targetPosition;
+                    ctx.targetRot = targetRotation;
                     ctx.startUp = cameraRot * vec3(0.0f, 1.0f, 0.0f);
                     ctx.targetUp = targetUp;
                 }

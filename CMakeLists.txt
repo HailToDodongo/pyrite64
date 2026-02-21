@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(pyrite64 VERSION 0.1.0)
+project(pyrite64 VERSION 0.2.0)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
