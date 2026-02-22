@@ -46,7 +46,7 @@ namespace Editor
       Renderer::Object objSprites{};
 
       bool showGrid{true};
-      bool showCollMesh{true};
+      bool showCollMesh{false};
       bool showCollObj{true};
 
       int gizmoOp{0};
