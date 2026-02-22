@@ -1,4 +1,6 @@
 # v0.3.0
+- Editor - General
+  - Auto-Save before build & run 
 - Editor - Viewport:
   - Multi-Selection support:
     - Click and drag left mouse to multi-select objects

@@ -11,6 +11,11 @@
 #include "utils/toolchain.h"
 #include "SDL3/SDL.h"
 
+namespace Editor
+{
+  class Scene;
+}
+
 namespace Renderer { class Scene; }
 
 struct Context
@@ -21,6 +26,7 @@ struct Context
   Renderer::Scene *scene{nullptr};
   SDL_Window* window{nullptr};
   SDL_GPUDevice *gpu{nullptr};
+  std::unique_ptr<Editor::Scene> editorScene{nullptr};
 
   struct Clipboard
   {

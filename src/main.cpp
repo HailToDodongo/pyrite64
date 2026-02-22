@@ -190,7 +190,7 @@ int main(int argc, char** argv)
     Renderer::Scene scene{};
     ctx.scene = &scene;
     Editor::Main editorMain{ctx.gpu};
-    Editor::Scene editorScene{};
+    ctx.editorScene = std::make_unique<Editor::Scene>();
 
     if(!CLI::getProjectPath().empty())
     {
@@ -229,7 +229,7 @@ int main(int argc, char** argv)
             if ((event.key.mod & SDL_KMOD_CTRL) && event.key.key == SDLK_S) {
               if (ctx.project) {
                 ctx.project->save();
-                editorScene.save();
+                ctx.editorScene->save();
               }
             }
           }
@@ -288,7 +288,7 @@ int main(int argc, char** argv)
 
       if (ctx.project) {
         Editor::UndoRedo::getHistory().begin();
-        editorScene.draw();
+        ctx.editorScene->draw();
         Editor::UndoRedo::getHistory().end();
       } else {
         editorMain.draw();

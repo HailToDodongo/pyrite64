@@ -14,6 +14,7 @@
 #include "../utils/json.h"
 #include "../utils/proc.h"
 #include "undoRedo.h"
+#include "pages/editorScene.h"
 //#include <stacktrace>
 
 namespace Editor::Actions
@@ -109,6 +110,9 @@ namespace Editor::Actions
       if (!ctx.project)return false;
 
       ImGui::SetWindowFocus("Log");
+
+      ctx.project->save();
+      ctx.editorScene->save();
 
       auto z64Path = ctx.project->getPath() + "/" + ctx.project->conf.romName + ".z64";
       fs::remove(z64Path);
