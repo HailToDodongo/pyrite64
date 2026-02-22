@@ -139,7 +139,6 @@ void Editor::Scene::draw()
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2, 2));
   ImGui::Begin("Files");
   ImGui::PopStyleVar();
-
     assetsBrowser.draw();
   ImGui::End();
 
@@ -159,7 +158,9 @@ void Editor::Scene::draw()
 
   }
 
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2, 2));
   ImGui::Begin("Log");
+  ImGui::PopStyleVar();;
     logWindow.draw();
   ImGui::End();
 

@@ -28,11 +28,12 @@ namespace Utils::FS
     return content;
   }
 
-  inline void saveTextFile(const fs::path &path, const std::string &content) {
+  inline bool saveTextFile(const fs::path &path, const std::string &content) {
     FILE *file = fopen(path.string().c_str(), "wb");
-    if(!file)return;
+    if(!file)return false;
     fwrite(content.data(), 1, content.size(), file);
     fclose(file);
+    return true;
   }
 
   std::vector<std::string> scanDirs(const std::string &basePath);

@@ -241,6 +241,7 @@ add_executable(pyrite64 src/main.cpp
         src/utils/toolchain.cpp
         src/editor/imgui/notification.cpp
         src/utils/ringBuffer.h
+        src/utils/time.cpp
 )
 
 target_include_directories(pyrite64 PRIVATE

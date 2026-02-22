@@ -1,12 +1,15 @@
 # v0.3.0
-- Editor:
+- Editor - Viewport:
   - Multi-Selection support:
     - Click and drag left mouse to multi-select objects
     - Hold "CTRL" to add to selection
     - Transform tools can be used on multiple objects at once
   - Focus objects by pressing "F"
   - Orbit objects by holding "ALT" and left-clicking
-  - 3D axis-gizmo label and orientation fixes 
+  - 3D axis-gizmo label and orientation fixes
+- Editor - Log Window:
+  - Buttons for clear / copy to clipboard / save to file
+  - Properly strip ANSI codes 
 
 # v0.2.0
 - Toolchain-Manager:
