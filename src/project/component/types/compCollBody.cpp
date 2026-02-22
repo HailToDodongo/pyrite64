@@ -132,4 +132,14 @@ namespace Project::Component::CollBody
       Utils::Mesh::addLineSphere(*vp.getLines(), center, halfExt, glm::vec4{0.0f, 1.0f, 1.0f, 1.0f});
     }
   }
+
+  Utils::AABB getAABB(Object &obj, Entry &entry) {
+    Data &data = *static_cast<Data*>(entry.data.get());
+    Utils::AABB aabb;
+    glm::vec3 halfExt = data.halfExtend.resolve(obj.propOverrides) * (float)0xFFFF;
+    glm::vec3 offset = data.offset.resolve(obj.propOverrides) * (float)0xFFFF;
+    aabb.addPoint(offset - halfExt);
+    aabb.addPoint(offset + halfExt);
+    return aabb;
+  }
 }

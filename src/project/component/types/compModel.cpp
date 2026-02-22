@@ -251,4 +251,12 @@ namespace Project::Component::Model
       Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, aabbCol);
     }
   }
+
+  Utils::AABB getAABB(Object &obj, Entry &entry) {
+    Data &data = *static_cast<Data*>(entry.data.get());
+    Utils::AABB aabb = data.aabb;
+    aabb.min *= (float)0xFFFF;
+    aabb.max *= (float)0xFFFF;
+    return aabb;
+  }
 }

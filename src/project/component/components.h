@@ -9,6 +9,7 @@
 #include "json.hpp"
 #include "IconsMaterialDesignIcons.h"
 #include "../../build/sceneContext.h"
+#include "../../utils/aabb.h"
 
 namespace Editor
 {
@@ -37,6 +38,7 @@ namespace Project::Component
   typedef nlohmann::json(*FuncCompSerial)(const Entry &entry);
   typedef std::shared_ptr<void>(*FuncCompDeserial)(nlohmann::json &doc);
   typedef void(*FuncCompBuild)(Object&, Entry &entry, Build::SceneCtx &ctx);
+  typedef Utils::AABB(*FuncCompGetAABB)(Object&, Entry &entry);
 
   struct CompInfo
   {
@@ -52,6 +54,7 @@ namespace Project::Component
     FuncCompSerial funcSerialize{};
     FuncCompDeserial funcDeserialize{};
     FuncCompBuild funcBuild{};
+    FuncCompGetAABB funcGetAABB{};
   };
 
   #define MAKE_COMP(name) \
@@ -64,6 +67,7 @@ namespace Project::Component
       nlohmann::json serialize(const Entry &entry); \
       std::shared_ptr<void> deserialize(nlohmann::json &doc); \
       void build(Object&, Entry &entry, Build::SceneCtx &ctx); \
+      Utils::AABB getAABB(Object &obj, Entry &entry); \
     }
 
   MAKE_COMP(Code)
@@ -87,7 +91,8 @@ namespace Project::Component
       .funcDraw = Code::draw,
       .funcSerialize = Code::serialize,
       .funcDeserialize = Code::deserialize,
-      .funcBuild = Code::build
+      .funcBuild = Code::build,
+      .funcGetAABB = nullptr
     },
     CompInfo{
       .id = 1,
@@ -98,7 +103,8 @@ namespace Project::Component
       .funcDraw3D = Model::draw3D,
       .funcSerialize = Model::serialize,
       .funcDeserialize = Model::deserialize,
-      .funcBuild = Model::build
+      .funcBuild = Model::build,
+      .funcGetAABB = Model::getAABB
     },
     CompInfo{
       .id = 2,
@@ -110,7 +116,8 @@ namespace Project::Component
       .funcDraw3D = Light::draw3D,
       .funcSerialize = Light::serialize,
       .funcDeserialize = Light::deserialize,
-      .funcBuild = Light::build
+      .funcBuild = Light::build,
+      .funcGetAABB = nullptr
     },
     CompInfo{
       .id = 3,
@@ -122,7 +129,8 @@ namespace Project::Component
       .funcDraw3D = Camera::draw3D,
       .funcSerialize = Camera::serialize,
       .funcDeserialize = Camera::deserialize,
-      .funcBuild = Camera::build
+      .funcBuild = Camera::build,
+      .funcGetAABB = nullptr
     },
     CompInfo{
       .id = 4,
@@ -133,7 +141,8 @@ namespace Project::Component
       .funcDrawPost3D = CollMesh::draw3D,
       .funcSerialize = CollMesh::serialize,
       .funcDeserialize = CollMesh::deserialize,
-      .funcBuild = CollMesh::build
+      .funcBuild = CollMesh::build,
+      .funcGetAABB = CollMesh::getAABB
     },
     CompInfo{
       .id = 5,
@@ -144,7 +153,8 @@ namespace Project::Component
       .funcDrawPost3D = CollBody::draw3D,
       .funcSerialize = CollBody::serialize,
       .funcDeserialize = CollBody::deserialize,
-      .funcBuild = CollBody::build
+      .funcBuild = CollBody::build,
+      .funcGetAABB = CollBody::getAABB
     },
     CompInfo{
       .id = 6,
@@ -155,7 +165,8 @@ namespace Project::Component
       .funcDrawPost3D = Audio2D::draw3D,
       .funcSerialize = Audio2D::serialize,
       .funcDeserialize = Audio2D::deserialize,
-      .funcBuild = Audio2D::build
+      .funcBuild = Audio2D::build,
+      .funcGetAABB = nullptr
     },
     CompInfo{
       .id = 7,
@@ -167,7 +178,8 @@ namespace Project::Component
       .funcDrawPost3D = Constraint::draw3D,
       .funcSerialize = Constraint::serialize,
       .funcDeserialize = Constraint::deserialize,
-      .funcBuild = Constraint::build
+      .funcBuild = Constraint::build,
+      .funcGetAABB = nullptr
     },
     CompInfo{
       .id = 8,
@@ -179,7 +191,8 @@ namespace Project::Component
       .funcDrawPost3D = Culling::draw3D,
       .funcSerialize = Culling::serialize,
       .funcDeserialize = Culling::deserialize,
-      .funcBuild = Culling::build
+      .funcBuild = Culling::build,
+      .funcGetAABB = nullptr
     },
     CompInfo{
       .id = 9,
@@ -190,7 +203,8 @@ namespace Project::Component
       .funcDraw3D = NodeGraph::draw3D,
       .funcSerialize = NodeGraph::serialize,
       .funcDeserialize = NodeGraph::deserialize,
-      .funcBuild = NodeGraph::build
+      .funcBuild = NodeGraph::build,
+      .funcGetAABB = nullptr
     },
     CompInfo{
       .id = 10,
@@ -201,7 +215,8 @@ namespace Project::Component
       .funcDraw3D = AnimModel::draw3D,
       .funcSerialize = AnimModel::serialize,
       .funcDeserialize = AnimModel::deserialize,
-      .funcBuild = AnimModel::build
+      .funcBuild = AnimModel::build,
+      .funcGetAABB = AnimModel::getAABB
     }
   };
 
