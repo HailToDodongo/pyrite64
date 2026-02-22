@@ -65,6 +65,9 @@ void Editor::LogWindow::draw()
   ImGui::PushID("LOG");
   ImGui::PushStyleColor(ImGuiCol_FrameBg, {0.05f, 0.05f, 0.06f, 1.0f});
 
+  const char* child_window_name = NULL;
+  ImFormatStringToTempBuffer(&child_window_name, NULL, "Log/LOG_43838E2B/%08X", ImGui::GetID(""));
+
   auto &logStripped = Utils::Logger::getLogStripped();
   ImGui::InputTextMultiline("", (char*)logStripped.data(), logStripped.size()+1, {
     ImGui::GetWindowSize().x-6,
@@ -72,13 +75,10 @@ void Editor::LogWindow::draw()
   }, ImGuiInputTextFlags_ReadOnly);
 
 
-  if (lastLen != log.length()) {
-    lastLen = log.length();
-    const char* child_window_name = NULL;
-    ImFormatStringToTempBuffer(&child_window_name, NULL, "Log/LOG_43838E2B/%08X", ImGui::GetID(""));
-    ImGuiWindow* child_window = ImGui::FindWindowByName(child_window_name);
-    if(child_window) {
-      ImGui::SetScrollY(child_window, child_window->ScrollMax.y);
+  if (lastLen != logStripped.length()) {
+    lastLen = logStripped.length();
+    if(auto *childWindow = ImGui::FindWindowByName(child_window_name)) {
+      ImGui::SetScrollY(childWindow, childWindow->ScrollMax.y);
     }
   }
 
