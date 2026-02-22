@@ -7,9 +7,6 @@
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/geometric.hpp"
-#include "../utils/logger.h"
-
-//#include "glm/gtx/quaternion.hpp"
 
 namespace
 {
@@ -76,12 +73,6 @@ void Renderer::Camera::apply(UniformGlobal &uniGlobal)
   const glm::vec3 dynamicUp = glm::normalize(rot * WORLD_UP);
   const glm::vec3 target = pos + direction;
   uniGlobal.cameraMat = glm::lookAt(pos, target, dynamicUp);
-
-
-/*
-  uniGlobal.cameraMat = glm::mat4_cast(rot);
-  uniGlobal.cameraMat = glm::translate(uniGlobal.cameraMat, -pos * rot);
-  */
 }
 
 void Renderer::Camera::rotateDelta(glm::vec2 screenDelta)
