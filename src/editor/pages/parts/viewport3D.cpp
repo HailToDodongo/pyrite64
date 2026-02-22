@@ -575,9 +575,14 @@ void Editor::Viewport3D::draw()
       auto prefab = ctx.project->getAssets().getPrefabByUUID(prefabUUID);
       if(prefab) {
         UndoRedo::getHistory().markChanged("Add Prefab");
-        auto added = scene->addPrefabInstance(prefabUUID);
-        if (added) {
-          ctx.setObjectSelection(added->uuid);
+        auto newObj = scene->addPrefabInstance(prefabUUID);
+        if (newObj) {
+          // place in front of camera view
+          glm::vec3 camForward = camera.rot * glm::vec3{0,0,-1};
+          glm::vec3 camPos = camera.pos;
+          newObj->pos.resolve(newObj->propOverrides) = camPos + camForward * 150.0f;
+
+          ctx.setObjectSelection(newObj->uuid);
         }
       }
     }

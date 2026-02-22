@@ -314,6 +314,9 @@ int main(int argc, char** argv)
     }
   }
 
+  // needs to be destroyed before GPU teardown
+  ctx.editorScene.reset();
+
   SDL_WaitForGPUIdle(ctx.gpu);
 
   ImGui_ImplSDL3_Shutdown();

@@ -1,6 +1,7 @@
 # v0.3.0
 - Editor - General
-  - Auto-Save before build & run 
+  - Auto-Save before build & run
+  - Instantiating prefabs now places them in front of camera   
 - Editor - Viewport:
   - Multi-Selection support:
     - Click and drag left mouse to multi-select objects
