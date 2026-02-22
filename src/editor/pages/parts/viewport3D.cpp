@@ -450,19 +450,10 @@ void Editor::Viewport3D::draw()
     } else {
       if(!ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
       {
-        if (ImGui::IsKeyDown(ImGuiKey_G))gizmoOp = 0;
-        if (ImGui::IsKeyDown(ImGuiKey_R))gizmoOp = 1;
-        if (ImGui::IsKeyDown(ImGuiKey_S))gizmoOp = 2;
-
-        if (ImGui::IsKeyDown(ImGuiKey_F) && obj) {
-          glm::vec3 objPos = obj->pos.resolve(obj->propOverrides);
-          glm::quat objRot = obj->rot.resolve(obj->propOverrides);
-          glm::vec3 objScale = obj->scale.resolve(obj->propOverrides);
-          glm::vec3 camUp = camera.rot * glm::vec3{0,1,0};
-          float objHeight = glm::dot(camUp, objRot*objScale);
-          float focusDist = camera.calculateFocusDistance(objHeight);
-          camera.focus(objPos, focusDist);
-        }
+        if (ImGui::IsKeyPressed(ImGuiKey_G))gizmoOp = 0;
+        if (ImGui::IsKeyPressed(ImGuiKey_R))gizmoOp = 1;
+        if (ImGui::IsKeyPressed(ImGuiKey_S))gizmoOp = 2;
+        if (ImGui::IsKeyPressed(ImGuiKey_F))camera.focusSelection(ctx);
       }
     }
   }

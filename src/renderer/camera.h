@@ -8,6 +8,7 @@
 #include "uniforms.h"
 #include "glm/vec3.hpp"
 #include "glm/gtc/quaternion.hpp"
+#include "../context.h"
 
 namespace Renderer
 {
@@ -52,6 +53,6 @@ namespace Renderer
       }
 
       void focus(glm::vec3 position, float distance);
-      float calculateFocusDistance(float height);
+      void focusSelection(Context &ctx);
   };
 }

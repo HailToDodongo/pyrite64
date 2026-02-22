@@ -7,6 +7,7 @@
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/geometric.hpp"
+#include "../utils/logger.h"
 
 //#include "glm/gtx/quaternion.hpp"
 
@@ -160,8 +161,35 @@ void Renderer::Camera::focus(glm::vec3 position, float distance) {
   pos = pivot + posOffset;
 }
 
-float Renderer::Camera::calculateFocusDistance(float height) {
-    float fov = glm::radians(FOV);
-    float dist = screenSize.y * height * 0.5f / tanf(fov * 0.5f);
-    return dist * 1.1f;
+void Renderer::Camera::focusSelection(Context &ctx) {
+  const auto& selectedUUIDs = ctx.getSelectedObjectUUIDs();
+  if (selectedUUIDs.empty()) return;
+  
+  auto scene = ctx.project->getScenes().getLoadedScene();
+  if (!scene) return;
+
+  Utils::AABB aabb;
+  for (uint32_t uuid : selectedUUIDs) {
+    auto obj = scene->getObjectByUUID(uuid);
+    if (!obj) continue;
+
+    Utils::AABB objAABB = obj->getWorldAABB();
+    aabb.addPoint(objAABB.min);
+    aabb.addPoint(objAABB.max);
+  }
+  
+  glm::vec3 h = aabb.getHalfExtend();
+  glm::vec3 up  = rot * glm::vec3{0, 1, 0};
+  float height = glm::abs(glm::dot(up, glm::vec3(h.x, 0, 0))) +
+                 glm::abs(glm::dot(up, glm::vec3(0, h.y, 0))) +
+                 glm::abs(glm::dot(up, glm::vec3(0, 0, h.z)));
+  
+  glm::vec3 fwd = rot * glm::vec3{0, 0, 1};
+  float depth = glm::abs(glm::dot(fwd, glm::vec3(h.x, 0, 0))) +
+                glm::abs(glm::dot(fwd, glm::vec3(0, h.y, 0))) +
+                glm::abs(glm::dot(fwd, glm::vec3(0, 0, h.z)));
+
+  float fov = glm::radians(FOV);
+  float dist = 1.1f * depth + (height) / tanf(fov * 0.5f);
+  focus(aabb.getCenter(), dist);
 }
