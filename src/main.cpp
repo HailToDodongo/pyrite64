@@ -89,9 +89,9 @@ int main(int argc, char** argv)
   SDL_GetTicks();
 
   // @TODO: handle actual DPI settings, or have scaling in-editor
-  float main_scale = 1.0f;//SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+  float dpiScale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
   SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
-  SDL_Window* window = SDL_CreateWindow("Pyrite64 - Editor", (int)(1280 * main_scale), (int)(800 * main_scale), window_flags);
+  SDL_Window* window = SDL_CreateWindow("Pyrite64 - Editor", (int)(1280 * dpiScale), (int)(800 * dpiScale), window_flags);
   ctx.window = window;
 
   srand(time(NULL) + SDL_GetTicks());
@@ -170,8 +170,9 @@ int main(int argc, char** argv)
 
   // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-  ImGui::applyTheme();
-  ImGui::loadFonts(main_scale);
+  ImGui::Theme::setTheme();
+  ImGui::Theme::setZoom();
+  ImGui::Theme::update();
 
   // Setup Platform/Renderer backends
   ImGui_ImplSDL3_InitForSDLGPU(window);

@@ -3,12 +3,15 @@
 * @license MIT
 */
 #pragma once
+#include <string>
+
 #include "imgui.h"
 
-namespace ImGui
+namespace ImGui::Theme
 {
-  void applyTheme();
-  void loadFonts(float contentScale);
+  void setTheme(const std::string &name = "default");
+  void setZoom(float zoomLevel = 1.0f);
 
+  void update();
   ImFont *getFontMono();
 }

@@ -60,7 +60,7 @@ void Editor::LogWindow::draw()
   ImGui::EndChild();
 
   ImGui::BeginChild("LOG", ImVec2(0, 0), ImGuiChildFlags_Borders);
-  ImGui::PushFont(ImGui::getFontMono());
+  ImGui::PushFont(ImGui::Theme::getFontMono());
 
   ImGui::PushID("LOG");
   ImGui::PushStyleColor(ImGuiCol_FrameBg, {0.05f, 0.05f, 0.06f, 1.0f});

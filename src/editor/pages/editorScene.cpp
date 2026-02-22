@@ -276,7 +276,7 @@ void Editor::Scene::draw()
   fpsRingBuffer.push((double)ctx.timeCpuSelf / 1000.0 / 1000.0);
 
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
-  ImGui::PushFont(ImGui::getFontMono());
+  ImGui::PushFont(ImGui::Theme::getFontMono());
   ImVec4 perfColor{1.0f,1.0f,1.0f,0.4f};
   if (io.Framerate < 45) perfColor = {1.0f, 0.5f, 0.5f, 1.0f};
   ImGui::TextColored(perfColor, "%d FPS | History: %d/%d %s | CPU: %.2fms",

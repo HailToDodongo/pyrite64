@@ -11,11 +11,47 @@ namespace
 {
   constinit ImFont* fontMono{nullptr};
   constexpr ImVec4 COLOR_HIGHLIGHT{1.0f, 0.5f, 0.0f, 1.0f};
+
+  void loadFonts(float contentScale = 1.0f)
+  {
+    if(fontMono)return;
+
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(contentScale);        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+    style.FontScaleDpi = contentScale;        // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
+
+    style.FontSizeBase = 15.0f;
+    ImFont* font = io.Fonts->AddFontFromFileTTF("./data/Altinn-DINExp.ttf");
+    IM_ASSERT(font != nullptr);
+
+    static const ImWchar icons_ranges[] = { ICON_MIN_MDI, ICON_MAX_16_MDI, 0 };
+    ImFontConfig icons_config;
+    icons_config.MergeMode = true;
+    icons_config.PixelSnapH = true;
+    icons_config.GlyphMinAdvanceX = 16.0f;
+    font = io.Fonts->AddFontFromFileTTF("./data/materialdesignicons-webfont.ttf", 16, &icons_config, icons_ranges);
+    IM_ASSERT(font != nullptr);
+
+    fontMono = io.Fonts->AddFontFromFileTTF("./data/GoogleSansCode.ttf", 16);
+    IM_ASSERT(fontMono != nullptr);
+  }
 }
 
-void ImGui::applyTheme()
+void ImGui::Theme::setTheme(const std::string &name)
+{
+
+}
+
+void ImGui::Theme::setZoom(float zoomLevel)
+{
+
+}
+
+void ImGui::Theme::update()
 {
   ImGuiStyle &style = ImGui::GetStyle();
+  style = ImGuiStyle();
   ImVec4 *colors = style.Colors;
 
   // Primary background
@@ -106,30 +142,17 @@ void ImGui::applyTheme()
   gStyle.TranslationLineArrowSize = 7;
 
   ImGuizmo::SetGizmoSizeClipSpace(0.14f);
+
+  loadFonts(1.0f);
+
+  // zoom handling
+  /*float prevZoomFactor = 1.0f;
+  float zoomFactor = 2.0f;
+  io.FontGlobalScale = zoomFactor; // scales all text
+  ImGui::GetStyle().ScaleAllSizes(zoomFactor / prevZoomFactor); // scales all widget sizes, paddings, etc.
+  prevZoomFactor = zoomFactor;*/
 }
 
-void ImGui::loadFonts(float contentScale) {
-  ImGuiIO& io = ImGui::GetIO();
-  ImGuiStyle& style = ImGui::GetStyle();
-  style.ScaleAllSizes(contentScale);        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
-  style.FontScaleDpi = contentScale;        // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
-
-  style.FontSizeBase = 15.0f;
-  ImFont* font = io.Fonts->AddFontFromFileTTF("./data/Altinn-DINExp.ttf");
-  IM_ASSERT(font != nullptr);
-
-  static const ImWchar icons_ranges[] = { ICON_MIN_MDI, ICON_MAX_16_MDI, 0 };
-  ImFontConfig icons_config;
-  icons_config.MergeMode = true;
-  icons_config.PixelSnapH = true;
-  icons_config.GlyphMinAdvanceX = 16.0f;
-  font = io.Fonts->AddFontFromFileTTF("./data/materialdesignicons-webfont.ttf", 16, &icons_config, icons_ranges);
-  IM_ASSERT(font != nullptr);
-
-  fontMono = io.Fonts->AddFontFromFileTTF("./data/GoogleSansCode.ttf", 16);
-  IM_ASSERT(fontMono != nullptr);
-}
-
-ImFont* ImGui::getFontMono() {
+ImFont* ImGui::Theme::getFontMono() {
   return fontMono;
 }
