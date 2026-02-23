@@ -4,6 +4,7 @@
 */
 #pragma once
 #include "glm/vec3.hpp"
+#include "glm/gtc/quaternion.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
 namespace Utils
@@ -54,6 +55,20 @@ namespace Utils
       for (const auto &corner : corners) {
         addPoint(glm::vec3(matrix * glm::vec4(corner, 1.0f)));
       }
+    }
+
+    void transform(const glm::vec3 &pos, const glm::quat &rot, const glm::vec3 &scale) {
+      glm::vec3 center = (min + max) * 0.5f;
+      glm::vec3 extent = (max - min) * 0.5f * scale;
+      center = rot * (center * scale) + pos;
+
+      glm::vec3 right = rot * glm::vec3(1, 0, 0);
+      glm::vec3 up    = rot * glm::vec3(0, 1, 0);
+      glm::vec3 fwd   = rot * glm::vec3(0, 0, 1);
+      extent = glm::abs(right)*extent.x + glm::abs(up)*extent.y + glm::abs(fwd)*extent.z;
+
+      min = center - extent;
+      max = center + extent;
     }
   };
 }

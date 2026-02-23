@@ -89,17 +89,10 @@ namespace Project
 
       Utils::AABB getWorldAABB() {
         Utils::AABB aabb = getLocalAABB();
-        glm::vec3 skew{0,0,0};
-        glm::vec4 persp{0,0,0,1};
-        glm::mat4 mat = glm::recompose(
-          scale.resolve(propOverrides),
-          rot.resolve(propOverrides),
-          pos.resolve(propOverrides),
-          skew, 
-          persp
-        );
-
-        aabb.transform(mat);
+        glm::vec3 t = pos.resolve(propOverrides);
+        glm::quat r = rot.resolve(propOverrides);
+        glm::vec3 s = scale.resolve(propOverrides);
+        aabb.transform(t, r, s);
         return aabb;
       }
   };
