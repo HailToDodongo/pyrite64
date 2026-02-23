@@ -39,6 +39,8 @@ namespace Build
     std::string assetFileMap{};
     uint32_t stringOffset{0};
 
+    bool needsOpus{false};
+
     void addAsset(const Project::AssetManagerEntry &entry);
   };
 }

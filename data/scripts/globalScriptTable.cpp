@@ -1,6 +1,6 @@
 // NOTE: Auto-Generated File!
 
-#include <assert.h>
+#include <libdragon.h>
 
 #include "script/globalScript.h"
 

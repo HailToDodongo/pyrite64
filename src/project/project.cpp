@@ -5,11 +5,50 @@
 #include "project.h"
 
 #include <filesystem>
+#include <fstream>
+#include <string>
 
 #include "../utils/fs.h"
+#include "../utils/hash.h"
 
 #include "../utils/json.h"
 #include "../utils/jsonBuilder.h"
+
+namespace
+{
+  /**
+   * Recursively copy changed files from src to dst if file is different.
+   * This is used to make sure updated engine code is put in the project.
+   * Doing so each time would force a recompile, so the content is checked.
+   */
+  void copyChangedEngineFiles(const fs::path& src, const fs::path& dst) {
+
+    if (!fs::exists(src)) return;
+    if (fs::is_directory(src)) {
+      fs::create_directories(dst);
+      for (const auto& entry : fs::directory_iterator(src)) {
+        copyChangedEngineFiles(entry.path(), dst / entry.path().filename());
+      }
+    } else {
+      std::string srcHash{};
+      std::string dstHash{};
+
+      // Read destination file if exists
+      if (fs::exists(dst)) {
+        std::ifstream ifs(dst, std::ios::binary);
+        dstHash = std::string((std::istreambuf_iterator(ifs)), std::istreambuf_iterator<char>());
+        {
+          std::ifstream ifsSrc(src, std::ios::binary);
+          srcHash = std::string((std::istreambuf_iterator(ifsSrc)), std::istreambuf_iterator<char>());
+        }
+      }
+
+      if (dstHash.empty() || srcHash != dstHash) {
+        fs::copy_file(src, dst, fs::copy_options::overwrite_existing);
+      }
+    }
+  }
+}
 
 std::string Project::ProjectConf::serialize() const {
   return Utils::JSON::Builder{}
@@ -58,18 +97,10 @@ Project::Project::Project(const std::string &p64projPath)
   Utils::FS::ensureFile(f / "Makefile.custom", "data/build/baseMakefile.custom");
   Utils::FS::ensureFile(f / "assets" / "p64" / "font.ia4.png", "data/build/assets/font.ia4.png");
 
-  // Copy engine directory into project.
-  // This avoids issues if the editor itself is sitting in a directory with spaces (e.g. "C:/Program Files/...").
-  // @TODO: also update the engine on changes by keeping some hash file
-  if(!fs::exists(f / "engine")) {
-    fs::create_directories(f / "engine");
-    // do individual copies to avoid build-files
-    auto opt = fs::copy_options::recursive | fs::copy_options::overwrite_existing;
-    fs::copy_file("n64/engine/Makefile",   f / "engine" / "Makefile", opt);
-    fs::copy_file("n64/engine/.gitignore", f / "engine" / ".gitignore", opt);
-    fs::copy(     "n64/engine/src",        f / "engine" / "src", opt);
-    fs::copy(     "n64/engine/include",    f / "engine" / "include", opt);
-  }
+  //auto t = SDL_GetTicksNS();
+  copyChangedEngineFiles("n64/engine", f / "engine");
+  //t = SDL_GetTicksNS() - t;
+  //printf("Engine files sync took %.2f ms\n", t / 1e6);
 
   deserialize(configJSON);
   assets.reload();

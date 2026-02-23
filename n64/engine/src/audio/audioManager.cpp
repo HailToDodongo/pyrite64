@@ -48,8 +48,8 @@ namespace P64::AudioManager
     masterVol = volume;
   }
 
-  void init() {
-    audio_init(32000, 3);
+  void init(int freq) {
+    audio_init(freq, 3);
     mixer_init(CHANNEL_COUNT);
     slots = {};
   }

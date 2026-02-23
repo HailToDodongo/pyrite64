@@ -129,6 +129,21 @@ void Build::buildGlobalScripts(Project::Project &project, SceneCtx &sceneCtx)
     }
   }
 
+  // asset specific settings
+  sceneCtx.needsOpus = false;
+  for(auto &asset : project.getAssets().getTypeEntries(Project::FileType::AUDIO))
+  {
+    if(asset.conf.wavCompression.value == 3) // Opus
+    {
+      sceneCtx.needsOpus = true;
+    }
+  }
+
+  // global game-init
+  if(sceneCtx.needsOpus) {
+    nameMap["onGameInit"] += " wav64_init_compression(3); \n";
+  }
+
   std::string srcHook = "";
   for (auto &pair : nameMap)
   {

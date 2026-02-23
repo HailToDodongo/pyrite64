@@ -75,9 +75,13 @@ void Editor::AssetInspector::draw() {
           { 44100, "44100 Hz" },
         }, asset->conf.wavResampleRate.value
       );
-      ImTable::addComboBox("Compression", asset->conf.wavCompression.value, {
-        "None", "VADPCM", "Opus",
-      });
+
+      ImTable::addVecComboBox<ImTable::ComboEntry>("Compression", {
+          { 0, "None" },
+          { 1, "VADPCM" },
+          { 3, "Opus" },
+        }, asset->conf.wavCompression.value
+      );
     }
 
     if (asset->type != FileType::AUDIO)

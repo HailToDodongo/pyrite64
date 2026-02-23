@@ -5,7 +5,7 @@
 #pragma once
 
 namespace P64::AudioManager {
-  void init();
+  void init(int freq = 32000);
   void update();
   void destroy();
 }
