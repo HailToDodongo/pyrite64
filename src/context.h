@@ -49,6 +49,7 @@ struct Context
   uint32_t selObjectUUID{0}; // The "primary" selected object (for single selection or the most recently selected in multi-selection)
   std::vector<uint32_t> selObjectUUIDs{}; // All selected object UUIDs (for multi-selection, includes selObjectUUID as the last element)
   Editor::InputConfig inputs{};
+  ImGuiKey* rebindingKey{nullptr};
 
   std::future<void> futureBuildRun{};
 

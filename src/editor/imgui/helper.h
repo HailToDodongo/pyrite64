@@ -8,6 +8,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "IconsMaterialDesignIcons.h"
 #include "../../project/project.h"
+#include "../../context.h"
 #include "../undoRedo.h"
 #include "../../utils/filePicker.h"
 #include "../../utils/prop.h"
@@ -408,13 +409,13 @@ namespace ImTable
     return res;
   }
 
-  inline void addComboBox(const std::string &name, int &itemCurrent, const std::vector<const char*> &items) {
+  inline bool addComboBox(const std::string &name, int &itemCurrent, const std::vector<const char*> &items) {
     add(name);
     bool disabled  (isPrefabLocked());
     if(disabled)ImGui::BeginDisabled();
     auto labelHidden = "##" + name;
     const char* preview = (itemCurrent >= 0 && itemCurrent < (int)items.size()) ? items[itemCurrent] : "<None>";
-    drawComboSelection(
+    bool res = drawComboSelection(
       labelHidden.c_str(),
       (int)items.size(),
       itemCurrent,
@@ -424,6 +425,7 @@ namespace ImTable
       [&itemCurrent](int i) { itemCurrent = i; }
     );
     if(disabled)ImGui::EndDisabled();
+    return res;
   }
 
   inline void addCheckBox(const std::string &name, bool &value) {
@@ -641,4 +643,35 @@ namespace ImTable
     if(changed)Editor::UndoRedo::getHistory().markChanged("Edit " + name);
   }
 
+  inline bool addKeybind(const std::string& name, ImGuiKey& key) {
+    add(name);
+    bool isRebinding = (ctx.rebindingKey == &key);
+    const char* label = isRebinding ? "Press any key..." : ImGui::GetKeyName(key);
+    ImGui::PushID(name.c_str());
+    if (ImGui::Button(label, ImVec2(-FLT_MIN, 0))) {
+      ctx.rebindingKey = &key;
+    }
+
+    if (!isRebinding) {
+      ImGui::PopID();
+      return false;
+    }
+
+    for (int k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k++) {
+      if (!ImGui::IsKeyPressed((ImGuiKey)k)) continue;
+
+      ctx.rebindingKey = nullptr;
+      if (k == ImGuiKey_Escape) {
+        break;
+      } else {
+        key = (ImGuiKey)k;
+        Editor::UndoRedo::getHistory().markChanged("Rebind " + name);
+        ImGui::PopID();
+        return true;
+      }
+    }
+    
+    ImGui::PopID();
+    return false;
+  }
 }

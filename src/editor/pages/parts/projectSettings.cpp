@@ -24,15 +24,30 @@ bool Editor::ProjectSettings::draw()
     ImTable::addPath("N64_INST", ctx.project->conf.pathN64Inst, true, "$N64_INST");
     ImTable::end();
   }
-  if (ImGui::CollapsingHeader("Preferences", ImGuiTreeNodeFlags_DefaultOpen)) {
-    ImTable::start("Preferences");
-    int preset = ctx.project->conf.inputPreset;
-    ImTable::addComboBox("Keymap", preset, { "Blender", "Industry Compatible" });
-    if (preset != ctx.project->conf.inputPreset) {
-      ctx.project->conf.inputPreset = preset;
-      ctx.inputs.applyPreset((Editor::InputPreset)preset);
+  if (ImGui::CollapsingHeader("Keymap", ImGuiTreeNodeFlags_DefaultOpen)) {
+    ImTable::start("Keymap");
+    if (ImTable::addComboBox("Preset", (int&)ctx.project->conf.inputPreset, { "Blender", "Industry Compatible" })) {
+      ctx.inputs.applyPreset((Editor::InputPreset)ctx.project->conf.inputPreset);
     }
     ImTable::end();
+    if (ImGui::TreeNodeEx("3D View", ImGuiTreeNodeFlags_SpanFullWidth)) {
+      ImTable::start("3D View");
+      ImTable::addKeybind("Move Forward", ctx.inputs.moveForward);
+      ImTable::addKeybind("Move Back", ctx.inputs.moveBack);
+      ImTable::addKeybind("Move Left", ctx.inputs.moveLeft);
+      ImTable::addKeybind("Move Right", ctx.inputs.moveRight);
+      ImTable::addKeybind("Move Up", ctx.inputs.moveUp);
+      ImTable::addKeybind("Move Down", ctx.inputs.moveDown);
+      ImTable::addKeybind("Toggle Ortho", ctx.inputs.toggleOrtho);
+      ImTable::addKeybind("Focus Object", ctx.inputs.focusObject);
+      ImTable::addKeybind("Gizmo Translate", ctx.inputs.gizmoTranslate);
+      ImTable::addKeybind("Gizmo Rotate", ctx.inputs.gizmoRotate);
+      ImTable::addKeybind("Gizmo Scale", ctx.inputs.gizmoScale);
+      ImTable::addKeybind("Delete Object", ctx.inputs.deleteObject);
+      ImTable::addKeybind("Snap Object", ctx.inputs.snapObject);
+      ImTable::end();
+      ImGui::TreePop();
+    }
   }
 
   // close button, positioned to bottom right corner
