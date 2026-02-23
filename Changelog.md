@@ -1,7 +1,8 @@
 # v0.3.0
 - Editor - General
   - Auto-Save before build & run
-  - Instantiating prefabs now places them in front of camera   
+  - Instantiating prefabs now places them in front of camera
+  - Fix issue where adding new scripts could temp. mess up asset associations during build
 - Editor - Viewport:
   - Multi-Selection support:
     - Click and drag left mouse to multi-select objects

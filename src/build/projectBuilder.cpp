@@ -97,7 +97,10 @@ bool Build::buildProject(const std::string &configPath)
   // Asset-Manager
   for (auto &typed : project.getAssets().getEntries()) {
     for (auto &entry : typed) {
-      if (entry.conf.exclude || entry.type == Project::FileType::UNKNOWN) continue;
+      if (entry.conf.exclude || entry.type == Project::FileType::UNKNOWN
+        || entry.type == Project::FileType::CODE_OBJ
+        || entry.type == Project::FileType::CODE_GLOBAL
+      ) continue;
       sceneCtx.addAsset(entry);
     }
   }

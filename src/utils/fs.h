@@ -32,6 +32,7 @@ namespace Utils::FS
     FILE *file = fopen(path.string().c_str(), "wb");
     if(!file)return false;
     fwrite(content.data(), 1, content.size(), file);
+    fflush(file);
     fclose(file);
     return true;
   }
