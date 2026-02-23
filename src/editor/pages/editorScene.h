@@ -7,6 +7,7 @@
 #include "parts/assetsBrowser.h"
 #include "parts/layerInspector.h"
 #include "parts/logWindow.h"
+#include "parts/memoryDashboard.h"
 #include "parts/nodeEditor.h"
 #include "parts/objectInspector.h"
 #include "parts/projectSettings.h"
@@ -30,6 +31,7 @@ namespace Editor
       LayerInspector layerInspector{};
       ObjectInspector objectInspector{};
       LogWindow logWindow{};
+      MemoryDashboard memoryDashboard{};
       SceneGraph sceneGraph{};
 
       bool dockSpaceInit{false};

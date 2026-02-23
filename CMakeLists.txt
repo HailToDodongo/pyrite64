@@ -161,6 +161,8 @@ add_executable(pyrite64 src/main.cpp
         src/utils/logger.cpp
         src/editor/pages/parts/logWindow.cpp
         src/editor/pages/parts/logWindow.h
+        src/editor/pages/parts/memoryDashboard.h
+        src/editor/pages/parts/memoryDashboard.cpp
         src/editor/pages/parts/projectSettings.h
         src/editor/pages/parts/projectSettings.cpp
         src/editor/pages/parts/sceneGraph.h
