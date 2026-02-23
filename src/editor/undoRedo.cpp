@@ -56,6 +56,7 @@ namespace Editor::UndoRedo
     undoStack.clear();
     redoStack.clear();
     nextChangedReason.clear();
+    savedState.reset();
     snapshotScene = nullptr;
     snapshotSelUUIDs.clear();
   }
@@ -67,6 +68,9 @@ namespace Editor::UndoRedo
     if (undoStack.empty()) {
       // If this is the first change, we need to save the initial state of the scene
       std::string initialState = scene->serialize(true);
+      if (!savedState.has_value()) {
+        savedState = initialState;
+      }
       auto ids = ctx.selObjectUUIDs;
       undoStack.push_back(std::make_unique<Entry>(
         std::move(initialState), "Initial State", ids
@@ -91,7 +95,6 @@ namespace Editor::UndoRedo
       undoStack.back()->selection = snapshotSelUUIDs;
     }
 
-    redoStack.clear();
     auto ids = ctx.selObjectUUIDs;
 
     auto newEntry = std::make_unique<Entry>(
@@ -110,11 +113,36 @@ namespace Editor::UndoRedo
       }
     }
 
+    redoStack.clear();
+
     undoStack.push_back(std::move(newEntry));
 
     if (undoStack.size() > maxHistorySize) {
       undoStack.erase(undoStack.begin(), undoStack.end() - maxHistorySize);
     }
+  }
+
+  void History::markSaved()
+  {
+    if (undoStack.empty()) {
+      savedState.reset();
+      return;
+    }
+
+    savedState = undoStack.back()->state;
+  }
+
+  bool History::isDirty() const
+  {
+    if (undoStack.empty()) {
+      return false;
+    }
+
+    if (!savedState.has_value()) {
+      return false;
+    }
+
+    return undoStack.back()->state != *savedState;
   }
 
   std::string History::getUndoDescription() const

@@ -29,6 +29,8 @@ namespace Project
     private:
       std::string path;
       std::string pathConfig;
+      bool dirty{false};
+      std::string savedState{};
 
       AssetManager assets{this};
       SceneManager scenes{this};
@@ -42,6 +44,9 @@ namespace Project
 
       void save();
       void saveConfig();
+      void markDirty() { dirty = true; }
+      void markSaved() { dirty = false; savedState = conf.serialize(); }
+      [[nodiscard]] bool isDirty() const { return dirty || conf.serialize() != savedState; }
 
       AssetManager& getAssets() { return assets; }
       SceneManager& getScenes() { return scenes; }

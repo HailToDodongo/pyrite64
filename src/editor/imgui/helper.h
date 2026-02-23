@@ -36,7 +36,9 @@ namespace ImGui
     ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImGui::GetStyle().ItemSpacing + ImVec2{0, -4});
+    ImVec2 subHeaderItemSpacing = ImGui::GetStyle().ItemSpacing;
+    subHeaderItemSpacing.y -= 4;
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, subHeaderItemSpacing);
 
     auto isOpen = ImGui::CollapsingHeader(label, flags);
 

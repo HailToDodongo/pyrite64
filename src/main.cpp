@@ -48,6 +48,76 @@ void ImDrawCallback_ImplSDLGPU3_SetSamplerRepeat(const ImDrawList* parent_list, 
 
 void cli(argparse::ArgumentParser &prog);
 
+bool hasUnsavedChanges()
+{
+  if (!ctx.project) {
+    return false;
+  }
+
+  return Editor::UndoRedo::getHistory().isDirty() || ctx.project->isDirty();
+}
+
+bool confirmCloseWithUnsavedChanges()
+{
+  if (!hasUnsavedChanges()) {
+    return true;
+  }
+
+  const SDL_MessageBoxButtonData buttons[] = {
+    { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Save" },
+    { SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 2, "Discard" },
+  };
+
+  SDL_MessageBoxData messageboxdata{};
+  messageboxdata.flags = SDL_MESSAGEBOX_WARNING;
+  messageboxdata.window = ctx.window;
+  messageboxdata.title = "Unsaved Changes";
+  messageboxdata.message = "Your Project has unsaved changes, do you want to save them before closing?";
+  messageboxdata.numbuttons = SDL_arraysize(buttons);
+  messageboxdata.buttons = buttons;
+  messageboxdata.colorScheme = nullptr;
+
+  int buttonId = -1;
+  if (!SDL_ShowMessageBox(&messageboxdata, &buttonId)) {
+    fprintf(stderr, "Warning: SDL_ShowMessageBox failed: %s\n", SDL_GetError());
+    return false;
+  }
+
+  if (buttonId == 1) {
+    ctx.project->save();
+    if (ctx.editorScene) {
+      ctx.editorScene->save();
+    }
+    return true;
+  }
+
+  if (buttonId == 2) {
+    return true;
+  }
+
+  return false;
+}
+
+void updateWindowTitle()
+{
+  std::string title{"Pyrite64 - Editor"};
+
+  if (ctx.project) {
+    title += " | " + ctx.project->conf.name;
+    auto sceneDirty = Editor::UndoRedo::getHistory().isDirty();
+    auto projectDirty = ctx.project->isDirty();
+    if (sceneDirty || projectDirty) {
+      title += " *";
+    }
+  }
+
+  static std::string prevTitle{};
+  if (title != prevTitle) {
+    SDL_SetWindowTitle(ctx.window, title.c_str());
+    prevTitle = title;
+  }
+}
+
 void fatal(const char *fmt, ...)
 {
   va_list args;
@@ -210,9 +280,17 @@ int main(int argc, char** argv)
       {
         ImGui_ImplSDL3_ProcessEvent(&event);
 
-        if(event.type == SDL_EVENT_QUIT)done = true;
-        if(event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window)) {
-          done = true;
+        bool closeRequested = event.type == SDL_EVENT_QUIT;
+        closeRequested = closeRequested || (
+          event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED
+          && event.window.windowID == SDL_GetWindowID(window)
+        );
+
+        if (closeRequested) {
+          done = confirmCloseWithUnsavedChanges();
+          if (done) {
+            break;
+          }
         }
 
         // @TODO: refactor into generic actions with keybinds
@@ -273,6 +351,8 @@ int main(int argc, char** argv)
       if (ctx.project) {
         ctx.project->getAssets().pollWatch();
       }
+
+      updateWindowTitle();
 
       if(SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
         SDL_Delay(10);

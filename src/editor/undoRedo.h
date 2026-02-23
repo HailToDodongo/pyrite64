@@ -5,6 +5,7 @@
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -39,6 +40,7 @@ namespace Editor::UndoRedo
       Project::Scene* snapshotScene{nullptr};
       std::vector<uint32_t> snapshotSelUUIDs{};
       std::string nextChangedReason{};
+      std::optional<std::string> savedState{};
       
     public:
       /**
@@ -61,6 +63,9 @@ namespace Editor::UndoRedo
       void markChanged(std::string reason) {
         nextChangedReason = std::move(reason);
       }
+
+      void markSaved();
+      [[nodiscard]] bool isDirty() const;
 
       uint32_t getUndoCount() const { return (uint32_t)undoStack.size(); }
       uint32_t getRedoCount() const { return (uint32_t)redoStack.size(); }
