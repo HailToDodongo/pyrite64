@@ -20,6 +20,7 @@ namespace Project
     uint32_t sceneIdOnBoot{1};
     uint32_t sceneIdOnReset{1};
     uint32_t sceneIdLastOpened{1};
+    uint32_t inputPreset{0};
 
     std::string serialize() const;
   };

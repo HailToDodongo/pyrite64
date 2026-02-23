@@ -22,23 +22,27 @@ namespace Editor::Actions
   void initGlobalActions()
   {
     registerAction(Type::PROJECT_OPEN, [](const std::string &path) {
-       Utils::Logger::log("Open Project: " + path);
-       delete ctx.project;
-       UndoRedo::getHistory().clear();
-       try {
-         ctx.project = new Project::Project(path);
-         if(ctx.project && !ctx.project->getScenes().getEntries().empty()) {
-           ctx.project->getScenes().loadScene(ctx.project->conf.sceneIdLastOpened);
-         }
-       } catch (const std::exception &e) {
-         auto error = "Failed to open project:\n" + std::string(e.what());
-         //error += "\n" + std::to_string(std::stacktrace::current());
-         Utils::Logger::log(error, Utils::Logger::LEVEL_ERROR);
-         Editor::Noti::add(Editor::Noti::Type::ERROR, error);
-         ctx.project = nullptr;
-         return false;
-       }
-       return ctx.project != nullptr;
+      Utils::Logger::log("Open Project: " + path);
+      delete ctx.project;
+      UndoRedo::getHistory().clear();
+      try {
+        ctx.project = new Project::Project(path);
+        if(ctx.project)
+        {
+          ctx.inputs.applyPreset((Editor::InputPreset)ctx.project->conf.inputPreset);
+          if (!ctx.project->getScenes().getEntries().empty()) {
+            ctx.project->getScenes().loadScene(ctx.project->conf.sceneIdLastOpened);
+          }
+        } 
+      } catch (const std::exception &e) {
+        auto error = "Failed to open project:\n" + std::string(e.what());
+        //error += "\n" + std::to_string(std::stacktrace::current());
+        Utils::Logger::log(error, Utils::Logger::LEVEL_ERROR);
+        Editor::Noti::add(Editor::Noti::Type::ERROR, error);
+        ctx.project = nullptr;
+        return false;
+      }
+      return ctx.project != nullptr;
      });
 
     registerAction(Type::PROJECT_CLOSE, [](const std::string&) {

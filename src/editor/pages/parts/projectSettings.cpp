@@ -24,6 +24,16 @@ bool Editor::ProjectSettings::draw()
     ImTable::addPath("N64_INST", ctx.project->conf.pathN64Inst, true, "$N64_INST");
     ImTable::end();
   }
+  if (ImGui::CollapsingHeader("Preferences", ImGuiTreeNodeFlags_DefaultOpen)) {
+    ImTable::start("Preferences");
+    int preset = ctx.project->conf.inputPreset;
+    ImTable::addComboBox("Keymap", preset, { "Blender", "Industry Compatible" });
+    if (preset != ctx.project->conf.inputPreset) {
+      ctx.project->conf.inputPreset = preset;
+      ctx.inputs.applyPreset((Editor::InputPreset)preset);
+    }
+    ImTable::end();
+  }
 
   // close button, positioned to bottom right corner
   ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 54);

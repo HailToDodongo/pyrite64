@@ -59,6 +59,7 @@ std::string Project::ProjectConf::serialize() const {
     .set("sceneIdOnBoot", sceneIdOnBoot)
     .set("sceneIdOnReset", sceneIdOnReset)
     .set("sceneIdLastOpened", sceneIdLastOpened)
+    .set("inputPreset", inputPreset)
     .toString();
 }
 
@@ -70,6 +71,7 @@ void Project::Project::deserialize(const nlohmann::json &doc) {
   conf.sceneIdOnBoot = doc.value("sceneIdOnBoot", 1);
   conf.sceneIdOnReset = doc.value("sceneIdOnReset", 1);
   conf.sceneIdLastOpened = doc.value("sceneIdLastOpened", 1);
+  conf.inputPreset = doc.value("inputPreset", 0);
 }
 
 Project::Project::Project(const std::string &p64projPath)
