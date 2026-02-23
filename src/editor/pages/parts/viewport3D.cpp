@@ -431,14 +431,14 @@ void Editor::Viewport3D::draw()
 
   if(!ImGui::GetIO().WantTextInput)
   {
-    if(ImGui::IsKeyPressed(ImGuiKey_5))
+    if(ImGui::IsKeyPressed(ctx.inputs.toggleOrtho))
     {
       camera.isOrtho = !camera.isOrtho;
     }
 
     // Handle object deletion when Delete is pressed while the viewport is focused and an object is selected
     bool deletedSelection = false;
-    if (ImGui::IsWindowFocused() && obj && ImGui::IsKeyPressed(ImGuiKey_Delete)) {
+    if (ImGui::IsWindowFocused() && obj && ImGui::IsKeyPressed(ctx.inputs.deleteObject)) {
       UndoRedo::getHistory().markChanged("Delete Object");
       if (Editor::SelectionUtils::deleteSelectedObjects(*scene)) {
         deletedSelection = true;
@@ -452,13 +452,12 @@ void Editor::Viewport3D::draw()
 
     if (newMouseDown) {
       glm::vec3 moveDir = {0,0,0};
-      if (ImGui::IsKeyDown(ImGuiKey_W))moveDir.z = -moveSpeed;
-      if (ImGui::IsKeyDown(ImGuiKey_S))moveDir.z = moveSpeed;
-      if (ImGui::IsKeyDown(ImGuiKey_A))moveDir.x = -moveSpeed;
-      if (ImGui::IsKeyDown(ImGuiKey_D))moveDir.x = moveSpeed;
-
-      if (ImGui::IsKeyDown(ImGuiKey_Q))moveDir.y = -moveSpeed;
-      if (ImGui::IsKeyDown(ImGuiKey_E))moveDir.y = moveSpeed;
+      if (ImGui::IsKeyDown(ctx.inputs.moveForward))moveDir.z = -moveSpeed;
+      if (ImGui::IsKeyDown(ctx.inputs.moveBack))moveDir.z = moveSpeed;
+      if (ImGui::IsKeyDown(ctx.inputs.moveLeft))moveDir.x = -moveSpeed;
+      if (ImGui::IsKeyDown(ctx.inputs.moveRight))moveDir.x = moveSpeed;
+      if (ImGui::IsKeyDown(ctx.inputs.moveDown))moveDir.y = -moveSpeed;
+      if (ImGui::IsKeyDown(ctx.inputs.moveUp))moveDir.y = moveSpeed;
 
       if(moveDir != glm::vec3{0,0,0}) {
         camera.velocity = camera.rot * moveDir;
@@ -466,10 +465,10 @@ void Editor::Viewport3D::draw()
     } else {
       if(!ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
       {
-        if (ImGui::IsKeyPressed(ImGuiKey_G))gizmoOp = 0;
-        if (ImGui::IsKeyPressed(ImGuiKey_R))gizmoOp = 1;
-        if (ImGui::IsKeyPressed(ImGuiKey_S))gizmoOp = 2;
-        if (ImGui::IsKeyPressed(ImGuiKey_F))camera.focusSelection(ctx);
+        if (ImGui::IsKeyDown(ctx.inputs.gizmoTranslate))gizmoOp = 0;
+        if (ImGui::IsKeyDown(ctx.inputs.gizmoRotate))gizmoOp = 1;
+        if (ImGui::IsKeyDown(ctx.inputs.gizmoScale))gizmoOp = 2;
+        if (ImGui::IsKeyPressed(ctx.inputs.focusObject))camera.focusSelection(ctx);
       }
     }
   }
@@ -647,7 +646,7 @@ void Editor::Viewport3D::draw()
       bool isOnlySelf = ImGui::IsKeyDown(ImGuiKey_LeftShift);
 
       // snap object to absolute grid
-      if(ImGui::IsKeyDown(ImGuiKey_LeftShift) && ImGui::IsKeyPressed(ImGuiKey_S))
+      if(ImGui::IsKeyDown(ImGuiKey_LeftShift) && ImGui::IsKeyPressed(ctx.inputs.snapObject))
       {
         glm::vec3 pos = obj->pos.resolve(obj->propOverrides);
         pos.x = std::round(pos.x / snap.x) * snap.x;
