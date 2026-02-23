@@ -43,15 +43,29 @@ namespace
 namespace P64::AudioManager
 {
   constinit uint64_t ticksUpdate{0};
+  constinit int lastFreq{0};
 
   void setMasterVolume(float volume) {
     masterVol = volume;
   }
 
-  void init(int freq) {
-    audio_init(freq, 3);
-    mixer_init(CHANNEL_COUNT);
-    slots = {};
+  void init(int freq)
+  {
+    if(freq != lastFreq)
+    {
+      if(lastFreq != 0)
+      {
+        Log::info("Audio freq. changed: %d -> %d", lastFreq, freq);
+        stopAll();
+        mixer_close();
+        audio_close();
+      }
+
+      audio_init(freq, 3);
+      mixer_init(CHANNEL_COUNT);
+      slots = {};
+      lastFreq = freq;
+    }
   }
 
   void update()

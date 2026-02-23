@@ -146,6 +146,9 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
   ctx.fileScene.write<uint8_t>(sc->conf.filter.value);
   ctx.fileScene.write<uint8_t>(0); // padding
 
+  ctx.fileScene.write<uint16_t>(sc->conf.audioFreq.value);
+  ctx.fileScene.write<uint16_t>(0); // padding
+
   // Layer::Setup
   ctx.fileScene.write<uint8_t>(sc->conf.layers3D.size());
   ctx.fileScene.write<uint8_t>(sc->conf.layersPtx.size());

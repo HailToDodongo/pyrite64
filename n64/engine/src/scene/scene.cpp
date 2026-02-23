@@ -43,6 +43,7 @@ P64::Scene::Scene(uint16_t sceneId, Scene** ref)
   Debug::init();
 
   loadSceneConfig();
+  P64::AudioManager::init(conf.audioFreq);
 
   DrawLayer::init(conf.layerSetup);
 

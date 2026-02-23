@@ -37,6 +37,7 @@ namespace Project
     PROP_S32(renderPipeline);
     PROP_S32(frameLimit);
     PROP_S32(filter);
+    PROP_S32(audioFreq);
 
     std::vector<LayerConf> layers3D{};
     std::vector<LayerConf> layersPtx{};

@@ -3,6 +3,7 @@
   - Auto-Save before build & run
   - Instantiating prefabs now places them in front of camera
   - Fix issue where adding new scripts could temp. mess up asset associations during build
+  - Opus audio now working 
 - Editor - Viewport:
   - Multi-Selection support:
     - Click and drag left mouse to multi-select objects
@@ -13,7 +14,9 @@
   - 3D axis-gizmo label and orientation fixes
 - Editor - Log Window:
   - Buttons for clear / copy to clipboard / save to file
-  - Properly strip ANSI codes 
+  - Properly strip ANSI codes
+- Editor - Scene:
+  - New scene setting for audio-mixer frequency (default: 32kHz)
 
 # v0.2.0
 - Toolchain-Manager:

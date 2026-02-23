@@ -80,4 +80,21 @@ void Editor::SceneInspector::draw() {
 
     ImTable::end();
   }
+
+  if (ImGui::CollapsingHeader("Audio", ImGuiTreeNodeFlags_DefaultOpen))
+  {
+    ImTable::start("Audio");
+
+    ImTable::addVecComboBox<ImTable::ComboEntry>("Mixer Freq.", {
+      { 8000, "8000 Hz" },
+      { 11025, "11025 Hz" },
+      { 16000, "16000 Hz" },
+      { 22050, "22050 Hz" },
+      { 32000, "32000 Hz" },
+      { 44100, "44100 Hz" },
+      { 48000, "48000 Hz" },
+    }, scene->conf.audioFreq.value);
+
+    ImTable::end();
+  }
 }

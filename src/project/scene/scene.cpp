@@ -46,6 +46,7 @@ nlohmann::json Project::SceneConf::serialize() const {
     .set(renderPipeline)
     .set(frameLimit)
     .set(filter)
+    .set(audioFreq)
     .setArray<LayerConf>("layers3D", layers3D, writeLayer)
     .setArray<LayerConf>("layersPtx", layersPtx, writeLayer)
     .setArray<LayerConf>("layers2D", layers2D, writeLayer);
@@ -261,14 +262,14 @@ void Project::Scene::resetLayers()
 
 void Project::Scene::deserialize(const std::string &data)
 {
-  if(data.empty())return;
-
-  auto doc = nlohmann::json::parse(data, nullptr, false);
+  auto doc = nlohmann::json::parse(
+    !data.empty() ? data : "{\"conf\": {}}",
+    nullptr, false);
   if (!doc.is_object())return;
 
   auto &docConf = doc["conf"];
   {
-    Utils::JSON::readProp(docConf, conf.name);
+    Utils::JSON::readProp(docConf, conf.name, std::string{"New Scene"});
     conf.fbWidth = docConf.value("fbWidth", 320);
     conf.fbHeight = docConf.value("fbHeight", 240);
     conf.fbFormat = docConf.value("fbFormat", 0);
@@ -278,6 +279,7 @@ void Project::Scene::deserialize(const std::string &data)
     Utils::JSON::readProp(docConf, conf.renderPipeline);
     Utils::JSON::readProp(docConf, conf.frameLimit, 0);
     Utils::JSON::readProp(docConf, conf.filter, 0);
+    Utils::JSON::readProp(docConf, conf.audioFreq, 32000);
 
     auto readLayer = [](const nlohmann::json &dom) {
       LayerConf layer{};
@@ -313,6 +315,7 @@ void Project::Scene::deserialize(const std::string &data)
   }
 
   removeAllObjects();
+  if(!doc.contains("graph"))return;
   auto docGraph = doc["graph"];
   root.deserialize(this, docGraph);
 }

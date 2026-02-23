@@ -56,6 +56,9 @@ namespace P64
     uint8_t filter{};
     uint8_t padding[1]{};
 
+    uint16_t audioFreq{};
+    uint16_t padding2{};
+
     DrawLayer::Setup layerSetup{};
   };
 

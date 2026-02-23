@@ -64,6 +64,7 @@ $(ROM_NAME).z64: $(BUILD_DIR)/$(ROM_NAME).dfs
 clean:
 	rm -rf $(BUILD_DIR) $(ROM_NAME).z64
 	rm -rf filesystem
+	rm -rf engine/build
 
 cleanCode:
 	rm -rf $(BUILD_DIR) $(ROM_NAME).z64
