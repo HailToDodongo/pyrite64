@@ -7,35 +7,85 @@
 
   "configurePresets": [
     {
-      "name": "windows-gcc",
-      "displayName": "Windows x86_64 (GCC)",
+      "name": "gcc-base",
+      "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "windows-base",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "linux-base",
+      "hidden": true,
+      "installDir": "$env{HOME}/.local",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "debug-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release-base",
+      "hidden": true,
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "linux",
-      "displayName": "Linux x86_64",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
-      "installDir": "$env{HOME}/.local",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
+      "name": "windows-gcc-debug",
+      "displayName": "Windows x86_64 GCC Debug",
+      "inherits": ["gcc-base", "windows-base", "debug-base"]
+    },
+    {
+      "name": "windows-gcc-release",
+      "displayName": "Windows x86_64 GCC Release",
+      "inherits": ["gcc-base", "windows-base", "release-base"]
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux x86_64 Debug",
+      "inherits": ["gcc-base", "linux-base", "debug-base"]
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux x86_64 Release",
+      "inherits": ["gcc-base", "linux-base", "release-base"]
     }
   ],
 
   "buildPresets": [
     {
-      "name": "windows-gcc",
-      "configurePreset": "windows-gcc",
+      "name": "windows-gcc-debug",
+      "configurePreset": "windows-gcc-debug",
       "jobs": 0
     },
     {
-      "name": "linux",
-      "configurePreset": "linux",
+      "name": "windows-gcc-release",
+      "configurePreset": "windows-gcc-release",
+      "jobs": 0
+    },
+    {
+      "name": "linux-debug",
+      "configurePreset": "linux-debug",
+      "jobs": 0
+    },
+    {
+      "name": "linux-release",
+      "configurePreset": "linux-release",
       "jobs": 0
     }
   ],
@@ -44,15 +94,15 @@
     {
       "name": "windows-gcc",
       "steps": [
-        { "type": "configure", "name": "windows-gcc" },
-        { "type": "build",     "name": "windows-gcc" }
+        { "type": "configure", "name": "windows-gcc-release" },
+        { "type": "build",     "name": "windows-gcc-release" }
       ]
     },
     {
       "name": "linux",
       "steps": [
-        { "type": "configure", "name": "linux" },
-        { "type": "build",     "name": "linux" }
+        { "type": "configure", "name": "linux-release" },
+        { "type": "build",     "name": "linux-release" }
       ]
     }
   ]

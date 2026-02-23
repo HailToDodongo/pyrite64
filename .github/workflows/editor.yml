@@ -39,11 +39,11 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake --preset windows-gcc
+          cmake --preset windows-gcc-release
 
       - name: Build
         run: |
-          cmake --build --preset windows-gcc
+          cmake --build --preset windows-gcc-release
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v6
@@ -75,11 +75,11 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake --preset linux
+          cmake --preset linux-release
 
       - name: Build
         run: |
-          cmake --build --preset linux
+          cmake --build --preset linux-release
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v6
