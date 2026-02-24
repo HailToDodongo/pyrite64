@@ -14,6 +14,7 @@
 
 #include "cli.h"
 #include "build/projectBuilder.h"
+#include "utils/json.h"
 #include "editor/actions.h"
 #include "editor/imgui/theme.h"
 #include "editor/pages/editorMain.h"
@@ -118,6 +119,94 @@ void updateWindowTitle()
   }
 }
 
+fs::path getEditorConfigPath()
+{
+  char* prefDir = SDL_GetPrefPath(nullptr, "pyrite64");
+  if(!prefDir)return {};
+  fs::path path = fs::path(prefDir) / "editor.json";
+  SDL_free(prefDir);
+  return path;
+}
+
+bool loadWindowState(SDL_Window* window)
+{
+  auto configPath = getEditorConfigPath();
+  if(configPath.empty())return false;
+
+  auto json = Utils::JSON::loadFile(configPath);
+  if(json.empty())return false;
+
+  int w = json.value("windowW", 0);
+  int h = json.value("windowH", 0);
+  int x = json.value("windowX", 0);
+  int y = json.value("windowY", 0);
+  bool maximized = json.value("maximized", false);
+
+  if(w <= 0 || h <= 0)return false;
+
+  // validate position is on a connected display
+  int numDisplays = 0;
+  auto *displays = SDL_GetDisplays(&numDisplays);
+  bool posValid = false;
+  if(displays) {
+    for(int i = 0; i < numDisplays; ++i) {
+      SDL_Rect bounds{};
+      if(SDL_GetDisplayBounds(displays[i], &bounds)) {
+        if(x >= bounds.x && x < bounds.x + bounds.w &&
+           y >= bounds.y && y < bounds.y + bounds.h) {
+          posValid = true;
+          break;
+        }
+      }
+    }
+    SDL_free(displays);
+  }
+
+  SDL_SetWindowSize(window, w, h);
+  if(posValid) {
+    SDL_SetWindowPosition(window, x, y);
+  } else {
+    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+  }
+
+  if(maximized) {
+    SDL_MaximizeWindow(window);
+  }
+  return true;
+}
+
+// track the last non-maximized window geometry so we can save it while maximized
+namespace {
+  int savedWinX{}, savedWinY{}, savedWinW{}, savedWinH{};
+}
+
+void saveWindowState(SDL_Window* window)
+{
+  auto configPath = getEditorConfigPath();
+  if(configPath.empty())return;
+
+  auto flags = SDL_GetWindowFlags(window);
+  bool maximized = (flags & SDL_WINDOW_MAXIMIZED) != 0;
+
+  // when not maximized, track the current geometry
+  if(!maximized) {
+    SDL_GetWindowSize(window, &savedWinW, &savedWinH);
+    SDL_GetWindowPosition(window, &savedWinX, &savedWinY);
+  }
+
+  if(savedWinW <= 0 || savedWinH <= 0)return;
+
+  nlohmann::json json;
+  json["windowW"] = savedWinW;
+  json["windowH"] = savedWinH;
+  json["windowX"] = savedWinX;
+  json["windowY"] = savedWinY;
+  json["maximized"] = maximized;
+
+  fs::create_directories(configPath.parent_path());
+  Utils::FS::saveTextFile(configPath, json.dump());
+}
+
 void fatal(const char *fmt, ...)
 {
   va_list args;
@@ -173,7 +262,9 @@ int main(int argc, char** argv)
   }
 
   SDL_SetWindowIcon(window, IMG_Load("data/img/windowIcon.png"));
-  SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+  if(!loadWindowState(window)) {
+    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+  }
   SDL_ShowWindow(window);
 
   // Ensure text input events are enabled
@@ -292,6 +383,12 @@ int main(int argc, char** argv)
           if (done) {
             break;
           }
+        }
+
+        if(event.type == SDL_EVENT_WINDOW_MOVED || event.type == SDL_EVENT_WINDOW_RESIZED
+          || event.type == SDL_EVENT_WINDOW_MAXIMIZED || event.type == SDL_EVENT_WINDOW_RESTORED)
+        {
+          saveWindowState(window);
         }
 
         // @TODO: refactor into generic actions with keybinds
