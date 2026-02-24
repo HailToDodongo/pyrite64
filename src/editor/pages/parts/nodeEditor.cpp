@@ -40,10 +40,9 @@ Editor::NodeEditor::NodeEditor(uint64_t assetUUID)
   stylePinVal.extra.padding.y = 16;
 
   currentAsset = ctx.project->getAssets().getEntryByUUID(assetUUID);
-  graph.deserialize(currentAsset
-    ? Utils::FS::loadTextFile(currentAsset->path)
-    : "{}"
-  );
+  auto loadedState = currentAsset ? Utils::FS::loadTextFile(currentAsset->path) : "{}";
+  graph.deserialize(loadedState);
+  savedState = graph.serialize();
   //name = "Node-Editor - ";
   name = currentAsset ? currentAsset->name : "*New Graph*";
 
@@ -78,7 +77,10 @@ Editor::NodeEditor::NodeEditor(uint64_t assetUUID)
     if(node) {
       if(ImGui::Selectable(ICON_MDI_CONTENT_COPY " Duplicate")) {
         auto nodeP64 = (Project::Graph::Node::Base*)(node);
-        auto newPos = node->getPos() + ImVec2{node->getSize().x, 20};
+        ImVec2 newPos{
+          node->getPos().x + node->getSize().x,
+          node->getPos().y + 20.0f,
+        };
         nlohmann::json jNode;
         nodeP64->serialize(jNode);
         auto newNode = graph.addNode(nodeP64->type, newPos);
@@ -120,10 +122,46 @@ bool Editor::NodeEditor::draw(ImGuiID defDockId)
   graph.graph.update();
   ImGui::End();
 
+  auto currentState = graph.serialize();
+  auto isDirtyNow = currentState != savedState;
+
+  if (isDirtyNow) {
+    if (!dirty || currentState != trackedDirtyState) {
+      ctx.project->getAssets().markNodeGraphDirty(currentAsset->getUUID(), currentState);
+      trackedDirtyState = currentState;
+    }
+  } else if (dirty) {
+    ctx.project->getAssets().clearNodeGraphDirty(currentAsset->getUUID());
+    trackedDirtyState.clear();
+  }
+
+  dirty = isDirtyNow;
+
   return isOpen;
 }
 
 void Editor::NodeEditor::save()
 {
-  Utils::FS::saveTextFile(currentAsset->path, graph.serialize());
+  if (!currentAsset) {
+    return;
+  }
+
+  auto currentState = graph.serialize();
+  Utils::FS::saveTextFile(currentAsset->path, currentState);
+  Utils::FS::saveTextFile(currentAsset->path + ".conf", currentAsset->conf.serialize());
+  savedState = currentState;
+  trackedDirtyState.clear();
+  dirty = false;
+  ctx.project->getAssets().markNodeGraphSaved(currentAsset->getUUID(), savedState);
+}
+
+void Editor::NodeEditor::discardUnsavedChanges()
+{
+  if (!currentAsset) {
+    return;
+  }
+  graph.deserialize(savedState);
+  trackedDirtyState.clear();
+  dirty = false;
+  ctx.project->getAssets().clearNodeGraphDirty(currentAsset->getUUID());
 }

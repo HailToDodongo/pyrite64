@@ -39,6 +39,9 @@ namespace Editor
       ImGuiID dockRightID;
       ImGuiID dockBottomID;
 
+      uint64_t pendingNodeEditorCloseUUID{0};
+      bool pendingNodeEditorClosePopup{false};
+
     public:
       Scene();
       ~Scene();

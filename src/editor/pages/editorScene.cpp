@@ -121,12 +121,56 @@ void Editor::Scene::draw()
   for(uint32_t i = 0; i < nodeEditors.size(); ++i) {
     auto &nodeEditor = nodeEditors[i];
     if (!nodeEditor->draw(dockSpaceID)) {
-      delIndices.push_back(i);
+      if (nodeEditor->isDirty()) {
+        pendingNodeEditorCloseUUID = nodeEditor->getAssetUUID();
+        pendingNodeEditorClosePopup = true;
+      } else {
+        delIndices.push_back(i);
+      }
     }
   }
   // Remove closed editors
   for(int32_t i = (int32_t)delIndices.size() - 1; i >= 0; --i) {
     nodeEditors.erase(nodeEditors.begin() + delIndices[i]);
+  }
+
+  if (pendingNodeEditorClosePopup) {
+    ImGui::OpenPopup("Unsaved Node Graph");
+    pendingNodeEditorClosePopup = false;
+  }
+
+  if (ImGui::BeginPopupModal("Unsaved Node Graph", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    auto itEditor = std::find_if(nodeEditors.begin(), nodeEditors.end(), [&](const std::shared_ptr<NodeEditor> &editor) {
+      return editor && editor->getAssetUUID() == pendingNodeEditorCloseUUID;
+    });
+
+    if (itEditor == nodeEditors.end()) {
+      pendingNodeEditorCloseUUID = 0;
+      ImGui::CloseCurrentPopup();
+    } else {
+      auto &editor = *itEditor;
+      ImGui::Text("The node graph '%s' has unsaved changes.", editor->getName().c_str());
+      ImGui::Spacing();
+      if (ImGui::Button("Save", {100, 0})) {
+        editor->save();
+        nodeEditors.erase(itEditor);
+        pendingNodeEditorCloseUUID = 0;
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("Discard", {100, 0})) {
+        editor->discardUnsavedChanges();
+        nodeEditors.erase(itEditor);
+        pendingNodeEditorCloseUUID = 0;
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("Cancel", {100, 0})) {
+        pendingNodeEditorCloseUUID = 0;
+        ImGui::CloseCurrentPopup();
+      }
+    }
+    ImGui::EndPopup();
   }
 
   ImGui::Begin("Object");

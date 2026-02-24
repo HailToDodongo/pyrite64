@@ -25,6 +25,26 @@ namespace fs = std::filesystem;
 
 namespace
 {
+  template<typename Loader>
+  void updateDirtyState(
+    uint64_t uuid,
+    const std::string &currentState,
+    std::unordered_set<uint64_t> &dirtySet,
+    std::unordered_map<uint64_t, std::string> &savedState,
+    Loader &&loadSavedState)
+  {
+    auto itSaved = savedState.find(uuid);
+    if (itSaved == savedState.end()) {
+      itSaved = savedState.emplace(uuid, loadSavedState()).first;
+    }
+
+    if (currentState == itSaved->second) {
+      dirtySet.erase(uuid);
+    } else {
+      dirtySet.insert(uuid);
+    }
+  }
+
   fs::path getCodePath(Project::Project *project) {
     auto res = fs::path{project->getPath()} / "src" / "user";
     if (!fs::exists(res)) {
@@ -218,6 +238,28 @@ Project::AssetManager::~AssetManager() {
 
 }
 
+void Project::AssetManager::resetDirtyTracking()
+{
+  dirtyPrefabs.clear();
+  dirtyAssetMeta.clear();
+  dirtyNodeGraphs.clear();
+  savedPrefabState.clear();
+  savedAssetMetaState.clear();
+  savedNodeGraphState.clear();
+  dirtyNodeGraphState.clear();
+}
+
+void Project::AssetManager::clearDirtyTracking(uint64_t uuid)
+{
+  dirtyPrefabs.erase(uuid);
+  dirtyAssetMeta.erase(uuid);
+  dirtyNodeGraphs.erase(uuid);
+  savedPrefabState.erase(uuid);
+  savedAssetMetaState.erase(uuid);
+  savedNodeGraphState.erase(uuid);
+  dirtyNodeGraphState.erase(uuid);
+}
+
 void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::string &path)
 {
   switch(entry.type)
@@ -268,6 +310,7 @@ void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::str
 void Project::AssetManager::reload() {
   for (auto &e : entries)e.clear();
   entriesMap.clear();
+  resetDirtyTracking();
   watchFiles.clear();
   watchInitialized = false;
 
@@ -433,6 +476,8 @@ bool Project::AssetManager::pollWatch()
       auto &typed = entries[typeIdx];
       for (size_t i = 0; i < typed.size(); ++i) {
         if (fs::path{typed[i].path} == pathIn) {
+          auto uuid = typed[i].getUUID();
+          clearDirtyTracking(uuid);
           typed.erase(typed.begin() + i);
           touchedTypes.insert(static_cast<int>(typeIdx));
           return true;
@@ -473,6 +518,9 @@ bool Project::AssetManager::pollWatch()
         entry->conf.uuid = entry->prefab->uuid.value;
       }
     }
+
+    auto uuid = entry->getUUID();
+    clearDirtyTracking(uuid);
   };
 
   // Rebuild a single script entry
@@ -551,25 +599,121 @@ const std::shared_ptr<Renderer::Texture> & Project::AssetManager::getFallbackTex
 
 void Project::AssetManager::save()
 {
-  for(auto &typed : entries) {
-    for(auto &entry : typed)
-    {
-      if(entry.type == FileType::UNKNOWN || entry.type == FileType::CODE_OBJ || entry.type == FileType::CODE_GLOBAL) {
-        continue;
-      }
-
-      auto pathMeta = entry.path + ".conf";
-      auto json = entry.conf.serialize();
-
-      auto oldFile = Utils::FS::loadTextFile(pathMeta);
-
-      // if the meta-data changed, force a recompile of the asset by deleting the target
-      if (oldFile == json)continue;
-      Utils::Logger::log("Asset meta-data changed, forcing recompile: " + entry.outPath, Utils::Logger::LEVEL_INFO);
-      fs::remove(project->getPath() + "/" + entry.outPath);
-      Utils::FS::saveTextFile(pathMeta, entry.conf.serialize());
+  std::vector<uint64_t> prefabsToSave{dirtyPrefabs.begin(), dirtyPrefabs.end()};
+  for (auto uuid : prefabsToSave) {
+    auto entry = getEntryByUUID(uuid);
+    if (!entry || entry->type != FileType::PREFAB || !entry->prefab) {
+      dirtyPrefabs.erase(uuid);
+      savedPrefabState.erase(uuid);
+      continue;
     }
+
+    entry->prefab->save();
+    dirtyPrefabs.erase(uuid);
+    savedPrefabState.erase(uuid);
   }
+
+  std::vector<uint64_t> assetsToSave{dirtyAssetMeta.begin(), dirtyAssetMeta.end()};
+  for (auto uuid : assetsToSave) {
+    auto entry = getEntryByUUID(uuid);
+    if (!entry
+      || entry->type == FileType::UNKNOWN
+      || entry->type == FileType::CODE_OBJ
+      || entry->type == FileType::CODE_GLOBAL
+      || entry->type == FileType::PREFAB)
+    {
+      dirtyAssetMeta.erase(uuid);
+      savedAssetMetaState.erase(uuid);
+      continue;
+    }
+
+    auto pathMeta = entry->path + ".conf";
+    auto json = entry->conf.serialize();
+
+    Utils::Logger::log("Asset meta-data changed, forcing recompile: " + entry->outPath, Utils::Logger::LEVEL_INFO);
+    fs::remove(project->getPath() + "/" + entry->outPath);
+    Utils::FS::saveTextFile(pathMeta, json);
+
+    dirtyAssetMeta.erase(uuid);
+    savedAssetMetaState.erase(uuid);
+  }
+
+  std::vector<uint64_t> graphsToSave{dirtyNodeGraphs.begin(), dirtyNodeGraphs.end()};
+  for (auto uuid : graphsToSave) {
+    auto entry = getEntryByUUID(uuid);
+    auto itState = dirtyNodeGraphState.find(uuid);
+
+    if (!entry || entry->type != FileType::NODE_GRAPH || itState == dirtyNodeGraphState.end()) {
+      clearNodeGraphDirty(uuid);
+      continue;
+    }
+
+    Utils::FS::saveTextFile(entry->path, itState->second);
+    markNodeGraphSaved(uuid, itState->second);
+  }
+}
+
+void Project::AssetManager::markPrefabDirty(uint64_t uuid)
+{
+  auto entry = getEntryByUUID(uuid);
+  if (!entry || entry->type != FileType::PREFAB || !entry->prefab) {
+    return;
+  }
+
+  auto currentState = entry->prefab->serialize();
+  updateDirtyState(uuid, currentState, dirtyPrefabs, savedPrefabState, [&]() {
+    return Utils::FS::loadTextFile(entry->path);
+  });
+}
+
+void Project::AssetManager::markAssetMetaDirty(uint64_t uuid)
+{
+  auto entry = getEntryByUUID(uuid);
+  if (!entry
+    || entry->type == FileType::UNKNOWN
+    || entry->type == FileType::CODE_OBJ
+    || entry->type == FileType::CODE_GLOBAL
+    || entry->type == FileType::PREFAB)
+  {
+    return;
+  }
+
+  auto currentState = entry->conf.serialize();
+  updateDirtyState(uuid, currentState, dirtyAssetMeta, savedAssetMetaState, [&]() {
+    return Utils::FS::loadTextFile(entry->path + ".conf");
+  });
+}
+
+void Project::AssetManager::markNodeGraphDirty(uint64_t uuid, const std::string &currentState)
+{
+  auto entry = getEntryByUUID(uuid);
+  if (!entry || entry->type != FileType::NODE_GRAPH) {
+    return;
+  }
+
+  updateDirtyState(uuid, currentState, dirtyNodeGraphs, savedNodeGraphState, [&]() {
+    return Utils::FS::loadTextFile(entry->path);
+  });
+
+  if (dirtyNodeGraphs.contains(uuid)) {
+    dirtyNodeGraphState[uuid] = currentState;
+  } else {
+    dirtyNodeGraphState.erase(uuid);
+  }
+}
+
+void Project::AssetManager::markNodeGraphSaved(uint64_t uuid, const std::string &savedState)
+{
+  dirtyNodeGraphs.erase(uuid);
+  dirtyNodeGraphState.erase(uuid);
+  savedNodeGraphState[uuid] = savedState;
+}
+
+void Project::AssetManager::clearNodeGraphDirty(uint64_t uuid)
+{
+  dirtyNodeGraphs.erase(uuid);
+  dirtyNodeGraphState.erase(uuid);
+  savedNodeGraphState.erase(uuid);
 }
 
 bool Project::AssetManager::createScript(const std::string &name, const std::string &subDir) {
