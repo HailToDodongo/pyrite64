@@ -3,8 +3,6 @@ name: Windows (MSYS2 UCRT64)
 on:
   push:
     branches: [ main ]
-    tags:
-      - 'v*'
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
