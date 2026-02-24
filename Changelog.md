@@ -20,6 +20,8 @@
   - Properly strip ANSI codes
 - Editor - Scene:
   - New scene setting for audio-mixer frequency (default: 32kHz)
+- Model Converter (tiny3d):
+  - fix issue where multiple animations with partially matching names could lead to them being ignored
 - Various toolchain and build-setup improvements (by [@thekovic](https://www.github.com/thekovic))
 
 # v0.2.0
