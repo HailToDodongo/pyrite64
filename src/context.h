@@ -7,10 +7,10 @@
 #include <future>
 #include <vector>
 
-#include "editor/inputConfig.h"
 #include "project/project.h"
 #include "utils/toolchain.h"
 #include "SDL3/SDL.h"
+#include "editor/inputConfig.h"
 
 namespace Editor
 {

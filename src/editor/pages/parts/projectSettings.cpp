@@ -9,6 +9,7 @@
 #include "../../../utils/logger.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "../../imgui/helper.h"
+#include "../../inputConfig.h"
 
 bool Editor::ProjectSettings::draw()
 {

@@ -7,6 +7,7 @@
 
 #include "assetManager.h"
 #include "scene/sceneManager.h"
+#include "../editor/inputConfig.h"//TODO: move keymap into preferences
 
 namespace Project
 {
@@ -20,7 +21,9 @@ namespace Project
     uint32_t sceneIdOnBoot{1};
     uint32_t sceneIdOnReset{1};
     uint32_t sceneIdLastOpened{1};
+    
     uint32_t inputPreset{0};
+    Editor::InputConfig keymap{};
 
     std::string serialize() const;
   };
