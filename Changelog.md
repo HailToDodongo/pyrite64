@@ -2,6 +2,7 @@
 - Editor - General
   - Fix clean-build under windows
   - Automatically force a clean if engine code changed
+  - Configurable keybindings and editor preferences (by [@Q-Bert-Reynolds](https://www.github.com/Q-Bert-Reynolds), #95)
 - Toolchain manager:
   - Existing installations can now be updated too (by [@thekovic](https://www.github.com/thekovic), #11)
 - CLI

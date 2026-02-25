@@ -176,9 +176,12 @@ struct Context
 
   void loadPrefs() {
     auto doc = Utils::JSON::loadFile(getPrefsPath());
-    keymapPreset = (Editor::Input::KeymapPreset)doc.value("keymapPreset", 0);      
-    if (doc.contains("keymap")) keymap.deserialize(doc["keymap"], keymapPreset);
-    else applyKeymapPreset();
+    if(doc.is_object()) {
+      keymapPreset = (Editor::Input::KeymapPreset)doc.value("keymapPreset", 0);
+      if (doc.contains("keymap")) keymap.deserialize(doc["keymap"], keymapPreset);
+    } else {
+      applyKeymapPreset();
+    }
   }
 
   void savePrefs() {
