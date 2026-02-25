@@ -48,6 +48,7 @@ struct Context
   uint64_t selAssetUUID{0};
   uint32_t selObjectUUID{0}; // The "primary" selected object (for single selection or the most recently selected in multi-selection)
   std::vector<uint32_t> selObjectUUIDs{}; // All selected object UUIDs (for multi-selection, includes selObjectUUID as the last element)
+  Editor::Input::KeymapPreset keymapPreset = Editor::Input::KeymapPreset::Blender;
   Editor::Input::Keymap keymap{};
   ImGuiKey* rebindingKey{nullptr};
 
@@ -154,12 +155,15 @@ struct Context
     }
   }
 
-  void applyKeymapPreset(Editor::Input::KeymapPreset preset) {
-    if (preset == Editor::Input::KeymapPreset::Blender) {
-      keymap = Editor::Input::blenderKeymap;
-    } else if (preset == Editor::Input::KeymapPreset::Standard) {
-      keymap = Editor::Input::standardKeymap;
+  Editor::Input::Keymap getCurrentKeymapPreset() {
+    if (keymapPreset == Editor::Input::KeymapPreset::Blender) {
+      return Editor::Input::blenderKeymap;
     }
+    return Editor::Input::standardKeymap;
+  }
+
+  void applyKeymapPreset() {
+    keymap = getCurrentKeymapPreset();
   }
 };
 

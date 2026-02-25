@@ -643,13 +643,26 @@ namespace ImTable
     if(changed)Editor::UndoRedo::getHistory().markChanged("Edit " + name);
   }
 
-  inline bool addKeybind(const std::string& name, ImGuiKey& key) {
+  inline bool addKeybind(const std::string &name, ImGuiKey &key, ImGuiKey defaultValue) {
     add(name);
-    bool isRebinding = (ctx.rebindingKey == &key);
-    const char* label = isRebinding ? "Press any key..." : ImGui::GetKeyName(key);
     ImGui::PushID(name.c_str());
-    if (ImGui::Button(label, ImVec2(-FLT_MIN, 0))) {
+
+    bool isOverridden = key != defaultValue;
+    float w = isOverridden ? (ImGui::GetContentRegionAvail().x - ImGui::GetFrameHeightWithSpacing()) : -FLT_MIN;
+    
+    bool isRebinding = ctx.rebindingKey == &key;
+    const char* label = isRebinding ? "Press any key..." : ImGui::GetKeyName(key);
+    if (ImGui::Button(label, ImVec2(w, 0))) {
       ctx.rebindingKey = &key;
+    }
+    
+    if (isOverridden) {
+      ImGui::SameLine(0, 2);
+      if (ImGui::Button(ICON_MDI_CLOSE, ImVec2(-FLT_MIN, 0))) {
+          key = defaultValue;
+          Editor::UndoRedo::getHistory().markChanged("Reset " + name);
+      }
+      if (ImGui::IsItemHovered()) ImGui::SetTooltip("Reset to default key.");
     }
 
     if (!isRebinding) {
