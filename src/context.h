@@ -53,7 +53,6 @@ struct Context
   std::vector<uint32_t> selObjectUUIDs{}; // All selected object UUIDs (for multi-selection, includes selObjectUUID as the last element)
   Editor::Input::KeymapPreset keymapPreset = Editor::Input::KeymapPreset::Blender;
   Editor::Input::Keymap keymap{};
-  ImGuiKey* rebindingKey{nullptr};
 
   std::future<void> futureBuildRun{};
 

@@ -8,7 +8,6 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "IconsMaterialDesignIcons.h"
 #include "../../project/project.h"
-#include "../../context.h"
 #include "../undoRedo.h"
 #include "../../utils/filePicker.h"
 #include "../../utils/prop.h"
@@ -642,7 +641,8 @@ namespace ImTable
     }
     if(changed)Editor::UndoRedo::getHistory().markChanged("Edit " + name);
   }
-
+  
+  static ImGuiKey* rebindingKey{nullptr};
   inline bool addKeybind(const std::string &name, ImGuiKey &key, ImGuiKey defaultValue) {
     add(name);
     ImGui::PushID(name.c_str());
@@ -650,10 +650,10 @@ namespace ImTable
     bool isOverridden = key != defaultValue;
     float w = isOverridden ? (ImGui::GetContentRegionAvail().x - ImGui::GetFrameHeightWithSpacing()) : -FLT_MIN;
     
-    bool isRebinding = ctx.rebindingKey == &key;
+    bool isRebinding = rebindingKey == &key;
     const char* label = isRebinding ? "Press any key..." : ImGui::GetKeyName(key);
     if (ImGui::Button(label, ImVec2(w, 0))) {
-      ctx.rebindingKey = &key;
+      rebindingKey = &key;
     }
     
     if (isOverridden) {
@@ -673,7 +673,7 @@ namespace ImTable
     for (int k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k++) {
       if (!ImGui::IsKeyPressed((ImGuiKey)k)) continue;
 
-      ctx.rebindingKey = nullptr;
+      rebindingKey = nullptr;
       if (k == ImGuiKey_Escape) {
         break;
       } else {
