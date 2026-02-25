@@ -1,9 +1,4 @@
 {
-  "keymap": {
-    "focusObject": "Period",
-    "toggleOrtho": "5"
-  },
-  "keymapPreset": 0,
   "name": "bigtex",
   "pathEmu": "ares",
   "pathN64Inst": "",
