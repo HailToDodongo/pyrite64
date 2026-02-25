@@ -21,7 +21,7 @@ bool Editor::Preferences::draw()
       ctx.applyKeymapPreset();
     }
     ImTable::end();
-    if (ImGui::TreeNodeEx("3D View", ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_Selected)) {
+    if (ImGui::TreeNodeEx("3D View", ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen)) {
       ImTable::start("3D View");
       Editor::Input::Keymap defaults = ctx.getCurrentKeymapPreset();
       ImTable::addKeybind("Move Forward",    ctx.keymap.moveForward,    defaults.moveForward);
@@ -43,7 +43,7 @@ bool Editor::Preferences::draw()
   }
 
   if (ImGui::Button("Save")) {
-    ctx.project->save();
+    ctx.savePrefs();
     return true;
   }
   return false;

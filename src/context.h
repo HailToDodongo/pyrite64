@@ -8,6 +8,9 @@
 #include <vector>
 
 #include "project/project.h"
+#include "utils/json.h"
+#include "utils/jsonBuilder.h"
+#include "utils/proc.h"
 #include "utils/toolchain.h"
 #include "SDL3/SDL.h"
 #include "editor/keymap.h"
@@ -164,6 +167,26 @@ struct Context
 
   void applyKeymapPreset() {
     keymap = getCurrentKeymapPreset();
+  }
+
+  static std::string getPrefsPath() { 
+    auto path = Utils::Proc::getDataRoot() / "preferences.json";
+    return path.string();
+  }
+
+  void loadPrefs() {
+    auto doc = Utils::JSON::loadFile(getPrefsPath());
+    keymapPreset = (Editor::Input::KeymapPreset)doc.value("keymapPreset", 0);      
+    if (doc.contains("keymap")) keymap.deserialize(doc["keymap"], keymapPreset);
+    else applyKeymapPreset();
+  }
+
+  void savePrefs() {
+    std::string json = Utils::JSON::Builder{}
+      .set("keymapPreset", (uint32_t)keymapPreset)
+      .set("keymap", keymap.serialize(keymapPreset))
+      .toString();
+    Utils::FS::saveTextFile(getPrefsPath(), json);
   }
 };
 

@@ -263,6 +263,7 @@ int main(int argc, char** argv)
     Editor::Main editorMain{ctx.gpu};
     ctx.editorScene = std::make_unique<Editor::Scene>();
 
+    ctx.loadPrefs();
     if(!CLI::getProjectPath().empty())
     {
       if(!Editor::Actions::call(Editor::Actions::Type::PROJECT_OPEN, CLI::getProjectPath())) {

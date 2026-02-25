@@ -9,3 +9,4 @@ pyrite64
 *.pak
 pyrite64.exe
 *.dll
+preferences.json
