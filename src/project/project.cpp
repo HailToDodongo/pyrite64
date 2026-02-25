@@ -13,7 +13,7 @@
 #include "../utils/json.h"
 #include "../utils/jsonBuilder.h"
 #include "../context.h"
-#include "../editor/inputConfig.h"//TODO: move keymap into preferences
+#include "../editor/keymap.h"//TODO: move keymap into preferences
 
 namespace
 {
@@ -60,8 +60,8 @@ std::string Project::ProjectConf::serialize() const {
     .set("sceneIdOnBoot", sceneIdOnBoot)
     .set("sceneIdOnReset", sceneIdOnReset)
     .set("sceneIdLastOpened", sceneIdLastOpened)
-    .set("inputPreset", inputPreset)//TODO: move keymap into preferences
-    .set("keymap", ctx.inputs.serialize())
+    .set("keymapPreset", keymapPreset)//TODO: move keymap into preferences
+    .set("keymap", ctx.keymap.serialize((Editor::Input::KeymapPreset)keymapPreset))
     .toString();
 }
 
@@ -73,9 +73,9 @@ void Project::Project::deserialize(const nlohmann::json &doc) {
   conf.sceneIdOnBoot = doc.value("sceneIdOnBoot", 1);
   conf.sceneIdOnReset = doc.value("sceneIdOnReset", 1);
   conf.sceneIdLastOpened = doc.value("sceneIdLastOpened", 1);
-  conf.inputPreset = doc.value("inputPreset", 0);
-  if (doc.contains("keymap")) ctx.inputs.deserialize(doc["keymap"]);
-  else ctx.inputs.applyPreset((Editor::InputPreset)conf.inputPreset);
+  conf.keymapPreset = doc.value("keymapPreset", 0);
+  if (doc.contains("keymap")) ctx.keymap.deserialize(doc["keymap"], (Editor::Input::KeymapPreset)conf.keymapPreset);
+  else ctx.applyKeymapPreset((Editor::Input::KeymapPreset)conf.keymapPreset);
 }
 
 Project::Project::Project(const std::string &p64projPath)

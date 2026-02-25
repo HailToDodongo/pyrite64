@@ -10,7 +10,7 @@
 #include "project/project.h"
 #include "utils/toolchain.h"
 #include "SDL3/SDL.h"
-#include "editor/inputConfig.h"
+#include "editor/keymap.h"
 
 namespace Editor
 {
@@ -48,7 +48,7 @@ struct Context
   uint64_t selAssetUUID{0};
   uint32_t selObjectUUID{0}; // The "primary" selected object (for single selection or the most recently selected in multi-selection)
   std::vector<uint32_t> selObjectUUIDs{}; // All selected object UUIDs (for multi-selection, includes selObjectUUID as the last element)
-  Editor::InputConfig inputs{};
+  Editor::Input::Keymap keymap{};
   ImGuiKey* rebindingKey{nullptr};
 
   std::future<void> futureBuildRun{};
@@ -151,6 +151,14 @@ struct Context
 
     if (!isObjectSelected(selObjectUUID)) {
       selObjectUUID = selObjectUUIDs.empty() ? 0 : selObjectUUIDs.back();
+    }
+  }
+
+  void applyKeymapPreset(Editor::Input::KeymapPreset preset) {
+    if (preset == Editor::Input::KeymapPreset::Blender) {
+      keymap = Editor::Input::blenderKeymap;
+    } else if (preset == Editor::Input::KeymapPreset::Standard) {
+      keymap = Editor::Input::standardKeymap;
     }
   }
 };

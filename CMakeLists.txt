@@ -121,6 +121,8 @@ add_executable(pyrite64 src/main.cpp
         src/editor/undoRedo.cpp
         src/editor/selectionUtils.h
         src/editor/selectionUtils.cpp
+        src/editor/keymap.h
+        src/editor/keymap.cpp
         src/utils/json.h
         src/utils/colors.h
         src/editor/imgui/theme.h
