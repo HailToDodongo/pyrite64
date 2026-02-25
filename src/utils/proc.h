@@ -20,4 +20,8 @@ namespace Utils::Proc
   /// @brief 
   /// @return Return path to the directory where data files are stored. This can be the executable directory (on Windows or during development), or the XDG_DATA_HOME directory on an installed Linux build.
   fs::path getDataRoot();
+
+  /// @brief
+  /// @return Returns the path to where writable global data can be put
+  fs::path getAppDataPath();
 }

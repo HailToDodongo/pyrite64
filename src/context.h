@@ -170,7 +170,7 @@ struct Context
   }
 
   static std::string getPrefsPath() { 
-    auto path = Utils::Proc::getDataRoot() / "preferences.json";
+    auto path = Utils::Proc::getAppDataPath() / "preferences.json";
     return path.string();
   }
 

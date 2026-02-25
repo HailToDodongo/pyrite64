@@ -108,3 +108,24 @@ fs::path Utils::Proc::getDataRoot()
   // This is to avoid returning empty path which could cause issues.
   return execPath; 
 }
+
+fs::path Utils::Proc::getAppDataPath()
+{
+  char* prefDir = SDL_GetPrefPath("htd", "pyrite64");
+  if(prefDir && *prefDir) {
+    auto p = fs::path(prefDir);
+    SDL_free(prefDir);
+    return p;
+  }
+
+  printf("Error: SDL_GetPrefPath() failed: %s, fallback to Documents\n", SDL_GetError());
+  const char* docsPath = SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS);
+  if (docsPath && *docsPath) {
+    auto p = fs::path(docsPath) / "pyrite64";
+    fs::create_directories(p);
+    return p;
+  }
+
+  printf("Error: SDL_GetUserFolder() failed: %s, fallback to current directory\n", SDL_GetError());
+  return fs::current_path();
+}
