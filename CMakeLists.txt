@@ -47,6 +47,15 @@ add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)
 
 add_subdirectory(vendored/glm EXCLUDE_FROM_ALL)
 
+# SDL_shadercross for SPIR-V -> backend-native shader compilation (Metal on macOS).
+set(SDLSHADERCROSS_VENDORED ON)
+set(SDLSHADERCROSS_STATIC ON)
+set(SDLSHADERCROSS_SHARED OFF)
+set(SDLSHADERCROSS_SPIRVCROSS_SHARED OFF)
+set(SDLSHADERCROSS_DXC OFF)
+set(SDLSHADERCROSS_CLI OFF)
+add_subdirectory(vendored/SDL_shadercross EXCLUDE_FROM_ALL)
+
 add_compile_definitions(IMGUI_USE_WCHAR32)
 
 # Create your game executable target as usual
@@ -262,6 +271,7 @@ target_include_directories(pyrite64 PRIVATE
     vendored/ImGuizmo
     vendored/tiny3d/tools/gltf_importer/src/lib
     vendored/libdragon
+    vendored/SDL_shadercross/include
     n64
 )
 
@@ -277,7 +287,12 @@ target_compile_definitions(pyrite64 PRIVATE IMGUI_DEFINE_MATH_OPERATORS GLM_FORC
 set_target_properties(pyrite64 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")
 
 # Link to the actual SDL3 library.
-target_link_libraries(pyrite64 PRIVATE SDL3::SDL3 SDL3_image::SDL3_image glm::glm)
+target_link_libraries(pyrite64 PRIVATE
+    SDL3::SDL3
+    SDL3_image::SDL3_image
+    glm::glm
+    SDL3_shadercross::SDL3_shadercross-static
+)
 
 if(MINGW)
     set(APP_ICON_RESOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/icon.rc")

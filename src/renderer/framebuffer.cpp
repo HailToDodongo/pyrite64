@@ -4,6 +4,23 @@
 */
 #include "framebuffer.h"
 #include "../context.h"
+#include <stdexcept>
+
+SDL_GPUTextureFormat Renderer::getDepthStencilFormat()
+{
+  constexpr SDL_GPUTextureFormat candidates[] = {
+    SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
+    SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT,
+  };
+
+  for (auto format : candidates) {
+    if (SDL_GPUTextureSupportsFormat(ctx.gpu, format, SDL_GPU_TEXTURETYPE_2D, SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET)) {
+      return format;
+    }
+  }
+
+  throw std::runtime_error("No supported depth-stencil texture format found!");
+}
 
 Renderer::Framebuffer::Framebuffer()
 {
@@ -68,7 +85,7 @@ void Renderer::Framebuffer::resize(uint32_t width, uint32_t height)
   gpuTexObj = SDL_CreateGPUTexture(ctx.gpu, &texInfo);
 
   texInfo.type = SDL_GPU_TEXTURETYPE_2D;
-  texInfo.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;
+  texInfo.format = getDepthStencilFormat();
   texInfo.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
   gpuTexDepth = SDL_CreateGPUTexture(ctx.gpu, &texInfo);
 

@@ -9,6 +9,8 @@
 
 namespace Renderer
 {
+  SDL_GPUTextureFormat getDepthStencilFormat();
+
   class Framebuffer
   {
     private:

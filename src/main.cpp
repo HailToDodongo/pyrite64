@@ -22,6 +22,7 @@
 #include "renderer/scene.h"
 #include "renderer/shader.h"
 #include "SDL3_image/SDL_image.h"
+#include "SDL3_shadercross/SDL_shadercross.h"
 #include "tiny3d/tools/gltf_importer/src/structs.h"
 #include "utils/filePicker.h"
 #include "utils/fs.h"
@@ -156,7 +157,12 @@ int main(int argc, char** argv)
     printf("Error: SDL_Init(): %s\n", SDL_GetError());
     return -1;
   }
-  SDL_GetTicks();
+
+  if (!SDL_ShaderCross_Init())
+  {
+    fatal("Error: SDL_ShaderCross_Init(): %s\n", SDL_GetError());
+    return -1;
+  }
 
   // @TODO: handle actual DPI settings, or have scaling in-editor
   float dpiScale = 1.0f;//SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
@@ -185,10 +191,10 @@ int main(int argc, char** argv)
 
   // Create GPU Device
   bool debugMode = false;
-  ctx.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, debugMode, nullptr);
+  ctx.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_DXIL, debugMode, nullptr);
   if (ctx.gpu == nullptr)
   {
-    fatal("Error: Cannot initialize Vulkan GPU\nPyrite currently requires a Vulkan capable GPU to run.\n\nSDL_CreateGPUDevice(): %s\n", SDL_GetError());
+    fatal("Error: Cannot initialize a supported GPU backend (SPIR-V/MSL/DXIL)\n\nSDL_CreateGPUDevice(): %s\n", SDL_GetError());
     return -1;
   }
 
@@ -406,6 +412,7 @@ int main(int argc, char** argv)
   SDL_ReleaseWindowFromGPUDevice(ctx.gpu, window);
   SDL_DestroyGPUDevice(ctx.gpu);
   SDL_DestroyWindow(window);
+  SDL_ShaderCross_Quit();
   SDL_Quit();
 
   return 0;
