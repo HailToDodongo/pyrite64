@@ -55,16 +55,7 @@ void Editor::CreateProjectOverlay::open()
   ImGui::OpenPopup("Create Project");
   projectName = "New Project";
   projectSafeName = makeNameSafe(projectName);
-  const char* docsPath = SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS);
-  if (docsPath && *docsPath) {
-    projectPath = docsPath;
-  } else {
-    const char* home = std::getenv("HOME");
-    projectPath = (home && *home) ? home : ".";
-    projectPath = expandHomePath(projectPath);
-  }
-  fs::path p = fs::path(projectPath) / "pyrite64";
-  projectPath = p.string();
+  projectPath = Utils::Proc::getProjectsPath().string();
 }
 
 bool Editor::CreateProjectOverlay::draw()

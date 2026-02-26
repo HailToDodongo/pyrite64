@@ -80,7 +80,7 @@ namespace
     if (forceUpdate) envVars += "FORCE_UPDATE=true ";
     std::string command = minttyPath.string() + " --hold=error /bin/env " + envVars + "/bin/bash -l ";
     
-    fs::path scriptPath = Utils::Proc::getDataRoot() / "data" / "scripts" / "mingw_create_env.sh";
+    fs::path scriptPath = Utils::Proc::getAppResourcePath() / "data" / "scripts" / "mingw_create_env.sh";
     command += "\"" + scriptPath.string() + "\"";
 
     auto res = Utils::Proc::runSync(command);
