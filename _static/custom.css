@@ -1,0 +1,21 @@
+@font-face {
+    font-family: "DIN";
+    src: url("./Altinn-DINExp.ttf");
+}
+
+@font-face {
+    font-family: "Noto";
+    src: url("./NotoSans-Regular.ttf");
+}
+
+
+body .brand,
+body h1,
+body h2,
+body .sidebar-brand-text {
+  font-family: "DIN", Helvetica, sans-serif;
+}
+
+body h1 sup {
+  font-size: 26px;
+}
