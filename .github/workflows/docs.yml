@@ -35,7 +35,14 @@ jobs:
           cd docs
           make html
 
-      - name: Upload docs artifacts
+      - name: Upload docs artifact for GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build/html
+
+      - name: Upload docs artifact for PRs
+        if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: sphinx-html
@@ -46,18 +53,12 @@ jobs:
     needs: build-docs
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Download built docs
-        uses: actions/download-artifact@v4
-        with:
-          name: sphinx-html
-          path: docs/_build/html
-
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/_build/html
-          publish_branch: gh-pages
-          force_orphan: true
+        id: deployment
+        uses: actions/deploy-pages@v4
