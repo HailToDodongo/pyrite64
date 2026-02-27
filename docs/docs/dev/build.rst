@@ -32,7 +32,7 @@ Linux users should follow the conventions of their distribution and package mana
 Git LFS
 ====================
 
-On some Linux distributions, Git LFS may require adding an external repository to your package manager per these 
+On some Linux distributions, Git LFS may require adding an external repository to your package manager. Follow these
 `instructions <https://github.com/git-lfs/git-lfs/blob/main/INSTALLING.md>`__.
 
 Windows users should already have Git LFS installed as part of Git for Windows. You can verify this by running:
@@ -41,7 +41,7 @@ Windows users should already have Git LFS installed as part of Git for Windows. 
 
   git lfs version
 
-If no version is shown, install Git LFS from their website (https://git-lfs.com/).
+If no version is shown, install Git LFS from its website (https://git-lfs.com/).
 
 After installing Git LFS, initialize it by running:
 

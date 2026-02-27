@@ -26,7 +26,7 @@ Creating a new Project
 Opening a Project
 ~~~~~~~~~~~~~~~~
 
-| Each projects directory includes a ``.p64proj`` file that holds the project settings.
+| Each projects directory includes a ``.p64proj`` file that contains the project settings.
 | To open an existing project, click on "Open Project" and select the ``.p64proj`` file.
 | Since it has a unique file extension, you can also associate it with the editor in your OS to open it by default when double-clicking on it.
 

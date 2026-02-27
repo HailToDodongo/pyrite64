@@ -47,7 +47,7 @@ Can I import any 3D models from blender?
 | The `tiny3d <https://github.com/HailToDodongo/tiny3d/tree/main/examples>`__ repo also contains example .blend files.
 
 ====================
-Can I sell games made with it?
+Can I sell games made with Pyrite64?
 ====================
 
 | **I'm not a lawyer, and the following is not legal advice.**
@@ -63,7 +63,7 @@ Can I sell games made with it?
 .. _Fast64: https://github.com/Fast-64/fast64
 
 ====================
-Can i put games on a physical cartridge?
+Can I put games on a physical cartridge?
 ====================
 
 | Yes!
