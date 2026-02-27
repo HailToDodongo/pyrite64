@@ -13,12 +13,5 @@ Pyrite\ :sup:`64`
   docs/manual
   docs/dev
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
 .. _tiny3d: https://github.com/HailToDodongo/tiny3d
 .. _Libdragon: https://github.com/DragonMinded/libdragon
