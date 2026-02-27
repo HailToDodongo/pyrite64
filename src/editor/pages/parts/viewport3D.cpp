@@ -474,19 +474,25 @@ void Editor::Viewport3D::draw()
   }
 
   if (isMouseHover && !overRotGizmo) {
-    float wheel = io.MouseWheel;
-    if (wheel != 0.0f) {
+    //multitouch trackpads don't generate touch or pinch events on windows
+    //instead, we have to rely on the fact that trackpads move in fractional amounts
+    glm::vec2 wheel = glm::vec2(io.MouseWheelH, io.MouseWheel);
+    if (std::abs(wheel.x) == 1 || std::abs(wheel.y) == 1) {
+      //actual wheel or pinch gesture 
       float wheelSpeed = (isShiftDown ? 4.0f : 1.0f) * 30.0f;
-      camera.zoomSpeed += wheel * wheelSpeed;
+      camera.zoomSpeed += wheel.y * wheelSpeed;
+    } else {
+      //two finger swipe on trackpad
+      if (isShiftDown) {
+        camera.moveDelta(wheel * -30.0f);
+      } else {
+        camera.orbitDelta(wheel * 10.0f);
+      }
     }
-  }
 
-  if (isMouseHover && !overRotGizmo)
-  {
     if(!isMouseDown && newMouseDown) {
       mousePosStart = mousePos;
     }
-    isMouseDown = newMouseDown;
     isMouseDown = newMouseDown;
   }
 
