@@ -151,12 +151,13 @@ bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool a
 
   auto objIt = objectsMap.find(uuidObject);
   auto targetIt = objectsMap.find(uuidTarget);
-  if (objIt == objectsMap.end() || targetIt == objectsMap.end()) {
+  bool targetIsRoot = uuidTarget == root.uuid;
+  if (objIt == objectsMap.end() || (!targetIsRoot && targetIt == objectsMap.end())) {
     return false;
   }
 
   auto obj = objIt->second;
-  auto target = targetIt->second;
+  auto target = targetIsRoot ? std::shared_ptr<Object>{} : targetIt->second;
 
   // Remove from current parent
   if (obj->parent) {
@@ -167,23 +168,34 @@ bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool a
   }
 
   if (asChild) {
-    // Add as child to target
-    target->children.push_back(obj);
-    obj->parent = target.get();
+    // Add as child to target (or root)
+    if (targetIsRoot) {
+      root.children.push_back(obj);
+      obj->parent = &root;
+    } else {
+      target->children.push_back(obj);
+      obj->parent = target.get();
+    }
   } else {
-    // Add as sibling to target
-    auto parent = target->parent;
-    if (parent) {
-      // insert after target
-      auto &siblings = parent->children;
-      auto it = std::find_if(
-        siblings.begin(), siblings.end(),
-        [&target](const std::shared_ptr<Object> &ref) { return ref->uuid == target->uuid; }
-      );
-      if (it != siblings.end())
-      {
-        siblings.insert(it + 1, obj);
-        obj->parent = parent;
+    // Special case: insert at top if dropping above root
+    if (uuidTarget == root.uuid) {
+      root.children.insert(root.children.begin(), obj);
+      obj->parent = &root;
+    } else {
+      // Add as sibling to target
+      auto parent = target->parent;
+      if (parent) {
+        // insert after target
+        auto &siblings = parent->children;
+        auto it = std::find_if(
+          siblings.begin(), siblings.end(),
+          [&target](const std::shared_ptr<Object> &ref) { return ref->uuid == target->uuid; }
+        );
+        if (it != siblings.end())
+        {
+          siblings.insert(it + 1, obj);
+          obj->parent = parent;
+        }
       }
     }
   }
