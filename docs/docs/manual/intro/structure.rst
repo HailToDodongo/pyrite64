@@ -113,7 +113,7 @@ Version Control
 | So you can just initialize a git repo and commit all visible files.
 
 | Since a project is self-contained, checking that commited state out on another PC
-| allows to to then fully build it there too.
+| allows you to then fully build it there too.
 
 | While extremely unlikely, a potential corruption of project files themselves,
 | can then also be solved by just rolling back to a previous commit.
