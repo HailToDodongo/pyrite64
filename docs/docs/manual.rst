@@ -11,3 +11,4 @@ General documentation for the editor and runtime-engine.
   manual/install
   manual/launcher
   manual/cli
+  manual/developer_reference
