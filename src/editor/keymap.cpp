@@ -49,17 +49,15 @@ nlohmann::json Editor::Input::Keymap::serialize(KeymapPreset preset) const {
 }
 
 void Editor::Input::Keymap::deserialize(const nlohmann::json& parent, KeymapPreset preset) {
-  if (parent.is_null()) return;
-
   Keymap defaultKeymap;
   if (preset == KeymapPreset::Blender) defaultKeymap = blenderKeymap;
   else if (preset == KeymapPreset::Standard) defaultKeymap = standardKeymap;
 
   auto readKey = [&](const char* fieldName, ImGuiKey defaultKey) {
-  if (!parent.contains(fieldName)) return defaultKey;
-  std::string name = parent[fieldName];
-  ImGuiKey key = GetKeyFromName(name.c_str());
-  return (key == ImGuiKey_None) ? defaultKey : key;
+    if (parent.is_null() || !parent.contains(fieldName)) return defaultKey;
+    std::string name = parent[fieldName];
+    ImGuiKey key = GetKeyFromName(name.c_str());
+    return (key == ImGuiKey_None) ? defaultKey : key;
   };
 
   moveForward    = readKey("moveForward",    defaultKeymap.moveForward);
