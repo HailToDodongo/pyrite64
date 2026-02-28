@@ -112,7 +112,7 @@ Version Control
 | By default a ``.gitignore`` file is created for you, which ignores all of the above build files.
 | So you can just initialize a git repo and commit all visible files.
 
-| Since a project is self-contained, checking that commited state out on another PC
+| Since a project is self-contained, checking out that committed state on another PC
 | allows you to then fully build it there too.
 
 | While extremely unlikely, a potential corruption of project files themselves,
