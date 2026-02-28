@@ -14,6 +14,9 @@ namespace Editor
       Project::AssetManagerEntry *currentAsset{nullptr};
       Project::Graph::Graph graph{};
       std::string name{};
+      std::string savedState{};
+      std::string trackedDirtyState{};
+      bool dirty{false};
       bool isInit{false};
 
     public:
@@ -21,5 +24,10 @@ namespace Editor
       ~NodeEditor();
       bool draw(ImGuiID defDockId);
       void save();
+      void discardUnsavedChanges();
+
+      [[nodiscard]] bool isDirty() const { return dirty; }
+      [[nodiscard]] uint64_t getAssetUUID() const { return currentAsset ? currentAsset->getUUID() : 0; }
+      [[nodiscard]] const std::string &getName() const { return name; }
   };
 }

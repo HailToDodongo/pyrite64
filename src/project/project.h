@@ -46,7 +46,7 @@ namespace Project
       void saveConfig();
       void markDirty() { dirty = true; }
       void markSaved() { dirty = false; savedState = conf.serialize(); }
-      [[nodiscard]] bool isDirty() const { return dirty || conf.serialize() != savedState; }
+      [[nodiscard]] bool isDirty() const { return dirty || conf.serialize() != savedState || assets.isDirty(); }
 
       AssetManager& getAssets() { return assets; }
       SceneManager& getScenes() { return scenes; }

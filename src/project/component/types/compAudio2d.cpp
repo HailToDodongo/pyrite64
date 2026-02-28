@@ -79,10 +79,18 @@ namespace Project::Component::Audio2D
       ImTable::add("Name", entry.name);
 
       auto &audioList = ctx.project->getAssets().getTypeEntries(FileType::AUDIO);
-      ImTable::addAssetVecComboBox("Audio", audioList, data.audioUUID.value);
-      ImTable::addProp("Volume", data.volume);
-      ImTable::addProp("Loop", data.loop);
-      ImTable::addProp("Auto-Play", data.autoPlay);
+      ImTable::addObjProp<uint64_t>("Audio", data.audioUUID, [&audioList](uint64_t *val) -> bool {
+        uint64_t proxy = *val;
+        ImGui::VectorComboBox("##", audioList, proxy);
+        if (proxy == *val) {
+          return false;
+        }
+        *val = proxy;
+        return true;
+      }, nullptr);
+      ImTable::addObjProp("Volume", data.volume);
+      ImTable::addObjProp("Loop", data.loop);
+      ImTable::addObjProp("Auto-Play", data.autoPlay);
 
       ImTable::end();
     }
