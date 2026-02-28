@@ -10,12 +10,12 @@ N64 game-engine and editor using <a href="https://github.com/DragonMinded/libdra
 <br/>
 
 <p align="center">
-  <img src="./docs/img/editor00.png" width="350">&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="./docs/img/editor02.png" width="350">
+  <img src="./docs/_static/img/editor00.png" width="350">&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./docs/_static/img/editor02.png" width="350">
 </p>
 <p align="center">
-  <img src="./docs/img/editor01.png" width="350">&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="./docs/img/editor03.jpg" width="350">
+  <img src="./docs/_static/img/editor01.png" width="350">&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./docs/_static/img/editor03.jpg" width="350">
 </p>
 
 > Note: This project does NOT use any proprietary N64 SDKs or libraries.
@@ -39,14 +39,11 @@ Emulators that are accurate enough include [Ares (v147 or newer)](https://ares-e
 
 ## Documentation
 
-Before starting, please read the [FAQ](./docs/faq.md)!
+Before starting, please read the [FAQ](https://hailtododongo.github.io/pyrite64/docs/faq.html)!<br>
+General documentation is available here: [Documentation](https://hailtododongo.github.io/pyrite64/)<br>
+This also contains information on how to build the editor.
 
-- Installation & Docs:
-  - [Pyrite64 Installation](./docs/setup_editor.md)
-  - [Using the Editor](./docs/usage_editor.md)
-  - [Using the CLI](./docs/usage_editor.md)
-- Development on the editor itself:
-  - [Building the Editor](./docs/build_editor.md)
+The source-code for the docs can be found in this repo under `/docs`.
 
 ## Showcase
 

@@ -7,6 +7,7 @@
   - Automatically force a clean-build if engine code changed
   - Configurable keybindings and editor preferences (by [@Q-Bert-Reynolds](https://www.github.com/Q-Bert-Reynolds), #95)
   - Fix issue where snapping during scaling would collapse objects to zero size
+  - Improved performance of asset browser  
 - Toolchain manager:
   - Existing installations can now be updated too (by [@thekovic](https://www.github.com/thekovic), #11)
 - CLI
