@@ -27,7 +27,7 @@ CLI::Result CLI::run(int argc, char** argv)
 
   prog.add_argument("--cmd")
     .help("Command to run")
-    .add_choice("build");
+    .choices("build", "clean");
 
   prog.add_argument("project")
     .default_value("")
@@ -58,9 +58,20 @@ CLI::Result CLI::run(int argc, char** argv)
 
   printf("Pyrite64 - CLI\n");
   bool res = false;
+
   if (cmd == "build") {
     printf("Building project: %s\n", argProgPath.c_str());
     res = Build::buildProject(argProgPath);
+  }
+  else if (cmd == "clean")
+  {
+    printf("Cleaning project: %s\n", argProgPath.c_str());
+    Project::Project project{argProgPath};
+    res = Build::cleanProject(project, {
+      .code = true,
+      .assets = true,
+      .engine = true,
+    });
   }
 
   return res ? Result::SUCCESS : Result::ERROR;

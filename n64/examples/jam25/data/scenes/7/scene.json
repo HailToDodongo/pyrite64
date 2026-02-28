@@ -1,5 +1,6 @@
 {
   "conf": {
+    "audioFreq": 32000,
     "clearColor": [
       1.0,
       0.9390283823013306,
@@ -116,7 +117,7 @@
           1.0,
           1.0
         ],
-        "selectable": true,
+        "selectable": false,
         "uuid": 3138327617,
         "uuidPrefab": 2150773366
       },

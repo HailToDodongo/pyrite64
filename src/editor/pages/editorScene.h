@@ -10,6 +10,7 @@
 #include "parts/memoryDashboard.h"
 #include "parts/nodeEditor.h"
 #include "parts/objectInspector.h"
+#include "parts/preferences.h"
 #include "parts/projectSettings.h"
 #include "parts/sceneGraph.h"
 #include "parts/sceneInspector.h"
@@ -24,6 +25,7 @@ namespace Editor
 
       // Editors
       std::vector<std::shared_ptr<NodeEditor>> nodeEditors{};
+      Preferences preferences{};
       ProjectSettings projectSettings{};
       AssetsBrowser assetsBrowser{};
       AssetInspector assetInspector{};
@@ -38,6 +40,9 @@ namespace Editor
       ImGuiID dockLeftID;
       ImGuiID dockRightID;
       ImGuiID dockBottomID;
+
+      uint64_t pendingNodeEditorCloseUUID{0};
+      bool pendingNodeEditorClosePopup{false};
 
     public:
       Scene();

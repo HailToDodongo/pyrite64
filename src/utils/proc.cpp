@@ -84,7 +84,7 @@ fs::path Utils::Proc::getSelfPath()
   return fs::path{szPath};
 }
 
-fs::path Utils::Proc::getDataRoot()
+fs::path Utils::Proc::getAppResourcePath()
 {
   // Check if the data exist in the executable directory.
   // Check this first because this is where files are during development.
@@ -94,7 +94,7 @@ fs::path Utils::Proc::getDataRoot()
   }
 
   // If not found, check if the data exist in the XDG_DATA_HOME directory.
-  char* prefDir = SDL_GetPrefPath(nullptr, "pyrite64");
+  char* prefDir = SDL_GetPrefPath(PYRITE_ORG_NAME, PYRITE_APP_NAME);
   if (prefDir)
   {
     fs::path dataPath = fs::path(prefDir);
@@ -107,4 +107,60 @@ fs::path Utils::Proc::getDataRoot()
   // Fallback to executable directory, even if it doesn't contain the data.
   // This is to avoid returning empty path which could cause issues.
   return execPath; 
+}
+
+fs::path Utils::Proc::getAppDataPath()
+{
+  // On Linux, follow the XDG Base Directory Specification and store application data in XDG_CONFIG_HOME. On other platforms, use SDL_GetPrefPath() which gives a suitable directory for storing application data.
+  #ifndef _WIN32
+    const char* envr = SDL_getenv("XDG_CONFIG_HOME");
+    if (envr && *envr) {
+      auto p = fs::path(envr) / PYRITE_ORG_NAME / PYRITE_APP_NAME;
+      fs::create_directories(p);
+      return p;
+    }
+    // Fallback to "~/.config/<org>/<app>" if XDG_CONFIG_HOME is not set to conform to the spec.
+    else {
+      const char* home = SDL_GetUserFolder(SDL_FOLDER_HOME);
+      if (home && *home) {
+        auto p = fs::path(home) / ".config" / PYRITE_ORG_NAME / PYRITE_APP_NAME;
+        fs::create_directories(p);
+        return p;
+      }
+    }
+  #endif
+
+  char* prefDir = SDL_GetPrefPath(PYRITE_ORG_NAME, PYRITE_APP_NAME);
+  if(prefDir && *prefDir) {
+    auto p = fs::path(prefDir);
+    SDL_free(prefDir);
+    fs::create_directories(p);
+    return p;
+  }
+
+  printf("Error: SDL_GetPrefPath() failed: %s, fallback to Documents\n", SDL_GetError());
+  const char* docsPath = SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS);
+  if (docsPath && *docsPath) {
+    auto p = fs::path(docsPath) / PYRITE_ORG_NAME / PYRITE_APP_NAME;
+    fs::create_directories(p);
+    return p;
+  }
+
+  printf("Error: SDL_GetUserFolder() failed: %s, fallback to current directory\n", SDL_GetError());
+  return fs::current_path();
+}
+
+fs::path Utils::Proc::getProjectsPath()
+{
+  const char* docsPath = SDL_GetUserFolder(SDL_FOLDER_DOCUMENTS);
+  if (docsPath && *docsPath) {
+    return fs::path(docsPath) / PYRITE_APP_NAME;
+  }
+
+  const char* home = SDL_GetUserFolder(SDL_FOLDER_HOME);
+  if (home && *home) {
+    return fs::path(home) / PYRITE_APP_NAME / "projects";
+  }
+
+  return fs::current_path() / "projects";
 }

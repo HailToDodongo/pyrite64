@@ -28,6 +28,14 @@ namespace Build
 
   bool buildProject(const std::string &path);
 
+  struct CleanArgs
+  {
+    bool code{true};
+    bool assets{true};
+    bool engine{true};
+  };
+  bool cleanProject(const Project::Project &project, const CleanArgs &args = {});
+
   // individual parts
   uint32_t writeObject(SceneCtx &ctx, Project::Object &obj, bool savePrefabItself = false);
 

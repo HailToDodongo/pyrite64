@@ -3,6 +3,7 @@
 * @license MIT
 */
 #include "pipeline.h"
+#include "framebuffer.h"
 #include "../context.h"
 
 Renderer::Pipeline::Pipeline(const Info &info) {
@@ -15,7 +16,7 @@ Renderer::Pipeline::Pipeline(const Info &info) {
   pipelineInfo.depth_stencil_state.enable_depth_test = true;
   pipelineInfo.depth_stencil_state.enable_depth_write = true;
   pipelineInfo.target_info.has_depth_stencil_target = true;
-  pipelineInfo.target_info.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;
+  pipelineInfo.target_info.depth_stencil_format = Renderer::getDepthStencilFormat();
 
   SDL_GPUVertexBufferDescription vertBuffDesc[1];
 

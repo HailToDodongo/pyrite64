@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(pyrite64 VERSION 0.3.0)
+project(pyrite64 VERSION 0.5.0)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -46,6 +46,15 @@ set(SDLIMAGE_XV OFF)
 add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)
 
 add_subdirectory(vendored/glm EXCLUDE_FROM_ALL)
+
+# SDL_shadercross for SPIR-V -> backend-native shader compilation (Metal on macOS).
+set(SDLSHADERCROSS_VENDORED ON)
+set(SDLSHADERCROSS_STATIC ON)
+set(SDLSHADERCROSS_SHARED OFF)
+set(SDLSHADERCROSS_SPIRVCROSS_SHARED OFF)
+set(SDLSHADERCROSS_DXC OFF)
+set(SDLSHADERCROSS_CLI OFF)
+add_subdirectory(vendored/SDL_shadercross EXCLUDE_FROM_ALL)
 
 add_compile_definitions(IMGUI_USE_WCHAR32)
 
@@ -121,6 +130,8 @@ add_executable(pyrite64 src/main.cpp
         src/editor/undoRedo.cpp
         src/editor/selectionUtils.h
         src/editor/selectionUtils.cpp
+        src/editor/keymap.h
+        src/editor/keymap.cpp
         src/utils/json.h
         src/utils/colors.h
         src/editor/imgui/theme.h
@@ -165,6 +176,8 @@ add_executable(pyrite64 src/main.cpp
         src/editor/pages/parts/memoryDashboard.cpp
         src/editor/pages/parts/projectSettings.h
         src/editor/pages/parts/projectSettings.cpp
+        src/editor/pages/parts/preferences.h
+        src/editor/pages/parts/preferences.cpp
         src/editor/pages/parts/sceneGraph.h
         src/editor/pages/parts/sceneGraph.cpp
         src/project/scene/object.h
@@ -258,19 +271,36 @@ target_include_directories(pyrite64 PRIVATE
     vendored/ImGuizmo
     vendored/tiny3d/tools/gltf_importer/src/lib
     vendored/libdragon
+    vendored/SDL_shadercross/include
     n64
 )
 
 
 # target_link_libraries(pyrite64 PRIVATE SDL3::SDL3)
 
+set(PYRITE_ORG_NAME "htd")
+target_compile_definitions(pyrite64 PRIVATE "PYRITE_ORG_NAME=\"${PYRITE_ORG_NAME}\"")
+set(PYRITE_APP_NAME "pyrite64")
+target_compile_definitions(pyrite64 PRIVATE "PYRITE_APP_NAME=\"${PYRITE_APP_NAME}\"")
 target_compile_definitions(pyrite64 PRIVATE "PYRITE_VERSION=\"${PROJECT_VERSION}\"")
+
 target_compile_definitions(pyrite64 PRIVATE IMGUI_DEFINE_MATH_OPERATORS GLM_FORCE_QUAT_DATA_XYZW)
 
 set_target_properties(pyrite64 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")
 
 # Link to the actual SDL3 library.
-target_link_libraries(pyrite64 PRIVATE SDL3::SDL3 SDL3_image::SDL3_image glm::glm)
+target_link_libraries(pyrite64 PRIVATE
+    SDL3::SDL3
+    SDL3_image::SDL3_image
+    glm::glm
+)
+
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_compile_definitions(pyrite64 PRIVATE "HAS_SHADER_CROSS=1")
+    target_link_libraries(pyrite64 PRIVATE
+        SDL3_shadercross::SDL3_shadercross-static
+    )
+endif()
 
 if(MINGW)
     set(APP_ICON_RESOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/icon.rc")
@@ -288,19 +318,19 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     # Install the executable to $HOME/.local/bin
     install(TARGETS pyrite64 RUNTIME DESTINATION bin)
 
-    # Install the directories with data needed at runtime to $HOME/.local/share/pyrite64
+    # Install the directories with data needed at runtime to $HOME/.local/share/htd/pyrite64
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/data"
-        DESTINATION share/pyrite64)
+        DESTINATION "share/${PYRITE_ORG_NAME}/${PYRITE_APP_NAME}")
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/n64"
-        DESTINATION share/pyrite64)
+        DESTINATION "share/${PYRITE_ORG_NAME}/${PYRITE_APP_NAME}")
 
     # Install the desktop entry file to the appropriate location to get integration with desktop environment launcher such as KDE Application Launcher
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/desktop.file"
         DESTINATION share/applications
-        RENAME pyrite64.desktop)
+        RENAME "${PYRITE_APP_NAME}.desktop")
 
     # Install the icon to the appropriate location for the desktop entry file to find it
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/data/img/windowIcon.png"
         DESTINATION share/icons/hicolor/256x256/apps
-        RENAME pyrite64.png)
+        RENAME "${PYRITE_APP_NAME}.png")
 endif()

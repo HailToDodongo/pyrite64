@@ -101,7 +101,7 @@ void Editor::AssetInspector::draw() {
     ImTable::end();
 
     if (confBefore != asset->conf.serialize()) {
-      ctx.project->markDirty();
+      ctx.project->getAssets().markAssetMetaDirty(asset->getUUID());
     }
   }
 

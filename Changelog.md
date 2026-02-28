@@ -1,3 +1,20 @@
+# v0.5.0
+
+# v0.4.0
+- MacOS / Metal support (by [rasky](https://github.com/rasky), #106)
+- Runtime-Engine
+  - Fix rendering issue where the camera region / scissor is not set for all draw-layers
+- Editor - General
+  - Fix clean-build under windows
+  - Automatically force a clean-build if engine code changed
+  - Configurable keybindings and editor preferences (by [@Q-Bert-Reynolds](https://www.github.com/Q-Bert-Reynolds), #95)
+  - Fix issue where snapping during scaling would collapse objects to zero size
+  - Improved performance of asset browser  
+- Toolchain manager:
+  - Existing installations can now be updated too (by [@thekovic](https://www.github.com/thekovic), #11)
+- CLI
+  - New command to clean a project (`--cmd clean`)
+
 # v0.3.0
 - Editor - General
   - Auto-Save before build & run
@@ -20,6 +37,8 @@
   - Properly strip ANSI codes
 - Editor - Scene:
   - New scene setting for audio-mixer frequency (default: 32kHz)
+- Model Converter (tiny3d):
+  - fix issue where multiple animations with partially matching names could lead to them being ignored
 - Various toolchain and build-setup improvements (by [@thekovic](https://www.github.com/thekovic))
 
 # v0.2.0

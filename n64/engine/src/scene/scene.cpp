@@ -169,7 +169,6 @@ void P64::Scene::update(float deltaTime)
   }
 
   ticksActorUpdate = get_ticks() - ticksActorUpdate;
-
   collScene.update(deltaTime);
 
   for(auto &obj : pendingObjDelete)
@@ -216,7 +215,6 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
   renderPipeline->preDraw();
   DrawLayer::draw(0);
 
-
   // 3D Pass, for every active camera
   for(auto &cam : cameras)
   {
@@ -228,6 +226,7 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
 
     for(int i=1; i<conf.layerSetup.layerCount3D; ++i) {
       DrawLayer::use3D(i);
+        cam->reApplyScissor();
         t3d_matrix_push_pos(1);
       DrawLayer::useDefault();
     }

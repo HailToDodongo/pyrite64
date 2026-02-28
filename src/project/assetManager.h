@@ -5,6 +5,7 @@
 #pragma once
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <chrono>
 
@@ -95,10 +96,20 @@ namespace Project
       std::chrono::steady_clock::time_point watchLastCheck{};
       bool watchInitialized{false};
 
+      std::unordered_set<uint64_t> dirtyPrefabs{};
+      std::unordered_set<uint64_t> dirtyAssetMeta{};
+      std::unordered_set<uint64_t> dirtyNodeGraphs{};
+      std::unordered_map<uint64_t, std::string> savedPrefabState{};
+      std::unordered_map<uint64_t, std::string> savedAssetMetaState{};
+      std::unordered_map<uint64_t, std::string> savedNodeGraphState{};
+      std::unordered_map<uint64_t, std::string> dirtyNodeGraphState{};
+
       std::string defaultScript{};
       std::shared_ptr<Renderer::Texture> fallbackTex{};
 
       void reloadEntry(AssetManagerEntry &entry, const std::string &path);
+      void resetDirtyTracking();
+      void clearDirtyTracking(uint64_t uuid);
     public:
       std::unordered_map<uint64_t, std::pair<int, int>> entriesMap{};
       //std::unordered_map<uint64_t, int> entriesMapScript{};
@@ -109,6 +120,12 @@ namespace Project
       void reload();
       void reloadAssetByUUID(uint64_t uuid);
       bool pollWatch();
+      bool isDirty() const {
+        return !dirtyPrefabs.empty() || !dirtyAssetMeta.empty() || !dirtyNodeGraphs.empty();
+      }
+      bool isNodeGraphDirty(uint64_t uuid) const {
+        return dirtyNodeGraphs.contains(uuid);
+      }
 
       [[nodiscard]] const auto& getEntries() const {
         return entries;
@@ -147,6 +164,12 @@ namespace Project
       }
 
       const std::shared_ptr<Renderer::Texture> &getFallbackTexture();
+
+      void markPrefabDirty(uint64_t uuid);
+      void markAssetMetaDirty(uint64_t uuid);
+      void markNodeGraphDirty(uint64_t uuid, const std::string &currentState);
+      void markNodeGraphSaved(uint64_t uuid, const std::string &savedState);
+      void clearNodeGraphDirty(uint64_t uuid);
 
       void save();
 

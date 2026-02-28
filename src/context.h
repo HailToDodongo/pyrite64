@@ -8,8 +8,12 @@
 #include <vector>
 
 #include "project/project.h"
+#include "utils/json.h"
+#include "utils/jsonBuilder.h"
+#include "utils/proc.h"
 #include "utils/toolchain.h"
 #include "SDL3/SDL.h"
+#include "editor/keymap.h"
 
 namespace Editor
 {
@@ -47,6 +51,8 @@ struct Context
   uint64_t selAssetUUID{0};
   uint32_t selObjectUUID{0}; // The "primary" selected object (for single selection or the most recently selected in multi-selection)
   std::vector<uint32_t> selObjectUUIDs{}; // All selected object UUIDs (for multi-selection, includes selObjectUUID as the last element)
+  Editor::Input::KeymapPreset keymapPreset = Editor::Input::KeymapPreset::Blender;
+  Editor::Input::Keymap keymap{};
 
   std::future<void> futureBuildRun{};
 
@@ -149,6 +155,43 @@ struct Context
     if (!isObjectSelected(selObjectUUID)) {
       selObjectUUID = selObjectUUIDs.empty() ? 0 : selObjectUUIDs.back();
     }
+  }
+
+  Editor::Input::Keymap getCurrentKeymapPreset() {
+    if (keymapPreset == Editor::Input::KeymapPreset::Blender) {
+      return Editor::Input::blenderKeymap;
+    }
+    return Editor::Input::standardKeymap;
+  }
+
+  void applyKeymapPreset() {
+    keymap = getCurrentKeymapPreset();
+  }
+
+  static std::string getPrefsPath() { 
+    auto path = Utils::Proc::getAppDataPath() / "preferences.json";
+    return path.string();
+  }
+
+  void loadPrefs() {
+    auto doc = Utils::JSON::loadFile(getPrefsPath());
+    if(doc.is_object()) {
+      keymapPreset = (Editor::Input::KeymapPreset)doc.value("keymapPreset", 0);
+      if (doc.contains("keymap")) keymap.deserialize(doc["keymap"], keymapPreset);
+      else applyKeymapPreset();
+    } else {
+      applyKeymapPreset();
+    }
+  }
+
+  void savePrefs() {
+    std::string json = Utils::JSON::Builder{}
+      .set("keymapPreset", (uint32_t)keymapPreset)
+      .set("keymap", keymap.serialize(keymapPreset))
+      .toString();
+    auto prefPath = getPrefsPath();
+    printf("Saving prefs to %s\n", prefPath.c_str());
+    Utils::FS::saveTextFile(prefPath, json);
   }
 };
 

@@ -10,34 +10,29 @@
 #include "SDL3/SDL_gpu.h"
 #include "SDL3/SDL_iostream.h"
 
+#ifdef HAS_SHADER_CROSS
+  #include "SDL3_shadercross/SDL_shadercross.h"
+#endif
+
 Renderer::Shader::Shader(SDL_GPUDevice* device, const Config &conf)
   : gpuDevice{device}
 {
-
   SDL_GPUShaderFormat backendFormats = SDL_GetGPUShaderFormats(device);
-	SDL_GPUShaderFormat format = SDL_GPU_SHADERFORMAT_INVALID;
+  #ifdef HAS_SHADER_CROSS
+    const SDL_GPUShaderFormat shaderCrossFormats = SDL_ShaderCross_GetSPIRVShaderFormats();
+  #else
+    constexpr SDL_GPUShaderFormat shaderCrossFormats = 0;
+  #endif
 
-  std::string pathVert = "data/shader/" + conf.name + ".vert.";
-  std::string pathFrag = "data/shader/" + conf.name + ".frag.";
-  const char* entrypoint{};
+  const bool supportsNativeSpirv = (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) != 0;
+  const bool supportsShaderCross = (backendFormats & shaderCrossFormats) != 0;
 
-  if (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) {
-    pathVert += "spv";
-    pathFrag += "spv";
-		format = SDL_GPU_SHADERFORMAT_SPIRV;
-		entrypoint = "main";
-	} else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
-		throw std::runtime_error("Metal Backend not supported!"); // .msl
-		format = SDL_GPU_SHADERFORMAT_MSL;
-		entrypoint = "main0";
-	} else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {
-		pathVert += "dxil";
-    pathFrag += "dxil";
-		format = SDL_GPU_SHADERFORMAT_DXIL;
-		entrypoint = "main";
-	} else {
-    throw std::runtime_error("Unknown Shader-Backend!");
-	}
+  if (!supportsNativeSpirv && !supportsShaderCross) {
+    throw std::runtime_error("No supported shader backend for SPIR-V shader assets!");
+  }
+
+  std::string pathVert = "data/shader/" + conf.name + ".vert.spv";
+  std::string pathFrag = "data/shader/" + conf.name + ".frag.spv";
 
   size_t vertexCodeSize;
   void* vertexCode = SDL_LoadFile(pathVert.c_str(), &vertexCodeSize);
@@ -45,34 +40,73 @@ Renderer::Shader::Shader(SDL_GPUDevice* device, const Config &conf)
 
   size_t fragmentCodeSize;
   void* fragmentCode = SDL_LoadFile(pathFrag.c_str(), &fragmentCodeSize);
-  assert(vertexCode != nullptr);
+  assert(fragmentCode != nullptr);
 
-  SDL_GPUShaderCreateInfo vertexInfo{};
-  vertexInfo.code = (Uint8*)vertexCode;
-  vertexInfo.code_size = vertexCodeSize;
-  vertexInfo.entrypoint = entrypoint;
-  vertexInfo.format = format;
-  vertexInfo.stage = SDL_GPU_SHADERSTAGE_VERTEX;
-  vertexInfo.num_samplers = conf.vertTexCount;
-  vertexInfo.num_storage_buffers = 0;
-  vertexInfo.num_storage_textures = 0;
-  vertexInfo.num_uniform_buffers = conf.vertUboCount;
-  shaderVert = SDL_CreateGPUShader(device, &vertexInfo);
+  if (supportsNativeSpirv) {
+    SDL_GPUShaderCreateInfo vertexInfo{};
+    vertexInfo.code = (Uint8*)vertexCode;
+    vertexInfo.code_size = vertexCodeSize;
+    vertexInfo.entrypoint = "main";
+    vertexInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
+    vertexInfo.stage = SDL_GPU_SHADERSTAGE_VERTEX;
+    vertexInfo.num_samplers = conf.vertTexCount;
+    vertexInfo.num_storage_buffers = 0;
+    vertexInfo.num_storage_textures = 0;
+    vertexInfo.num_uniform_buffers = conf.vertUboCount;
+    shaderVert = SDL_CreateGPUShader(device, &vertexInfo);
+    assert(shaderVert != nullptr);
+
+    SDL_GPUShaderCreateInfo fragmentInfo{};
+    fragmentInfo.code = (Uint8*)fragmentCode;
+    fragmentInfo.code_size = fragmentCodeSize;
+    fragmentInfo.entrypoint = "main";
+    fragmentInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
+    fragmentInfo.stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
+    fragmentInfo.num_samplers = conf.fragTexCount;
+    fragmentInfo.num_storage_buffers = 0;
+    fragmentInfo.num_storage_textures = 0;
+    fragmentInfo.num_uniform_buffers = conf.fragUboCount;
+    shaderFrag = SDL_CreateGPUShader(gpuDevice, &fragmentInfo);
+  } else {
+#ifdef HAS_SHADER_CROSS
+    SDL_ShaderCross_SPIRV_Info vertexSpirvInfo{};
+    vertexSpirvInfo.bytecode = (const Uint8*)vertexCode;
+    vertexSpirvInfo.bytecode_size = vertexCodeSize;
+    vertexSpirvInfo.entrypoint = "main";
+    vertexSpirvInfo.shader_stage = SDL_SHADERCROSS_SHADERSTAGE_VERTEX;
+
+    SDL_ShaderCross_GraphicsShaderResourceInfo vertexResources{};
+    vertexResources.num_samplers = conf.vertTexCount;
+    vertexResources.num_storage_textures = 0;
+    vertexResources.num_storage_buffers = 0;
+    vertexResources.num_uniform_buffers = conf.vertUboCount;
+
+    SDL_ShaderCross_SPIRV_Info fragmentSpirvInfo{};
+    fragmentSpirvInfo.bytecode = (const Uint8*)fragmentCode;
+    fragmentSpirvInfo.bytecode_size = fragmentCodeSize;
+    fragmentSpirvInfo.entrypoint = "main";
+    fragmentSpirvInfo.shader_stage = SDL_SHADERCROSS_SHADERSTAGE_FRAGMENT;
+
+    SDL_ShaderCross_GraphicsShaderResourceInfo fragmentResources{};
+    fragmentResources.num_samplers = conf.fragTexCount;
+    fragmentResources.num_storage_textures = 0;
+    fragmentResources.num_storage_buffers = 0;
+    fragmentResources.num_uniform_buffers = conf.fragUboCount;
+
+    shaderVert = SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
+      device, &vertexSpirvInfo, &vertexResources, 0
+    );
+    shaderFrag = SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
+      device, &fragmentSpirvInfo, &fragmentResources, 0
+    );
+#else
+    // this should never trigger
+    throw std::runtime_error("Shader-Cross not enabled on this platform");
+#endif
+  }
+
   assert(shaderVert != nullptr);
-
-  // create the fragment shader
-  SDL_GPUShaderCreateInfo fragmentInfo{};
-  fragmentInfo.code = (Uint8*)fragmentCode;
-  fragmentInfo.code_size = fragmentCodeSize;
-  fragmentInfo.entrypoint = entrypoint;
-  fragmentInfo.format = format;
-  fragmentInfo.stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
-  fragmentInfo.num_samplers = conf.fragTexCount;
-  fragmentInfo.num_storage_buffers = 0;
-  fragmentInfo.num_storage_textures = 0;
-  fragmentInfo.num_uniform_buffers = conf.fragUboCount;
-
-  shaderFrag = SDL_CreateGPUShader(gpuDevice, &fragmentInfo);
+  assert(shaderFrag != nullptr);
 
   SDL_free(fragmentCode);
   SDL_free(vertexCode);

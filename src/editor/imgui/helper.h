@@ -408,13 +408,13 @@ namespace ImTable
     return res;
   }
 
-  inline void addComboBox(const std::string &name, int &itemCurrent, const std::vector<const char*> &items) {
+  inline bool addComboBox(const std::string &name, int &itemCurrent, const std::vector<const char*> &items) {
     add(name);
     bool disabled  (isPrefabLocked());
     if(disabled)ImGui::BeginDisabled();
     auto labelHidden = "##" + name;
     const char* preview = (itemCurrent >= 0 && itemCurrent < (int)items.size()) ? items[itemCurrent] : "<None>";
-    drawComboSelection(
+    bool res = drawComboSelection(
       labelHidden.c_str(),
       (int)items.size(),
       itemCurrent,
@@ -424,6 +424,7 @@ namespace ImTable
       [&itemCurrent](int i) { itemCurrent = i; }
     );
     if(disabled)ImGui::EndDisabled();
+    return res;
   }
 
   inline void addCheckBox(const std::string &name, bool &value) {
@@ -640,5 +641,50 @@ namespace ImTable
     }
     if(changed)Editor::UndoRedo::getHistory().markChanged("Edit " + name);
   }
+  
+  static ImGuiKey* rebindingKey{nullptr};
+  inline bool addKeybind(const std::string &name, ImGuiKey &key, ImGuiKey defaultValue) {
+    add(name);
+    ImGui::PushID(name.c_str());
 
+    bool isOverridden = key != defaultValue;
+    float w = isOverridden ? (ImGui::GetContentRegionAvail().x - ImGui::GetFrameHeightWithSpacing()) : -FLT_MIN;
+    
+    bool isRebinding = rebindingKey == &key;
+    const char* label = isRebinding ? "Press any key..." : ImGui::GetKeyName(key);
+    if (ImGui::Button(label, ImVec2(w, 0))) {
+      rebindingKey = &key;
+    }
+    
+    if (isOverridden) {
+      ImGui::SameLine(0, 2);
+      if (ImGui::Button(ICON_MDI_CLOSE, ImVec2(-FLT_MIN, 0))) {
+          key = defaultValue;
+          Editor::UndoRedo::getHistory().markChanged("Reset " + name);
+      }
+      if (ImGui::IsItemHovered()) ImGui::SetTooltip("Reset to default key.");
+    }
+
+    if (!isRebinding) {
+      ImGui::PopID();
+      return false;
+    }
+
+    for (int k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k++) {
+      if (!ImGui::IsKeyPressed((ImGuiKey)k)) continue;
+
+      rebindingKey = nullptr;
+      if (k == ImGuiKey_Escape) {
+        break;
+      } else {
+        key = (ImGuiKey)k;
+        Editor::UndoRedo::getHistory().markChanged("Rebind " + name);
+        ImGui::PopID();
+        return true;
+      }
+    }
+    
+    ImGui::PopID();
+    return false;
+  }
 }

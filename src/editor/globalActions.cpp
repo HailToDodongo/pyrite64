@@ -51,16 +51,12 @@ namespace Editor::Actions
     registerAction(Type::PROJECT_CLEAN, [](const std::string& arg) {
       if (ctx.isBuildOrRunning())return false;
       if (!ctx.project)return false;
-      Utils::Logger::log("Clean Project");
 
-      std::string runCmd = "make -C \"" + ctx.project->getPath() + "\" clean";
-
-      ctx.futureBuildRun = std::async(std::launch::async, [] (std::string runCmd)
-      {
-        Utils::Proc::runSyncLogged(runCmd);
-      }, runCmd);
-
-      return true;
+      return Build::cleanProject(*ctx.project, {
+        .code = true,
+        .assets = true,
+        .engine = true,
+      });
     });
 
     registerAction(Type::PROJECT_CREATE, [](const std::string &payload)

@@ -304,11 +304,10 @@ void Editor::ObjectInspector::draw() {
         name += obj->isPrefabEdit ? ("Back to Instance") : ("Edit '" + srcObj->name + "'");
 
         if(ImGui::Button(name.c_str())) {
-          obj->isPrefabEdit = !obj->isPrefabEdit;
-
-          if(!obj->isPrefabEdit) {
-            prefab->save();
+          if (obj->isPrefabEdit) {
+            ctx.project->getAssets().markPrefabDirty(prefab->uuid.value);
           }
+          obj->isPrefabEdit = !obj->isPrefabEdit;
         }
       }
 
@@ -369,6 +368,10 @@ void Editor::ObjectInspector::draw() {
       drawComp(obj.get(), comp, true);
     }
     srcObj = obj.get();
+  }
+
+  if (isPrefabInst && obj->isPrefabEdit && prefab) {
+    ctx.project->getAssets().markPrefabDirty(prefab->uuid.value);
   }
 
   if (compCopy) {

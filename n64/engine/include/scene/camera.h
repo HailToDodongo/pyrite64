@@ -34,6 +34,18 @@ namespace P64
       void update(float deltaTime);
       void attach();
 
+      /**
+       * Re-applies the scissor-area defined via the viewport.
+       * This can be useful if you changed the scissor-area and now wish to reset it.
+       */
+      void reApplyScissor() {
+        rdpq_set_scissor(
+          viewports.offset[0],  viewports.offset[1],
+          viewports.offset[0] + viewports.size[0],
+          viewports.offset[1] + viewports.size[1]
+        );
+      }
+
       void setScreenArea(int x, int y, int width, int height);
 
       /**

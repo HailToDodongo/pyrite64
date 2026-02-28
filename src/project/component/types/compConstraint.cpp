@@ -87,7 +87,15 @@ namespace Project::Component::Constraint
         {TYPE_REL_OFFSET, "Relative Offset"},
       };
 
-      ImTable::addVecComboBox("Type", typeList, data.type.value);
+      ImTable::addObjProp<uint32_t>("Type", data.type, [&typeList](uint32_t *val) -> bool {
+        uint32_t proxy = *val;
+        ImGui::VectorComboBox("##", typeList, proxy);
+        if (proxy == *val) {
+          return false;
+        }
+        *val = proxy;
+        return true;
+      }, nullptr);
 
       // @TODO: do this in scene itself
       auto &map = ctx.project->getScenes().getLoadedScene()->objectsMap;
@@ -103,14 +111,22 @@ namespace Project::Component::Constraint
 
       if(data.type.value != TYPE_COPY_CAM)
       {
-        ImTable::addObjectVecComboBox("Ref. Object", objList, data.objectUUID.value);
+        ImTable::addObjProp<uint32_t>("Ref. Object", data.objectUUID, [&objList](uint32_t *val) -> bool {
+          uint32_t proxy = *val;
+          ImGui::VectorComboBox("##", objList, proxy);
+          if (proxy == *val) {
+            return false;
+          }
+          *val = proxy;
+          return true;
+        }, nullptr);
       }
 
       if(data.type.value == TYPE_COPY_OBJ || data.type.value == TYPE_COPY_CAM)
       {
-        ImTable::addProp("Position", data.usePos);
-        ImTable::addProp("Scale",    data.useScale);
-        ImTable::addProp("Rotation", data.useRot);
+        ImTable::addObjProp("Position", data.usePos);
+        ImTable::addObjProp("Scale",    data.useScale);
+        ImTable::addObjProp("Rotation", data.useRot);
       }
 
       ImTable::end();

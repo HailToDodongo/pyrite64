@@ -268,7 +268,7 @@ void Editor::AssetsBrowser::draw() {
         if (absEc) {
           assetPathAbs = fs::path(asset.path);
         }
-        auto rel = fs::relative(assetPathAbs, basePathAbs, ec);
+        auto rel = assetPathAbs.lexically_relative(basePathAbs);
         if (ec) continue;
         auto relStr = rel.generic_string();
         if (relStr == ".") continue;

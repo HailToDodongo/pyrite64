@@ -11,7 +11,7 @@ workpath="/pyrite64-tmp"
 mkdir -p "$workpath"
 cd "$workpath"
 
-export N64_INST=$sdkpath
+export N64_INST="${N64_INST:-$sdkpath}"
 
 echo "Updating MSYS2 environment..."
 

@@ -207,7 +207,12 @@ bool Build::buildProject(const std::string &configPath)
   if (makefile != oldMakefile) {
     Utils::Logger::log("Makefile changed, clean build");
     Utils::FS::saveTextFile(mkPath, makefile);
-    sceneCtx.toolchain.runCmdSyncLogged("make -C \"" + path + "\" cleanCode");
+
+    cleanProject(project, {
+      .code = true,
+      .assets = false,
+      .engine = false,
+    });
   }
 
   {
@@ -230,6 +235,26 @@ bool Build::buildProject(const std::string &configPath)
     Utils::Logger::log("Build failed!", Utils::Logger::LEVEL_ERROR);
   }
   return success;
+}
+
+bool Build::cleanProject(const Project::Project &project, const CleanArgs &args)
+{
+  Utils::Logger::log("Clean Project: " + project.getPath());
+  fs::path projPath{project.getPath()};
+
+  fs::remove(projPath / (project.conf.romName + ".z64"));
+
+  if(args.assets) {
+    fs::remove_all(projPath / "filesystem");
+  }
+  if(args.code) {
+    fs::remove_all(projPath / "build");
+  }
+  if(args.engine) {
+    fs::remove_all(projPath / "engine" / "build");
+  }
+
+  return true;
 }
 
 

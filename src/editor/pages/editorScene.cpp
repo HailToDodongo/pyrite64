@@ -22,6 +22,7 @@ namespace
   constexpr float HEIGHT_TOP_BAR = 28.0f;
   constexpr float HEIGHT_STATUS_BAR = 24.0f;
 
+  constinit bool preferencesOpen{false};
   constinit bool projectSettingsOpen{false};
   constinit Utils::RingBuffer<double, 16> fpsRingBuffer{};
 }
@@ -121,12 +122,56 @@ void Editor::Scene::draw()
   for(uint32_t i = 0; i < nodeEditors.size(); ++i) {
     auto &nodeEditor = nodeEditors[i];
     if (!nodeEditor->draw(dockSpaceID)) {
-      delIndices.push_back(i);
+      if (nodeEditor->isDirty()) {
+        pendingNodeEditorCloseUUID = nodeEditor->getAssetUUID();
+        pendingNodeEditorClosePopup = true;
+      } else {
+        delIndices.push_back(i);
+      }
     }
   }
   // Remove closed editors
   for(int32_t i = (int32_t)delIndices.size() - 1; i >= 0; --i) {
     nodeEditors.erase(nodeEditors.begin() + delIndices[i]);
+  }
+
+  if (pendingNodeEditorClosePopup) {
+    ImGui::OpenPopup("Unsaved Node Graph");
+    pendingNodeEditorClosePopup = false;
+  }
+
+  if (ImGui::BeginPopupModal("Unsaved Node Graph", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    auto itEditor = std::find_if(nodeEditors.begin(), nodeEditors.end(), [&](const std::shared_ptr<NodeEditor> &editor) {
+      return editor && editor->getAssetUUID() == pendingNodeEditorCloseUUID;
+    });
+
+    if (itEditor == nodeEditors.end()) {
+      pendingNodeEditorCloseUUID = 0;
+      ImGui::CloseCurrentPopup();
+    } else {
+      auto &editor = *itEditor;
+      ImGui::Text("The node graph '%s' has unsaved changes.", editor->getName().c_str());
+      ImGui::Spacing();
+      if (ImGui::Button("Save", {100, 0})) {
+        editor->save();
+        nodeEditors.erase(itEditor);
+        pendingNodeEditorCloseUUID = 0;
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("Discard", {100, 0})) {
+        editor->discardUnsavedChanges();
+        nodeEditors.erase(itEditor);
+        pendingNodeEditorCloseUUID = 0;
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("Cancel", {100, 0})) {
+        pendingNodeEditorCloseUUID = 0;
+        ImGui::CloseCurrentPopup();
+      }
+    }
+    ImGui::EndPopup();
   }
 
   ImGui::Begin("Object");
@@ -171,6 +216,25 @@ void Editor::Scene::draw()
     memoryDashboard.draw();
   ImGui::End();
 
+  if (preferencesOpen) {
+    constexpr ImVec2 windowSize{500,300};
+    auto screenSize = ImGui::GetMainViewport()->WorkSize;
+    ImGui::SetNextWindowPos({(screenSize.x - windowSize.x) / 2, (screenSize.y - windowSize.y) / 2}, ImGuiCond_Appearing, {0.0f, 0.0f});
+    ImGui::SetNextWindowSize(windowSize, ImGuiCond_Appearing);
+
+    // Thick borders
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
+    ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+    ImGui::Begin(ICON_MDI_COG " Preferences", &preferencesOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
+    if (preferences.draw()) {
+      preferencesOpen = false;
+    }
+    ImGui::End();
+
+    ImGui::PopStyleColor(1);
+    ImGui::PopStyleVar(1);
+  }
+
   if (projectSettingsOpen) {
     constexpr ImVec2 windowSize{500,300};
     auto screenSize = ImGui::GetMainViewport()->WorkSize;
@@ -180,7 +244,7 @@ void Editor::Scene::draw()
     // Thick borders
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-    ImGui::Begin(ICON_MDI_COG " Project Settings", &projectSettingsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
+    ImGui::Begin(ICON_MDI_FILE_COG_OUTLINE " Project Settings", &projectSettingsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
     if (projectSettings.draw()) {
       projectSettingsOpen = false;
     }
@@ -206,7 +270,7 @@ void Editor::Scene::draw()
           ctx.project->save();
           save();
         }
-        if(ImGui::MenuItem(ICON_MDI_COG " Settings"))projectSettingsOpen = true;
+        if(ImGui::MenuItem(ICON_MDI_FILE_COG_OUTLINE " Settings"))projectSettingsOpen = true;
         if(ImGui::MenuItem(ICON_MDI_CLOSE " Close"))Actions::call(Actions::Type::PROJECT_CLOSE);
         ImGui::EndMenu();
       }
@@ -231,6 +295,8 @@ void Editor::Scene::draw()
         if(ImGui::MenuItem(redoText.c_str(), "Ctrl+Y", false, history.canRedo())) {
           history.redo();
         }
+
+        if(ImGui::MenuItem(ICON_MDI_COG " Preferences", "Ctrl+."))preferencesOpen = true;
 
         ImGui::EndMenu();
       }
@@ -296,6 +362,18 @@ void Editor::Scene::draw()
     Utils::byteSize(UndoRedo::getHistory().getMemoryUsage()).c_str(),
     fpsRingBuffer.average()
   );
+
+  perfColor = {1.0f,1.0f,1.0f,0.4f};
+  std::string txtInfo = "v" PYRITE_VERSION;
+  #ifndef NDEBUG
+    perfColor = {1.0f,1.0f,1.0f,0.6f};
+    txtInfo += " [DEBUG]";
+  #endif
+
+  ImGui::SameLine();
+  ImGui::SetCursorPosX(io.DisplaySize.x - 12 - ImGui::CalcTextSize(txtInfo.c_str()).x);
+  ImGui::TextColored(perfColor, "%s", txtInfo.c_str());
+
   ImGui::PopFont();
   ImGui::End();
 
@@ -312,6 +390,9 @@ void Editor::Scene::draw()
     if (isCtrl && ImGui::IsKeyPressed(ImGuiKey_Y)) {
       UndoRedo::getHistory().redo();
     }
+
+    // Preferences
+    if (isCtrl && ImGui::IsKeyPressed(ImGuiKey_Period))preferencesOpen = true;
   }
 }
 

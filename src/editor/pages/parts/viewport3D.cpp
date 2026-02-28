@@ -431,14 +431,14 @@ void Editor::Viewport3D::draw()
 
   if(!ImGui::GetIO().WantTextInput)
   {
-    if(ImGui::IsKeyPressed(ImGuiKey_5))
+    if(ImGui::IsKeyPressed(ctx.keymap.toggleOrtho))
     {
       camera.isOrtho = !camera.isOrtho;
     }
 
     // Handle object deletion when Delete is pressed while the viewport is focused and an object is selected
     bool deletedSelection = false;
-    if (ImGui::IsWindowFocused() && obj && ImGui::IsKeyPressed(ImGuiKey_Delete)) {
+    if (ImGui::IsWindowFocused() && obj && ImGui::IsKeyPressed(ctx.keymap.deleteObject)) {
       UndoRedo::getHistory().markChanged("Delete Object");
       if (Editor::SelectionUtils::deleteSelectedObjects(*scene)) {
         deletedSelection = true;
@@ -452,13 +452,12 @@ void Editor::Viewport3D::draw()
 
     if (newMouseDown) {
       glm::vec3 moveDir = {0,0,0};
-      if (ImGui::IsKeyDown(ImGuiKey_W))moveDir.z = -moveSpeed;
-      if (ImGui::IsKeyDown(ImGuiKey_S))moveDir.z = moveSpeed;
-      if (ImGui::IsKeyDown(ImGuiKey_A))moveDir.x = -moveSpeed;
-      if (ImGui::IsKeyDown(ImGuiKey_D))moveDir.x = moveSpeed;
-
-      if (ImGui::IsKeyDown(ImGuiKey_Q))moveDir.y = -moveSpeed;
-      if (ImGui::IsKeyDown(ImGuiKey_E))moveDir.y = moveSpeed;
+      if (ImGui::IsKeyDown(ctx.keymap.moveForward))moveDir.z = -moveSpeed;
+      if (ImGui::IsKeyDown(ctx.keymap.moveBack))moveDir.z = moveSpeed;
+      if (ImGui::IsKeyDown(ctx.keymap.moveLeft))moveDir.x = -moveSpeed;
+      if (ImGui::IsKeyDown(ctx.keymap.moveRight))moveDir.x = moveSpeed;
+      if (ImGui::IsKeyDown(ctx.keymap.moveDown))moveDir.y = -moveSpeed;
+      if (ImGui::IsKeyDown(ctx.keymap.moveUp))moveDir.y = moveSpeed;
 
       if(moveDir != glm::vec3{0,0,0}) {
         camera.velocity = camera.rot * moveDir;
@@ -466,28 +465,34 @@ void Editor::Viewport3D::draw()
     } else {
       if(!ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
       {
-        if (ImGui::IsKeyPressed(ImGuiKey_G))gizmoOp = 0;
-        if (ImGui::IsKeyPressed(ImGuiKey_R))gizmoOp = 1;
-        if (ImGui::IsKeyPressed(ImGuiKey_S))gizmoOp = 2;
-        if (ImGui::IsKeyPressed(ImGuiKey_F))camera.focusSelection(ctx);
+        if (ImGui::IsKeyDown(ctx.keymap.gizmoTranslate))gizmoOp = 0;
+        if (ImGui::IsKeyDown(ctx.keymap.gizmoRotate))gizmoOp = 1;
+        if (ImGui::IsKeyDown(ctx.keymap.gizmoScale))gizmoOp = 2;
+        if (ImGui::IsKeyPressed(ctx.keymap.focusObject))camera.focusSelection(ctx);
       }
     }
   }
 
   if (isMouseHover && !overRotGizmo) {
-    float wheel = io.MouseWheel;
-    if (wheel != 0.0f) {
+    //multitouch trackpads don't generate touch or pinch events on windows
+    //instead, we have to rely on the fact that trackpads move in fractional amounts
+    glm::vec2 wheel = glm::vec2(io.MouseWheelH, io.MouseWheel);
+    if (std::abs(wheel.x) == 1 || std::abs(wheel.y) == 1) {
+      //actual wheel or pinch gesture 
       float wheelSpeed = (isShiftDown ? 4.0f : 1.0f) * 30.0f;
-      camera.zoomSpeed += wheel * wheelSpeed;
+      camera.zoomSpeed += wheel.y * wheelSpeed;
+    } else {
+      //two finger swipe on trackpad
+      if (isShiftDown) {
+        camera.moveDelta(wheel * -30.0f);
+      } else {
+        camera.orbitDelta(wheel * 10.0f);
+      }
     }
-  }
 
-  if (isMouseHover && !overRotGizmo)
-  {
     if(!isMouseDown && newMouseDown) {
       mousePosStart = mousePos;
     }
-    isMouseDown = newMouseDown;
     isMouseDown = newMouseDown;
   }
 
@@ -640,14 +645,16 @@ void Editor::Viewport3D::draw()
       glm::mat4 oldGizmoMat = gizmoMat;
 
       glm::vec3 snap(10.0f);
-      if (gizmoOp == 1) {
+      if (gizmoOp == 1) { // rotate
         snap = glm::vec3(90.0f / 4.0f);
+      } else if (gizmoOp == 2) { // scale
+        snap = glm::vec3(0.125f);
       }
       bool isSnap = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl);
       bool isOnlySelf = ImGui::IsKeyDown(ImGuiKey_LeftShift);
 
       // snap object to absolute grid
-      if(ImGui::IsKeyDown(ImGuiKey_LeftShift) && ImGui::IsKeyPressed(ImGuiKey_S))
+      if(ImGui::IsKeyDown(ImGuiKey_LeftShift) && ImGui::IsKeyPressed(ctx.keymap.snapObject))
       {
         glm::vec3 pos = obj->pos.resolve(obj->propOverrides);
         pos.x = std::round(pos.x / snap.x) * snap.x;

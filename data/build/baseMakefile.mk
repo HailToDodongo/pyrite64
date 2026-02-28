@@ -60,17 +60,8 @@ $(BUILD_DIR)/$(ROM_NAME).elf: $(src:%.cpp=$(BUILD_DIR)/%.o) $(ENGINE_DIR)/build/
 $(ROM_NAME).z64: N64_ROM_TITLE="{{PROJECT_NAME}}"
 $(ROM_NAME).z64: $(BUILD_DIR)/$(ROM_NAME).dfs
 
-
 clean:
-	rm -rf $(BUILD_DIR) $(ROM_NAME).z64
-	rm -rf filesystem
-	rm -rf engine/build
-
-cleanCode:
-	rm -rf $(BUILD_DIR) $(ROM_NAME).z64
-
-cleanP64: clean
-	rm -rf assets/p64/*
+	{{P64_SELF_PATH}} --cli --cmd clean {{PROJECT_SELF_PATH}}
 
 p64:
 	{{P64_SELF_PATH}} --cli --cmd build {{PROJECT_SELF_PATH}}
