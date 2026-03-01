@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+source .venv/bin/activate
+
 rm -rf _build/html
 mkdir -p _build/html
 

@@ -1,4 +1,4 @@
-Pyrite64 Introduction
+Introduction
 ====================================
 
 | Now that you are ready to use Pyrite64, we will go over some basics.
