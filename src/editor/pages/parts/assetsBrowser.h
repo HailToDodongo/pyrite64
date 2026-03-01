@@ -19,5 +19,6 @@ namespace Editor
 
     public:
       void draw();
+      void showInFileBrowser(const std::string& path);
   };
 }

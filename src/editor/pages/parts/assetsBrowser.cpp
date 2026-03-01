@@ -12,6 +12,9 @@
 #include <algorithm>
 #include <filesystem>
 #include <unordered_set>
+#include <SDL3/SDL.h>
+#include <string>
+#include "../../../utils/logger.h"
 
 using FileType = Project::FileType;
 namespace fs = std::filesystem;
@@ -400,6 +403,14 @@ void Editor::AssetsBrowser::draw() {
       auto tooltipPath = dirState.empty() ? asset.name : (dirState + "/" + asset.name);
       ImGui::SetTooltip("File: %s", tooltipPath.c_str());
     }
+
+    if(ImGui::BeginPopupContextItem(asset.path.c_str())) {
+      if(ImGui::MenuItem(ICON_MDI_FOLDER " Show in File Browser")) {
+        showInFileBrowser(asset.path);
+      }
+
+      ImGui::EndPopup();
+    }
   }
 
   if(tab.showScenes)
@@ -488,4 +499,36 @@ void Editor::AssetsBrowser::draw() {
 
   ImGui::EndChild();
   ImGui::EndChild();
+}
+
+void Editor::AssetsBrowser::showInFileBrowser(const std::string& path) {
+  Utils::Logger::log(path);//DELETE ME
+#if defined(_WIN32)
+  const char* args[] = {
+    "explorer.exe",
+    ("/select," + path).c_str(),
+    NULL
+  };
+#elif defined(__APPLE__)
+  const char* args[] = {
+    "open",
+    "-R",
+    path.c_str(),
+    NULL
+  };
+#else
+  const char* args[] = {
+    "dbus-send",
+    "--session",
+    "--dest=org.freedesktop.FileManager1",
+    "--type=method_call",
+    "/org/freedesktop/FileManager1",
+    "org.freedesktop.FileManager1.ShowItems",
+    ("array:string:\"file://" + path + "\"").c_str(),
+    "string:\"\"",
+    NULL
+  };
+#endif
+
+  SDL_CreateProcess(args, false);
 }
