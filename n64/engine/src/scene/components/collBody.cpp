@@ -62,8 +62,8 @@ namespace P64::Comp
   void CollBody::update(Object &obj, CollBody* data, float deltaTime)
   {
     data->bcs.halfExtend = data->orgScale * obj.scale;
-    if(data->bcs.isTrigger()) {
-      data->bcs.center = obj.pos;
+    if(data->bcs.isTrigger() || data->bcs.isFixed()) {
+      data->bcs.center = obj.pos + data->bcs.parentOffset;
     }
   }
 }
