@@ -218,6 +218,15 @@ namespace Project::Component::Model
       obj.pos.resolve(obj.propOverrides),
       skew, persp);
 
+    // get draw layer
+    auto &layers = ctx.project->getScenes().getLoadedScene()->conf.layers3D;
+    auto layerIdx = data.layerIdx.resolve(obj);
+    if(layerIdx < layers.size()) {
+      auto &layer = layers[layerIdx];
+      data.obj3D.uniform.mat.blender.x = layer.blender.resolve(obj);
+      data.obj3D.uniform.mat.blender.y = data.obj3D.uniform.mat.blender.x;
+    }
+
     auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
     if (!asset || !asset->mesh3D) {
       return;

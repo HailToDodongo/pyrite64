@@ -21,8 +21,6 @@ namespace Renderer
     constexpr static uint32_t FLAG_SET_ENV_COL   = 1 << 25;
     constexpr static uint32_t FLAG_SET_PRIM_COL  = 1 << 26;
 
-    glm::i32vec4 blender[2];
-
     //Tile settings: xy = TEX0, zw = TEX1
     glm::vec4 mask; // clamped if < 0, mask = abs(mask)
     glm::vec4 shift;
@@ -51,6 +49,8 @@ namespace Renderer
     glm::vec4 primLodDepth;
     glm::vec4 k_0123;
     glm::vec2 k_45;
+
+    glm::u32vec2 blender;
   };
 
   struct UniformsObject

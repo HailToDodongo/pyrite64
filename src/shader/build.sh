@@ -15,28 +15,9 @@ for shader in *.vert.glsl *.frag.glsl; do
     stage="${base##*.}"              # vert or frag
 
     spv="$OUT_DIR/$base.spv"
-    hlsl="$OUT_DIR/$base.hlsl"
-    dxil="$OUT_DIR/$base.dxil"
-
     echo "=== Compiling $shader ($stage) ==="
 
     # GLSL -> SPIR-V
     glslc -fshader-stage="$stage" "$shader" -o "$spv"
 
-    # SPIR-V -> HLSL
-    spirv-cross \
-        --hlsl \
-        --shader-model 50 \
-        --entry main \
-        --stage "$stage" \
-        "$spv" > "$hlsl"
-
-    # HLSL -> DXIL
-    if [ "$stage" = "vert" ]; then
-        dxc -T vs_6_0 -E main "$hlsl" -Fo "$dxil"
-    else
-        dxc -T ps_6_0 -E main "$hlsl" -Fo "$dxil"
-    fi
-
-    rm "$hlsl"
 done

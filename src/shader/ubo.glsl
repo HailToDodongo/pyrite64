@@ -1,8 +1,6 @@
 struct UBO_Material {
   mat4 modelMat;
 
-  ivec4 blender[2];
-
   //Tile settings: xy = TEX0, zw = TEX1
   vec4 mask; // clamped if < 0, mask = abs(mask)
   vec4 shift;
@@ -16,6 +14,7 @@ struct UBO_Material {
   ivec4 cc1Alpha;
 
   ivec4 modes; // vertexFX, other-low, other-high, flags
+
   vec4 lightColor[2];
   vec4 lightDir[2]; // [0].w is alpha clip
   vec4 colPrim;
@@ -26,6 +25,8 @@ struct UBO_Material {
   vec4 primLodDepth;
   vec4 k_0123;
   vec2 k_45;
+
+  ivec2 blender;
 
   uint objectID;
 };

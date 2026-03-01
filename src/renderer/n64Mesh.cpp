@@ -115,6 +115,7 @@ void Renderer::N64Mesh::draw(
     }
 
     uint32_t flags = uniforms.mat.flags;
+    uint32_t blender = uniforms.mat.blender.x;
 
     if(part.material.flags & UniformN64Material::FLAG_SET_PRIM_COL) {
       lastPrim = part.material.colPrim;
@@ -131,6 +132,7 @@ void Renderer::N64Mesh::draw(
     uniforms.mat = part.material;
     uniforms.mat.colPrim = lastPrim;
     uniforms.mat.colEnv = lastEnv;
+    uniforms.mat.blender.x = blender;
 
     uniforms.mat.flags |= flags;
 

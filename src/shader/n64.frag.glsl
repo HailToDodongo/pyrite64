@@ -136,7 +136,7 @@ vec4 blender_fetch(
   else if (val == BLENDER_A_MEM  ) return colorFB.aaaa;
   return vec4(0.0); // default: BLENDER_0
 }
-
+/*
 vec4 blendColor(in vec4 oldColor, vec4 newColor)
 {
   vec4 colorBlend = vec4(0.0); // @TODO
@@ -157,7 +157,7 @@ vec4 blendColor(in vec4 oldColor, vec4 newColor)
 
   return ((P * A) + (M * B)) / (A + B);
 }
-
+*/
 // This implements the part of the fragment shader that touches depth/color.
 // All of this must happen in a way that guarantees coherency.
 // This is either done via the shader interlock extension, or with a re-try loop as a fallback.
@@ -306,6 +306,12 @@ void main()
   #endif
 
   FragColor = vec4(ccValue.rgb, ccValue.a);
+
+  // hack for transparency, TODO: add proper blending support again
+  if(material.blender.x == 0) {
+    FragColor.a = 1.0f;
+  }
+  //FragColor.a = 1.0;
   // FragColor = cc_shade; // TEST
 
   /*{
