@@ -73,6 +73,9 @@ Ideally you keep the source images in the highest quality possible, \
 and only adjust dimensions beforehand. \
 The editor allows you to set a format per asset, where the build process then handles a conversion. 
 
+For example, if you want to use `CI8` as a texture, there is no need to reduce colors beforehand. \
+The build process will take care of that while preserving good quality as much as possible.
+
 ## Performance
 
 The main cost with textures comes form their runtime size, \
