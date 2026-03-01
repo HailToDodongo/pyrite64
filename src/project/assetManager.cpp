@@ -148,8 +148,10 @@ namespace
       deserialize(entry.conf, pathMeta);
     }
 
+    bool forceSave = false;
     if (entry.conf.uuid == 0) {
       entry.conf.uuid = Utils::Hash::randomU64();
+      forceSave = true;
     }
 
     if (type == Project::FileType::IMAGE) {
@@ -166,6 +168,11 @@ namespace
         "abcdefghijklmnopqrstuvwxyz{|}~";
     }
 
+    // if this is the first time the asset is seen, we must save the config
+    // otherwise any UUID relations may be messed up
+    if(forceSave) {
+      Utils::FS::saveTextFile(pathMeta, entry.conf.serialize());
+    }
     return true;
   }
 
