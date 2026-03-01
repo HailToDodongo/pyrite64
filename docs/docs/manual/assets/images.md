@@ -73,8 +73,7 @@ Ideally you keep the source images in the highest quality possible, \
 and only adjust dimensions beforehand. \
 The editor allows you to set a format per asset, where the build process then handles a conversion. 
 
-Performance
------------------
+## Performance
 
 The main cost with textures comes form their runtime size, \
 simply because it takes up memory traffic. \
