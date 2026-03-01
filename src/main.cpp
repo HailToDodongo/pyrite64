@@ -14,6 +14,7 @@
 
 #include "cli.h"
 #include "build/projectBuilder.h"
+#include "utils/json.h"
 #include "editor/actions.h"
 #include "editor/imgui/theme.h"
 #include "editor/pages/editorMain.h"
@@ -123,6 +124,107 @@ void updateWindowTitle()
   }
 }
 
+fs::path getEditorConfigPath()
+{
+  static fs::path cached{};
+  if(!cached.empty())return cached;
+
+  char* prefDir = SDL_GetPrefPath(nullptr, "pyrite64");
+  if(!prefDir)return {};
+  cached = fs::path(prefDir) / "editor.json";
+  SDL_free(prefDir);
+  return cached;
+}
+
+namespace {
+  int savedWinX{}, savedWinY{}, savedWinW{}, savedWinH{};
+}
+
+bool loadWindowState(SDL_Window* window)
+{
+  auto configPath = getEditorConfigPath();
+  if(configPath.empty())return false;
+
+  nlohmann::json json;
+  try {
+    json = Utils::JSON::loadFile(configPath);
+    if(json.empty())return false;
+  } catch(...) {
+    fprintf(stderr, "Warning: corrupt editor.json, using defaults\n");
+    return false;
+  }
+
+  auto w = json.value("windowW", 0);
+  auto h = json.value("windowH", 0);
+  auto x = json.value("windowX", 0);
+  auto y = json.value("windowY", 0);
+  auto maximized = json.value("maximized", false);
+
+  if(w <= 0 || h <= 0)return false;
+  w = std::min(w, 16384);
+  h = std::min(h, 16384);
+
+  // check that the window is at least partially visible on a connected display
+  int numDisplays = 0;
+  auto *displays = SDL_GetDisplays(&numDisplays);
+  bool posValid = false;
+  if(displays) {
+    for(int i = 0; i < numDisplays; ++i) {
+      SDL_Rect bounds{};
+      if(SDL_GetDisplayBounds(displays[i], &bounds)) {
+        auto overlapX = std::max(0, std::min(x + w, bounds.x + bounds.w) - std::max(x, bounds.x));
+        auto overlapY = std::max(0, std::min(y + h, bounds.y + bounds.h) - std::max(y, bounds.y));
+        if(overlapX >= 100 && overlapY >= 100) {
+          posValid = true;
+          break;
+        }
+      }
+    }
+    SDL_free(displays);
+  }
+
+  SDL_SetWindowSize(window, w, h);
+  if(posValid) {
+    SDL_SetWindowPosition(window, x, y);
+  } else {
+    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+  }
+
+  if(maximized) {
+    SDL_MaximizeWindow(window);
+  }
+  return true;
+}
+
+void saveWindowState(SDL_Window* window)
+{
+  auto configPath = getEditorConfigPath();
+  if(configPath.empty())return;
+
+  if(savedWinW <= 0 || savedWinH <= 0)return;
+
+  auto flags = SDL_GetWindowFlags(window);
+  bool maximized = (flags & SDL_WINDOW_MAXIMIZED) != 0;
+
+  nlohmann::json json;
+  json["windowW"] = savedWinW;
+  json["windowH"] = savedWinH;
+  json["windowX"] = savedWinX;
+  json["windowY"] = savedWinY;
+  json["maximized"] = maximized;
+
+  fs::create_directories(configPath.parent_path());
+  Utils::FS::saveTextFile(configPath, json.dump(2));
+}
+
+void trackWindowGeometry(SDL_Window* window)
+{
+  if(!(SDL_GetWindowFlags(window) & SDL_WINDOW_MAXIMIZED)) {
+    SDL_GetWindowSize(window, &savedWinW, &savedWinH);
+    SDL_GetWindowPosition(window, &savedWinX, &savedWinY);
+  }
+}
+
 void fatal(const char *fmt, ...)
 {
   va_list args;
@@ -185,7 +287,10 @@ int main(int argc, char** argv)
   }
 
   SDL_SetWindowIcon(window, IMG_Load("data/img/windowIcon.png"));
-  SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+  if(!loadWindowState(window)) {
+    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+  }
+  trackWindowGeometry(window);
   SDL_ShowWindow(window);
 
   // Ensure text input events are enabled
@@ -307,6 +412,12 @@ int main(int argc, char** argv)
           }
         }
 
+        if(event.type == SDL_EVENT_WINDOW_MOVED || event.type == SDL_EVENT_WINDOW_RESIZED
+          || event.type == SDL_EVENT_WINDOW_RESTORED || event.type == SDL_EVENT_WINDOW_SHOWN)
+        {
+          trackWindowGeometry(window);
+        }
+
         // @TODO: refactor into generic actions with keybinds
         if (event.type == SDL_EVENT_KEY_DOWN)
         {
@@ -408,6 +519,8 @@ int main(int argc, char** argv)
     }
     ctx.editorScene.reset();
   }
+
+  saveWindowState(window);
 
   SDL_WaitForGPUIdle(ctx.gpu);
 
