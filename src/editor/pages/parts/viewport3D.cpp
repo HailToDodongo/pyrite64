@@ -546,6 +546,7 @@ void Editor::Viewport3D::draw()
 
   auto dragDelta = mousePos - mousePosStart;
   if (isMouseDown) {
+    ImGui::ClearActiveID();
     if (isAltDown && mouseHeldLeft) {
       camera.stopMoveDelta();
       camera.orbitDelta(dragDelta);
