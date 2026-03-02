@@ -398,19 +398,38 @@ void Editor::AssetsBrowser::draw() {
       ImGui::EndDragDropSource();
     }
 
-    if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-    {
+    if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
       auto tooltipPath = dirState.empty() ? asset.name : (dirState + "/" + asset.name);
       ImGui::SetTooltip("File: %s", tooltipPath.c_str());
     }
 
     if(ImGui::BeginPopupContextItem(asset.path.c_str())) {
-      if(ImGui::MenuItem(ICON_MDI_FOLDER " Show in File Browser")) {
-        showInFileBrowser(asset.path);
-      }
-
+      showContextMenu(asset.path);
       ImGui::EndPopup();
+    } 
+  }
+
+  if (!deletePath.empty()) {
+    ImGui::OpenPopup("Confirm Delete");
+  }
+  
+  if (ImGui::BeginPopupModal("Confirm Delete", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+    ImGui::Text("This action cannot be undone!\nAre you sure you want to delete this asset?");
+    ImGui::Separator();
+    
+    if (ImGui::Button("OK", ImVec2(120, 0))) { 
+        fs::remove(deletePath);
+        deletePath.clear();
+        ImGui::CloseCurrentPopup(); 
     }
+
+    ImGui::SameLine();
+    ImGui::SetItemDefaultFocus();
+    if (ImGui::Button("Cancel", ImVec2(120, 0))) { 
+        deletePath.clear();
+        ImGui::CloseCurrentPopup(); 
+    }
+    ImGui::EndPopup();
   }
 
   if(tab.showScenes)
@@ -499,6 +518,35 @@ void Editor::AssetsBrowser::draw() {
 
   ImGui::EndChild();
   ImGui::EndChild();
+}
+
+void Editor::AssetsBrowser::showContextMenu(const std::string& path) {
+#if defined(_WIN32)
+  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in Explorer";
+#elif defined(__APPLE__)
+  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in Finder";
+#else
+  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in File Manager";
+#endif
+  if(ImGui::MenuItem(showPrompt.c_str())) {
+    showInFileBrowser(path);
+  }
+
+  if(ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open")) {
+    SDL_SetClipboardText(path.c_str());
+  }
+  
+  if(ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Copy Path")) {
+    SDL_OpenURL(path.c_str());
+  }
+  
+  if(ImGui::MenuItem(ICON_MDI_RENAME " Rename")) {
+    renamePath = path;
+  }
+  
+  if(ImGui::MenuItem(ICON_MDI_DELETE " Delete")) {
+    deletePath = path;
+  }
 }
 
 void Editor::AssetsBrowser::showInFileBrowser(const std::string& path) {
