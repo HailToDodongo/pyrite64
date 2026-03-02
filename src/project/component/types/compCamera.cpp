@@ -15,20 +15,8 @@
 #include "../../../renderer/scene.h"
 #include "../../../utils/meshGen.h"
 
-#define GLM_ENABLE_EXPERIMENTAL
-#include "glm/gtx/matrix_decompose.hpp"
-
 namespace
 {
-  /*constexpr char* const LIGHT_TYPES[LIGHT_TYPE_COUNT] = {
-    "Ambient",
-    "Directional",
-    "Point"
-  };*/
-
-  glm::vec3 rotToDir(const Project::Object &obj) {
-    return glm::normalize(obj.rot.value * glm::vec3{0,0,-1});
-  }
 }
 
 namespace Project::Component::Camera
@@ -41,34 +29,44 @@ namespace Project::Component::Camera
     PROP_FLOAT(near);
     PROP_FLOAT(far);
     PROP_FLOAT(aspect);
+    PROP_S32(mode);
   };
 
   std::shared_ptr<void> init(Object &obj) {
-    auto data = std::make_shared<Data>();
-    return data;
+    nlohmann::json dummy = nlohmann::json::object();
+    auto res = deserialize(dummy);
+    auto data = static_cast<Data*>(res.get());
+
+    if(ctx.project) {
+      auto scene = ctx.project->getScenes().getLoadedScene();
+      data->vpSize.value = glm::ivec2(scene->conf.fbWidth, scene->conf.fbHeight);
+    }
+
+    return res;
   }
 
   nlohmann::json serialize(const Entry &entry) {
     Data &data = *static_cast<Data*>(entry.data.get());
-    Utils::JSON::Builder builder{};
-
-    builder.set(data.vpOffset);
-    builder.set(data.vpSize);
-    builder.set(data.fov);
-    builder.set(data.near);
-    builder.set(data.far);
-    builder.set(data.aspect);
-    return builder.doc;
+    return Utils::JSON::Builder{}
+      .set(data.vpOffset)
+      .set(data.vpSize)
+      .set(data.fov)
+      .set(data.near)
+      .set(data.far)
+      .set(data.aspect)
+      .set(data.mode)
+      .doc;
   }
 
   std::shared_ptr<void> deserialize(nlohmann::json &doc) {
     auto data = std::make_shared<Data>();
     Utils::JSON::readProp(doc, data->vpOffset);
     Utils::JSON::readProp(doc, data->vpSize);
-    Utils::JSON::readProp(doc, data->fov, glm::radians(70.0f));
+    Utils::JSON::readProp(doc, data->fov, 65.0f);
     Utils::JSON::readProp(doc, data->near, 100.0f);
-    Utils::JSON::readProp(doc, data->far, 1000.0f);
+    Utils::JSON::readProp(doc, data->far, 4000.0f);
     Utils::JSON::readProp(doc, data->aspect, 0.0f);
+    Utils::JSON::readProp(doc, data->mode, 0);
     return data;
   }
 
