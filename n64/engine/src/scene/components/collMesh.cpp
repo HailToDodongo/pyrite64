@@ -47,15 +47,6 @@ namespace P64::Comp
     data->flags = initData->flags;
 
     void *rawData = AssetManager::getByIndex(initData->assetIdx);
-    if(!(data->flags & FLAG_EXTERNAL))
-    {
-      auto it = t3d_model_iter_create((T3DModel*)rawData, (T3DModelChunkType)'0');
-      rawData = nullptr;
-      if(t3d_model_iter_next(&it)) {
-        rawData = it.chunk;
-      }
-    }
-
     data->meshInstance.object = &obj;
     data->meshInstance.mesh = Coll::Mesh::load(rawData);
     obj.getScene().getCollision().registerMesh(&data->meshInstance);

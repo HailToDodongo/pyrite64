@@ -91,10 +91,6 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
 
       std::vector<T3DM::CustomChunk> customChunks{};
 
-      if(model.conf.gltfCollision.value) {
-        customChunks.emplace_back('0', buildCollision(model.path, T3DM::config.globalScale).getData());
-      }
-
       T3DM::writeT3DM(t3dm, t3dmPath.string().c_str(), projectPath, customChunks);
 
       int compr = (int)model.conf.compression - 1;

@@ -66,27 +66,35 @@ namespace Project::Component::CollMesh
     // we need a part of a collision mesh, by default (and for perf. reasons)
     // the entire mesh is converted by default.
     // generate a unique file for that instance (and do so via a hash to allow sharing)
-    auto &meshes = data.filter.filterT3DM(t3dm->t3dmData.models, obj, false);
-    if(!meshes.empty())
-    {
-      flags |= 1;
-      modelUUID = t3dm->getId();
-      char* meshIdxData = (char*)meshes.data();
-      modelUUID ^= Utils::Hash::crc64(std::string_view{meshIdxData, meshes.size() * sizeof(uint32_t)});
-
-      auto res = ctx.assetUUIDToIdx.find(modelUUID);
-      if (res == ctx.assetUUIDToIdx.end())
-      {
-        std::unordered_set<std::string> meshNames{};
-        for(auto meshIdx : meshes) {
-          meshNames.insert(t3dm->t3dmData.models[meshIdx].name);
-        }
-
-        Build::buildT3DCollision(*ctx.project, ctx, meshNames, t3dm->getId(), modelUUID);
+    auto meshes = data.filter.filterT3DM(t3dm->t3dmData.models, obj, false);
+    if(meshes.empty()) { // take all by default
+      for(uint32_t i=0; i<t3dm->t3dmData.models.size(); ++i) {
+        meshes.push_back(i);
       }
     }
 
+    if(meshes.empty())
+    {
+      throw std::runtime_error("Component Model: No meshes selected for collision!");
+    }
+
+    flags |= 1;
+    modelUUID = t3dm->getId();
+    char* meshIdxData = (char*)meshes.data();
+    modelUUID ^= Utils::Hash::crc64(std::string_view{meshIdxData, meshes.size() * sizeof(uint32_t)});
+
     auto res = ctx.assetUUIDToIdx.find(modelUUID);
+    if (res == ctx.assetUUIDToIdx.end())
+    {
+      std::unordered_set<std::string> meshNames{};
+      for(auto meshIdx : meshes) {
+        meshNames.insert(t3dm->t3dmData.models[meshIdx].name);
+      }
+
+      Build::buildT3DCollision(*ctx.project, ctx, meshNames, t3dm->getId(), modelUUID);
+    }
+
+    res = ctx.assetUUIDToIdx.find(modelUUID);
     if (res == ctx.assetUUIDToIdx.end()) {
       Utils::Logger::log("Component Model: Model UUID not found: " + std::to_string(entry.uuid), Utils::Logger::LEVEL_ERROR);
     } else {

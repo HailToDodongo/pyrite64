@@ -86,7 +86,6 @@ namespace
       conf.baseScale = doc["baseScale"];
       conf.compression = (Project::ComprTypes)doc.value<int>("compression", 0);
       conf.gltfBVH = doc["gltfBVH"];
-      Utils::JSON::readProp(doc, conf.gltfCollision);
       Utils::JSON::readProp(doc, conf.wavForceMono);
       Utils::JSON::readProp(doc, conf.wavResampleRate);
       Utils::JSON::readProp(doc, conf.wavCompression);
@@ -225,7 +224,6 @@ std::string Project::AssetConf::serialize() const {
     .set("baseScale", baseScale)
     .set("compression", static_cast<int>(compression))
     .set("gltfBVH", gltfBVH)
-    .set(gltfCollision)
     .set(wavForceMono)
     .set(wavResampleRate)
     .set(wavCompression)
