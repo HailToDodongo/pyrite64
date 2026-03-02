@@ -41,6 +41,7 @@ namespace Project::Component::Camera
       auto scene = ctx.project->getScenes().getLoadedScene();
       data->vpSize.value = glm::ivec2(scene->conf.fbWidth, scene->conf.fbHeight);
     }
+    data->mode.value = 1;
 
     return res;
   }
@@ -80,6 +81,7 @@ namespace Project::Component::Camera
     ctx.fileObj.write<float>(data.near.resolve(obj));
     ctx.fileObj.write<float>(data.far.resolve(obj));
     ctx.fileObj.write<float>(data.aspect.resolve(obj));
+    ctx.fileObj.write<uint8_t>(data.mode.resolve(obj));
   }
 
   void update(Object &obj, Entry &entry)
@@ -94,24 +96,19 @@ namespace Project::Component::Camera
     {
       auto scene = ctx.project->getScenes().getLoadedScene();
       assert(scene);
-      /*auto &vpSize = data.vpSize.resolve(obj);
-      if(vpSize.x == 0) vpSize.x = scene->conf.fbWidth;
-      if(vpSize.y == 0) vpSize.y = scene->conf.fbHeight;*/
 
       ImTable::add("Name", entry.name);
+
+      ImTable::addComboBox("Controlled", data.mode.resolve(obj), {
+        "Manually", "By Object"
+      });
+
       ImTable::addObjProp("Offset", data.vpOffset);
       ImTable::addObjProp("Size", data.vpSize);
-
-      //float fov = glm::degrees(data.fov.resolve(obj));
       ImTable::addObjProp("FOV", data.fov);
-      //data.fov.resolve(obj) = glm::radians(fov);
-
-
       ImTable::addObjProp("Near", data.near);
       ImTable::addObjProp("Far", data.far);
-
       ImTable::addObjProp("Aspect", data.aspect);
-      //ImTable::addComboBox("Type", data.type, LIGHT_TYPES, LIGHT_TYPE_COUNT);
       ImTable::end();
     }
   }

@@ -17,6 +17,7 @@ void P64::Comp::Camera::initDelete(Object &obj, Camera* data, InitData* initData
 
   new(data) Camera();
 
+  data->mode = initData->mode;
   SceneManager::getCurrent().addCamera(&data->camera);
   auto &cam = data->camera;
   cam.setScreenArea(initData->vpOffset[0], initData->vpOffset[1], initData->vpSize[0], initData->vpSize[1]);
@@ -30,4 +31,11 @@ void P64::Comp::Camera::initDelete(Object &obj, Camera* data, InitData* initData
   }
 
   cam.setPosRot(obj.pos, obj.rot);
+}
+
+void P64::Comp::Camera::update(Object &obj, Camera* data, float deltaTime)
+{
+  if(data->mode == Mode::OBJECT) {
+    data->camera.setPosRot(obj.pos, obj.rot);
+  }
 }

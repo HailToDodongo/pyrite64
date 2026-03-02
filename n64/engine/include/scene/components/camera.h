@@ -15,6 +15,12 @@ namespace P64::Comp
   {
     static constexpr uint32_t ID = 3;
 
+    enum class Mode : uint8_t
+    {
+      MANUAL = 0,
+      OBJECT = 1,
+    };
+
     struct InitData
     {
       int vpOffset[2];
@@ -23,9 +29,11 @@ namespace P64::Comp
       float near;
       float far;
       float aspectRatio;
+      Mode mode;
     };
 
     P64::Camera camera{};
+    Mode mode;
 
     static uint32_t getAllocSize([[maybe_unused]] InitData* initData)
     {
@@ -34,9 +42,7 @@ namespace P64::Comp
 
     static void initDelete([[maybe_unused]] Object& obj, Camera* data, InitData* initData);
 
-    static void update([[maybe_unused]] Object& obj, [[maybe_unused]] Camera* data, [[maybe_unused]] float deltaTime) {
-      obj.pos = data->camera.getPos();
-    }
+    static void update([[maybe_unused]] Object& obj, [[maybe_unused]] Camera* data, [[maybe_unused]] float deltaTime);
 
     static void draw([[maybe_unused]] Object& obj, [[maybe_unused]] Camera* data, [[maybe_unused]] float deltaTime) {
     }
