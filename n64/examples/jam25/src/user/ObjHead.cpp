@@ -23,15 +23,8 @@ namespace P64::Script::C3F36ABD43F3FD05
     float time;   // Time accumulator for animation
   );
 
-  // The following functions are called by the engine at different points in the object's lifecycle.
-  // If you don't need a specific function you can remove it.
-
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void init(Object& obj, Data *data)
   {
-    if(isDelete) {
-      // do cleanup
-      return;
-    }
     data->currEvent = 0;
     data->time = 0.0f;
   }

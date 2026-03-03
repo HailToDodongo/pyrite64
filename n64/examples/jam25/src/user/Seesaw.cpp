@@ -13,12 +13,8 @@ namespace P64::Script::CF977D94F4DB7A71
     uint32_t state;
   );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void init(Object& obj, Data *data)
   {
-    if(isDelete) {
-      return;
-    }
-
     memset(data, 0, sizeof(Data));
   }
 

@@ -23,13 +23,8 @@ namespace P64::Script::CFEEDEA8CF251F94
     Coll::RaycastRes floorCast;
   );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void init(Object& obj, Data *data)
   {
-    if(isDelete)
-    {
-      return;
-    }
-
     if (obj.getComponent<Comp::Constraint>()) {
       data->noCast = 1;
     }

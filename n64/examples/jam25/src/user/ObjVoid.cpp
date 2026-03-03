@@ -42,12 +42,13 @@ namespace P64::Script::CD43F65D4883D4A8
   // The following functions are called by the engine at different points in the object's lifecycle.
   // If you don't need a specific function you can remove it.
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void destroy(Object& obj, Data *data)
   {
-    if(isDelete) {
-      delete data->orgScale;
-      return;
-    }
+    delete data->orgScale;
+  }
+
+  void init(Object& obj, Data *data)
+  {
     data->state = 0;
     data->fadeTimer = -1;
     data->orgScale = nullptr;

@@ -42,14 +42,13 @@ namespace P64::Script::C56A0C143A2EE1E7
     rspq_block_t *dplBg;
   );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void destroy(Object& obj, Data *data)
   {
-    if(isDelete)
-    {
-      rspq_call_deferred((void(*)(void*))rspq_block_free, data->dplBg);
-      return;
-    }
+    rspq_call_deferred((void(*)(void*))rspq_block_free, data->dplBg);
+  }
 
+  void init(Object& obj, Data *data)
+  {
     data->timer = 0;
 
     rspq_block_begin();

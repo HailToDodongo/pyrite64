@@ -31,13 +31,8 @@ namespace P64::Script::C896248FAFED4CBF
     bool failedMiRepeat;
   );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void init(Object& obj, Data *data)
   {
-    if(isDelete) {
-      // do cleanup
-      return;
-    }
-
     data->failedExpPack = !is_memory_expanded();
     if(data->failedExpPack)return;
 

@@ -43,7 +43,7 @@ namespace P64::Script::C0CC4367B29A36ED
     joypad_8way_t lastDirInp;
   );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void init(Object& obj, Data *data)
   {
     data->fadeTime = 1.0f;
     data->focusTime = 1.0f;

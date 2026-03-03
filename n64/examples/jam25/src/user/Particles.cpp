@@ -42,12 +42,8 @@ namespace P64::Script::C97E100FE63D9085
   // The following functions are called by the engine at different points in the object's lifecycle.
   // If you don't need a specific function you can remove it.
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void init(Object& obj, Data *data)
   {
-    if(isDelete) {
-      return;
-    }
-
     data->timer = 0;
     data->type = TYPE_COIN;
 

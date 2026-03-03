@@ -18,17 +18,16 @@ namespace P64::Script::C4640C925988CA72
       float fadeTarget;
     );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void destroy(Object& obj, Data *data)
   {
-    if(isDelete) {
-      SceneManager::load("Menu"_scene);
-      User::ScreenFade::setFadeState(false);
-      return;
-    }
+    SceneManager::load("Menu"_scene);
+    User::ScreenFade::setFadeState(false);
+  }
 
+  void init(Object& obj, Data *data)
+  {
     data->currLogo = 0;
     data->fade = 0;
-
     User::ScreenFade::setFadeState(true);
   }
 

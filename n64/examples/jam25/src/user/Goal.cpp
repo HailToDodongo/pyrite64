@@ -17,12 +17,8 @@ namespace P64::Script::C19072097105FC85
   // The following functions are called by the engine at different points in the object's lifecycle.
   // If you don't need a specific function you can remove it.
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void init(Object& obj, Data *data)
   {
-    if(isDelete) {
-      // do cleanup
-      return;
-    }
     data->state = 0;
   }
 

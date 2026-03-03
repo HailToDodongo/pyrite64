@@ -91,15 +91,14 @@ namespace P64::Script::C10BED11E4F936F7
     rspq_block_t *dplBgTex;
   );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void destroy(Object& obj, Data *data)
   {
-    if(isDelete)
-    {
-      rspq_call_deferred((void(*)(void*))rspq_block_free, data->dplBgTex);
-      texTitle = nullptr;
-      return;
-    }
+    rspq_call_deferred((void(*)(void*))rspq_block_free, data->dplBgTex);
+    texTitle = nullptr;
+  }
 
+  void init(Object& obj, Data *data)
+  {
     memset(data, 0, sizeof(Data));
     obj.pos.y = 200;
 

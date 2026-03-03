@@ -29,13 +29,13 @@ namespace P64::Script::C00EFAD26DE8842F
     float lastPlayerPos[2];
   );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void destroy(Object& obj, Data *data)
   {
-    if(isDelete) {
-      surface_free(&data->mapSurf);
-      return;
-    }
+    surface_free(&data->mapSurf);
+  }
 
+  void init(Object& obj, Data *data)
+  {
     data->playerAngle = 0;
     data->mapSurf = surface_alloc(FMT_I8, MAP_DIM, MAP_DIM);
     assert(STRIDE == data->mapSurf.stride);

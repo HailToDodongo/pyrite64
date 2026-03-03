@@ -87,9 +87,8 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     uint8_t landSFXCooldown;
   );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void init(Object& obj, Data *data)
   {
-    if(isDelete) return;
     sys_hw_memset((void*)data, 0, sizeof(Data));
 
     data->camPitch = 0.31f;

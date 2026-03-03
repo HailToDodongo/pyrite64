@@ -25,13 +25,13 @@ namespace P64::Script::C7D6052B4FD1AF1C
     float timer;
   );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void destroy(Object& obj, Data *data)
   {
-    if(isDelete) {
-      rspq_block_free(data->dplCoins);
-      return;
-    }
+    rspq_block_free(data->dplCoins);
+  }
 
+  void init(Object& obj, Data *data)
+  {
     const auto &conf = SceneManager::getCurrent().getConf();
     int posX = SCREEN_EDGE;
     int posY = conf.screenHeight - SCREEN_EDGE - data->iconCoin.get()->height;

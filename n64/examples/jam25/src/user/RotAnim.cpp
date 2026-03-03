@@ -22,11 +22,8 @@ namespace P64::Script::C6588C0666A90159
     float timer;
   );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void init(Object& obj, Data *data)
   {
-    if(isDelete) {
-      return;
-    }
     data->orgPos = obj.pos;
     data->timer = 0;
   }
