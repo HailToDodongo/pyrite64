@@ -11,14 +11,15 @@ namespace P64::Coll { struct CollEvent; }
 
 namespace P64::Script
 {
-  typedef void(*FuncObjInit)(Object&, void*, bool isDelete);
+  typedef void(*FuncObjInit)(Object&, void*);
   typedef void(*FuncObjDataDelta)(Object&, void*, float);
   typedef void(*FuncObjDataEvent)(Object&, void*, const ObjectEvent&);
   typedef void(*FuncObjDataColl)(Object&, void*, const P64::Coll::CollEvent&);
 
   struct ScriptEntry
   {
-    FuncObjInit initDelete;
+    FuncObjInit init;
+    FuncObjInit destroy;
     FuncObjDataDelta update;
     FuncObjDataDelta draw;
     FuncObjDataEvent onEvent;

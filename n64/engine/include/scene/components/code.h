@@ -18,7 +18,8 @@ namespace P64::Comp
     static constexpr uint32_t ID = 0;
 
     // @TODO: only store used functions
-    Script::FuncObjInit funcInitDelete{};
+    Script::FuncObjInit funcInit{};
+    Script::FuncObjInit funcDel{};
     Script::FuncObjDataDelta funcUpdate{};
     Script::FuncObjDataDelta funcDraw{};
     Script::FuncObjDataEvent funcOnEvent{};
@@ -34,8 +35,8 @@ namespace P64::Comp
     {
       if (initData == nullptr)
       {
-        if(data->funcInitDelete) {
-          data->funcInitDelete(obj, (char*)data + sizeof(Code), true);
+        if(data->funcDel) {
+          data->funcDel(obj, (char*)data + sizeof(Code));
         }
         return;
       }
@@ -44,7 +45,8 @@ namespace P64::Comp
       auto dataSize = Script::getCodeSizeByIndex(initData[0]);
       // reserved: initData[1];
 
-      data->funcInitDelete = scriptPtr.initDelete;
+      data->funcInit = scriptPtr.init;
+      data->funcDel = scriptPtr.destroy;
       data->funcUpdate = scriptPtr.update;
       data->funcDraw = scriptPtr.draw;
       data->funcOnEvent = scriptPtr.onEvent;
@@ -54,8 +56,8 @@ namespace P64::Comp
         memcpy((char*)data + sizeof(Code), (char*)&initData[2], dataSize);
       }
 
-      if(data->funcInitDelete) {
-        data->funcInitDelete(obj, (char*)data + sizeof(Code), false);
+      if(data->funcInit) {
+        data->funcInit(obj, (char*)data + sizeof(Code));
       }
     }
 

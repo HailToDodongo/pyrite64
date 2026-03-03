@@ -193,6 +193,12 @@ Please also check the following settings, for subsequent exports those will be r
 :align: center
 ```
 
+For skinned meshes, please also enable this setting to prevent any artificial bones to be exported:
+
+```{image} /_static/img/fast64_export_settings_anim.png
+:align: center
+```
+
 After exporting the `.glb` file into your projects asset directory, you can now use it in the editor.
 
 ## Performance

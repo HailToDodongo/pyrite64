@@ -30,11 +30,18 @@ void Build::buildScripts(Project::Project &project, SceneCtx &sceneCtx)
   for (auto &script : scripts)
   {
     auto src = Utils::FS::loadTextFile(script.path);
-    bool hasInit = Utils::CPP::hasFunction(src, "void", "initDelete");
-    bool hasUpdate = Utils::CPP::hasFunction(src, "void", "update");
-    bool hasDraw = Utils::CPP::hasFunction(src, "void", "draw");
-    bool hasEvent = Utils::CPP::hasFunction(src, "void", "onEvent");
-    bool hasColl = Utils::CPP::hasFunction(src, "void", "onCollision");
+
+    // check older versions of scripts, before init/del was combined into one
+    if (Utils::CPP::hasFunction(src, "void", "initDelete")) {
+      throw std::runtime_error("Script " + script.name + " contains 'initDelete'!\nPlease migrate to 'init' and 'destroy' functions.");
+    }
+
+    bool hasInit    = Utils::CPP::hasFunction(src, "void", "init");
+    bool hasDestroy = Utils::CPP::hasFunction(src, "void", "destroy");
+    bool hasUpdate  = Utils::CPP::hasFunction(src, "void", "update");
+    bool hasDraw    = Utils::CPP::hasFunction(src, "void", "draw");
+    bool hasEvent   = Utils::CPP::hasFunction(src, "void", "onEvent");
+    bool hasColl    = Utils::CPP::hasFunction(src, "void", "onCollision");
 
     auto uuidStr = std::format("{:016X}", script.getUUID());
 
@@ -42,7 +49,8 @@ void Build::buildScripts(Project::Project &project, SceneCtx &sceneCtx)
 
     srcDecl += "  namespace " + uuidStr + " {\nstruct Data;\n";
     srcDecl += " extern uint16_t DATA_SIZE;\n";
-    if(hasInit)srcDecl += "void initDelete(Object& obj, Data *data, bool isDelete);\n";
+    if(hasInit)srcDecl += "void init(Object& obj, Data *data);\n";
+    if(hasDestroy)srcDecl += "void destroy(Object& obj, Data *data);\n";
     if(hasUpdate)srcDecl += "void update(Object& obj, Data *data, float deltaTime);\n";
     if(hasDraw)srcDecl += "void draw(Object& obj, Data *data, float deltaTime);\n";
     if(hasEvent)srcDecl += "void onEvent(Object& obj, Data *data, const ObjectEvent& event);\n";
@@ -50,7 +58,8 @@ void Build::buildScripts(Project::Project &project, SceneCtx &sceneCtx)
     srcDecl += "}\n";
 
     srcEntries += "{\n";
-    if(hasInit)srcEntries += " .initDelete = (FuncObjInit)" + uuidStr + "::initDelete,\n";
+    if(hasInit)srcEntries += " .init = (FuncObjInit)" + uuidStr + "::init,\n";
+    if(hasDestroy)srcEntries += " .destroy = (FuncObjInit)" + uuidStr + "::destroy,\n";
     if(hasUpdate)srcEntries += " .update = (FuncObjDataDelta)" + uuidStr + "::update,\n";
     if(hasDraw)srcEntries += " .draw = (FuncObjDataDelta)" + uuidStr + "::draw,\n";
     if(hasEvent)srcEntries += " .onEvent = (FuncObjDataEvent)" + uuidStr + "::onEvent,\n";
