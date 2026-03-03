@@ -8,3 +8,4 @@ Scripting
   :maxdepth: 2
 
   script/intro
+  script/objScript

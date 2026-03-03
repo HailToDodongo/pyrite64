@@ -24,12 +24,12 @@ So while written in C++, it is more similar to a C-style functional approach.
 Scripts can also define a block of memory with variables to be used. \
 Those are then instantiated for each object, and can also be pre-set in the editor per object.
 
-The script will then be called at various points (e.g. update and draw), \
+At runtime, the script will then be called at various points (e.g. update and draw), \
 and may receive events (e.g. collision) as well.
 
 Since it is bound to an object, the lifetime of the script is bound to it too. \
-Meaning when the object spawns, so will the script, \
-and when it is destroyed the script will be as well.
+Meaning when the object spawns, so will the script instance, \
+and when it is destroyed the script instance will be as well.
 
 ## Global Scripts
 
@@ -37,12 +37,12 @@ A Global Script is not bound to any object or scene, \
 but as the name suggests is global to the game.\
 Pyrite64 will hook those up automatically if they exist.
 
-The main purpose is to implement system not easily doable via objects,\
+The main purpose is to implement systems not easily doable via objects,\
 for example general UI, or a drop-shadow helper.
 
 They can also be used to set up global memory, \
 which can for example hold a game-state like the current score or lives. \
 Since they don't get destroyed during scene changes, they never lose their data.
 
-To make everything usable, the engine call into its callbacks at various points.\
+To make everything usable, the engine calls into its callbacks at various points.\
 Including during starting the game, loading a scene, before and after updating, etc.
