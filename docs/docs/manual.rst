@@ -12,4 +12,5 @@ General documentation for the editor and runtime-engine.
   manual/launcher
   manual/introduction
   manual/assets
+  manual/script
   manual/cli
