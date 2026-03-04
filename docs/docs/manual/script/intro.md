@@ -5,7 +5,7 @@ An kind of general gameplay loop and handling of events is done purely by it. \
 The way custom logic is implemented is by registering scripts in the editor. \
 Whenever it is necessary, the engine will then call into user provided code.
 
-There two main types of scripts:
+There are three main types of scripts:
 
 ## Object Scripts
 
@@ -46,3 +46,20 @@ Since they don't get destroyed during scene changes, they never lose their data.
 
 To make everything usable, the engine calls into its callbacks at various points.\
 Including during starting the game, loading a scene, before and after updating, etc.
+
+## Node Graph
+
+A Node Graph is a way to program simple sequence of events in a visual node-based editor.\
+This does not allow for general programming, but should be seen as a way to organize events.\
+A simple example would be a dialog tree:
+- Open a text box
+- Wait for response and branch off
+- Wait 5s
+- Load a new Scene
+
+Internally it transpiles into C++ during build, so code ends up being native.\
+Since it uses stack-based co-routines, it can also wait for events without blocking.
+
+Please note that the node-graph is still in early development,\
+and doesn't offer many features yet.\
+Nor can it replace the object or global scripts.
