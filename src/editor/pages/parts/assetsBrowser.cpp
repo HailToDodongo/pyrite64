@@ -93,6 +93,25 @@ namespace
   }
 #endif
 
+  void openFile(const std::string &path)
+  {
+#if defined(__linux__)
+    if (isWSL()) {
+      const auto windowsPath = wslToWindowsPath(path);
+      if (windowsPath) {
+        const char* args[] = { "cmd.exe", "/C", "start", "", windowsPath->c_str(), NULL };
+        SDL_CreateProcess(args, false);
+      } else {
+        Editor::Noti::add(Editor::Noti::Type::ERROR,
+          "Failed to convert Linux path to Windows path (WSL interop).");
+        SDL_OpenURL(path.c_str());
+      }
+      return;
+    }
+#endif
+    SDL_OpenURL(path.c_str());
+  }
+
 }
 
 void Editor::AssetsBrowser::draw() {
@@ -480,7 +499,7 @@ void Editor::AssetsBrowser::draw() {
       ctx.selAssetUUID = asset.getUUID();
     }
     if (isDblClick) {
-      SDL_OpenURL(asset.path.c_str());
+      openFile(asset.path);
     }
 
     if (ImGui::BeginDragDropSource()) {
@@ -628,32 +647,7 @@ void Editor::AssetsBrowser::showContextMenu(const std::string& path) {
   }
 
   if(ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open")) {
-#if defined(__linux__)
-    if (isWSL()) {
-      const auto windowsPath = wslToWindowsPath(path);
-      if (windowsPath) {
-        const char* args[] = {
-          "cmd.exe",
-          "/C",
-          "start",
-          "",
-          windowsPath->c_str(),
-          NULL
-        };
-        SDL_CreateProcess(args, false);
-      } else {
-          Editor::Noti::add(
-            Editor::Noti::Type::ERROR,
-            "Failed to convert Linux path to Windows path (WSL interop)."
-          );
-        SDL_OpenURL(path.c_str());
-      }
-    } else {
-      SDL_OpenURL(path.c_str());
-    }
-#else
-    SDL_OpenURL(path.c_str());
-#endif
+    openFile(path);
   }
   
   if(ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Copy Path")) {
