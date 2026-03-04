@@ -165,7 +165,11 @@ The other section is a set of functions you can provide.\
 A newly created script will contain all of them by default,\
 and you can remove the ones you do not need.
 
-Currently allowed are:
+All functions have at least two common arguments:
+- `Object& obj` - The object the script is attached to
+- `Data *data` - Data pointer for this instance, structure as defined in `P64_DATA` 
+
+Currently allowed functions are:
 
 #### Init
 ```cpp
