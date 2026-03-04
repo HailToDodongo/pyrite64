@@ -602,9 +602,10 @@ void Editor::AssetsBrowser::showContextMenu(const std::string& path) {
 
 void Editor::AssetsBrowser::showInFileBrowser(const std::string& path) {
 #if defined(_WIN32)
+  std::string explorerArgs = "/select," + path;
   const char* args[] = {
     "explorer.exe",
-    ("/select," + path).c_str(),
+    explorerArgs.c_str(),
     NULL
   };
 #elif defined(__APPLE__)
