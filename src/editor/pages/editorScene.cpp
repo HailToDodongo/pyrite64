@@ -78,10 +78,9 @@ void Editor::Scene::draw()
   dockSpaceID = ImGui::DockSpace(dockSpaceID, ImVec2(0.0f, 0.0f), 0, 0);
   ImGui::End();
 
-  if(!dockSpaceInit)
+  auto dockSpace = ImGui::DockBuilderGetNode(dockSpaceID);
+  if(dockSpace == nullptr)
   {
-    dockSpaceInit = true;
-
     ImGui::DockBuilderRemoveNode(dockSpaceID); // Clear out existing layout
     ImGui::DockBuilderAddNode(dockSpaceID); // Add empty node
     ImGui::DockBuilderSetNodeSize(dockSpaceID, ImGui::GetMainViewport()->Size);
@@ -311,7 +310,7 @@ void Editor::Scene::draw()
 
       if(ImGui::BeginMenu("View"))
       {
-        if(ImGui::MenuItem("Reset Layout"))dockSpaceInit = false;
+        if(ImGui::MenuItem("Reset Layout"))ImGui::DockBuilderRemoveNode(dockSpaceID);
         ImGui::EndMenu();
       }
 
