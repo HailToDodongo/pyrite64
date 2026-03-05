@@ -6,7 +6,6 @@
 #include "argparse/argparse.hpp"
 #include "build/projectBuilder.h"
 #include "utils/logger.h"
-#include "editor/actions.h"
 
 namespace
 {
@@ -20,15 +19,6 @@ const std::string& CLI::getProjectPath()
 
 CLI::Result CLI::run(int argc, char** argv)
 {
-  //Windows will pass the project path as an argument when you double click a project file
-  if (argc > 1) {
-    std::string path = argv[1];
-    if (path.ends_with(".p64proj")) {
-      Editor::Actions::call(Editor::Actions::Type::PROJECT_OPEN, path);
-      return Result::GUI;
-    }
-  }
-
   argparse::ArgumentParser prog{"pyrite64", PYRITE_VERSION};
   prog.add_argument("--cli")
    .help("Run in CLI mode (no GUI)")
