@@ -4,10 +4,16 @@
 */
 #include "proc.h"
 
+#include <array>
+#include <cstdio>
+#include <cstdlib>
+#include <format>
 #include <fstream>
 #include <memory>
+#include <optional>
 #include <filesystem>
 
+#include <SDL3/SDL.h>
 #include <SDL3/SDL_filesystem.h>
 
 #ifdef _WIN32
@@ -26,6 +32,45 @@ namespace fs = std::filesystem;
 namespace
 {
   constexpr uint32_t BUFF_SIZE = 128;
+
+#if defined(__linux__)
+  bool isWSL()
+  {
+    return std::getenv("WSL_INTEROP") != nullptr || std::getenv("WSL_DISTRO_NAME") != nullptr;
+  }
+
+  std::optional<std::string> wslToWindowsPath(const std::string &path)
+  {
+    std::error_code absEc;
+    std::string linuxPath = fs::absolute(fs::path(path), absEc).generic_string();
+    if (absEc) linuxPath = fs::path(path).generic_string();
+
+    std::string escapedPath;
+    escapedPath.reserve(linuxPath.size());
+    for (char c : linuxPath) {
+      if (c == '\\' || c == '"') escapedPath.push_back('\\');
+      escapedPath.push_back(c);
+    }
+
+    std::string command = "wslpath -w -- \"" + escapedPath + "\"";
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) return std::nullopt;
+
+    std::array<char, 256> buffer{};
+    std::string output;
+    while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
+      output += buffer.data();
+    }
+
+    if (pclose(pipe) != 0) return std::nullopt;
+
+    while (!output.empty() && (output.back() == '\n' || output.back() == '\r')) {
+      output.pop_back();
+    }
+
+    return output.empty() ? std::nullopt : std::optional<std::string>{output};
+  }
+#endif
 }
 
 std::string Utils::Proc::runSync(const std::string &cmd)
@@ -163,4 +208,63 @@ fs::path Utils::Proc::getProjectsPath()
   }
 
   return fs::current_path() / "projects";
+}
+
+bool Utils::Proc::openFile(const std::string &path)
+{
+#if defined(__linux__)
+  if (isWSL()) {
+    const auto windowsPath = wslToWindowsPath(path);
+    if (windowsPath) {
+      const char* args[] = { "cmd.exe", "/C", "start", "", windowsPath->c_str(), NULL };
+      SDL_CreateProcess(args, false);
+      return true;
+    }
+    SDL_OpenURL(path.c_str());
+    return false;
+  }
+#endif
+  SDL_OpenURL(path.c_str());
+  return true;
+}
+
+bool Utils::Proc::openInFileBrowser(const std::string &path)
+{
+#if defined(_WIN32)
+  std::string explorerArgs = "/select," + path;
+  const char* args[] = { "explorer.exe", explorerArgs.c_str(), NULL };
+  SDL_CreateProcess(args, false);
+  return true;
+#elif defined(__APPLE__)
+  const char* args[] = { "open", "-R", path.c_str(), NULL };
+  SDL_CreateProcess(args, false);
+  return true;
+#else
+#if defined(__linux__)
+  if (isWSL()) {
+    const auto windowsPath = wslToWindowsPath(path);
+    if (windowsPath) {
+      std::string explorerArgs = std::string("/select,") + *windowsPath;
+      const char* args[] = { "explorer.exe", explorerArgs.c_str(), NULL };
+      SDL_CreateProcess(args, false);
+      return true;
+    }
+    return false;
+  }
+#endif
+  std::string pathArg = std::format("array:string:file:///{}", path);
+  const char* args[] = {
+    "dbus-send",
+    "--session",
+    "--dest=org.freedesktop.FileManager1",
+    "--type=method_call",
+    "/org/freedesktop/FileManager1",
+    "org.freedesktop.FileManager1.ShowItems",
+    pathArg.c_str(),
+    "string:",
+    NULL
+  };
+  SDL_CreateProcess(args, false);
+  return true;
+#endif
 }

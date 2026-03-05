@@ -10,15 +10,12 @@
 #include "../../imgui/notification.h"
 #include "../../../context.h"
 #include <algorithm>
-#include <array>
-#include <cstdlib>
-#include <cstdio>
 #include <filesystem>
-#include <optional>
 #include <unordered_set>
 #include <SDL3/SDL.h>
 #include <string>
 #include "../../../utils/logger.h"
+#include "../../../utils/proc.h"
 
 using FileType = Project::FileType;
 namespace fs = std::filesystem;
@@ -52,64 +49,6 @@ namespace
     if (left.empty()) return right;
     if (right.empty()) return left;
     return left + "/" + right;
-  }
-
-#if defined(__linux__)
-  bool isWSL()
-  {
-    return std::getenv("WSL_INTEROP") != nullptr || std::getenv("WSL_DISTRO_NAME") != nullptr;
-  }
-
-  std::optional<std::string> wslToWindowsPath(const std::string &path)
-  {
-    std::error_code absEc;
-    std::string linuxPath = fs::absolute(fs::path(path), absEc).generic_string();
-    if (absEc) linuxPath = fs::path(path).generic_string();
-
-    std::string escapedPath;
-    escapedPath.reserve(linuxPath.size());
-    for (char c : linuxPath) {
-      if (c == '\\' || c == '"') escapedPath.push_back('\\');
-      escapedPath.push_back(c);
-    }
-
-    std::string command = "wslpath -w -- \"" + escapedPath + "\"";
-    FILE* pipe = popen(command.c_str(), "r");
-    if (!pipe) return std::nullopt;
-
-    std::array<char, 256> buffer{};
-    std::string output;
-    while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
-      output += buffer.data();
-    }
-
-    if (pclose(pipe) != 0) return std::nullopt;
-
-    while (!output.empty() && (output.back() == '\n' || output.back() == '\r')) {
-      output.pop_back();
-    }
-
-    return output.empty() ? std::nullopt : std::optional<std::string>{output};
-  }
-#endif
-
-  void openFile(const std::string &path)
-  {
-#if defined(__linux__)
-    if (isWSL()) {
-      const auto windowsPath = wslToWindowsPath(path);
-      if (windowsPath) {
-        const char* args[] = { "cmd.exe", "/C", "start", "", windowsPath->c_str(), NULL };
-        SDL_CreateProcess(args, false);
-      } else {
-        Editor::Noti::add(Editor::Noti::Type::ERROR,
-          "Failed to convert Linux path to Windows path (WSL interop).");
-        SDL_OpenURL(path.c_str());
-      }
-      return;
-    }
-#endif
-    SDL_OpenURL(path.c_str());
   }
 
 }
@@ -499,7 +438,10 @@ void Editor::AssetsBrowser::draw() {
       ctx.selAssetUUID = asset.getUUID();
     }
     if (isDblClick) {
-      openFile(asset.path);
+      if (!Utils::Proc::openFile(asset.path))
+      {
+        Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File. This may be due to WSL path conversion failure.");
+      }
     }
 
     if (ImGui::BeginDragDropSource()) {
@@ -643,11 +585,15 @@ void Editor::AssetsBrowser::showContextMenu(const std::string& path) {
   std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in File Manager";
 #endif
   if(ImGui::MenuItem(showPrompt.c_str())) {
-    showInFileBrowser(path);
+    if (!Utils::Proc::openInFileBrowser(path)) {
+      Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File Explorer. This may be due to WSL path conversion failure.");
+    }
   }
 
   if(ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open")) {
-    openFile(path);
+    if (!Utils::Proc::openFile(path)) {
+      Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File. This may be due to WSL path conversion failure.");
+    }
   }
   
   if(ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Copy Path")) {
@@ -664,58 +610,4 @@ void Editor::AssetsBrowser::showContextMenu(const std::string& path) {
   if(ImGui::MenuItem(ICON_MDI_DELETE " Delete")) {
     deletePath = path;
   }
-}
-
-void Editor::AssetsBrowser::showInFileBrowser(const std::string& path) {
-#if defined(_WIN32)
-  std::string explorerArgs = "/select," + path;
-  const char* args[] = {
-    "explorer.exe",
-    explorerArgs.c_str(),
-    NULL
-  };
-#elif defined(__APPLE__)
-  const char* args[] = {
-    "open",
-    "-R",
-    path.c_str(),
-    NULL
-  };
-#else
-#if defined(__linux__)
-  if (isWSL()) {
-    const auto windowsPath = wslToWindowsPath(path);
-    if (windowsPath) {
-      std::string explorerArgs = std::string("/select,") + *windowsPath;
-      const char* args[] = {
-        "explorer.exe",
-        explorerArgs.c_str(),
-        NULL
-      };
-      SDL_CreateProcess(args, false);
-      return;
-    }
-
-    Editor::Noti::add(
-      Editor::Noti::Type::ERROR,
-      "Failed to convert Linux path to Windows path (WSL interop)."
-    );
-    return;
-  }
-#endif
-  std::string pathArg = std::format("array:string:file:///{}", path);
-  const char* args[] = {
-    "dbus-send",
-    "--session",
-    "--dest=org.freedesktop.FileManager1",
-    "--type=method_call",
-    "/org/freedesktop/FileManager1",
-    "org.freedesktop.FileManager1.ShowItems",
-    pathArg.c_str(),
-    "string:",
-    NULL
-  };
-#endif
-
-  SDL_CreateProcess(args, false);
 }

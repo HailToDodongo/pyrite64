@@ -23,6 +23,5 @@ namespace Editor
     public:
       void draw();
       void showContextMenu(const std::string& path);
-      void showInFileBrowser(const std::string& path);
   };
 }
