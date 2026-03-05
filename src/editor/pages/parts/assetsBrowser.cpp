@@ -75,14 +75,14 @@ void Editor::AssetsBrowser::draw() {
     },
   };
 
-  ImGui::BeginChild("LEFT", ImVec2(94, 0), ImGuiChildFlags_Borders);
+  ImGui::BeginChild("LEFT", ImVec2(94_px, 0), ImGuiChildFlags_Borders);
   for (int i=0; i<TABS.size(); ++i) {
     bool isActive = i == activeTab;
     if (ImGui::Selectable(TABS[i].name, isActive))activeTab = i;
   }
   ImGui::EndChild();
 
-  float sceneOptionsWidth = 140;
+  float sceneOptionsWidth = 140_px;
 
   if(activeTab == TAB_IDX_SCENES)
   {
@@ -123,8 +123,8 @@ void Editor::AssetsBrowser::draw() {
     }
   }
 
-  auto availWidth = ImGui::GetContentRegionAvail().x - 24;
-  if(activeTab == TAB_IDX_SCENES)availWidth -= sceneOptionsWidth - 4;
+  auto availWidth = ImGui::GetContentRegionAvail().x - 24_px;
+  if(activeTab == TAB_IDX_SCENES)availWidth -= sceneOptionsWidth - 4_px;
 
   ImGui::SameLine();
   ImGui::BeginChild("RIGHT");
@@ -135,10 +135,10 @@ void Editor::AssetsBrowser::draw() {
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetColorU32(ImGuiCol_Button));
     ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetColorU32(ImGuiCol_WindowBg));
 
-    ImGui::BeginChild("PATH", ImVec2(0, 21), 0,
+    ImGui::BeginChild("PATH", ImVec2(0, 21_px), 0,
       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove
     );
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 3));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4_px, 3_px));
 
     std::vector<std::string> crumbParts{};
     if (!dirState.empty()) {
@@ -151,7 +151,7 @@ void Editor::AssetsBrowser::draw() {
       }
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 4));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4_px, 4_px));
     if (ImGui::Button(baseLabel)) {
       dirState.clear();
     }
@@ -169,22 +169,22 @@ void Editor::AssetsBrowser::draw() {
 
     // search field on the right side
     ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x + ImGui::GetCursorPosX() - 160 - 2);
-    ImGui::SetNextItemWidth(160);
+    ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x + ImGui::GetCursorPosX() - 160_px - 2_px);
+    ImGui::SetNextItemWidth(160_px);
     ImGui::InputTextWithHint("##search", "Filter...", &searchFilter);
 
     ImGui::EndChild();
     ImGui::PopStyleColor(3);
   } else {
-    ImGui::Dummy({0, 4});
+    ImGui::Dummy({0, 4_px});
   }
 
   ImGui::BeginChild("ASSETS");
 
-  float imageSize = 64;
-  float itemWidth = imageSize + 18;
+  float imageSize = 64_px;
+  float itemWidth = imageSize + 18_px;
   float currentWidth = 0.0f;
-  ImVec2 textBtnSize{imageSize+12, imageSize+8};
+  ImVec2 textBtnSize{imageSize+12_px, imageSize+8_px};
 
   float cursorStartX = ImGui::GetCursorPosX();
   float cursorY = ImGui::GetCursorPosY();
@@ -192,8 +192,8 @@ void Editor::AssetsBrowser::draw() {
   auto checkLineBreak = [&]() {
     if ((currentWidth+itemWidth*2) > availWidth) {
       currentWidth = 0.0f;
-      cursorY += imageSize + 28;
-      if (activeTab == TAB_IDX_SCENES)cursorY -= 12;
+      cursorY += imageSize + 28_px;
+      if (activeTab == TAB_IDX_SCENES)cursorY -= 12_px;
 
       ImGui::SetCursorPos({cursorStartX, cursorY});
     } else {
@@ -204,13 +204,13 @@ void Editor::AssetsBrowser::draw() {
 
   auto drawRename = [&](const std::string &label, const ImVec2 &startPos) {
     ImVec2 rectMin{startPos.x,                startPos.y + imageSize + 8};
-    ImVec2 rectMax{startPos.x + imageSize + 14, startPos.y + imageSize + 8 + 16};
+    ImVec2 rectMax{startPos.x + imageSize + 14_px, startPos.y + imageSize + 8_px + 16_px};
 
     ImVec2 originalCursor = ImGui::GetCursorPos();
     ImGui::SetCursorScreenPos(rectMin);
     ImGui::SetNextItemWidth(rectMax.x - rectMin.x);
     if (ImGui::IsWindowAppearing() || !ImGui::IsAnyItemActive()) ImGui::SetKeyboardFocusHere();
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2_px, 0));
     if (ImGui::InputText("##renameInput", renameBuffer, sizeof(renameBuffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
       fs::path oldPath = renamePath;
       std::string newFileName = std::string(renameBuffer) + oldPath.extension().string();
@@ -243,10 +243,10 @@ void Editor::AssetsBrowser::draw() {
 
   auto drawLabel = [&](const std::string &label, const ImVec2 &startPos) {
     auto size = ImGui::CalcTextSize(label.c_str());
-    ImVec2 rextMin{startPos.x,                startPos.y + imageSize + 8};
-    ImVec2 rextMax{startPos.x + imageSize+14, startPos.y + imageSize + 8 + 16};
+    ImVec2 rextMin{startPos.x,                   startPos.y + imageSize + 8_px};
+    ImVec2 rextMax{startPos.x + imageSize+14_px, startPos.y + imageSize + 8_px + 16_px};
 
-    if((size.x+3) > (rextMax.x - rextMin.x))
+    if((size.x+3_px) > (rextMax.x - rextMin.x))
     {
       ImGui::RenderTextEllipsis(
         ImGui::GetWindowDrawList(), rextMin, rextMax, 0,
@@ -285,7 +285,7 @@ void Editor::AssetsBrowser::draw() {
       );
 
     } else {
-      ImGui::PushFont(nullptr, 40.0f);
+      ImGui::PushFont(nullptr, 40_px);
       clicked = ImGui::Button(iconTxt, textBtnSize);
       ImGui::PopFont();
     }
@@ -473,7 +473,7 @@ void Editor::AssetsBrowser::draw() {
     ImGui::Text("This action cannot be undone!\nAre you sure you want to delete this asset?");
     ImGui::Separator();
     
-    if (ImGui::Button("OK", ImVec2(120, 0))) { 
+    if (ImGui::Button("OK", ImVec2(120_px, 0))) {
         fs::remove(deletePath);
         deletePath.clear();
         ImGui::CloseCurrentPopup(); 
@@ -481,7 +481,7 @@ void Editor::AssetsBrowser::draw() {
 
     ImGui::SameLine();
     ImGui::SetItemDefaultFocus();
-    if (ImGui::Button("Cancel", ImVec2(120, 0))) { 
+    if (ImGui::Button("Cancel", ImVec2(120_px, 0))) {
         deletePath.clear();
         ImGui::CloseCurrentPopup(); 
     }
@@ -523,7 +523,7 @@ void Editor::AssetsBrowser::draw() {
     checkLineBreak();
     // set textsize to larger
 
-    ImGui::PushFont(nullptr, 32.0f);
+    ImGui::PushFont(nullptr, 32_px);
     if (ImGui::Button(
       (activeTab == TAB_IDX_SCRIPTS) ? ICON_MDI_FILE_DOCUMENT_PLUS_OUTLINE : ICON_MDI_EARTH_BOX_PLUS,
       textBtnSize
@@ -548,7 +548,7 @@ void Editor::AssetsBrowser::draw() {
     ImGui::SetTooltip("Create new Scene");
   }
 
-  ImGui::Dummy({0, 10});
+  ImGui::Dummy({0, 10_px});
 
   if(ImGui::BeginPopup("NewScript"))
   {

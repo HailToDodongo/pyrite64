@@ -14,7 +14,12 @@ namespace
 
   void loadFonts(float contentScale = 1.0f)
   {
-    if(fontMono)return;
+    if(fontMono)
+    {
+      ImGuiStyle& style = ImGui::GetStyle();
+      style.FontSizeBase = 15.0f * contentScale;
+      return;
+    }
 
     ImGuiIO& io = ImGui::GetIO();
     ImGuiStyle& style = ImGui::GetStyle();
@@ -38,6 +43,8 @@ namespace
   }
 }
 
+constinit float ImGui::Theme::zoomFactor = 1.0f;
+
 void ImGui::Theme::setTheme(const std::string &name)
 {
 
@@ -45,11 +52,27 @@ void ImGui::Theme::setTheme(const std::string &name)
 
 void ImGui::Theme::setZoom(float zoomLevel)
 {
+  zoomFactor = zoomLevel;
+}
 
+void ImGui::Theme::changeZoom(int levelDirection)
+{
+  if (levelDirection > 0) {
+    zoomFactor += 0.25f;
+  } else if (levelDirection < 0) {
+    zoomFactor -= 0.25f;
+  }
+  zoomFactor = std::max(0.25f, std::min(zoomFactor, 4.0f)); // Clamp between 0.5x and 4x
+}
+
+float ImGui::Theme::getZoom()
+{
+  return zoomFactor;
 }
 
 void ImGui::Theme::update()
 {
+  printf("Updating ImGui theme with zoom level: %.2f\n", zoomFactor);
   ImGuiStyle &style = ImGui::GetStyle();
   style = ImGuiStyle();
   ImVec4 *colors = style.Colors;
@@ -143,14 +166,8 @@ void ImGui::Theme::update()
 
   ImGuizmo::SetGizmoSizeClipSpace(0.14f);
 
-  loadFonts(1.0f);
-
-  // zoom handling
-  /*float prevZoomFactor = 1.0f;
-  float zoomFactor = 2.0f;
-  io.FontGlobalScale = zoomFactor; // scales all text
-  ImGui::GetStyle().ScaleAllSizes(zoomFactor / prevZoomFactor); // scales all widget sizes, paddings, etc.
-  prevZoomFactor = zoomFactor;*/
+  loadFonts(zoomFactor);
+  GetStyle().ScaleAllSizes(zoomFactor);
 }
 
 ImFont* ImGui::Theme::getFontMono() {

@@ -255,7 +255,6 @@ int main(int argc, char** argv)
   // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
   ImGui::Theme::setTheme();
-  ImGui::Theme::setZoom();
   ImGui::Theme::update();
 
   // Setup Platform/Renderer backends
@@ -347,6 +346,15 @@ int main(int argc, char** argv)
           }
         }
         // Check: io.WantCaptureMouse, io.WantCaptureKeyboard
+      }
+
+      if(ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_K)) {
+        ImGui::Theme::changeZoom(+1);
+        ImGui::Theme::update();
+      }
+      if(ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_L)) {
+        ImGui::Theme::changeZoom(-1);
+        ImGui::Theme::update();
       }
 
       if(!ImGui::GetIO().WantTextInput)

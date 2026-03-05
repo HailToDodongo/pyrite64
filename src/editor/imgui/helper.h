@@ -12,6 +12,7 @@
 #include "../keymap.h"
 #include "../../utils/filePicker.h"
 #include "../../utils/prop.h"
+#include "theme.h"
 #include "glm/vec3.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtc/type_ptr.hpp"
