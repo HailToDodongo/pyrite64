@@ -5,6 +5,7 @@
 #include "viewport3D.h"
 
 #include "imgui.h"
+#include "../../imgui/theme.h"
 #include "ImGuizmo.h"
 #include "ImViewGuizmo.h"
 #include "../../../context.h"
@@ -180,12 +181,6 @@ Editor::Viewport3D::Viewport3D()
 
   meshSprites = std::make_shared<Renderer::Mesh>();
   objSprites.setMesh(meshSprites);
-
-  auto &gizStyle = ImViewGuizmo::GetStyle();
-  gizStyle.scale = 0.5f;
-  gizStyle.circleRadius = 19.0f;
-  gizStyle.labelSize = 1.9f;
-  gizStyle.labelColor = IM_COL32(0,0,0,0xFF);
 }
 
 Editor::Viewport3D::~Viewport3D() {
@@ -290,6 +285,12 @@ void Editor::Viewport3D::onPostRender(Renderer::Scene &renderScene) {
 
 void Editor::Viewport3D::draw()
 {
+  auto &gizStyle = ImViewGuizmo::GetStyle();
+  gizStyle.scale = 0.5f * ImGui::Theme::zoomFactor;
+  gizStyle.circleRadius = 19.0f;
+  gizStyle.labelSize = 1.9f / ImGui::Theme::zoomFactor;
+  gizStyle.labelColor = IM_COL32(0,0,0,0xFF);
+
   camera.update();
 
   auto scene = ctx.project->getScenes().getLoadedScene();
@@ -328,12 +329,12 @@ void Editor::Viewport3D::draw()
   }
   auto obj = scene->getObjectByUUID(ctx.selObjectUUID);
 
-  constexpr float BAR_HEIGHT = 26.0f;
+  float BAR_HEIGHT = 26_px;
 
   auto currSize = ImGui::GetContentRegionAvail();
   auto currPos = ImGui::GetWindowPos();
-  if (currSize.x < 64)currSize.x = 64;
-  if (currSize.y < 64)currSize.y = 64;
+  if (currSize.x < 64_px)currSize.x = 64_px;
+  if (currSize.y < 64_px)currSize.y = 64_px;
   currSize.y -= BAR_HEIGHT;
 
   fb.resize((int)currSize.x, (int)currSize.y);
@@ -342,7 +343,7 @@ void Editor::Viewport3D::draw()
   auto &io = ImGui::GetIO();
   float deltaTime = io.DeltaTime;
 
-  ImVec2 gizPos{currPos.x + currSize.x - 50, currPos.y + 104};
+  ImVec2 gizPos{currPos.x + currSize.x - 50_px, currPos.y + 104_px};
 
   // mouse pos
   ImVec2 screenPos = ImGui::GetCursorScreenPos();
@@ -514,7 +515,7 @@ void Editor::Viewport3D::draw()
       GIZMO_LABELS[i],
       gizmoOp == i,
       i == 0, i == 2,
-      ImVec2(32,24)
+      ImVec2(32_px,24_px)
     )) {
       gizmoOp = i;
     }
@@ -523,29 +524,29 @@ void Editor::Viewport3D::draw()
 
   ImGui::SameLine();
 
-  if (ConnectedToggleButton(ICON_MDI_WEB, isTransWorld, true, true, ImVec2(32,24))) {
+  if (ConnectedToggleButton(ICON_MDI_WEB, isTransWorld, true, true, ImVec2(32_px,24_px))) {
     isTransWorld = !isTransWorld;
   }
   ImGui::SetItemTooltip("Show %s Space", isTransWorld ? "Local" : "World");
 
   ImGui::SameLine();
-  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 12);
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 12_px);
 
-  if(ConnectedToggleButton(ICON_MDI_GRID, showGrid, true, true, ImVec2(32,24))) {
+  if(ConnectedToggleButton(ICON_MDI_GRID, showGrid, true, true, ImVec2(32_px, 24_px))) {
     showGrid = !showGrid;
   }
   ImGui::SetItemTooltip("%s Grid", showGrid ? "Hide" : "Show");
 
   ImGui::SameLine();
-  ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4);
-  if(ConnectedToggleButton(ICON_MDI_LANDSLIDE_OUTLINE, showCollMesh, true, true, ImVec2(32,24))) {
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4_px);
+  if(ConnectedToggleButton(ICON_MDI_LANDSLIDE_OUTLINE, showCollMesh, true, true, ImVec2(32_px, 24_px))) {
     showCollMesh = !showCollMesh;
   }
   ImGui::SetItemTooltip("%s Collision Mesh", showCollMesh ? "Hide" : "Show");
 
   ImGui::SameLine();
-  ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4);
-  if(ConnectedToggleButton(ICON_MDI_CYLINDER, showCollObj, true, true, ImVec2(32,24))) {
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4_px);
+  if(ConnectedToggleButton(ICON_MDI_CYLINDER, showCollObj, true, true, ImVec2(32_px,24_px))) {
     showCollObj = !showCollObj;
   }
   ImGui::SetItemTooltip("%s Collision Bodies", showCollObj ? "Hide" : "Show");

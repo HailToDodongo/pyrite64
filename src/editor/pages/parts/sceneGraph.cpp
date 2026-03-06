@@ -39,8 +39,8 @@ namespace
 
     // Compute overlay position
     ImVec2 overlayStart{
-      cursorScreen.x - 4,
-      cursorScreen.y - (hitHeight / 2) + 3
+      cursorScreen.x - 4_px,
+      cursorScreen.y - (hitHeight / 2) + 3_px
     };
     ImVec2 overlayEnd = ImVec2(cursorScreen.x + fullWidth, cursorScreen.y + hitHeight);
 
@@ -100,7 +100,7 @@ namespace
       deleteSelection = true;
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 3.f));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 3_px));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
 
     std::string nameID{};
@@ -138,11 +138,13 @@ namespace
     if(obj.parent)
     {
       float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
-      constexpr float buttonSize = 12;
-      ImVec2 iconSize{16, 21};
+      ImVec2 iconSize{16_px, 21_px};
 
       auto oldCursorPos = ImGui::GetCursorPos();
-      ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::GetStyle().WindowPadding.x - buttonSize * 2 - spacing);
+
+      float offsetRight = 24_px + 10.0f;
+      if(!ImGui::GetCurrentWindow()->ScrollbarY)offsetRight += 10.0f;
+      ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - offsetRight);
 
       if(!parentEnabled)ImGui::BeginDisabled();
 
@@ -221,7 +223,7 @@ void Editor::SceneGraph::draw()
   deleteSelection = false;
   bool isFocus = ImGui::IsWindowFocused();
 
-  ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 16.0f);
+  ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 16.0_px);
   bool keyDelete = isFocus && (ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace));
 
   auto &root = scene->getRootObject();

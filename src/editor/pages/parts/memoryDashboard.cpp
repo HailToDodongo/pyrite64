@@ -185,7 +185,7 @@ void Editor::MemoryDashboard::drawBudgetBar()
   // Stacked bar
   ImVec2 barStart = ImGui::GetCursorScreenPos();
   float barWidth = ImGui::GetContentRegionAvail().x;
-  float barHeight = 20.0f;
+  float barHeight = 20.0_px;
 
   auto *drawList = ImGui::GetWindowDrawList();
 
@@ -287,20 +287,20 @@ void Editor::MemoryDashboard::draw()
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
-  ImGui::BeginChild("MEM_TOP", ImVec2(0, 22),
+  ImGui::BeginChild("MEM_TOP", ImVec2(0, 22_px),
     ImGuiChildFlags_AlwaysUseWindowPadding,
     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse
   );
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4_px, 0));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
 
     ImGui::Text("Cart:");
     ImGui::SameLine();
-    ImGui::SetNextItemWidth(80);
+    ImGui::SetNextItemWidth(80_px);
     ImGui::Combo("##CartSize", &selectedCartSize, CART_LABELS, CART_SIZE_COUNT);
 
     ImGui::SameLine();
-    if(ImGui::Button("Refresh", {64, 0})) {
+    if(ImGui::Button("Refresh", {64_px, 0})) {
       refresh();
     }
 

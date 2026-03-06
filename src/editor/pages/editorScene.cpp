@@ -22,9 +22,6 @@
 
 namespace
 {
-  constexpr float HEIGHT_TOP_BAR = 28.0f;
-  constexpr float HEIGHT_STATUS_BAR = 24.0f;
-
   constinit bool preferencesOpen{false};
   constinit bool projectSettingsOpen{false};
   constinit bool needsSanityCheck{false};
@@ -54,6 +51,9 @@ Editor::Scene::~Scene()
 
 void Editor::Scene::draw()
 {
+  float HEIGHT_TOP_BAR = 28_px;
+  float HEIGHT_STATUS_BAR = 24_px;
+
   ImViewGuizmo::BeginFrame();
   ImGuizmo::BeginFrame();
 
@@ -117,7 +117,7 @@ void Editor::Scene::draw()
     ImGui::DockBuilderFinish(dockSpaceID);
   }
 
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2, 2));
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2_px, 2_px));
   ImGui::Begin("3D-Viewport");
     viewport3d.draw();
   ImGui::End();
@@ -157,21 +157,21 @@ void Editor::Scene::draw()
       auto &editor = *itEditor;
       ImGui::Text("The node graph '%s' has unsaved changes.", editor->getName().c_str());
       ImGui::Spacing();
-      if (ImGui::Button("Save", {100, 0})) {
+      if (ImGui::Button("Save", {100_px, 0})) {
         editor->save();
         nodeEditors.erase(itEditor);
         pendingNodeEditorCloseUUID = 0;
         ImGui::CloseCurrentPopup();
       }
       ImGui::SameLine();
-      if (ImGui::Button("Discard", {100, 0})) {
+      if (ImGui::Button("Discard", {100_px, 0})) {
         editor->discardUnsavedChanges();
         nodeEditors.erase(itEditor);
         pendingNodeEditorCloseUUID = 0;
         ImGui::CloseCurrentPopup();
       }
       ImGui::SameLine();
-      if (ImGui::Button("Cancel", {100, 0})) {
+      if (ImGui::Button("Cancel", {100_px, 0})) {
         pendingNodeEditorCloseUUID = 0;
         ImGui::CloseCurrentPopup();
       }
@@ -187,7 +187,7 @@ void Editor::Scene::draw()
     assetInspector.draw();
   ImGui::End();
 
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2, 2));
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2_px, 2_px));
   ImGui::Begin("Files");
   ImGui::PopStyleVar();
     assetsBrowser.draw();
@@ -209,26 +209,26 @@ void Editor::Scene::draw()
 
   }
 
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2, 2));
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2_px, 2_px));
   ImGui::Begin("Log");
   ImGui::PopStyleVar();;
     logWindow.draw();
   ImGui::End();
 
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 4));
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4_px, 4_px));
   ImGui::Begin("ROM");
   ImGui::PopStyleVar();
     memoryDashboard.draw();
   ImGui::End();
 
   if (preferencesOpen) {
-    constexpr ImVec2 windowSize{500,300};
+    ImVec2 windowSize{500_px, 300_px};
     auto screenSize = ImGui::GetMainViewport()->WorkSize;
     ImGui::SetNextWindowPos({(screenSize.x - windowSize.x) / 2, (screenSize.y - windowSize.y) / 2}, ImGuiCond_Appearing, {0.0f, 0.0f});
     ImGui::SetNextWindowSize(windowSize, ImGuiCond_Appearing);
 
     // Thick borders
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0_px);
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
     ImGui::Begin(ICON_MDI_COG " Preferences", &preferencesOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
     if (preferences.draw()) {
@@ -241,13 +241,13 @@ void Editor::Scene::draw()
   }
 
   if (projectSettingsOpen) {
-    constexpr ImVec2 windowSize{500,300};
+    ImVec2 windowSize{500_px,300_px};
     auto screenSize = ImGui::GetMainViewport()->WorkSize;
     ImGui::SetNextWindowPos({(screenSize.x - windowSize.x) / 2, (screenSize.y - windowSize.y) / 2}, ImGuiCond_Appearing, {0.0f, 0.0f});
     ImGui::SetNextWindowSize(windowSize, ImGuiCond_Appearing);
 
     // Thick borders
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0_px);
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
     ImGui::Begin(ICON_MDI_FILE_COG_OUTLINE " Project Settings", &projectSettingsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
     if (projectSettings.draw()) {
@@ -262,7 +262,7 @@ void Editor::Scene::draw()
   // Top bar
   ImGui::SetNextWindowPos({0,0}, ImGuiCond_Always);
   ImGui::SetNextWindowSize({io.DisplaySize.x, 4}, ImGuiCond_Always);
-  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{8,6});
+  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{8_px,6_px});
   if(ImGui::Begin("TOP_BAR", 0,
     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar
     | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking
@@ -326,10 +326,10 @@ void Editor::Scene::draw()
         ImGui::EndMenu();
       }
 
-      ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 40);
+      ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 40_px);
 
       const char* tooltip{};
-      ImGui::PushFont(nullptr, 20.0f);
+      ImGui::PushFont(nullptr, 20.0_px);
       if(isRunning){
         ImGui::BeginDisabled();
         ImGui::MenuItem(ICON_MDI_STOP);
@@ -362,8 +362,8 @@ void Editor::Scene::draw()
 
   fpsRingBuffer.push((double)ctx.timeCpuSelf / 1000.0 / 1000.0);
 
-  ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
-  ImGui::PushFont(ImGui::Theme::getFontMono());
+  ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5_px);
+  ImGui::PushFont(ImGui::Theme::getFontMono(), 16_px);
   ImVec4 perfColor{1.0f,1.0f,1.0f,0.4f};
   if (io.Framerate < 45) perfColor = {1.0f, 0.5f, 0.5f, 1.0f};
   ImGui::TextColored(perfColor, "%d FPS | History: %d/%d %s | CPU: %.2fms",
@@ -375,7 +375,7 @@ void Editor::Scene::draw()
   );
 
   ImGui::SameLine();
-  auto posX = io.DisplaySize.x - 12;
+  auto posX = io.DisplaySize.x - 12_px;
 
   if(!ctx.newerVersion.empty()) {
     ImGui::PopFont();
@@ -385,7 +385,7 @@ void Editor::Scene::draw()
     auto posY = ImGui::GetCursorPosY();;
     ImGui::SetCursorPos({posX, posY - 2});
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {5,2});
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {5_px, 2_px});
     ImGui::PushStyleColor(ImGuiCol_Button, {0.5f, 0.8f, 0.0f, 0.9f});
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.5f, 0.8f, 0.0f, 0.75f});
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, {1.0f, 0.5f, 0.0f, 0.6f});
@@ -400,7 +400,7 @@ void Editor::Scene::draw()
 
     ImGui::SetCursorPosY(posY);
     ImGui::PushFont(ImGui::Theme::getFontMono());
-    posX -= 8;
+    posX -= 8_px;
   }
 
   perfColor = {1.0f,1.0f,1.0f,0.4f};

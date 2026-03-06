@@ -537,13 +537,13 @@ namespace ImTable
 
     if(propState)
     {
-      ImGui::PushFont(nullptr, 18.0f);
+      ImGui::PushFont(nullptr, 18.0_px);
 
       if(ImGui::IconButton(
         propState->value
         ? ICON_MDI_CHECKBOX_MARKED_CIRCLE
         : ICON_MDI_CHECKBOX_BLANK_CIRCLE_OUTLINE,
-        {24,24},
+        {24_px,24_px},
         ImVec4{1,1,1,1}
       )) {
         propState->value = !propState->value;

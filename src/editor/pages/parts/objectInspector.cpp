@@ -387,8 +387,8 @@ void Editor::ObjectInspector::draw() {
   }
 
   const char* addLabel = ICON_MDI_PLUS_BOX_OUTLINE " Add Component";
-  ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 4);
-  ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(addLabel).x) * 0.5f - 4);
+  ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 4_px);
+  ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(addLabel).x) * 0.5f - 4_px);
   if (ImGui::Button(addLabel)) {
     ImGui::OpenPopup("CompSelect");
   }
