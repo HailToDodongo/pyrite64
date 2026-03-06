@@ -316,6 +316,12 @@ void Editor::Scene::draw()
 
       if(ImGui::BeginMenu("View"))
       {
+        if(ImGui::MenuItem(ICON_MDI_MAGNIFY_PLUS " Zoom In")) {
+          ImGui::Theme::changeZoom(+1);
+        }
+        if(ImGui::MenuItem(ICON_MDI_MAGNIFY_MINUS "Zoom Out")) {
+          ImGui::Theme::changeZoom(-1);
+        }
         if(ImGui::MenuItem("Reset Layout"))ImGui::DockBuilderRemoveNode(dockSpaceID);
         ImGui::EndMenu();
       }

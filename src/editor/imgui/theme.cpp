@@ -9,8 +9,10 @@
 
 namespace
 {
-  constinit ImFont* fontMono{nullptr};
   constexpr ImVec4 COLOR_HIGHLIGHT{1.0f, 0.5f, 0.0f, 1.0f};
+
+  constinit ImFont* fontMono{nullptr};
+  constinit bool needsUpdate{true};
 
   void loadFonts(float contentScale = 1.0f)
   {
@@ -47,12 +49,13 @@ constinit float ImGui::Theme::zoomFactor = 1.0f;
 
 void ImGui::Theme::setTheme(const std::string &name)
 {
-
+  needsUpdate = true;
 }
 
 void ImGui::Theme::setZoom(float zoomLevel)
 {
   zoomFactor = zoomLevel;
+  needsUpdate = true;
 }
 
 void ImGui::Theme::changeZoom(int levelDirection)
@@ -63,6 +66,7 @@ void ImGui::Theme::changeZoom(int levelDirection)
     zoomFactor -= 0.25f;
   }
   zoomFactor = std::max(0.25f, std::min(zoomFactor, 4.0f)); // Clamp between 0.5x and 4x
+  needsUpdate = true;
 }
 
 float ImGui::Theme::getZoom()
@@ -72,6 +76,9 @@ float ImGui::Theme::getZoom()
 
 void ImGui::Theme::update()
 {
+  if(!needsUpdate)return;
+  needsUpdate = false;
+
   printf("Updating ImGui theme with zoom level: %.2f\n", zoomFactor);
   ImGuiStyle &style = ImGui::GetStyle();
   style = ImGuiStyle();

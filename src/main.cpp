@@ -290,8 +290,11 @@ int main(int argc, char** argv)
     while(!done) {
 
       auto frameStart = SDL_GetTicksNS();
+
+      ImGui::Theme::update();
+
       //printf("Frame Start | Time: %.2fms\n", ImGui::GetIO().DeltaTime * 1000.0f);
-      SDL_Event event;
+      SDL_Event event{};
       while (SDL_PollEvent(&event))
       {
         //convert pinch events to whole number mouse wheel events to mimic windows 
@@ -350,11 +353,9 @@ int main(int argc, char** argv)
 
       if(ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_K)) {
         ImGui::Theme::changeZoom(+1);
-        ImGui::Theme::update();
       }
       if(ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_L)) {
         ImGui::Theme::changeZoom(-1);
-        ImGui::Theme::update();
       }
 
       if(!ImGui::GetIO().WantTextInput)
