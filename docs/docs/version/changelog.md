@@ -1,9 +1,33 @@
 # Changelog
 
 ## v0.5.0
+
+- Migrated documentation to sphinx, added new docs
+  - Available online here  https://hailtododongo.github.io/pyrite64/index.html
+- fix: keymap was only getting applied if it failed to load from file by @Q-Bert-Reynolds in https://github.com/HailToDodongo/pyrite64/pull/126
+- Better handling of unsaved assets and settings, ask before closing node-graph by @Byterset in https://github.com/HailToDodongo/pyrite64/pull/111
+- Trackpad pan and orbit by @Q-Bert-Reynolds in https://github.com/HailToDodongo/pyrite64/pull/124
+- fix: handle dragging objects into/near the root node in the scene-graph by @Byterset in https://github.com/HailToDodongo/pyrite64/pull/131
+- Collision mesh now generated on demand, remove "Collision" asset setting by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/139
+- editor: Lose focus from InputText when using 3D viewport by @thekovic in https://github.com/HailToDodongo/pyrite64/pull/137
+- Transforming Object now trans. attached camera + new option to toggle this behaviour by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/142
+- Asset browser context popup by @Q-Bert-Reynolds in https://github.com/HailToDodongo/pyrite64/pull/132
+  - Right click on assets to show more options (open file, open directory, rename, delete)
+- Project wide shortcuts now use reassignable keymap by @Q-Bert-Reynolds in https://github.com/HailToDodongo/pyrite64/pull/140
+- Refactor C++ Scripts to have separate init / destroy function + add scripting docs by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/145
+- editor: Fix 'Show in Explorer' not opening correct folder sometimes by @thekovic in https://github.com/HailToDodongo/pyrite64/pull/150
+- Remember window layout between sessions by @Q-Bert-Reynolds in https://github.com/HailToDodongo/pyrite64/pull/148
+- Remember window size and position across sessions by @Q-Bert-Reynolds in https://github.com/HailToDodongo/pyrite64/pull/147
+- Handle WSL in Asset Browser by @Byterset in https://github.com/HailToDodongo/pyrite64/pull/154
+- Open application directly from project file on Linux by @Q-Bert-Reynolds in https://github.com/HailToDodongo/pyrite64/pull/146
+- Viewport navigation preferences, fixes Linux pinch zoom by @Q-Bert-Reynolds in https://github.com/HailToDodongo/pyrite64/pull/156
+- Add Tooltips to Toggle Buttons by @Byterset in https://github.com/HailToDodongo/pyrite64/pull/157
+- Check for Pyrite64 updates + Link to new release page by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/158
 - Show error if assets have duplicate UUIDs.
 - Show error model-components have missing models.
 - Fix temp. broken model references at runtime in prefabs during asset changes
+
+**Full Changelog**: https://github.com/HailToDodongo/pyrite64/compare/v0.4.0...v0.5.0
 
 ```{admonition} This version introduced breaking changes!
 :class: warning
