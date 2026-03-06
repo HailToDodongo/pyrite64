@@ -42,6 +42,8 @@ bool Editor::Preferences::draw()
       ImTable::addKeybind("Reload Assets", ctx.keymap.reloadAssets, defaults.reloadAssets);
       ImTable::addKeybind("Build",         ctx.keymap.build,        defaults.build);
       ImTable::addKeybind("Build & Run",   ctx.keymap.buildAndRun,  defaults.buildAndRun);
+      ImTable::addKeybind("Zoom In",       ctx.keymap.zoomIn,       defaults.zoomIn);
+      ImTable::addKeybind("Zoom Out",      ctx.keymap.zoomOut,      defaults.zoomOut);
       ImTable::end();
       ImGui::TreePop();
     }

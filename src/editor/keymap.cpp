@@ -52,7 +52,9 @@ nlohmann::json Editor::Input::Keymap::serialize(KeymapPreset preset) const {
   auto writeChord = [&](const char* name, ImGuiKeyChord currentChord, ImGuiKeyChord defaultChord) {
     if (currentChord != defaultChord) json.set(name, GetKeyChordName(currentChord));
   };
-  
+
+  writeChord("zoomIn",       zoomIn,         defaultKeymap.zoomIn);
+  writeChord("zoomOut",      zoomOut,        defaultKeymap.zoomOut);
   writeChord("save",         save,           defaultKeymap.save);
   writeChord("copy",         copy,           defaultKeymap.copy);
   writeChord("paste",        paste,          defaultKeymap.paste);
@@ -94,6 +96,8 @@ void Editor::Input::Keymap::deserialize(const nlohmann::json& parent, KeymapPres
     return (chord == ImGuiKey_None) ? defaultChord : chord;
   };
 
+  zoomIn         = readChord("zoomIn",       defaultKeymap.zoomIn);
+  zoomOut        = readChord("zoomOut",      defaultKeymap.zoomOut);
   save           = readChord("save",         defaultKeymap.save);
   copy           = readChord("copy",         defaultKeymap.copy);
   paste          = readChord("paste",        defaultKeymap.paste);

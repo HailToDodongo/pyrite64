@@ -15,8 +15,8 @@ namespace Editor::Input {
 
   struct Keymap {
     // Window
-    ImGuiKeyChord zoomIn       = ImGuiMod_Ctrl | ImGuiKey_Equal;
-    ImGuiKeyChord zoomOut      = ImGuiMod_Ctrl | ImGuiKey_Minus;
+    ImGuiKeyChord zoomIn       = ImGuiMod_Ctrl | ImGuiKey_UpArrow;
+    ImGuiKeyChord zoomOut      = ImGuiMod_Ctrl | ImGuiKey_DownArrow;
 
     // Project
     ImGuiKeyChord save         = ImGuiMod_Ctrl | ImGuiKey_S;

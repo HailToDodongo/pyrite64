@@ -3,16 +3,37 @@
 * @license MIT
 */
 #include "theme.h"
+
+#include <array>
+
 #include "imgui.h"
 #include "IconsMaterialDesignIcons.h"
 #include "ImGuizmo.h"
+#include "notification.h"
+
+constinit float ImGui::Theme::zoomFactor = 1.0f;
 
 namespace
 {
   constexpr ImVec4 COLOR_HIGHLIGHT{1.0f, 0.5f, 0.0f, 1.0f};
+  constexpr std::array<float, 12> ZOOM_VALUES{
+    1.0f / 2.0f,
+    1.0f / 1.75f,
+    1.0f / 1.50f,
+    1.0f / 1.25f,
+    1.0f,
+    1.25f,
+    1.50f,
+    1.75f,
+    2.0f,
+    2.5f,
+    3.0f,
+    4.0f
+  };
 
   constinit ImFont* fontMono{nullptr};
   constinit bool needsUpdate{true};
+  constinit int zoomLevel{4};
 
   void loadFonts(float contentScale = 1.0f)
   {
@@ -45,28 +66,18 @@ namespace
   }
 }
 
-constinit float ImGui::Theme::zoomFactor = 1.0f;
-
 void ImGui::Theme::setTheme(const std::string &name)
 {
   needsUpdate = true;
 }
 
-void ImGui::Theme::setZoom(float zoomLevel)
-{
-  zoomFactor = zoomLevel;
-  needsUpdate = true;
-}
-
 void ImGui::Theme::changeZoom(int levelDirection)
 {
-  if (levelDirection > 0) {
-    zoomFactor += 0.25f;
-  } else if (levelDirection < 0) {
-    zoomFactor -= 0.25f;
-  }
-  zoomFactor = std::max(0.25f, std::min(zoomFactor, 4.0f)); // Clamp between 0.5x and 4x
+  zoomLevel += levelDirection;
+  zoomLevel = std::max(0, std::min((int)ZOOM_VALUES.size() - 1, zoomLevel));
+  zoomFactor = ZOOM_VALUES[zoomLevel];
   needsUpdate = true;
+  Editor::Noti::showAction("Zoom: " + std::to_string((int)(zoomFactor * 100)) + "%");
 }
 
 float ImGui::Theme::getZoom()

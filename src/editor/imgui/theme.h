@@ -12,7 +12,6 @@ namespace ImGui::Theme
   extern float zoomFactor;
 
   void setTheme(const std::string &name = "default");
-  void setZoom(float zoomLevel = 1.0f);
   void changeZoom(int levelDirection);
   float getZoom();
 

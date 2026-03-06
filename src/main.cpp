@@ -351,15 +351,15 @@ int main(int argc, char** argv)
         // Check: io.WantCaptureMouse, io.WantCaptureKeyboard
       }
 
-      if(ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_K)) {
-        ImGui::Theme::changeZoom(+1);
-      }
-      if(ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_L)) {
-        ImGui::Theme::changeZoom(-1);
-      }
-
       if(!ImGui::GetIO().WantTextInput)
       {
+        if(ImGui::IsKeyChordPressed(ctx.keymap.zoomIn)) {
+          ImGui::Theme::changeZoom(+1);
+        }
+        if(ImGui::IsKeyChordPressed(ctx.keymap.zoomOut)) {
+          ImGui::Theme::changeZoom(-1);
+        }
+
         if (ImGui::IsKeyChordPressed(ctx.keymap.copy)) {
           Editor::Actions::call(Editor::Actions::Type::COPY);
         }

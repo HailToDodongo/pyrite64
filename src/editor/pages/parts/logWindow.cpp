@@ -26,14 +26,14 @@ void Editor::LogWindow::draw()
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0)); // Remove space between children
 
-  ImGui::BeginChild("TOP", ImVec2(0, 22),
+  ImGui::BeginChild("TOP", ImVec2(0, 22_px),
     ImGuiChildFlags_AlwaysUseWindowPadding,
     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse
   );
 
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4_px, 0));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
-    constexpr float btnWidth = 64;
+    float btnWidth = 64_px;
     if(ImGui::Button("Clear", {btnWidth, 0})) {
       Utils::Logger::clear();
     }
@@ -60,7 +60,7 @@ void Editor::LogWindow::draw()
   ImGui::EndChild();
 
   ImGui::BeginChild("LOG", ImVec2(0, 0), ImGuiChildFlags_Borders);
-  ImGui::PushFont(ImGui::Theme::getFontMono());
+  ImGui::PushFont(ImGui::Theme::getFontMono(), 16_px);
 
   ImGui::PushID("LOG");
   ImGui::PushStyleColor(ImGuiCol_FrameBg, {0.05f, 0.05f, 0.06f, 1.0f});

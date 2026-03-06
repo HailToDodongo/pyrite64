@@ -15,5 +15,6 @@ namespace Editor::Noti
   };
 
   void add(Type type, const std::string &text);
+  void showAction(const std::string &text);
   void draw();
 }
