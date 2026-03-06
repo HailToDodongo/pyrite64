@@ -22,6 +22,24 @@ inline ImGuiKey GetKeyFromName(const std::string& name) {
   return ImGuiKey_None;
 }
 
+inline ImGuiKeyChord GetKeyChordFromName(const std::string& name) {
+    if (name.empty()) return ImGuiKey_None;
+    ImGuiKeyChord chord = ImGuiKey_None;
+    if (name.find("Ctrl+") != std::string::npos)  chord |= ImGuiMod_Ctrl;
+    if (name.find("Cmd+") != std::string::npos)   chord |= ImGuiMod_Ctrl;
+    if (name.find("Shift+") != std::string::npos) chord |= ImGuiMod_Shift;
+    if (name.find("Alt+") != std::string::npos)   chord |= ImGuiMod_Alt;
+    if (name.find("Super+") != std::string::npos) chord |= ImGuiMod_Super;
+
+    std::string key_str = name;
+    size_t last_plus = name.find_last_of('+');
+    if (last_plus != std::string::npos) {
+        key_str = name.substr(last_plus + 1); 
+    }
+    chord |= GetKeyFromName(key_str);
+    return chord;
+}
+
 nlohmann::json Editor::Input::Keymap::serialize(KeymapPreset preset) const {
   Keymap defaultKeymap;
   if (preset == KeymapPreset::Blender) defaultKeymap = blenderKeymap;
@@ -31,7 +49,17 @@ nlohmann::json Editor::Input::Keymap::serialize(KeymapPreset preset) const {
   auto writeKey = [&](const char* name, ImGuiKey currentKey, ImGuiKey defaultKey) {
     if (currentKey != defaultKey) json.set(name, ImGui::GetKeyName(currentKey));
   };
+  auto writeChord = [&](const char* name, ImGuiKeyChord currentChord, ImGuiKeyChord defaultChord) {
+    if (currentChord != defaultChord) json.set(name, GetKeyChordName(currentChord));
+  };
   
+  writeChord("save",         save,           defaultKeymap.save);
+  writeChord("copy",         copy,           defaultKeymap.copy);
+  writeChord("paste",        paste,          defaultKeymap.paste);
+  writeChord("toggleVSync",  toggleVSync,    defaultKeymap.toggleVSync);
+  writeChord("reloadAssets", reloadAssets,   defaultKeymap.reloadAssets);
+  writeChord("build",        build,          defaultKeymap.build);
+  writeChord("buildAndRun",  buildAndRun,    defaultKeymap.buildAndRun);
   writeKey("moveForward",    moveForward,    defaultKeymap.moveForward);
   writeKey("moveBack",       moveBack,       defaultKeymap.moveBack);
   writeKey("moveLeft",       moveLeft,       defaultKeymap.moveLeft);
@@ -59,7 +87,20 @@ void Editor::Input::Keymap::deserialize(const nlohmann::json& parent, KeymapPres
     ImGuiKey key = GetKeyFromName(name.c_str());
     return (key == ImGuiKey_None) ? defaultKey : key;
   };
+   auto readChord = [&](const char* fieldName, ImGuiKeyChord defaultChord) {
+    if (parent.is_null() || !parent.contains(fieldName)) return defaultChord;
+    std::string name = parent[fieldName];
+    ImGuiKeyChord chord = GetKeyChordFromName(name.c_str());
+    return (chord == ImGuiKey_None) ? defaultChord : chord;
+  };
 
+  save           = readChord("save",         defaultKeymap.save);
+  copy           = readChord("copy",         defaultKeymap.copy);
+  paste          = readChord("paste",        defaultKeymap.paste);
+  toggleVSync    = readChord("toggleVSync",  defaultKeymap.toggleVSync);
+  reloadAssets   = readChord("reloadAssets", defaultKeymap.reloadAssets);
+  build          = readChord("build",        defaultKeymap.build);
+  buildAndRun    = readChord("buildAndRun",  defaultKeymap.buildAndRun);
   moveForward    = readKey("moveForward",    defaultKeymap.moveForward);
   moveBack       = readKey("moveBack",       defaultKeymap.moveBack);
   moveLeft       = readKey("moveLeft",       defaultKeymap.moveLeft);

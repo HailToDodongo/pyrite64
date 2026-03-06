@@ -13,7 +13,7 @@ export N64_INST={{N64_INST}}
 include $(N64_INST)/include/n64.mk
 include $(N64_INST)/include/t3d.mk
 
-N64_CXXFLAGS += -std=gnu++20 -ftrivial-auto-var-init=uninitialized -fno-exceptions -Os -Isrc -Isrc/user \
+N64_CXXFLAGS += -std=gnu++20 -fno-exceptions -Os -Isrc -Isrc/user \
 	-I$(ENGINE_DIR)/include
 
 # Allow custom attributes, otherwise GCC (rightfully) complains unknown ones

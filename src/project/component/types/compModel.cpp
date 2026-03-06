@@ -79,7 +79,18 @@ namespace Project::Component::Model
     }
 
     auto t3dm = ctx.project->getAssets().getEntryByUUID(data.model.value);
-    assert(t3dm);
+
+    if(id == 0xDEAD || !t3dm) {
+      std::string error = "Model asset not found for object '" + obj.name + "'";
+      if(ctx.scene) {
+        error += "\nScene: '"+ctx.scene->getName()+"'";
+      } else {
+        error += " (Prefab)";
+      }
+      error += "\nModel-UUID: " + std::to_string(data.model.value);
+      throw std::runtime_error(error);
+    }
+
     auto &meshes = data.filter.filterT3DM(t3dm->t3dmData.models, obj, true);
 
     ctx.fileObj.write<uint16_t>(id);

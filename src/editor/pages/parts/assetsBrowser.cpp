@@ -12,6 +12,10 @@
 #include <algorithm>
 #include <filesystem>
 #include <unordered_set>
+#include <SDL3/SDL.h>
+#include <string>
+#include "../../../utils/logger.h"
+#include "../../../utils/proc.h"
 
 using FileType = Project::FileType;
 namespace fs = std::filesystem;
@@ -198,6 +202,45 @@ void Editor::AssetsBrowser::draw() {
     currentWidth += itemWidth;
   };
 
+  auto drawRename = [&](const std::string &label, const ImVec2 &startPos) {
+    ImVec2 rectMin{startPos.x,                startPos.y + imageSize + 8};
+    ImVec2 rectMax{startPos.x + imageSize + 14, startPos.y + imageSize + 8 + 16};
+
+    ImVec2 originalCursor = ImGui::GetCursorPos();
+    ImGui::SetCursorScreenPos(rectMin);
+    ImGui::SetNextItemWidth(rectMax.x - rectMin.x);
+    if (ImGui::IsWindowAppearing() || !ImGui::IsAnyItemActive()) ImGui::SetKeyboardFocusHere();
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 0));
+    if (ImGui::InputText("##renameInput", renameBuffer, sizeof(renameBuffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
+      fs::path oldPath = renamePath;
+      std::string newFileName = std::string(renameBuffer) + oldPath.extension().string();
+      fs::path newPath = oldPath.parent_path() / newFileName;
+
+      std::error_code ec;
+      if (oldPath != newPath) {
+        if (fs::exists(newPath)) Utils::Logger::log("A file with that name already exists.", Utils::Logger::LEVEL_ERROR);
+        else {
+          fs::rename(oldPath, newPath, ec);
+          if (ec) Utils::Logger::log("Rename failed: " + ec.message(), Utils::Logger::LEVEL_ERROR);
+          else {
+            fs::path oldConf = oldPath.string() + ".conf";
+            fs::path newConf = newPath.string() + ".conf";
+            fs::rename(oldConf, newConf, ec);
+            if (ec) Utils::Logger::log("Failed to move .conf: " + ec.message(), Utils::Logger::LEVEL_ERROR);
+          }
+        }
+      }
+      renamePath.clear();
+    }
+    ImGui::PopStyleVar();
+
+    if ((!ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) || ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+      renamePath.clear();
+    }
+
+    ImGui::SetCursorPos(originalCursor);
+  };
+
   auto drawLabel = [&](const std::string &label, const ImVec2 &startPos) {
     auto size = ImGui::CalcTextSize(label.c_str());
     ImVec2 rextMin{startPos.x,                startPos.y + imageSize + 8};
@@ -220,7 +263,7 @@ void Editor::AssetsBrowser::draw() {
     }
   };
 
-  auto drawGridButton = [&](const char* id, ImTextureRef icon, const char* iconTxt,
+  auto drawGridButton = [&](const std::string &path, ImTextureRef icon, const char* iconTxt,
     const std::string &label, bool selected, float alpha) {
     bool clicked = false;
     if(selected) {
@@ -228,9 +271,11 @@ void Editor::AssetsBrowser::draw() {
       ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.5f,0.5f,0.7f,0.8f});
     }
 
-    ImGui::PushID(id);
+    ImGui::PushID(path.c_str());
     auto sPos = ImGui::GetCursorScreenPos();
-    drawLabel(label, sPos);
+    bool isRenaming = path == renamePath;
+    if (isRenaming) drawRename(label, sPos);
+    else drawLabel(label, sPos);
 
     if(icon._TexID)
     {
@@ -241,14 +286,14 @@ void Editor::AssetsBrowser::draw() {
 
     } else {
       ImGui::PushFont(nullptr, 40.0f);
-        clicked = ImGui::Button(iconTxt, textBtnSize);
+      clicked = ImGui::Button(iconTxt, textBtnSize);
       ImGui::PopFont();
     }
 
     ImGui::PopID();
 
     if(selected)ImGui::PopStyleColor(2);
-    return clicked;
+    return clicked && !isRenaming;
   };
 
   std::vector<std::string> folders{};
@@ -330,12 +375,19 @@ void Editor::AssetsBrowser::draw() {
         continue;
       }
       checkLineBreak();
+      std::string folderPath = (basePathAbs / dirState / folder).string();
 
       // Show a filled folder when it contains assets for this tab, outlined (empty) folder otherwise
       const char* folderIcon = folderHasAssets[folder] ? ICON_MDI_FOLDER : ICON_MDI_FOLDER_OUTLINE;
-      if (drawGridButton(folder.c_str(), ImTextureRef(nullptr), folderIcon, folder, false, 1.0f)) {
+      if (drawGridButton(folderPath, ImTextureRef(nullptr), folderIcon, folder, false, 1.0f)) {
         dirState = joinDir(dirState, folder);
       }
+
+      if(ImGui::BeginPopupContextItem(folder.c_str())) {
+        showContextMenu(folderPath);
+        ImGui::EndPopup();
+      }
+
       if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
         ImGui::SetTooltip("Folder: %s", joinDir(dirState, folder).c_str());
       }
@@ -373,16 +425,23 @@ void Editor::AssetsBrowser::draw() {
 
     bool isSelected = (ctx.selAssetUUID == asset.getUUID());
     bool clicked = drawGridButton(
-      asset.name.c_str(),
+      asset.path,
       icon,
       iconTxt,
       asset.name,
       isSelected,
       asset.conf.exclude ? 0.25f : 1.0f
     );
+    bool isDblClick = ImGui::IsMouseDoubleClicked(0) && ImGui::IsItemHovered();
 
     if (clicked) {
-      ctx.selAssetUUID = asset.getUUID() == ctx.selAssetUUID ? 0 : asset.getUUID();
+      ctx.selAssetUUID = asset.getUUID();
+    }
+    if (isDblClick) {
+      if (!Utils::Proc::openFile(asset.path))
+      {
+        Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File. This may be due to WSL path conversion failure.");
+      }
     }
 
     if (ImGui::BeginDragDropSource()) {
@@ -395,11 +454,38 @@ void Editor::AssetsBrowser::draw() {
       ImGui::EndDragDropSource();
     }
 
-    if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-    {
+    if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
       auto tooltipPath = dirState.empty() ? asset.name : (dirState + "/" + asset.name);
       ImGui::SetTooltip("File: %s", tooltipPath.c_str());
     }
+
+    if(ImGui::BeginPopupContextItem(asset.path.c_str())) {
+      showContextMenu(asset.path);
+      ImGui::EndPopup();
+    } 
+  }
+
+  if (!deletePath.empty()) {
+    ImGui::OpenPopup("Confirm Delete");
+  }
+  
+  if (ImGui::BeginPopupModal("Confirm Delete", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+    ImGui::Text("This action cannot be undone!\nAre you sure you want to delete this asset?");
+    ImGui::Separator();
+    
+    if (ImGui::Button("OK", ImVec2(120, 0))) { 
+        fs::remove(deletePath);
+        deletePath.clear();
+        ImGui::CloseCurrentPopup(); 
+    }
+
+    ImGui::SameLine();
+    ImGui::SetItemDefaultFocus();
+    if (ImGui::Button("Cancel", ImVec2(120, 0))) { 
+        deletePath.clear();
+        ImGui::CloseCurrentPopup(); 
+    }
+    ImGui::EndPopup();
   }
 
   if(tab.showScenes)
@@ -488,4 +574,40 @@ void Editor::AssetsBrowser::draw() {
 
   ImGui::EndChild();
   ImGui::EndChild();
+}
+
+void Editor::AssetsBrowser::showContextMenu(const std::string& path) {
+#if defined(_WIN32)
+  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in Explorer";
+#elif defined(__APPLE__)
+  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in Finder";
+#else
+  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in File Manager";
+#endif
+  if(ImGui::MenuItem(showPrompt.c_str())) {
+    if (!Utils::Proc::openInFileBrowser(path)) {
+      Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File Explorer. This may be due to WSL path conversion failure.");
+    }
+  }
+
+  if(ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open")) {
+    if (!Utils::Proc::openFile(path)) {
+      Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File. This may be due to WSL path conversion failure.");
+    }
+  }
+  
+  if(ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Copy Path")) {
+    SDL_SetClipboardText(path.c_str());
+  }
+  
+  if(ImGui::MenuItem(ICON_MDI_RENAME " Rename")) {
+    renamePath = path;
+    std::string stem = fs::path(path).stem().string(); 
+    strncpy(renameBuffer, stem.c_str(), sizeof(renameBuffer) - 1);
+    renameBuffer[sizeof(renameBuffer) - 1] = '\0';
+  }
+  
+  if(ImGui::MenuItem(ICON_MDI_DELETE " Delete")) {
+    deletePath = path;
+  }
 }

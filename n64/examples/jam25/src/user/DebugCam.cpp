@@ -20,12 +20,8 @@ namespace P64::Script::C48BB14F061323F6
   // The following functions are called by the engine at different points in the object's lifecycle.
   // If you don't need a specific function you can remove it.
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void init(Object& obj, Data *data)
   {
-    if(isDelete) {
-      // do cleanup
-      return;
-    }
     memset(data, 0, sizeof(*data));
     data->camRotX = 1.544792654048f;
     data->camRotY = 4.05f;

@@ -28,4 +28,14 @@ namespace Utils::Proc
   /// @brief 
   /// @return Returns the path to the default projects directory. This is in the user's Documents folder, if available, otherwise in the user's home directory.
   fs::path getProjectsPath();
+
+  /// @brief Opens a file with the system's default application.
+  ///        On WSL, converts the path to a Windows path and uses cmd.exe
+  /// @return true on success, false if WSL path conversion failed.
+  bool openFile(const std::string &path);
+
+  /// @brief Opens a path in the system file browser.
+  ///        On WSL, converts the path to a Windows path and uses explorer.exe.
+  /// @return true on success, false if WSL path conversion failed.
+  bool openInFileBrowser(const std::string &path);
 }

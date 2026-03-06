@@ -28,6 +28,7 @@ namespace
     {Build::buildFontAssets,    "Font"},
     {Build::buildTextureAssets, "Texture"},
     {Build::buildAudioAssets,   "Audio"},
+    // must be last: (@TODO: handle prefab referencing prefab, [not in the editor yet])
     {Build::buildPrefabAssets,  "Prefab"},
   });
 }

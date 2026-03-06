@@ -130,6 +130,8 @@ add_executable(pyrite64 src/main.cpp
         src/editor/undoRedo.cpp
         src/editor/selectionUtils.h
         src/editor/selectionUtils.cpp
+        src/editor/window.h
+        src/editor/window.cpp
         src/editor/keymap.h
         src/editor/keymap.cpp
         src/utils/json.h
@@ -328,6 +330,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/desktop.file"
         DESTINATION share/applications
         RENAME "${PYRITE_APP_NAME}.desktop")
+
+    # Install the desktop entry file to the appropriate location to get integration with desktop environment launcher such as KDE Application Launcher
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/mimetype.xml"
+        DESTINATION share/mime/packages
+        RENAME "${PYRITE_APP_NAME}.xml")
 
     # Install the icon to the appropriate location for the desktop entry file to find it
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/data/img/windowIcon.png"

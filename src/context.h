@@ -53,6 +53,11 @@ struct Context
   std::vector<uint32_t> selObjectUUIDs{}; // All selected object UUIDs (for multi-selection, includes selObjectUUID as the last element)
   Editor::Input::KeymapPreset keymapPreset = Editor::Input::KeymapPreset::Blender;
   Editor::Input::Keymap keymap{};
+  float zoomSpeed = 1.0f;
+  float moveSpeed = 120.0f;
+  float panSpeed = 30.0f;
+  float lookSpeed = -10.0f;
+  bool invertWheelY = false;
 
   std::future<void> futureBuildRun{};
 
@@ -179,6 +184,12 @@ struct Context
       keymapPreset = (Editor::Input::KeymapPreset)doc.value("keymapPreset", 0);
       if (doc.contains("keymap")) keymap.deserialize(doc["keymap"], keymapPreset);
       else applyKeymapPreset();
+
+      zoomSpeed = doc.value("zoomSpeed", 1.0f);
+      moveSpeed = doc.value("moveSpeed", 120.0f);
+      panSpeed = doc.value("panSpeed", 30.0f);
+      lookSpeed = doc.value("lookSpeed", -10.0f);
+      invertWheelY = doc.value("invertWheelY", false);
     } else {
       applyKeymapPreset();
     }
@@ -188,6 +199,11 @@ struct Context
     std::string json = Utils::JSON::Builder{}
       .set("keymapPreset", (uint32_t)keymapPreset)
       .set("keymap", keymap.serialize(keymapPreset))
+      .set("zoomSpeed", zoomSpeed)
+      .set("moveSpeed", moveSpeed)
+      .set("panSpeed", panSpeed)
+      .set("lookSpeed", lookSpeed)
+      .set("invertWheelY", invertWheelY)
       .toString();
     auto prefPath = getPrefsPath();
     printf("Saving prefs to %s\n", prefPath.c_str());

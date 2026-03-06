@@ -27,12 +27,8 @@ namespace P64::Script::C4F4D286D6CB0DE3
     float moveVelocity;
   );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
+  void init(Object& obj, Data *data)
   {
-    if(isDelete) {
-      return;
-    }
-
     debugf("Bot: id=%d parent=%d\n", obj.id, obj.group);
     data->moveVelocity = 0;
     data->turnVelocity = 0;

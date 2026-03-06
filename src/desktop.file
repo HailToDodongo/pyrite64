@@ -2,8 +2,9 @@
 Type=Application
 Name=Pyrite64
 Comment=N64 Game Engine and Editor
-Exec=pyrite64
+Exec=pyrite64 %f
 Icon=pyrite64
 Terminal=false
 Categories=Development;Game;
 StartupNotify=true
+MimeType=application/x-pyrite64-project;

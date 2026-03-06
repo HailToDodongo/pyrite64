@@ -29,10 +29,6 @@ namespace P64::Script::C6912C680DE13230
     float speed;
   );
 
-  void initDelete(Object& obj, Data *data, bool isDelete)
-  {
-    //fm_quat_rotate(&obj.rot, &obj.rot, &rotAxis, 3.2f);
-  }
 
   void update(Object& obj, Data *data, float deltaTime)
   {

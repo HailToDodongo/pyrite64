@@ -14,6 +14,15 @@ namespace Editor::Input {
   };
 
   struct Keymap {
+    // Project
+    ImGuiKeyChord save         = ImGuiMod_Ctrl | ImGuiKey_S;
+    ImGuiKeyChord copy         = ImGuiMod_Ctrl | ImGuiKey_C;
+    ImGuiKeyChord paste        = ImGuiMod_Ctrl | ImGuiKey_V;
+    ImGuiKeyChord toggleVSync  = ImGuiKey_F2;
+    ImGuiKeyChord reloadAssets = ImGuiKey_F5;
+    ImGuiKeyChord build        = ImGuiKey_F11;
+    ImGuiKeyChord buildAndRun  = ImGuiKey_F12;
+
     // Navigation/Viewport
     ImGuiKey moveForward    = ImGuiKey_W;
     ImGuiKey moveBack       = ImGuiKey_S;
@@ -39,18 +48,38 @@ namespace Editor::Input {
 
   static Keymap blenderKeymap;
   static Keymap standardKeymap = (Keymap) {
-      .moveForward = ImGuiKey_W,  
-      .moveBack = ImGuiKey_S,  
-      .moveLeft = ImGuiKey_A,  
-      .moveRight = ImGuiKey_D,  
-      .moveUp = ImGuiKey_E,  
-      .moveDown = ImGuiKey_Q,  
-      .toggleOrtho = ImGuiKey_Tab, 
-      .focusObject = ImGuiKey_F,  
-      .gizmoTranslate = ImGuiKey_W,  
-      .gizmoRotate = ImGuiKey_E,  
-      .gizmoScale = ImGuiKey_R,  
-      .deleteObject = ImGuiKey_Delete,  
-      .snapObject = ImGuiKey_S
+    .reloadAssets     = ImGuiMod_Ctrl | ImGuiKey_R,
+    .build            = ImGuiMod_Ctrl | ImGuiKey_B,
+    .buildAndRun      = ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_B,
+    .toggleOrtho      = ImGuiKey_Tab, 
+    .focusObject      = ImGuiKey_F,  
+    .gizmoTranslate   = ImGuiKey_W,  
+    .gizmoRotate      = ImGuiKey_E,  
+    .gizmoScale       = ImGuiKey_R,
   };
+
+  static std::string GetKeyChordName(ImGuiKeyChord key_chord) {
+    std::string result;
+    ImGuiKey key = (ImGuiKey)(key_chord & ~ImGuiMod_Mask_);
+
+    if (key_chord & ImGuiMod_Ctrl) {
+  #if defined(__APPLE__)
+      result += "Cmd+";
+  #else
+      result += "Ctrl+";
+  #endif
+    }
+    if (key_chord & ImGuiMod_Shift) result += "Shift+";
+    if (key_chord & ImGuiMod_Alt)   result += "Alt+";
+    if (key_chord & ImGuiMod_Super) result += "Super+";
+
+    // Append the base key name
+    if (key != ImGuiKey_None || key_chord == ImGuiKey_None) {
+      const char* key_name = ImGui::GetKeyName(key);
+      if (key_name) result += key_name;
+    } else if (!result.empty()) {
+      result.pop_back();
+    }
+    return result;
+  }
 }

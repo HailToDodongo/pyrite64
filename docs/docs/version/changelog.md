@@ -1,6 +1,17 @@
-# v0.5.0
+# Changelog
 
-# v0.4.0
+## v0.5.0
+- Show error if assets have duplicate UUIDs.
+- Show error model-components have missing models.
+- Fix temp. broken model references at runtime in prefabs during asset changes
+
+```{admonition} This version introduced breaking changes!
+:class: warning
+
+Checkout [Breaking Changes](./breakingChanges) for more information.
+```
+
+## v0.4.0
 - MacOS / Metal support (by [rasky](https://github.com/rasky), #106)
 - Runtime-Engine
   - Fix rendering issue where the camera region / scissor is not set for all draw-layers
@@ -15,7 +26,7 @@
 - CLI
   - New command to clean a project (`--cmd clean`)
 
-# v0.3.0
+## v0.3.0
 - Editor - General
   - Auto-Save before build & run
   - Instantiating prefabs now places them in front of camera
@@ -41,7 +52,7 @@
   - fix issue where multiple animations with partially matching names could lead to them being ignored
 - Various toolchain and build-setup improvements (by [@thekovic](https://www.github.com/thekovic))
 
-# v0.2.0
+## v0.2.0
 - Toolchain-Manager:
   - fixed build failure if MSYS2 home path contains spaces
   - check for existing N64_INST / toolchain installation (windows)
@@ -51,5 +62,5 @@
   - Fix DPI scaling issues
   - Show error-popup if Vulkan is not supported 
 
-# v0.1.0
+## v0.1.0
 Initial release

@@ -121,7 +121,17 @@ namespace Editor::Actions
       ctx.futureBuildRun = std::async(std::launch::async, [] (std::string configPath, std::string runCmd)
       {
         auto oldPATH = std::getenv("PATH");
-        bool result = Build::buildProject(configPath);
+        bool result = false;
+        try {
+          result = Build::buildProject(configPath);
+        } catch (const std::exception &e)
+        {
+          auto error = "Build failed with exception:\n" + std::string(e.what());
+          //error += "\n" + std::to_string(std::stacktrace::current());
+          Utils::Logger::log(error, Utils::Logger::LEVEL_ERROR);
+          Editor::Noti::add(Editor::Noti::Type::ERROR, error);
+          return;
+        }
 
         #if defined(_WIN32)
           _putenv_s("PATH", oldPATH);

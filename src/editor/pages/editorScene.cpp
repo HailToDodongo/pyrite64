@@ -14,7 +14,9 @@
 #define IMVIEWGUIZMO_IMPLEMENTATION 1
 #include "ImGuizmo.h"
 #include "ImViewGuizmo.h"
+#include "../../utils/logger.h"
 #include "../../utils/ringBuffer.h"
+#include "../imgui/notification.h"
 #include "../imgui/theme.h"
 
 namespace
@@ -24,6 +26,7 @@ namespace
 
   constinit bool preferencesOpen{false};
   constinit bool projectSettingsOpen{false};
+  constinit bool needsSanityCheck{false};
   constinit Utils::RingBuffer<double, 16> fpsRingBuffer{};
 }
 
@@ -40,6 +43,7 @@ Editor::Scene::Scene()
     }
     return false;
   });
+  needsSanityCheck = true;
 }
 
 Editor::Scene::~Scene()
@@ -75,13 +79,13 @@ void Editor::Scene::draw()
   ImGui::PopStyleVar(3);
 
   auto dockSpaceID = ImGui::GetID("DockSpace");
+  auto dockSpace = ImGui::DockBuilderGetNode(dockSpaceID);
+
   dockSpaceID = ImGui::DockSpace(dockSpaceID, ImVec2(0.0f, 0.0f), 0, 0);
   ImGui::End();
 
-  if(!dockSpaceInit)
+  if(!dockSpace)
   {
-    dockSpaceInit = true;
-
     ImGui::DockBuilderRemoveNode(dockSpaceID); // Clear out existing layout
     ImGui::DockBuilderAddNode(dockSpaceID); // Add empty node
     ImGui::DockBuilderSetNodeSize(dockSpaceID, ImGui::GetMainViewport()->Size);
@@ -311,7 +315,7 @@ void Editor::Scene::draw()
 
       if(ImGui::BeginMenu("View"))
       {
-        if(ImGui::MenuItem("Reset Layout"))dockSpaceInit = false;
+        if(ImGui::MenuItem("Reset Layout"))ImGui::DockBuilderRemoveNode(dockSpaceID);
         ImGui::EndMenu();
       }
 
@@ -393,6 +397,32 @@ void Editor::Scene::draw()
 
     // Preferences
     if (isCtrl && ImGui::IsKeyPressed(ImGuiKey_Period))preferencesOpen = true;
+  }
+
+  if(needsSanityCheck)
+  {
+    // check for duplicated asset UUIDs
+    auto &assets = ctx.project->getAssets().getEntries();
+    std::unordered_map<uint64_t, const Project::AssetManagerEntry*> uuids{};
+    for (const auto &assetTypes : assets)
+    {
+      for (const auto &asset : assetTypes)
+      {
+        auto existing = uuids.find(asset.getUUID());
+        if (existing != uuids.end()) {
+          auto msg = "Duplicate UUID found: " + std::to_string(asset.getUUID()) + "\nAsset: " + asset.name
+             + "\nWith: " + existing->second->name;
+          if(ctx.window) {
+            Editor::Noti::add(Noti::ERROR, msg);
+          } else {
+            Utils::Logger::log(msg, Utils::Logger::LEVEL_ERROR);
+          }
+        } else {
+          uuids[asset.getUUID()] = &asset;
+        }
+      }
+    }
+    needsSanityCheck = false;
   }
 }
 

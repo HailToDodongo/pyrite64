@@ -21,6 +21,7 @@
 #include "../../undoRedo.h"
 #include "../../selectionUtils.h"
 
+#include "../../../utils/logger.h"
 namespace
 {
   constinit uint32_t nextPassId{0};
@@ -349,7 +350,7 @@ void Editor::Viewport3D::draw()
   mousePos.x -= screenPos.x;
   mousePos.y -= vpOffsetY;
 
-  float moveSpeed = 120.0f * deltaTime;
+  float moveSpeed = ctx.moveSpeed * deltaTime;
 
   bool mouseHeldLeft = ImGui::IsMouseDown(ImGuiMouseButton_Left);
   bool mouseHeldRight = ImGui::IsMouseDown(ImGuiMouseButton_Right);
@@ -478,19 +479,20 @@ void Editor::Viewport3D::draw()
     //instead, we have to rely on the fact that trackpads move in fractional amounts
     glm::vec2 wheel = glm::vec2(io.MouseWheelH, io.MouseWheel);
     bool usesWheel = wheel != glm::vec2{0,0};
-
+    
     if(usesWheel)
     {
-      if (std::abs(wheel.x) == 1 || std::abs(wheel.y) == 1) {
+      if (std::fmod(std::abs(wheel.x), 1.0f) == 0 && std::fmod(std::abs(wheel.y), 1.0f) == 0) {
         //actual wheel or pinch gesture
-        float wheelSpeed = (isShiftDown ? 4.0f : 1.0f) * 30.0f;
+        float wheelSpeed = (isShiftDown ? 4.0f : 1.0f) * ctx.zoomSpeed;
         camera.zoomSpeed += wheel.y * wheelSpeed;
       } else {
+        if (ctx.invertWheelY) wheel.y *= -1;
         //two finger swipe on trackpad
         if (isShiftDown) {
-          camera.moveDelta(wheel * -30.0f);
+          camera.moveDelta(wheel * ctx.panSpeed);
         } else {
-          camera.orbitDelta(wheel * 10.0f);
+          camera.orbitDelta(wheel * ctx.lookSpeed);
         }
       }
     }

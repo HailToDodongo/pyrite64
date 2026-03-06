@@ -13,7 +13,6 @@ namespace fs = std::filesystem;
 
 bool Build::buildPrefabAssets(Project::Project &project, SceneCtx &sceneCtx)
 {
-  fs::path mkAsset = fs::path{project.conf.pathN64Inst} / "bin" / "mkasset";
   auto &assets = sceneCtx.project->getAssets().getTypeEntries(Project::FileType::PREFAB);
   for (auto &asset : assets)
   {
@@ -25,14 +24,15 @@ bool Build::buildPrefabAssets(Project::Project &project, SceneCtx &sceneCtx)
     fs::create_directories(outPath.parent_path());
 
     sceneCtx.files.push_back(Utils::FS::toUnixPath(asset.outPath));
-    if(!assetBuildNeeded(asset, outPath))continue;
 
-    //printf("Prefab: %s -> %s\n", asset.path.c_str(), outPath.string().c_str());
+    // @TODO: lazy-build again after refactoring the asset table building
+    //if(!assetBuildNeeded(asset, outPath))continue;
 
     sceneCtx.fileObj = {};
     writeObject(sceneCtx, asset.prefab->obj, true);
     sceneCtx.fileObj.writeToFile(outPath);
     sceneCtx.fileObj = {};
   }
+
   return true;
 }
