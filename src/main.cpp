@@ -23,6 +23,8 @@
 #include "renderer/scene.h"
 #include "renderer/shader.h"
 #include "SDL3_image/SDL_image.h"
+#include "utils/network.h"
+#include "utils/updater.h"
 
 #ifdef HAS_SHADER_CROSS
   #include "SDL3_shadercross/SDL_shadercross.h"
@@ -157,6 +159,16 @@ int main(int argc, char** argv)
   if (cliRes != CLI::Result::GUI) {
     return (cliRes == CLI::Result::SUCCESS) ? 0 : -1;
   }
+
+  // start the version check in the background while the app is starting
+  std::thread updateCheckThread([]() {
+    try {
+      ctx.newerVersion = Utils::Updater::getNewerVersion();
+    } catch (const std::exception& e) {
+      Utils::Logger::log(std::string("Failed to check for updates: ") + e.what(), Utils::Logger::LEVEL_ERROR);
+    }
+    ctx.hasNewerVersion = !ctx.newerVersion.empty();
+  });
 
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
   {
@@ -427,6 +439,7 @@ int main(int argc, char** argv)
   // needs to be destroyed before GPU teardown
   ctx.editorScene.reset();
 
+  updateCheckThread.join();
   SDL_WaitForGPUIdle(ctx.gpu);
 
   ImGui_ImplSDL3_Shutdown();

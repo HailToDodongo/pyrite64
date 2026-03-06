@@ -32,6 +32,9 @@ struct Context
   SDL_GPUDevice *gpu{nullptr};
   std::unique_ptr<Editor::Scene> editorScene{nullptr};
 
+  std::string newerVersion{};
+  std::atomic_bool hasNewerVersion{false};
+
   struct Clipboard
   {
     struct Entry {

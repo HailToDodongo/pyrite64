@@ -259,6 +259,9 @@ add_executable(pyrite64 src/main.cpp
         src/editor/imgui/notification.cpp
         src/utils/ringBuffer.h
         src/utils/time.cpp
+        src/utils/network.cpp
+        src/utils/updater.h
+        src/utils/updater.cpp
 )
 
 target_include_directories(pyrite64 PRIVATE
@@ -281,9 +284,14 @@ target_include_directories(pyrite64 PRIVATE
 # target_link_libraries(pyrite64 PRIVATE SDL3::SDL3)
 
 set(PYRITE_ORG_NAME "htd")
-target_compile_definitions(pyrite64 PRIVATE "PYRITE_ORG_NAME=\"${PYRITE_ORG_NAME}\"")
 set(PYRITE_APP_NAME "pyrite64")
+set(PYRITE_GH_USER "HailToDodongo")
+set(PYRITE_GH_REPO "pyrite64")
+
+target_compile_definitions(pyrite64 PRIVATE "PYRITE_ORG_NAME=\"${PYRITE_ORG_NAME}\"")
 target_compile_definitions(pyrite64 PRIVATE "PYRITE_APP_NAME=\"${PYRITE_APP_NAME}\"")
+target_compile_definitions(pyrite64 PRIVATE "PYRITE_GH_USER=\"${PYRITE_GH_USER}\"")
+target_compile_definitions(pyrite64 PRIVATE "PYRITE_GH_REPO=\"${PYRITE_GH_REPO}\"")
 target_compile_definitions(pyrite64 PRIVATE "PYRITE_VERSION=\"${PROJECT_VERSION}\"")
 
 target_compile_definitions(pyrite64 PRIVATE IMGUI_DEFINE_MATH_OPERATORS GLM_FORCE_QUAT_DATA_XYZW)

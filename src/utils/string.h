@@ -97,4 +97,17 @@ namespace Utils
     snprintf(buf, sizeof(buf), "%.1f %s", count, suffixes[suffix]); 
     return std::string{buf};
   }
+
+  inline int compareSemVer(const std::string &versionA, const std::string &versionB)
+  {
+    auto splitA = splitString(versionA.starts_with('v') ? versionA.substr(1) : versionA, '.');
+    auto splitB = splitString(versionB.starts_with('v') ? versionB.substr(1) : versionB, '.');
+    for (size_t i = 0; i < 3; ++i) {
+      int partA = i < splitA.size() ? std::stoi(splitA[i]) : 0;
+      int partB = i < splitB.size() ? std::stoi(splitB[i]) : 0;
+      if (partA > partB) return 1;
+      if (partA < partB) return -1;
+    }
+    return 0;
+  }
 }

@@ -16,6 +16,7 @@
 #include "ImViewGuizmo.h"
 #include "../../utils/logger.h"
 #include "../../utils/ringBuffer.h"
+#include "../../utils/updater.h"
 #include "../imgui/notification.h"
 #include "../imgui/theme.h"
 
@@ -367,6 +368,35 @@ void Editor::Scene::draw()
     fpsRingBuffer.average()
   );
 
+  ImGui::SameLine();
+  auto posX = io.DisplaySize.x - 12;
+
+  if(!ctx.newerVersion.empty()) {
+    ImGui::PopFont();
+
+    auto txt = ICON_MDI_DOWNLOAD " Update Available: " + ctx.newerVersion;
+    posX -= ImGui::CalcTextSize(txt.c_str()).x + 4;
+    auto posY = ImGui::GetCursorPosY();;
+    ImGui::SetCursorPos({posX, posY - 2});
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {5,2});
+    ImGui::PushStyleColor(ImGuiCol_Button, {0.5f, 0.8f, 0.0f, 0.9f});
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.5f, 0.8f, 0.0f, 0.75f});
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, {1.0f, 0.5f, 0.0f, 0.6f});
+    ImGui::PushStyleColor(ImGuiCol_Text, {0.0f, 0.0f, 0.0f, 1.0f});
+
+    if(ImGui::Button(txt.c_str(), {0,0})) {
+      Utils::Updater::doUpdate(ctx.newerVersion);
+    }
+
+    ImGui::PopStyleColor(4);
+    ImGui::PopStyleVar(1);
+
+    ImGui::SetCursorPosY(posY);
+    ImGui::PushFont(ImGui::Theme::getFontMono());
+    posX -= 8;
+  }
+
   perfColor = {1.0f,1.0f,1.0f,0.4f};
   std::string txtInfo = "v" PYRITE_VERSION;
   #ifndef NDEBUG
@@ -374,8 +404,7 @@ void Editor::Scene::draw()
     txtInfo += " [DEBUG]";
   #endif
 
-  ImGui::SameLine();
-  ImGui::SetCursorPosX(io.DisplaySize.x - 12 - ImGui::CalcTextSize(txtInfo.c_str()).x);
+  ImGui::SetCursorPosX(posX - ImGui::CalcTextSize(txtInfo.c_str()).x);
   ImGui::TextColored(perfColor, "%s", txtInfo.c_str());
 
   ImGui::PopFont();
