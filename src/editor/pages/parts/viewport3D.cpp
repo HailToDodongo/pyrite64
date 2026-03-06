@@ -508,6 +508,7 @@ void Editor::Viewport3D::draw()
   //ImGui::Text("Viewport: %f | %f | %08X", mousePos.x, mousePos.y, ctx.selObjectUUID);
 
   constexpr const char* const GIZMO_LABELS[3] = {ICON_MDI_CURSOR_MOVE, ICON_MDI_ROTATE_360, ICON_MDI_ARROW_EXPAND};
+  constexpr const char* const GIZMO_TOOLTIPS[3] = {"Translate", "Rotate", "Scale"};
   for (int i=0; i<3; ++i) {
     if (ConnectedToggleButton(
       GIZMO_LABELS[i],
@@ -517,6 +518,7 @@ void Editor::Viewport3D::draw()
     )) {
       gizmoOp = i;
     }
+    ImGui::SetItemTooltip("%s", GIZMO_TOOLTIPS[i]);
   }
 
   ImGui::SameLine();
@@ -524,6 +526,7 @@ void Editor::Viewport3D::draw()
   if (ConnectedToggleButton(ICON_MDI_WEB, isTransWorld, true, true, ImVec2(32,24))) {
     isTransWorld = !isTransWorld;
   }
+  ImGui::SetItemTooltip("Show %s Space", isTransWorld ? "Local" : "World");
 
   ImGui::SameLine();
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 12);
@@ -531,18 +534,21 @@ void Editor::Viewport3D::draw()
   if(ConnectedToggleButton(ICON_MDI_GRID, showGrid, true, true, ImVec2(32,24))) {
     showGrid = !showGrid;
   }
+  ImGui::SetItemTooltip("%s Grid", showGrid ? "Hide" : "Show");
 
   ImGui::SameLine();
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4);
   if(ConnectedToggleButton(ICON_MDI_LANDSLIDE_OUTLINE, showCollMesh, true, true, ImVec2(32,24))) {
     showCollMesh = !showCollMesh;
   }
+  ImGui::SetItemTooltip("%s Collision Mesh", showCollMesh ? "Hide" : "Show");
 
   ImGui::SameLine();
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4);
   if(ConnectedToggleButton(ICON_MDI_CYLINDER, showCollObj, true, true, ImVec2(32,24))) {
     showCollObj = !showCollObj;
   }
+  ImGui::SetItemTooltip("%s Collision Bodies", showCollObj ? "Hide" : "Show");
 
   ImGui::SetCursorPosY(currPos.y + BAR_HEIGHT);
 

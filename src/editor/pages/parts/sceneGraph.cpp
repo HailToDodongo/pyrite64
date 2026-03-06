@@ -122,6 +122,7 @@ namespace
     if (obj.parent && ImGui::BeginDragDropSource())
     {
       ImGui::SetDragDropPayload("OBJECT", &obj.uuid, sizeof(obj.uuid));
+      ImGui::TextUnformatted(obj.name.c_str());
       ImGui::EndDragDropSource();
     }
 
@@ -149,8 +150,10 @@ namespace
 
       int clicked = 0;
       clicked |= ImGui::IconToggle(obj.selectable, ICON_MDI_CURSOR_DEFAULT, ICON_MDI_CURSOR_DEFAULT_OUTLINE, iconSize);
+      ImGui::SetItemTooltip("%s Object Selection", obj.selectable ? "Disable" : "Enable");
       ImGui::SameLine(0, spacing);
       clicked |= ImGui::IconToggle(obj.enabled, ICON_MDI_CHECKBOX_MARKED, ICON_MDI_CHECKBOX_BLANK_OUTLINE, iconSize);
+      ImGui::SetItemTooltip("%s Object", obj.enabled ? "Disable" : "Enable");
 
       if(clicked)nodeIsClicked = false;
 

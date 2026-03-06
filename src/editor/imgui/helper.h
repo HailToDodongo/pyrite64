@@ -584,6 +584,7 @@ namespace ImTable
           obj->removePropOverride(prop);
         }
       }
+      ImGui::SetItemTooltip("%s Override", isOverrideLocal ? "Disable" : "Enable");
       ImGui::SameLine();
     }
 
