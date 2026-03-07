@@ -15,8 +15,8 @@ namespace Editor::Input {
 
   struct Keymap {
     // Window
-    ImGuiKeyChord zoomIn       = ImGuiMod_Ctrl | ImGuiKey_UpArrow;
-    ImGuiKeyChord zoomOut      = ImGuiMod_Ctrl | ImGuiKey_DownArrow;
+    ImGuiKeyChord zoomIn       = ImGuiMod_Ctrl | ImGuiKey_MouseWheelY;
+    ImGuiKeyChord zoomOut      = ImGuiMod_Ctrl | ImGuiKey_MouseWheelY;
 
     // Project
     ImGuiKeyChord save         = ImGuiMod_Ctrl | ImGuiKey_S;
@@ -62,28 +62,5 @@ namespace Editor::Input {
     .gizmoScale       = ImGuiKey_R,
   };
 
-  static std::string GetKeyChordName(ImGuiKeyChord key_chord) {
-    std::string result;
-    ImGuiKey key = (ImGuiKey)(key_chord & ~ImGuiMod_Mask_);
-
-    if (key_chord & ImGuiMod_Ctrl) {
-  #if defined(__APPLE__)
-      result += "Cmd+";
-  #else
-      result += "Ctrl+";
-  #endif
-    }
-    if (key_chord & ImGuiMod_Shift) result += "Shift+";
-    if (key_chord & ImGuiMod_Alt)   result += "Alt+";
-    if (key_chord & ImGuiMod_Super) result += "Super+";
-
-    // Append the base key name
-    if (key != ImGuiKey_None || key_chord == ImGuiKey_None) {
-      const char* key_name = ImGui::GetKeyName(key);
-      if (key_name) result += key_name;
-    } else if (!result.empty()) {
-      result.pop_back();
-    }
-    return result;
-  }
+  std::string GetKeyChordName(ImGuiKeyChord key_chord);
 }

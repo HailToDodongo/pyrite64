@@ -351,29 +351,6 @@ int main(int argc, char** argv)
         // Check: io.WantCaptureMouse, io.WantCaptureKeyboard
       }
 
-      if(!ImGui::GetIO().WantTextInput)
-      {
-        if(ImGui::IsKeyChordPressed(ctx.keymap.zoomIn)) {
-          ImGui::Theme::changeZoom(+1);
-        }
-        if(ImGui::IsKeyChordPressed(ctx.keymap.zoomOut)) {
-          ImGui::Theme::changeZoom(-1);
-        }
-
-        if (ImGui::IsKeyChordPressed(ctx.keymap.copy)) {
-          Editor::Actions::call(Editor::Actions::Type::COPY);
-        }
-        if (ImGui::IsKeyChordPressed(ctx.keymap.paste)) {
-          Editor::Actions::call(Editor::Actions::Type::PASTE);
-        }
-        if (ImGui::IsKeyChordPressed(ctx.keymap.save)) {
-          if (ctx.project) {
-            ctx.project->save();
-            ctx.editorScene->save();
-          }
-        }
-      }
-
       if (ImGui::IsKeyChordPressed(ctx.keymap.build)) {
         Editor::Actions::call(Editor::Actions::Type::PROJECT_BUILD);
       }
@@ -410,6 +387,38 @@ int main(int argc, char** argv)
       ImGui_ImplSDLGPU3_NewFrame();
       ImGui_ImplSDL3_NewFrame();
       ImGui::NewFrame();
+
+      if(!ImGui::GetIO().WantTextInput)
+      {
+        int mouseWheelY = ImGui::GetIO().MouseWheel;
+        if(ImGui::IsKeyChordPressed(ctx.keymap.zoomIn)) {
+          // special handling for zoom, the default keybind uses CTRL+SCROLL,
+          // so check direction here
+          int zoom = 1;
+          if(mouseWheelY > 0)zoom = 1;
+          if(mouseWheelY < 0)zoom = -1;
+          ImGui::Theme::changeZoom(zoom);
+        }
+        else if(ImGui::IsKeyChordPressed(ctx.keymap.zoomOut)) {
+          int zoom = -1;
+          if(mouseWheelY > 0)zoom = 1;
+          if(mouseWheelY < 0)zoom = -1;
+          ImGui::Theme::changeZoom(zoom);
+        }
+
+        if (ImGui::IsKeyChordPressed(ctx.keymap.copy)) {
+          Editor::Actions::call(Editor::Actions::Type::COPY);
+        }
+        if (ImGui::IsKeyChordPressed(ctx.keymap.paste)) {
+          Editor::Actions::call(Editor::Actions::Type::PASTE);
+        }
+        if (ImGui::IsKeyChordPressed(ctx.keymap.save)) {
+          if (ctx.project) {
+            ctx.project->save();
+            ctx.editorScene->save();
+          }
+        }
+      }
 
       uint64_t ticksSelf = SDL_GetTicksNS();
       scene.update();
