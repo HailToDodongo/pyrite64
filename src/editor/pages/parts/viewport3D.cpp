@@ -332,10 +332,14 @@ void Editor::Viewport3D::draw()
   float BAR_HEIGHT = 26_px;
 
   auto currSize = ImGui::GetContentRegionAvail();
+
   auto currPos = ImGui::GetWindowPos();
   if (currSize.x < 64_px)currSize.x = 64_px;
   if (currSize.y < 64_px)currSize.y = 64_px;
   currSize.y -= BAR_HEIGHT;
+
+  currSize.x = floorf(currSize.x);
+  currSize.y = floorf(currSize.y);
 
   fb.resize((int)currSize.x, (int)currSize.y);
   camera.screenSize = {currSize.x, currSize.y};
@@ -574,9 +578,14 @@ void Editor::Viewport3D::draw()
   if (!newMouseDown)isMouseDown = false;
 
   currPos = ImGui::GetCursorScreenPos();
+  currPos.x = floorf(currPos.x);
+  currPos.y = floorf(currPos.y);
+  ImGui::SetCursorScreenPos(currPos);
+
   vpOffsetY = currPos.y;
 
-  ImGui::Image(ImTextureID(fb.getTexture()), {currSize.x, currSize.y});
+  auto tex = fb.getTexture();
+  ImGui::Image(ImTextureID(tex), {(float)fb.getWidth(), (float)fb.getHeight()});
 
   if (ImGui::BeginDragDropTarget())
   {
