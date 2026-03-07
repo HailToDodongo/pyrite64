@@ -31,7 +31,16 @@ bool Editor::PreferenceOverlay::draw()
     ImTable::add("Anti-Alias", isOn);
     ctx.prefs.renderFactorAA = isOn ? 2.0f : 1.0f;
 
+    if(ctx.forceVSync) {
+      ctx.prefs.useVSync = true;
+      ImGui::BeginDisabled();
+    }
     ImTable::add("VSync", ctx.prefs.useVSync);
+    if(ctx.forceVSync)    {
+      ImGui::EndDisabled();
+      ImGui::SetItemTooltip("GPU only supports VSync");
+    }
+
     if(!ctx.prefs.useVSync)
     {
       ImTable::add("FPS Limit", ctx.prefs.fpsLimit);

@@ -32,6 +32,7 @@ struct Context
   SDL_Window* window{nullptr};
   SDL_GPUDevice *gpu{nullptr};
   std::unique_ptr<Editor::Scene> editorScene{nullptr};
+  bool forceVSync{false};
 
   std::string newerVersion{};
   std::atomic_bool hasNewerVersion{false};

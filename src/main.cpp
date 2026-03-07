@@ -220,12 +220,13 @@ int main(int argc, char** argv)
     return -1;
   }
 
+  ctx.forceVSync = false;
   SDL_GPUPresentMode presentMode = SDL_GPU_PRESENTMODE_IMMEDIATE;
   if(!SDL_WindowSupportsGPUPresentMode(ctx.gpu, ctx.window, presentMode))
   {
     printf("Warning: SDL_GPU_PRESENTMODE_IMMEDIATE not supported, falling back to SDL_GPU_PRESENTMODE_VSYNC\n");
     presentMode = SDL_GPU_PRESENTMODE_VSYNC;
-    ctx.prefs.useVSync = true;
+    ctx.forceVSync = true;
   }
 
   SDL_SetGPUSwapchainParameters(ctx.gpu, ctx.window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, presentMode);
@@ -364,6 +365,7 @@ int main(int argc, char** argv)
         Editor::Actions::call(Editor::Actions::Type::ASSETS_RELOAD);
       }
 
+      if(ctx.forceVSync)ctx.prefs.useVSync = true;
       SDL_GPUPresentMode newPresentMode = ctx.prefs.useVSync
         ? SDL_GPU_PRESENTMODE_VSYNC
         : SDL_GPU_PRESENTMODE_IMMEDIATE;
