@@ -61,6 +61,7 @@ struct Context
   float panSpeed = 30.0f;
   float lookSpeed = -10.0f;
   bool invertWheelY = false;
+  float renderFactorAA = 1.0f;
 
   std::future<void> futureBuildRun{};
 
@@ -193,6 +194,7 @@ struct Context
       panSpeed = doc.value("panSpeed", 30.0f);
       lookSpeed = doc.value("lookSpeed", -10.0f);
       invertWheelY = doc.value("invertWheelY", false);
+      renderFactorAA = doc.value("renderFactorAA", 1.0f);
     } else {
       applyKeymapPreset();
     }
@@ -207,6 +209,7 @@ struct Context
       .set("panSpeed", panSpeed)
       .set("lookSpeed", lookSpeed)
       .set("invertWheelY", invertWheelY)
+      .set("renderFactorAA", renderFactorAA)
       .toString();
     auto prefPath = getPrefsPath();
     printf("Saving prefs to %s\n", prefPath.c_str());

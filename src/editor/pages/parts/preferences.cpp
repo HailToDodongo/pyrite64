@@ -25,6 +25,14 @@ bool Editor::Preferences::draw()
     ImTable::end();
   }
 
+  if (ImGui::CollapsingHeader("Rendering", ImGuiTreeNodeFlags_DefaultOpen)) {
+    ImTable::start("Rendering");
+    bool isOn = ctx.renderFactorAA  > 1.0f;
+    ImTable::add("Anti-Alias", isOn);
+    ctx.renderFactorAA = isOn ? 2.0f : 1.0f;
+    ImTable::end();
+  }
+
   if (ImGui::CollapsingHeader("Keymap", ImGuiTreeNodeFlags_DefaultOpen)) {
     ImTable::start("Keymap");
     if (ImTable::addComboBox("Preset", (int&)ctx.keymapPreset, { "Blender", "Industry Compatible" })) {

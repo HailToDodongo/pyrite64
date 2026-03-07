@@ -77,6 +77,15 @@ void Renderer::Framebuffer::resize(uint32_t width, uint32_t height)
   texInfo.type = SDL_GPU_TEXTURETYPE_2D;
   texInfo.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
   texInfo.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
+
+  // NOTE: this just breaks the image, since MSAA cannot be used if the target is also a sampler
+  // this is the case as we render it into a texture to be later used by imgui
+  /*if(ctx.renderFactorAA > 1.0f) {
+    if(SDL_GPUTextureSupportsSampleCount(ctx.gpu, texInfo.format, SDL_GPU_SAMPLECOUNT_2)) {
+      texInfo.sample_count = SDL_GPU_SAMPLECOUNT_2;
+    }
+  }*/
+
   gpuTex = SDL_CreateGPUTexture(ctx.gpu, &texInfo);
 
   texInfo.type = SDL_GPU_TEXTURETYPE_2D;

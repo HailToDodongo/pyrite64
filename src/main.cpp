@@ -297,7 +297,7 @@ int main(int argc, char** argv)
       SDL_Event event{};
       while (SDL_PollEvent(&event))
       {
-        //convert pinch events to whole number mouse wheel events to mimic windows 
+        //convert pinch events to whole number mouse wheel events to mimic windows
         if (event.type == SDL_EVENT_PINCH_BEGIN) {
           lastPinch = 1;
         } else if (event.type == SDL_EVENT_PINCH_UPDATE) {

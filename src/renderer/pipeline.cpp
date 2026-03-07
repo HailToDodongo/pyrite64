@@ -66,7 +66,6 @@ Renderer::Pipeline::Pipeline(const Info &info) {
   pipelineInfo.target_info.color_target_descriptions = colorTargetDescriptions;
 
   pipelineInfo.rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE; // done in shader
-  // pipelineInfo.multisample_state.enable_alpha_to_coverage = true;
   pipeline = SDL_CreateGPUGraphicsPipeline(ctx.gpu, &pipelineInfo);
 }
 

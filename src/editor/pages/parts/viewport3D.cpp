@@ -260,10 +260,23 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
   meshSprites->recreate(renderScene);
 
   renderScene.getPipeline("lines").bind(renderPass3D);
-  if (showGrid) {
-    objGrid.draw(renderPass3D, cmdBuff);
-  }
+
+  if(showGrid)objGrid.draw(renderPass3D, cmdBuff);
   objLines.draw(renderPass3D, cmdBuff);
+
+  // hack to get thicker lines with AA, just draw again with a 1px offset in screen-space
+  if(ctx.renderFactorAA > 1.0f) {
+    auto oldMat = uniGlobal.projMat[2];
+    uniGlobal.projMat[2][0] += 1.0f / uniGlobal.screenSize.x;
+    uniGlobal.projMat[2][1] -= 1.0f / uniGlobal.screenSize.y;
+    SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
+
+    if(showGrid)objGrid.draw(renderPass3D, cmdBuff);
+    objLines.draw(renderPass3D, cmdBuff);
+
+    uniGlobal.projMat[2] = oldMat;
+    SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
+  }
 
   renderScene.getPipeline("sprites").bind(renderPass3D);
 
@@ -279,7 +292,10 @@ void Editor::Viewport3D::onCopyPass(SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPa
 
 void Editor::Viewport3D::onPostRender(Renderer::Scene &renderScene) {
   if (pickedObjID.isRequested()) {
-    pickedObjID.setResult(fb.readObjectID(mousePosClick.x, mousePosClick.y));
+    pickedObjID.setResult(fb.readObjectID(
+      mousePosClick.x * ctx.renderFactorAA,
+      mousePosClick.y * ctx.renderFactorAA
+    ));
   }
 }
 
@@ -341,8 +357,11 @@ void Editor::Viewport3D::draw()
   currSize.x = floorf(currSize.x);
   currSize.y = floorf(currSize.y);
 
-  fb.resize((int)currSize.x, (int)currSize.y);
-  camera.screenSize = {currSize.x, currSize.y};
+  // Since we can't use MSAA directly, just render at higher res here
+  auto renderSize = currSize * ctx.renderFactorAA;
+
+  fb.resize((int)renderSize.x, (int)renderSize.y);
+  camera.screenSize = {renderSize.x, renderSize.y};
 
   auto &io = ImGui::GetIO();
   float deltaTime = io.DeltaTime;
@@ -585,7 +604,10 @@ void Editor::Viewport3D::draw()
   vpOffsetY = currPos.y;
 
   auto tex = fb.getTexture();
-  ImGui::Image(ImTextureID(tex), {(float)fb.getWidth(), (float)fb.getHeight()});
+  ImGui::Image(ImTextureID(tex), {
+    (float)fb.getWidth() / ctx.renderFactorAA,
+    (float)fb.getHeight() / ctx.renderFactorAA
+  });
 
   if (ImGui::BeginDragDropTarget())
   {
