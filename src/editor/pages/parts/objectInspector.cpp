@@ -318,7 +318,27 @@ void Editor::ObjectInspector::draw() {
   if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
     if (ImTable::start("Transform", obj.get())) {
       ImTable::addObjProp("Pos", srcObj->pos);
-      ImTable::addObjProp("Scale", srcObj->scale);
+
+      glm::vec3 scaleBefore = srcObj->scale.value;
+      if (ImTable::addObjProp("Scale", srcObj->scale) && srcObj->linkedScale) 
+      {
+        if (scaleBefore == glm::vec3{0,0, 0}) {
+          srcObj->scale.value = glm::vec3(srcObj->scale.value.x + srcObj->scale.value.y + srcObj->scale.value.z);
+        }
+        else {
+          float ratio = 1.0f;
+          if      (srcObj->scale.value.x != scaleBefore.x && scaleBefore.x != 0) ratio = srcObj->scale.value.x / scaleBefore.x;
+          else if (srcObj->scale.value.y != scaleBefore.y && scaleBefore.y != 0) ratio = srcObj->scale.value.y / scaleBefore.y;
+          else if (srcObj->scale.value.z != scaleBefore.z && scaleBefore.z != 0) ratio = srcObj->scale.value.z / scaleBefore.z;
+          srcObj->scale.value = scaleBefore * ratio;
+        }
+      }
+
+      // Linked Scale button
+      ImGui::TableSetColumnIndex(0);
+      ImGui::SameLine(50);
+      ImGui::IconToggle(srcObj->linkedScale, ICON_MDI_LINK, ICON_MDI_LINK_OFF, ImVec2(20,20));
+
       ImTable::addObjProp("Rot", srcObj->rot);
       ImTable::end();
     }
