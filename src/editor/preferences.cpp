@@ -34,6 +34,8 @@ void Editor::Preferences::load()
     lookSpeed = doc.value("lookSpeed", DEF.lookSpeed);
     invertWheelY = doc.value("invertWheelY", DEF.invertWheelY);
     renderFactorAA = doc.value("renderFactorAA", DEF.renderFactorAA);
+    useVSync = doc.value("useVSync", DEF.useVSync);
+    fpsLimit = doc.value("fpsLimit", DEF.fpsLimit);
   } else {
     applyKeymapPreset();
   }
@@ -50,6 +52,8 @@ void Editor::Preferences::save()
     .set("lookSpeed", lookSpeed)
     .set("invertWheelY", invertWheelY)
     .set("renderFactorAA", renderFactorAA)
+    .set("useVSync", useVSync)
+    .set("fpsLimit", fpsLimit)
     .toString();
   auto prefPath = getPrefsPath();
   printf("Saving prefs to %s\n", prefPath.c_str());

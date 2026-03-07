@@ -17,6 +17,8 @@ namespace Editor
     float lookSpeed = -10.0f;
     bool invertWheelY = false;
     float renderFactorAA = 1.0f;
+    bool useVSync = false;
+    int fpsLimit = 60;
 
     void load();
     void save();

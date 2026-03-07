@@ -30,6 +30,14 @@ bool Editor::PreferenceOverlay::draw()
     bool isOn = ctx.prefs.renderFactorAA  > 1.0f;
     ImTable::add("Anti-Alias", isOn);
     ctx.prefs.renderFactorAA = isOn ? 2.0f : 1.0f;
+
+    ImTable::add("VSync", ctx.prefs.useVSync);
+    if(!ctx.prefs.useVSync)
+    {
+      ImTable::add("FPS Limit", ctx.prefs.fpsLimit);
+      ctx.prefs.fpsLimit = std::max(20, ctx.prefs.fpsLimit);
+    }
+
     ImTable::end();
   }
 
@@ -46,7 +54,6 @@ bool Editor::PreferenceOverlay::draw()
       ImTable::addKeybind("Save",          ctx.prefs.keymap.save,         defaults.save);
       ImTable::addKeybind("Copy",          ctx.prefs.keymap.copy,         defaults.copy);
       ImTable::addKeybind("Paste",         ctx.prefs.keymap.paste,        defaults.paste);
-      ImTable::addKeybind("Toggle VSync",  ctx.prefs.keymap.toggleVSync,  defaults.toggleVSync);
       ImTable::addKeybind("Reload Assets", ctx.prefs.keymap.reloadAssets, defaults.reloadAssets);
       ImTable::addKeybind("Build",         ctx.prefs.keymap.build,        defaults.build);
       ImTable::addKeybind("Build & Run",   ctx.prefs.keymap.buildAndRun,  defaults.buildAndRun);

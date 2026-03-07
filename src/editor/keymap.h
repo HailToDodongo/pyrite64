@@ -22,7 +22,6 @@ namespace Editor::Input {
     ImGuiKeyChord save         = ImGuiMod_Ctrl | ImGuiKey_S;
     ImGuiKeyChord copy         = ImGuiMod_Ctrl | ImGuiKey_C;
     ImGuiKeyChord paste        = ImGuiMod_Ctrl | ImGuiKey_V;
-    ImGuiKeyChord toggleVSync  = ImGuiKey_F2;
     ImGuiKeyChord reloadAssets = ImGuiKey_F5;
     ImGuiKeyChord build        = ImGuiKey_F11;
     ImGuiKeyChord buildAndRun  = ImGuiKey_F12;

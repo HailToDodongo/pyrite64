@@ -225,6 +225,7 @@ int main(int argc, char** argv)
   {
     printf("Warning: SDL_GPU_PRESENTMODE_IMMEDIATE not supported, falling back to SDL_GPU_PRESENTMODE_VSYNC\n");
     presentMode = SDL_GPU_PRESENTMODE_VSYNC;
+    ctx.prefs.useVSync = true;
   }
 
   SDL_SetGPUSwapchainParameters(ctx.gpu, ctx.window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, presentMode);
@@ -363,9 +364,12 @@ int main(int argc, char** argv)
         Editor::Actions::call(Editor::Actions::Type::ASSETS_RELOAD);
       }
 
-      if (ImGui::IsKeyChordPressed(ctx.prefs.keymap.toggleVSync))
+      SDL_GPUPresentMode newPresentMode = ctx.prefs.useVSync
+        ? SDL_GPU_PRESENTMODE_VSYNC
+        : SDL_GPU_PRESENTMODE_IMMEDIATE;
+      if (newPresentMode != presentMode)
       {
-        presentMode = (presentMode == SDL_GPU_PRESENTMODE_VSYNC) ? SDL_GPU_PRESENTMODE_IMMEDIATE : SDL_GPU_PRESENTMODE_VSYNC;
+        presentMode = newPresentMode;
         printf("Switched Present Mode to: %s\n", (presentMode == SDL_GPU_PRESENTMODE_VSYNC) ? "VSync" : "Immediate");
         SDL_SetGPUSwapchainParameters(ctx.gpu, ctx.window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, presentMode);
       }
@@ -442,7 +446,9 @@ int main(int argc, char** argv)
 
       if(presentMode != SDL_GPU_PRESENTMODE_VSYNC)
       {
-        uint64_t targetFrameTime = 16'666'666; // ~60 FPS
+        uint64_t targetFrameTime = 1'000'000'000 / (uint64_t)ctx.prefs.fpsLimit;
+        targetFrameTime -= 100'000;
+
         auto frameTime = SDL_GetTicksNS() - frameStart;
         if(frameTime < targetFrameTime) {
           SDL_DelayNS(targetFrameTime - frameTime);

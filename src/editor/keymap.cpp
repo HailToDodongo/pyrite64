@@ -58,7 +58,6 @@ nlohmann::json Editor::Input::Keymap::serialize(KeymapPreset preset) const {
   writeChord("save",         save,           defaultKeymap.save);
   writeChord("copy",         copy,           defaultKeymap.copy);
   writeChord("paste",        paste,          defaultKeymap.paste);
-  writeChord("toggleVSync",  toggleVSync,    defaultKeymap.toggleVSync);
   writeChord("reloadAssets", reloadAssets,   defaultKeymap.reloadAssets);
   writeChord("build",        build,          defaultKeymap.build);
   writeChord("buildAndRun",  buildAndRun,    defaultKeymap.buildAndRun);
@@ -101,7 +100,6 @@ void Editor::Input::Keymap::deserialize(const nlohmann::json& parent, KeymapPres
   save           = readChord("save",         defaultKeymap.save);
   copy           = readChord("copy",         defaultKeymap.copy);
   paste          = readChord("paste",        defaultKeymap.paste);
-  toggleVSync    = readChord("toggleVSync",  defaultKeymap.toggleVSync);
   reloadAssets   = readChord("reloadAssets", defaultKeymap.reloadAssets);
   build          = readChord("build",        defaultKeymap.build);
   buildAndRun    = readChord("buildAndRun",  defaultKeymap.buildAndRun);
