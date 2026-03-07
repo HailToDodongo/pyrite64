@@ -17,7 +17,7 @@
 #include "editor/actions.h"
 #include "editor/window.h"
 #include "editor/imgui/theme.h"
-#include "editor/pages/editorMain.h"
+#include "editor/pages/launcher.h"
 #include "editor/pages/editorScene.h"
 #include "editor/imgui/notification.h"
 #include "renderer/scene.h"
@@ -273,7 +273,7 @@ int main(int argc, char** argv)
 
     Renderer::Scene scene{};
     ctx.scene = &scene;
-    Editor::Main editorMain{ctx.gpu};
+    Editor::Launcher editorMain{ctx.gpu};
     ctx.editorScene = std::make_unique<Editor::Scene>();
 
     ctx.loadPrefs();

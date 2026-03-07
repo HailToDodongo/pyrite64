@@ -2,13 +2,14 @@
 * @copyright 2025 - Max Bebök
 * @license MIT
 */
-#include "editorMain.h"
+#include "launcher.h"
 
 #include <atomic>
 #include <cstdio>
 #include <mutex>
 
 #include "imgui.h"
+#include "../imgui/theme.h"
 #include "../actions.h"
 #include "../../utils/filePicker.h"
 #include "../../context.h"
@@ -22,8 +23,6 @@ void ImDrawCallback_ImplSDLGPU3_SetSamplerRepeat(const ImDrawList* parent_list, 
 
 namespace
 {
-  constexpr float BTN_SPACING = 300;
-
   bool isHoverAdd = false;
   bool isHoverLast = false;
   bool isHoverTool = false;
@@ -32,10 +31,10 @@ namespace
     float centerPosX, const ImVec2 &btnSizeLast,
     float midBgPointY, const char* text
   ) {
-    ImGui::PushFont(nullptr, 24);
+    ImGui::PushFont(nullptr, 24_px);
     ImGui::SetCursorPos({
-      centerPosX - (ImGui::CalcTextSize(text).x / 2) + 6,
-      midBgPointY + (btnSizeLast.y / 2) + 10
+      centerPosX - (ImGui::CalcTextSize(text).x / 2) + 6_px,
+      midBgPointY + (btnSizeLast.y / 2) + 10_px
     });
 
     ImGui::Text("%s", text);
@@ -43,7 +42,7 @@ namespace
   }
 }
 
-Editor::Main::Main(SDL_GPUDevice* device)
+Editor::Launcher::Launcher(SDL_GPUDevice* device)
   : texTitle{device, "data/img/titleLogo.png"},
   texBtnAdd{device, "data/img/cardAdd.svg"},
   texBtnOpen{device, "data/img/cardLast.svg"},
@@ -53,11 +52,12 @@ Editor::Main::Main(SDL_GPUDevice* device)
   ctx.toolchain.scan();
 }
 
-Editor::Main::~Main() {
+Editor::Launcher::~Launcher() {
 }
 
-void Editor::Main::draw()
+void Editor::Launcher::draw()
 {
+  float BTN_SPACING = 300_px;
   const auto &toolState = ctx.toolchain.getState();
   auto &io = ImGui::GetIO();
 
@@ -74,8 +74,8 @@ void Editor::Main::draw()
   // BG
   ImGui::GetWindowDrawList()->AddCallback(ImDrawCallback_ImplSDLGPU3_SetSamplerRepeat, nullptr);
 
-  float topBgHeight = 7;
-  float bottomBgHeight = 3;
+  float topBgHeight = 7_px;
+  float bottomBgHeight = 3_px;
   float bgRepeatsX = io.DisplaySize.x / texBG.getWidth();
   ImGui::SetCursorPos({0,0});
   ImGui::Image(ImTextureID(texBG.getGPUTex()),
@@ -103,16 +103,18 @@ void Editor::Main::draw()
     ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
   }
 
-  auto logoSize = texTitle.getSize(0.65f);
+  auto logoSize = texTitle.getSize(0.65 * ImGui::Theme::zoomFactor);
   ImGui::SetCursorPos({
-    centerPos.x - (logoSize.x/2) + 16,
-    28
+    centerPos.x - (logoSize.x/2) + 16_px,
+    28_px
   });
   ImGui::Image(ImTextureID(texTitle.getGPUTex()),logoSize);
 
   auto renderButton = [&](Renderer::Texture &img, const char* text, bool& hover, int &posX) -> bool
   {
     auto btnSizeAdd = img.getSize(hover ? 0.85f : 0.8f);
+    btnSizeAdd *= ImGui::Theme::zoomFactor;
+
     ImVec2 btnPos{
       posX  - (btnSizeAdd.x/2),
       midBgPointY - (btnSizeAdd.y/2),
@@ -144,7 +146,7 @@ void Editor::Main::draw()
   int buttonCount = validToolchain ? 3 : 1;
 
   // screen center
-  int posX = (int)centerPos.x - 6;
+  int posX = (int)centerPos.x - 6_px;
   if(buttonCount == 3) {
     posX -= (BTN_SPACING);
   }
@@ -184,12 +186,12 @@ void Editor::Main::draw()
   }
 
   if(!validToolchain) {
-    ImGui::PushFont(nullptr, 32);
+    ImGui::PushFont(nullptr, 32_px);
     const char* warnText = ICON_MDI_ALERT " Toolchain not found";
     float textWidth = ImGui::CalcTextSize(warnText).x;
     ImGui::SetCursorPos({
       centerPos.x - (textWidth / 2),
-      midBgPointY - (texBtnTool.getHeight() * 0.8f / 2) - 50
+      midBgPointY - (texBtnTool.getHeight() * 0.8f / 2) - 50_px
     });
     
     ImGui::TextColored({1.0f, 0.2f, 0.2f, 1.0f}, "%s", warnText);
@@ -201,8 +203,8 @@ void Editor::Main::draw()
 
   // version + credits
   {
-    constexpr float PADDING = 24;
-    constexpr float FONT_SIZE = 18;
+    float PADDING = 24_px;
+    float FONT_SIZE = 18_px;
 
     ImGui::PushFont(nullptr, FONT_SIZE);
     ImGui::SetCursorPos({PADDING, io.DisplaySize.y - FONT_SIZE - PADDING});

@@ -16,9 +16,10 @@ namespace
   constexpr ImVec4 STEP_ACTIVE = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
   constexpr ImVec4 STEP_INACTIVE = ImVec4(0.1f, 0.1f, 0.1f, 1.0f);
 
+  constexpr ImVec2 RAW_BUTTON_SIZE = ImVec2(110, 90);
+  constexpr float RAW_BUTTON_SPACING = 50;
 
-  constexpr ImVec2 BUTTON_SIZE = ImVec2(110, 90);
-  constexpr float BUTTON_SPACING = 50.0f;
+
   constinit int checkTimer = 0;
 
   std::string projectName{};
@@ -28,6 +29,9 @@ namespace
   // draws a rounded square with text inside
   void drawStep(ImVec2 &pps, const char* text, bool done, bool nextArrow = true)
   {
+    auto BUTTON_SIZE = RAW_BUTTON_SIZE * ImGui::Theme::zoomFactor;
+    auto BUTTON_SPACING = RAW_BUTTON_SPACING * ImGui::Theme::zoomFactor;
+
     ImGui::PushStyleColor(ImGuiCol_Button, done ? STEP_ACTIVE : STEP_INACTIVE);
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, done ? STEP_ACTIVE : STEP_INACTIVE);
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, done ? STEP_ACTIVE : STEP_INACTIVE);
@@ -37,11 +41,11 @@ namespace
 
     const char* icon = done ? ICON_MDI_CHECK_CIRCLE : ICON_MDI_ALERT_CIRCLE;
     ImGui::SetCursorPos({
-      pps.x + BUTTON_SIZE.x - 24,
+      pps.x + BUTTON_SIZE.x - 24_px,
       pps.y,
     });
 
-    ImGui::PushFont(nullptr, 24);
+    ImGui::PushFont(nullptr, 24_px);
     ImGui::TextColored(
       done ? ImVec4(0.2f, 1.0f, 0.2f, 1.0f) : ImVec4(1.0f, 0.2f, 0.2f, 1.0f),
       "%s", icon
@@ -52,10 +56,10 @@ namespace
 
     if (nextArrow) {
       ImGui::SetCursorPos({
-        pps.x + BUTTON_SIZE.x + 10,
-        pps.y + (BUTTON_SIZE.y / 2) - 10
+        pps.x + BUTTON_SIZE.x + 10_px,
+        pps.y + (BUTTON_SIZE.y / 2) - 10_px
       });
-      ImGui::PushFont(nullptr, 32);
+      ImGui::PushFont(nullptr, 32_px);
       ImGui::TextColored(
         {1.0f, 1.0f, 1.0f, 0.4f},
         ICON_MDI_ARROW_RIGHT_BOLD
@@ -80,9 +84,12 @@ bool Editor::ToolchainOverlay::draw()
     constexpr bool isWindows = false;
   #endif
 
+  auto BUTTON_SIZE = RAW_BUTTON_SIZE * ImGui::Theme::zoomFactor;
+  auto BUTTON_SPACING = RAW_BUTTON_SPACING * ImGui::Theme::zoomFactor;
+
   ImGuiIO &io = ImGui::GetIO();
   ImGui::SetNextWindowPos({io.DisplaySize.x / 2, io.DisplaySize.y / 2}, ImGuiCond_Always, {0.5f, 0.5f});
-  ImGui::SetNextWindowSize({800, 400}, ImGuiCond_Always);
+  ImGui::SetNextWindowSize({800_px, 400_px}, ImGuiCond_Always);
 
   if (ImGui::BeginPopupModal("Toolchain", nullptr,
     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
@@ -98,15 +105,15 @@ bool Editor::ToolchainOverlay::draw()
 
     auto &toolState = ctx.toolchain.getState();
   
-    ImGui::Dummy({0, 2});
-    ImGui::PushFont(nullptr, 24);
+    ImGui::Dummy({0, 2_px});
+    ImGui::PushFont(nullptr, 24_px);
       const char* title = "Toolchain Manager";
       float titleWidth = ImGui::CalcTextSize(title).x;
       ImGui::SetCursorPosX((ImGui::GetWindowWidth() - titleWidth) * 0.5f);
       ImGui::Text("%s", title);
     ImGui::PopFont();
 
-    ImGui::Dummy({0, 10});
+    ImGui::Dummy({0, 10_px});
 
     constexpr const char *STEPS[] = {
       isWindows ? "MSYS2" : "N64_INST",
@@ -125,7 +132,7 @@ bool Editor::ToolchainOverlay::draw()
     float contentWidth = (BUTTON_SIZE.x * steps) + (BUTTON_SPACING * (steps-1));
     ImVec2 startPos = {
       (ImGui::GetWindowWidth() - contentWidth) * 0.5f,
-      ImGui::GetCursorPosY() + 40
+      ImGui::GetCursorPosY() + 40_px
     };
     
     bool allDone = true;
@@ -134,8 +141,8 @@ bool Editor::ToolchainOverlay::draw()
       allDone = allDone && STEP_DONE[i];
     }
 
-    float posX = 106;
-    ImGui::SetCursorPos({posX, startPos.y + BUTTON_SIZE.y + 15});
+    float posX = 106_px;
+    ImGui::SetCursorPos({posX, startPos.y + BUTTON_SIZE.y + 15_px});
 
     if(!ctx.toolchain.isInstalling()) 
     {
@@ -177,14 +184,14 @@ bool Editor::ToolchainOverlay::draw()
             "Please follow the guide for libdragon and tiny3d here:\n"
           );
 
-          ImGui::Dummy({0, 4});
+          ImGui::Dummy({0, 4_px});
           ImGui::SetCursorPosX(posX);
 
           ImGui::TextLinkOpenURL("Libdragon Wiki", "https://github.com/DragonMinded/libdragon/wiki/Installing-libdragon");
           ImGui::SameLine(); ImGui::Text(" + "); ImGui::SameLine();
           ImGui::TextLinkOpenURL("Tiny3D Docs", "https://github.com/HailToDodongo/tiny3d?tab=readme-ov-file#build");
 
-          ImGui::Dummy({0, 4});
+          ImGui::Dummy({0, 4_px});
           ImGui::SetCursorPosX(posX);
 
           ImGui::Text(
@@ -195,12 +202,12 @@ bool Editor::ToolchainOverlay::draw()
       }
       
       ImGui::SetCursorPos({
-        (ImGui::GetWindowWidth() - 150) * 0.5f,
-        ImGui::GetCursorPosY() + 20
+        (ImGui::GetWindowWidth() - 150_px) * 0.5f,
+        ImGui::GetCursorPosY() + 20_px
       });
 
       if(STEP_DONE[0] && isWindows) {
-        if (ImGui::Button(allDone ? "Update" : "Install", {150, 40})) {
+        if (ImGui::Button(allDone ? "Update" : "Install", {150_px, 40_px})) {
           ctx.toolchain.install();
         }
       }
@@ -215,10 +222,10 @@ bool Editor::ToolchainOverlay::draw()
     // back button
     if(!ctx.toolchain.isInstalling()) 
     {
-      ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 110 - 20);
-      ImGui::SetCursorPosY(ImGui::GetWindowHeight() - 40);
+      ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 110_px - 20_px);
+      ImGui::SetCursorPosY(ImGui::GetWindowHeight() - 40_px);
 
-      if (ImGui::Button("Back", {100, 0})) {
+      if (ImGui::Button("Back", {100_px, 0})) {
         ImGui::CloseCurrentPopup();
       }
     }

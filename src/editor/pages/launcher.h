@@ -8,7 +8,7 @@
 
 namespace Editor
 {
-  class Main
+  class Launcher
   {
     private:
       Renderer::Texture texTitle;
@@ -18,8 +18,8 @@ namespace Editor
       Renderer::Texture texBG;
 
     public:
-      Main(SDL_GPUDevice* device);
-      ~Main();
+      Launcher(SDL_GPUDevice* device);
+      ~Launcher();
 
       void draw();
   };

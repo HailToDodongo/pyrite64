@@ -64,7 +64,7 @@ bool Editor::CreateProjectOverlay::draw()
   // set width/height
   ImGuiIO &io = ImGui::GetIO();
   ImGui::SetNextWindowPos({io.DisplaySize.x / 2, io.DisplaySize.y / 2}, ImGuiCond_Always, {0.5f, 0.5f});
-  ImGui::SetNextWindowSize({400, 300}, ImGuiCond_Always);
+  ImGui::SetNextWindowSize({400_px, 300_px}, ImGuiCond_Always);
 
   if (ImGui::BeginPopupModal("Create Project", nullptr,
     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
@@ -72,26 +72,26 @@ bool Editor::CreateProjectOverlay::draw()
 
   ))
   {
-    ImGui::Dummy({0, 2});
-    ImGui::PushFont(nullptr, 24);
+    ImGui::Dummy({0, 2_px});
+    ImGui::PushFont(nullptr, 24_px);
       const char* title = "Create New Project";
       float titleWidth = ImGui::CalcTextSize(title).x;
       ImGui::SetCursorPosX((ImGui::GetWindowWidth() - titleWidth) * 0.5f);
       ImGui::Text("Create New Project");
     ImGui::PopFont();
 
-    ImGui::Dummy({0, 10});
+    ImGui::Dummy({0, 10_px});
 
     ImGui::Text("Project Name:");
     if(ImGui::InputText("##name", &projectName)) {
       projectSafeName = makeNameSafe(projectName);
     }
-    ImGui::Dummy({0, 4});
+    ImGui::Dummy({0, 4_px});
 
     ImGui::Text("Project Path:");
     ImGui::InputText("##path", &projectPath);
     ImGui::SameLine();
-    if (ImGui::Button(ICON_MDI_FOLDER_SEARCH_OUTLINE, {30, 0}))
+    if (ImGui::Button(ICON_MDI_FOLDER_SEARCH_OUTLINE, {30_px, 0}))
     {
       Utils::FilePicker::open([](const std::string &path) {
         if (path.empty()) return;
@@ -99,7 +99,7 @@ bool Editor::CreateProjectOverlay::draw()
       }, {.title="Choose Folder to create new Project in", .isDirectory = true});
     }
 
-    ImGui::Dummy({0, 4});
+    ImGui::Dummy({0, 4_px});
     // text in gray
     ImGui::Text("Project will be created in:");
     fs::path fullPath = projectPath;
@@ -112,13 +112,13 @@ bool Editor::CreateProjectOverlay::draw()
       ImGui::TextColored({1.0f, 0.5f, 0.5f, 1.0f}, "The project path must not contain spaces!");
     }
 
-    ImGui::Dummy({0, 10});
+    ImGui::Dummy({0, 10_px});
     ImGui::Separator();
-    ImGui::Dummy({0, 6});
+    ImGui::Dummy({0, 6_px});
     // right aligned
-    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 220);
+    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 220_px);
 
-    if (ImGui::Button("Cancel", {100, 0})) {
+    if (ImGui::Button("Cancel", {100_px, 0})) {
       projectName.clear();
       projectSafeName.clear();
       projectPath.clear();
@@ -134,7 +134,7 @@ bool Editor::CreateProjectOverlay::draw()
 
     bool canCreate = isValid && !projectName.empty() && !projectPath.empty();
     if(!canCreate)ImGui::BeginDisabled();
-    if (ImGui::Button("Create", {100, 0})) {
+    if (ImGui::Button("Create", {100_px, 0})) {
       nlohmann::json args{};
       args["path"] = fullPath;
       args["name"] = projectName;

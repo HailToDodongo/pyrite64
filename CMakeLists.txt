@@ -120,7 +120,7 @@ add_executable(pyrite64 src/main.cpp
         src/renderer/vertex.h
         src/context.h
         src/project/project.h
-        src/editor/pages/editorMain.cpp
+        src/editor/pages/launcher.cpp
         src/renderer/texture.cpp
         src/renderer/texture.h
         src/project/project.cpp
