@@ -23,8 +23,8 @@ namespace
     ImGui::Text("%s", layerName.c_str());
     ImGui::SameLine();
     std::string addLabel = ICON_MDI_PLUS_BOX_OUTLINE " Add##" + layerName;
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 3);
-    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(addLabel.c_str()).x / 2) - 4);
+    ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize(addLabel.c_str(), nullptr, true).x) - 8_px);
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 3_px);
     if (ImGui::Button(addLabel.c_str())) {
       Project::LayerConf layer{};
       layer.name.value = "New Layer";
@@ -36,7 +36,7 @@ namespace
     {
       auto tabName = std::to_string(layerIdx) + " - " + layer.name.value + "###" + std::to_string((uint64_t)&layer);
 
-      ImGui::SetCursorPosX(10);
+      ImGui::SetCursorPosX(10_px);
       bool open = ImGui::CollapsingHeader(tabName.c_str(), 0);
       if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
         ImGui::OpenPopup(layerName.c_str());

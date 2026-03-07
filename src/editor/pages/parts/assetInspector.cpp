@@ -106,7 +106,15 @@ void Editor::AssetInspector::draw() {
 
   if (ImGui::CollapsingHeader("Preview", ImGuiTreeNodeFlags_DefaultOpen)) {
     if (asset->type == FileType::IMAGE && asset->texture) {
-      ImGui::Image(ImTextureRef(asset->texture->getGPUTex()), asset->texture->getSize(4.0f));
+      auto imgSize = asset->texture->getSize();
+
+      float maxWidth = ImGui::GetContentRegionAvail().x - 8_px;
+      if(maxWidth > 256_px)maxWidth = 256_px;
+      float imgRatio = imgSize.x / imgSize.y;
+      imgSize.x = maxWidth;
+      imgSize.y = maxWidth / imgRatio;
+
+      ImGui::Image(ImTextureRef(asset->texture->getGPUTex()), imgSize);
       ImGui::Text("%dx%dpx", asset->texture->getWidth(), asset->texture->getHeight());
     }
     if (asset->type == FileType::MODEL_3D) {
