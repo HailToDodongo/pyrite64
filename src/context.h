@@ -14,6 +14,7 @@
 #include "utils/toolchain.h"
 #include "SDL3/SDL.h"
 #include "editor/keymap.h"
+#include "editor/preferences.h"
 
 namespace Editor
 {
@@ -54,14 +55,8 @@ struct Context
   uint64_t selAssetUUID{0};
   uint32_t selObjectUUID{0}; // The "primary" selected object (for single selection or the most recently selected in multi-selection)
   std::vector<uint32_t> selObjectUUIDs{}; // All selected object UUIDs (for multi-selection, includes selObjectUUID as the last element)
-  Editor::Input::KeymapPreset keymapPreset = Editor::Input::KeymapPreset::Blender;
-  Editor::Input::Keymap keymap{};
-  float zoomSpeed = 1.0f;
-  float moveSpeed = 120.0f;
-  float panSpeed = 30.0f;
-  float lookSpeed = -10.0f;
-  bool invertWheelY = false;
-  float renderFactorAA = 1.0f;
+
+  Editor::Preferences prefs{};
 
   std::future<void> futureBuildRun{};
 
@@ -164,56 +159,6 @@ struct Context
     if (!isObjectSelected(selObjectUUID)) {
       selObjectUUID = selObjectUUIDs.empty() ? 0 : selObjectUUIDs.back();
     }
-  }
-
-  Editor::Input::Keymap getCurrentKeymapPreset() {
-    if (keymapPreset == Editor::Input::KeymapPreset::Blender) {
-      return Editor::Input::blenderKeymap;
-    }
-    return Editor::Input::standardKeymap;
-  }
-
-  void applyKeymapPreset() {
-    keymap = getCurrentKeymapPreset();
-  }
-
-  static std::string getPrefsPath() { 
-    auto path = Utils::Proc::getAppDataPath() / "preferences.json";
-    return path.string();
-  }
-
-  void loadPrefs() {
-    auto doc = Utils::JSON::loadFile(getPrefsPath());
-    if(doc.is_object()) {
-      keymapPreset = (Editor::Input::KeymapPreset)doc.value("keymapPreset", 0);
-      if (doc.contains("keymap")) keymap.deserialize(doc["keymap"], keymapPreset);
-      else applyKeymapPreset();
-
-      zoomSpeed = doc.value("zoomSpeed", 1.0f);
-      moveSpeed = doc.value("moveSpeed", 120.0f);
-      panSpeed = doc.value("panSpeed", 30.0f);
-      lookSpeed = doc.value("lookSpeed", -10.0f);
-      invertWheelY = doc.value("invertWheelY", false);
-      renderFactorAA = doc.value("renderFactorAA", 1.0f);
-    } else {
-      applyKeymapPreset();
-    }
-  }
-
-  void savePrefs() {
-    std::string json = Utils::JSON::Builder{}
-      .set("keymapPreset", (uint32_t)keymapPreset)
-      .set("keymap", keymap.serialize(keymapPreset))
-      .set("zoomSpeed", zoomSpeed)
-      .set("moveSpeed", moveSpeed)
-      .set("panSpeed", panSpeed)
-      .set("lookSpeed", lookSpeed)
-      .set("invertWheelY", invertWheelY)
-      .set("renderFactorAA", renderFactorAA)
-      .toString();
-    auto prefPath = getPrefsPath();
-    printf("Saving prefs to %s\n", prefPath.c_str());
-    Utils::FS::saveTextFile(prefPath, json);
   }
 };
 

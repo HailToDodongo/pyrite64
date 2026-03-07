@@ -265,7 +265,7 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
   objLines.draw(renderPass3D, cmdBuff);
 
   // hack to get thicker lines with AA, just draw again with a 1px offset in screen-space
-  if(ctx.renderFactorAA > 1.0f) {
+  if(ctx.prefs.renderFactorAA > 1.0f) {
     auto oldMat = uniGlobal.projMat[2];
     uniGlobal.projMat[2][0] += 1.0f / uniGlobal.screenSize.x;
     uniGlobal.projMat[2][1] -= 1.0f / uniGlobal.screenSize.y;
@@ -293,8 +293,8 @@ void Editor::Viewport3D::onCopyPass(SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPa
 void Editor::Viewport3D::onPostRender(Renderer::Scene &renderScene) {
   if (pickedObjID.isRequested()) {
     pickedObjID.setResult(fb.readObjectID(
-      mousePosClick.x * ctx.renderFactorAA,
-      mousePosClick.y * ctx.renderFactorAA
+      mousePosClick.x * ctx.prefs.renderFactorAA,
+      mousePosClick.y * ctx.prefs.renderFactorAA
     ));
   }
 }
@@ -358,7 +358,7 @@ void Editor::Viewport3D::draw()
   currSize.y = floorf(currSize.y);
 
   // Since we can't use MSAA directly, just render at higher res here
-  auto renderSize = currSize * ctx.renderFactorAA;
+  auto renderSize = currSize * ctx.prefs.renderFactorAA;
 
   fb.resize((int)renderSize.x, (int)renderSize.y);
   camera.screenSize = {renderSize.x, renderSize.y};
@@ -374,7 +374,7 @@ void Editor::Viewport3D::draw()
   mousePos.x -= screenPos.x;
   mousePos.y -= vpOffsetY;
 
-  float moveSpeed = ctx.moveSpeed * deltaTime;
+  float moveSpeed = ctx.prefs.moveSpeed * deltaTime;
 
   bool mouseHeldLeft = ImGui::IsMouseDown(ImGuiMouseButton_Left);
   bool mouseHeldRight = ImGui::IsMouseDown(ImGuiMouseButton_Right);
@@ -456,14 +456,14 @@ void Editor::Viewport3D::draw()
 
   if(!ImGui::GetIO().WantTextInput)
   {
-    if(ImGui::IsKeyPressed(ctx.keymap.toggleOrtho))
+    if(ImGui::IsKeyPressed(ctx.prefs.keymap.toggleOrtho))
     {
       camera.isOrtho = !camera.isOrtho;
     }
 
     // Handle object deletion when Delete is pressed while the viewport is focused and an object is selected
     bool deletedSelection = false;
-    if (ImGui::IsWindowFocused() && obj && ImGui::IsKeyPressed(ctx.keymap.deleteObject)) {
+    if (ImGui::IsWindowFocused() && obj && ImGui::IsKeyPressed(ctx.prefs.keymap.deleteObject)) {
       UndoRedo::getHistory().markChanged("Delete Object");
       if (Editor::SelectionUtils::deleteSelectedObjects(*scene)) {
         deletedSelection = true;
@@ -477,12 +477,12 @@ void Editor::Viewport3D::draw()
 
     if (newMouseDown) {
       glm::vec3 moveDir = {0,0,0};
-      if (ImGui::IsKeyDown(ctx.keymap.moveForward))moveDir.z = -moveSpeed;
-      if (ImGui::IsKeyDown(ctx.keymap.moveBack))moveDir.z = moveSpeed;
-      if (ImGui::IsKeyDown(ctx.keymap.moveLeft))moveDir.x = -moveSpeed;
-      if (ImGui::IsKeyDown(ctx.keymap.moveRight))moveDir.x = moveSpeed;
-      if (ImGui::IsKeyDown(ctx.keymap.moveDown))moveDir.y = -moveSpeed;
-      if (ImGui::IsKeyDown(ctx.keymap.moveUp))moveDir.y = moveSpeed;
+      if (ImGui::IsKeyDown(ctx.prefs.keymap.moveForward))moveDir.z = -moveSpeed;
+      if (ImGui::IsKeyDown(ctx.prefs.keymap.moveBack))moveDir.z = moveSpeed;
+      if (ImGui::IsKeyDown(ctx.prefs.keymap.moveLeft))moveDir.x = -moveSpeed;
+      if (ImGui::IsKeyDown(ctx.prefs.keymap.moveRight))moveDir.x = moveSpeed;
+      if (ImGui::IsKeyDown(ctx.prefs.keymap.moveDown))moveDir.y = -moveSpeed;
+      if (ImGui::IsKeyDown(ctx.prefs.keymap.moveUp))moveDir.y = moveSpeed;
 
       if(moveDir != glm::vec3{0,0,0}) {
         camera.velocity = camera.rot * moveDir;
@@ -490,10 +490,10 @@ void Editor::Viewport3D::draw()
     } else {
       if(!ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
       {
-        if (ImGui::IsKeyDown(ctx.keymap.gizmoTranslate))gizmoOp = 0;
-        if (ImGui::IsKeyDown(ctx.keymap.gizmoRotate))gizmoOp = 1;
-        if (ImGui::IsKeyDown(ctx.keymap.gizmoScale))gizmoOp = 2;
-        if (ImGui::IsKeyPressed(ctx.keymap.focusObject))camera.focusSelection(ctx);
+        if (ImGui::IsKeyDown(ctx.prefs.keymap.gizmoTranslate))gizmoOp = 0;
+        if (ImGui::IsKeyDown(ctx.prefs.keymap.gizmoRotate))gizmoOp = 1;
+        if (ImGui::IsKeyDown(ctx.prefs.keymap.gizmoScale))gizmoOp = 2;
+        if (ImGui::IsKeyPressed(ctx.prefs.keymap.focusObject))camera.focusSelection(ctx);
       }
     }
   }
@@ -508,15 +508,15 @@ void Editor::Viewport3D::draw()
     {
       if (std::fmod(std::abs(wheel.x), 1.0f) == 0 && std::fmod(std::abs(wheel.y), 1.0f) == 0) {
         //actual wheel or pinch gesture
-        float wheelSpeed = (isShiftDown ? 4.0f : 1.0f) * ctx.zoomSpeed;
+        float wheelSpeed = (isShiftDown ? 4.0f : 1.0f) * ctx.prefs.zoomSpeed;
         camera.zoomSpeed += wheel.y * wheelSpeed;
       } else {
-        if (ctx.invertWheelY) wheel.y *= -1;
+        if (ctx.prefs.invertWheelY) wheel.y *= -1;
         //two finger swipe on trackpad
         if (isShiftDown) {
-          camera.moveDelta(wheel * ctx.panSpeed);
+          camera.moveDelta(wheel * ctx.prefs.panSpeed);
         } else {
-          camera.orbitDelta(wheel * ctx.lookSpeed);
+          camera.orbitDelta(wheel * ctx.prefs.lookSpeed);
         }
       }
     }
@@ -605,8 +605,8 @@ void Editor::Viewport3D::draw()
 
   auto tex = fb.getTexture();
   ImGui::Image(ImTextureID(tex), {
-    (float)fb.getWidth() / ctx.renderFactorAA,
-    (float)fb.getHeight() / ctx.renderFactorAA
+    (float)fb.getWidth() / ctx.prefs.renderFactorAA,
+    (float)fb.getHeight() / ctx.prefs.renderFactorAA
   });
 
   if (ImGui::BeginDragDropTarget())
@@ -700,7 +700,7 @@ void Editor::Viewport3D::draw()
       bool isOnlySelf = ImGui::IsKeyDown(ImGuiKey_LeftShift);
 
       // snap object to absolute grid
-      if(ImGui::IsKeyDown(ImGuiKey_LeftShift) && ImGui::IsKeyPressed(ctx.keymap.snapObject))
+      if(ImGui::IsKeyDown(ImGuiKey_LeftShift) && ImGui::IsKeyPressed(ctx.prefs.keymap.snapObject))
       {
         glm::vec3 pos = obj->pos.resolve(obj->propOverrides);
         pos.x = std::round(pos.x / snap.x) * snap.x;

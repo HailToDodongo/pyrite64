@@ -231,7 +231,7 @@ void Editor::Scene::draw()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0_px);
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
     ImGui::Begin(ICON_MDI_COG " Preferences", &preferencesOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
-    if (preferences.draw()) {
+    if (prefOverlay.draw()) {
       preferencesOpen = false;
     }
     ImGui::End();

@@ -6,7 +6,7 @@
 
 namespace Editor
 {
-  class Preferences
+  class PreferenceOverlay
   {
     private:
 

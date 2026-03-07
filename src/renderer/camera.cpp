@@ -68,7 +68,7 @@ void Renderer::Camera::apply(UniformGlobal &uniGlobal)
     uniGlobal.spriteSize = {7000, 7000};
     uniGlobal.projMat = glm::perspective(fov, aspect, near, far);
   }
-  uniGlobal.spriteSize *= ctx.renderFactorAA;
+  uniGlobal.spriteSize *= ctx.prefs.renderFactorAA;
 
   const glm::vec3 direction = glm::normalize(rot * WORLD_FORWARD);
   const glm::vec3 dynamicUp = glm::normalize(rot * WORLD_UP);

@@ -10,7 +10,7 @@
 #include "parts/memoryDashboard.h"
 #include "parts/nodeEditor.h"
 #include "parts/objectInspector.h"
-#include "parts/preferences.h"
+#include "parts/preferenceOverlay.h"
 #include "parts/projectSettings.h"
 #include "parts/sceneGraph.h"
 #include "parts/sceneInspector.h"
@@ -25,7 +25,7 @@ namespace Editor
 
       // Editors
       std::vector<std::shared_ptr<NodeEditor>> nodeEditors{};
-      Preferences preferences{};
+      PreferenceOverlay prefOverlay{};
       ProjectSettings projectSettings{};
       AssetsBrowser assetsBrowser{};
       AssetInspector assetInspector{};
