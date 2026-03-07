@@ -15,6 +15,9 @@ namespace ImGui::Theme
   void changeZoom(int levelDirection);
   float getZoom();
 
+  int getZoomLevel();
+  void setZoomLevel(int level);
+
   void update();
   ImFont *getFontMono();
 }

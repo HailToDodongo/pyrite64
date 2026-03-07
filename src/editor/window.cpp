@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <filesystem>
 
+#include "imgui/theme.h"
+
 namespace Editor {
 
   bool Window::init(const std::string& title) {
@@ -54,14 +56,17 @@ namespace Editor {
       fprintf(stderr, "Warning: corrupt editor.json, using defaults\n");
       return false;
     }
-  
-    // @TODO: handle actual DPI settings, or have scaling in-editor
-    float dpiScale = 1.0f;//SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
-    state.w = json.value("windowW", (int)(1280 * dpiScale));
-    state.h = json.value("windowH", (int)(800 * dpiScale));
+
+    state.w = json.value("windowW", 1280);
+    state.h = json.value("windowH", 800);
     state.x = json.value("windowX", (int)SDL_WINDOWPOS_CENTERED);
     state.y = json.value("windowY", (int)SDL_WINDOWPOS_CENTERED);
     state.maximized = json.value("maximized", false);
+
+    int zoomLevel = json.value("zoomLevel", -1);
+    if(zoomLevel >= 0) {
+      ImGui::Theme::setZoomLevel(zoomLevel);
+    }
 
     if(state.w <= 0 || state.h <= 0)return false;
     state.w = std::min(state.w, 16384);
@@ -109,6 +114,7 @@ namespace Editor {
     json["windowX"] = state.x;
     json["windowY"] = state.y;
     json["maximized"] = state.maximized;
+    json["zoomLevel"] = ImGui::Theme::getZoomLevel();
 
     Utils::FS::saveTextFile(path, json.dump(2));
   }
