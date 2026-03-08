@@ -16,6 +16,7 @@
 #include "../../../project/component/components.h"
 #include "../../selectionUtils.h"
 #include "../../undoRedo.h"
+#include "glm/gtc/quaternion.hpp"
 
 Editor::ObjectInspector::ObjectInspector() {
 }
@@ -284,6 +285,11 @@ void Editor::ObjectInspector::draw() {
     isPrefabInst = true;
   }
 
+  if (lastSelected != obj->uuid) {
+    lastSelected = obj->uuid;
+    glm::quat rot = srcObj->rot.value;
+    euler = glm::degrees(glm::eulerAngles(rot));
+  }
 
   //if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen))
   {
@@ -319,7 +325,11 @@ void Editor::ObjectInspector::draw() {
     if (ImTable::start("Transform", obj.get())) {
       ImTable::addObjProp("Pos", srcObj->pos);
       ImTable::addObjProp("Scale", srcObj->scale);
-      ImTable::addObjProp("Rot", srcObj->rot);
+      ImTable::addObjProp<glm::quat>("Rot", srcObj->rot, [&](glm::quat *val) -> bool {
+        if (!ImGui::InputFloat3("##", glm::value_ptr(euler))) return false;
+        *val = glm::quat(glm::radians(euler));
+        return true;
+      }, nullptr);
       ImTable::end();
     }
   }
