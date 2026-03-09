@@ -39,24 +39,18 @@ bool ImGui::IconButton(const char* label, const ImVec2 &labelSize, const ImVec4 
   return clicked;
 }
 
-bool ImGui::rotationInput(glm::quat &quat)
-{
-  if(ctx.prefs.showRotAsEuler)
-  {
-    auto orgRot = glm::normalize(quat);
-    glm::vec3 euler = glm::degrees(glm::eulerAngles(orgRot));
-
-    InputFloat3("##RotEuler", glm::value_ptr(euler));
-    // onl apply after we accept (enter or blur), otherwise any potential gimbal lock will
-    // mess up values since imgui still pins the currently active euler angle.
-    if(IsItemDeactivatedAfterEdit()) {
-      quat = glm::normalize(glm::quat(glm::radians(euler)));
-      return true;
-    }
-    return false;
-  }
-
-  return InputFloat4("##", glm::value_ptr(quat));
+glm::vec3 tmpEuler;
+bool ImGui::rotationInput(glm::quat &quat) {
+  if(!ctx.prefs.showRotAsEuler) return InputFloat4("##", glm::value_ptr(quat));
+  
+  glm::quat calcRot = glm::normalize(glm::quat(glm::radians(tmpEuler)));
+  glm::quat orgRot = glm::normalize(quat);
+  glm::quat diff = glm::inverse(calcRot) * orgRot;
+  if (glm::dot(calcRot, orgRot) < 1) tmpEuler = glm::degrees(glm::eulerAngles(orgRot));
+  
+  InputFloat3("##RotEuler", glm::value_ptr(tmpEuler));
+  quat = glm::normalize(glm::quat(glm::radians(tmpEuler)));
+  return true;
 }
 
 bool ImTable::addKeybind(const std::string &name, ImGuiKeyChord &chord, ImGuiKeyChord defaultValue, bool isChord) {

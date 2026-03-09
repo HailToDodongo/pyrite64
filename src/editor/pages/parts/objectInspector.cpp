@@ -333,9 +333,6 @@ void Editor::ObjectInspector::draw() {
         ImTable::addObjProp("Scale", srcObj->scale, cb, nullptr);
       } else {
         ImTable::addObjProp("Scale", srcObj->scale);
-
-      // icon to toggle between XYZ and scalar scale
-      ImGui::SameLine();
       }
 
       // icon to toggle between XYZ and scalar scale
