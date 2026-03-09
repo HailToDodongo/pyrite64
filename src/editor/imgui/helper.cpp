@@ -45,9 +45,8 @@ bool ImGui::rotationInput(glm::quat &quat) {
   
   glm::quat calcRot = glm::normalize(glm::quat(glm::radians(tmpEuler)));
   glm::quat orgRot = glm::normalize(quat);
-  glm::quat diff = glm::inverse(calcRot) * orgRot;
   if (glm::dot(calcRot, orgRot) < 1) tmpEuler = glm::degrees(glm::eulerAngles(orgRot));
-  
+
   InputFloat3("##RotEuler", glm::value_ptr(tmpEuler));
   quat = glm::normalize(glm::quat(glm::radians(tmpEuler)));
   return true;
