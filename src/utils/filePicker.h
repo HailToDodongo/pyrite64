@@ -20,6 +20,7 @@ namespace Utils::FilePicker
     std::string title{};
     bool isDirectory{false};
     std::vector<Filter> customFilters{};
+    std::string defaultPath{};
   };
 
   /**
