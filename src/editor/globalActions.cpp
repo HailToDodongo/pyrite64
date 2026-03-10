@@ -14,6 +14,7 @@
 #include "../utils/json.h"
 #include "../utils/proc.h"
 #include "undoRedo.h"
+#include "recentProjects.h"
 #include "pages/editorScene.h"
 //#include <stacktrace>
 
@@ -27,6 +28,7 @@ namespace Editor::Actions
        UndoRedo::getHistory().clear();
        try {
          ctx.project = new Project::Project(path);
+         Editor::RecentProjects::setMostRecentPath(path);
          if(ctx.project && !ctx.project->getScenes().getEntries().empty()) {
            ctx.project->getScenes().loadScene(ctx.project->conf.sceneIdLastOpened);
          }
@@ -95,6 +97,7 @@ namespace Editor::Actions
       configJSON["name"] = args["name"];
       configJSON["romName"] = args["rom"];
       Utils::FS::saveTextFile(configPath, configJSON.dump(2));
+      Editor::RecentProjects::setMostRecentPath(configPath);
 
       return true;
     });

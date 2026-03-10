@@ -4,6 +4,7 @@
 */
 #pragma once
 #include "fs.h"
+#include "prop.h"
 #include "glm/vec3.hpp"
 #include "glm/gtc/quaternion.hpp"
 

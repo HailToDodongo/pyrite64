@@ -12,6 +12,7 @@
 #include "../imgui/theme.h"
 #include "../actions.h"
 #include "../../utils/filePicker.h"
+#include "../recentProjects.h"
 #include "../../context.h"
 #include "backends/imgui_impl_sdlgpu3.h"
 #include "parts/createProjectOverlay.h"
@@ -159,6 +160,7 @@ void Editor::Launcher::draw()
     }
 
     if (renderButton(texBtnOpen, "Open Project", isHoverLast, posX)) {
+      std::string mostRecent = Editor::RecentProjects::getMostRecentPath();
       Utils::FilePicker::open([](const std::string &path) {
         if (path.empty()) return;
 
@@ -174,7 +176,8 @@ void Editor::Launcher::draw()
       }, {
         .title="Choose Project File (.p64proj)",
         .isDirectory = false,
-        .customFilters = {{"Pyrite64 Project", "p64proj"}}
+        .customFilters = {{"Pyrite64 Project", "p64proj"}},
+        .defaultPath = mostRecent
       });
     }
   }
