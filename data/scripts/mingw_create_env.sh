@@ -59,7 +59,7 @@ if [ ! -x "$sdkpath/bin/mips64-elf-gcc.exe" ]; then
     exit 1
 fi
 
-echo "Toolchain installation looks OK"
+echo "Toolchain installation in '$N64_INST' looks OK"
 
 # download libdragon itself
 if [ -e "libdragon" ]; then

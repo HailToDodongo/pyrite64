@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Report an issue with Pyrite64
-title: "[BUG]"
+title: "[BUG] "
 labels: bug
 assignees: ''
 
