@@ -669,8 +669,10 @@ void Editor::Viewport3D::draw()
 
       glm::vec3 center{0.0f, 0.0f, 0.0f};
       if (!isMultiSelect) {
+        glm::vec3 scale = obj->scale.resolve(obj->propOverrides, &isOverride);
+        for (int i = 0; i < 3; i++) if (glm::abs(scale[i]) < 0.0001f) scale[i] = 0.0001f;
         gizmoMat = glm::recompose(
-          obj->scale.resolve(obj->propOverrides, &isOverride),
+          scale,
           obj->rot.resolve(obj->propOverrides),
           obj->pos.resolve(obj->propOverrides),
           skew, persp);
@@ -709,11 +711,10 @@ void Editor::Viewport3D::draw()
         obj->pos.resolve(obj->propOverrides) = pos;
       }
 
-      auto op = GIZMO_OPS[gizmoOp];
       if(ImGuizmo::Manipulate(
         glm::value_ptr(uniGlobal.cameraMat),
         glm::value_ptr(uniGlobal.projMat),
-        op,
+        GIZMO_OPS[gizmoOp],
         isTransWorld ? ImGuizmo::MODE::WORLD : ImGuizmo::MODE::LOCAL,
         glm::value_ptr(gizmoMat),
         nullptr,
