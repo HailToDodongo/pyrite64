@@ -158,9 +158,9 @@ Utils::CPP::Struct Utils::CPP::parseDataStruct(const std::string &sourceCode, co
 }
 
 bool Utils::CPP::hasFunction(const std::string&sourceCode, const std::string&retType, const std::string&name) {
-  // remove line and multi-line comments
-  auto code = std::regex_replace(sourceCode, std::regex(R"(//[^\n]*)"), "");
-  code = std::regex_replace(code, std::regex(R"(/\*[\s\S]*?\*/)"), "");
+  // remove multi-line and line comments
+  auto code = std::regex_replace(sourceCode, std::regex(R"((?<!/)/\*[\s\S]*?\*/)", std::regex::grep), "");
+  code = std::regex_replace(code, std::regex(R"(//[^\n]*)"), "");
   // remove all spaces and newlines
   code = std::regex_replace(code, std::regex(R"(\s+)"), "");
 
