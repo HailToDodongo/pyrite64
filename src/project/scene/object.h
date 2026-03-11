@@ -36,7 +36,7 @@ namespace Project
       PROP_QUAT(rot);
       PROP_VEC3(scale);
 
-      bool scalarScale{false};
+      bool proportionalScale{false};
       bool enabled{true};
       bool selectable{true};
       bool isPrefabEdit{false};

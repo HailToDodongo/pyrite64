@@ -710,10 +710,6 @@ void Editor::Viewport3D::draw()
       }
 
       auto op = GIZMO_OPS[gizmoOp];
-      if(op == ImGuizmo::OPERATION::SCALE && obj->scalarScale) {
-        op = ImGuizmo::OPERATION::SCALE_X;
-      }
-
       if(ImGuizmo::Manipulate(
         glm::value_ptr(uniGlobal.cameraMat),
         glm::value_ptr(uniGlobal.projMat),

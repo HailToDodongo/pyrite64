@@ -323,28 +323,38 @@ void Editor::ObjectInspector::draw() {
     {
       ImTable::addObjProp("Pos", srcObj->pos);
 
-      if(srcObj->scalarScale)
+      if(srcObj->proportionalScale)
       {
         std::function<bool(glm::vec3*)> cb = [](glm::vec3 *val) -> bool {
-          bool res = ImTable::typedInput<float>(&val->x);
-          val->y = val->z = val->x;
-          return res;
+          glm::vec3 scale = *val;
+          if (!ImGui::InputFloat3("##", glm::value_ptr(*val))) return false;
+          if (scale == glm::vec3{0,0, 0}) {
+            *val = glm::vec3(val->x + val->y + val->z);
+          }
+          else {
+            float ratio = 1.0f;
+            if      (val->x != scale.x && scale.x != 0) ratio = val->x / scale.x;
+            else if (val->y != scale.y && scale.y != 0) ratio = val->y / scale.y;
+            else if (val->z != scale.z && scale.z != 0) ratio = val->z / scale.z;
+            *val = scale * ratio;
+          }
+          return true;
         };
         ImTable::addObjProp("Scale", srcObj->scale, cb, nullptr);
       } else {
         ImTable::addObjProp("Scale", srcObj->scale);
       }
 
-      // icon to toggle between XYZ and scalar scale
+      // icon to toggle between proportional and independent scale
       ImGui::SameLine();
       ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 32_px);
-      if(ImGui::IconButton(srcObj->scalarScale ? ICON_MDI_LINK_VARIANT : ICON_MDI_LINK_VARIANT_OFF, {24_px, 24_px})) {
+      if(ImGui::IconButton(srcObj->proportionalScale ? ICON_MDI_LINK_VARIANT : ICON_MDI_LINK_VARIANT_OFF, {24_px, 24_px})) {
         ImGui::ClearActiveID();
-        srcObj->scalarScale = !srcObj->scalarScale;
+        srcObj->proportionalScale = !srcObj->proportionalScale;
       }
-      ImGui::SetItemTooltip(srcObj->scalarScale
-        ? "Change to XYZ Scale"
-        : "Change to Uniform Scale"
+      ImGui::SetItemTooltip(srcObj->proportionalScale
+        ? "Change to Independent Scale"
+        : "Change to Proportional Scale"
       );
 
       ImTable::addObjProp("Rot", srcObj->rot);
@@ -364,13 +374,6 @@ void Editor::ObjectInspector::draw() {
 
       ImTable::end();
     }
-  }
-
-  // enforce single scale
-  if(srcObj->scalarScale)
-  {
-    auto &scale = srcObj->scale.resolve(srcObj->propOverrides);
-    scale.y = scale.z = scale.x;
   }
 
   uint64_t compDelUUID = 0;
