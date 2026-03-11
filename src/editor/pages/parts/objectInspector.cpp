@@ -327,18 +327,26 @@ void Editor::ObjectInspector::draw() {
       {
         std::function<bool(glm::vec3*)> cb = [](glm::vec3 *val) -> bool {
           glm::vec3 scale = *val;
-          if (!ImGui::InputFloat3("##", glm::value_ptr(*val))) return false;
-          if (scale == glm::vec3{0,0, 0}) {
+          if (scale == glm::vec3(0,0,0)) {
+            if (!ImGui::InputFloat3("##", glm::value_ptr(*val))) return false;
             *val = glm::vec3(val->x + val->y + val->z);
+            return true;
           }
-          else {
-            float ratio = 1.0f;
-            if      (val->x != scale.x && scale.x != 0) ratio = val->x / scale.x;
-            else if (val->y != scale.y && scale.y != 0) ratio = val->y / scale.y;
-            else if (val->z != scale.z && scale.z != 0) ratio = val->z / scale.z;
-            *val = scale * ratio;
+          ImGuiContext& g = *GImGui;
+          ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+          float ratio = 1.0f;
+          for (int i = 0; i < 3; ++i) {
+            ImGui::PushID(i);
+            if (i > 0) ImGui::SameLine(0, g.Style.ItemInnerSpacing.x);
+            bool isZero = glm::abs(scale[i]) < 0.0001f;
+            if (isZero) ImGui::BeginDisabled();
+            if (ImGui::InputFloat("", &(*val)[i])) ratio = (*val)[i] / scale[i];
+            if (isZero) ImGui::EndDisabled();
+            ImGui::PopID();
+            ImGui::PopItemWidth();
           }
-          return true;
+          *val = scale * ratio;
+          return ratio != 1.0f;
         };
         ImTable::addObjProp("Scale", srcObj->scale, cb, nullptr);
       } else {
