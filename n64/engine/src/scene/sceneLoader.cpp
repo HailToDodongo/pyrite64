@@ -64,7 +64,7 @@ void P64::Scene::loadSceneConfig()
   }
 }
 
-P64::Object* P64::Scene::loadObject(uint8_t* &objFile, std::function<void(Object&)> callback)
+P64::Object* P64::Scene::loadObject(uint8_t* &objFile, std::function<void(Object&)> callback, bool deferComponentInit)
 {
   ObjectEntry* objEntry = (ObjectEntry*)objFile;
 
@@ -140,7 +140,19 @@ P64::Object* P64::Scene::loadObject(uint8_t* &objFile, std::function<void(Object
     objCompTablePtr->offset = objCompDataPtr - (char*)obj;
     ++objCompTablePtr;
 
-    compDef.initDel(*obj, objCompDataPtr, ptrIn + 4);
+    if(deferComponentInit)
+    {
+      auto &pending = pendingCompInit.emplace_back();
+      pending.obj = obj;
+      pending.dataPtr = objCompDataPtr;
+      pending.compId = compId;
+      pending.initData.assign(ptrIn + 4, ptrIn + argSize);
+    }
+    else
+    {
+      compDef.initDel(*obj, objCompDataPtr, ptrIn + 4);
+    }
+
     objCompDataPtr += Math::alignUp(compDef.getAllocSize(ptrIn + 4), 8);
     ptrIn += argSize;
   }
@@ -161,6 +173,16 @@ P64::Object* P64::Scene::loadObject(uint8_t* &objFile, std::function<void(Object
   return obj;
 }
 
+void P64::Scene::runPendingComponentInit()
+{
+  for(auto &pending : pendingCompInit)
+  {
+    const auto &compDef = COMP_TABLE[pending.compId];
+    compDef.initDel(*pending.obj, pending.dataPtr, pending.initData.data());
+  }
+  pendingCompInit.clear();
+}
+
 void P64::Scene::loadScene() {
   updateScenePath(id);
   scenePath[sizeof(scenePath)-2] = '\0';
@@ -175,8 +197,11 @@ void P64::Scene::loadScene() {
     // now process all other objects
     auto objFile = objFileStart;
     for(uint32_t i=0; i<conf.objectCount; ++i) {
-      loadObject(objFile);
+      loadObject(objFile, {}, true);
     }
+
+    // run component init only after all objects are registered in the scene
+    runPendingComponentInit();
 
     free(objFileStart);
   }

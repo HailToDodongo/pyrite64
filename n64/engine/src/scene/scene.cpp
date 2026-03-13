@@ -142,8 +142,11 @@ void P64::Scene::update(float deltaTime)
       obj.scale = data.scale;
       obj.rot = data.rot;
       obj.flags = ObjectFlags::ACTIVE;
-    });
+    }, true);
   }
+
+  runPendingComponentInit();
+
   objectsToAdd.clear();
 
   ticksGlobalUpdate = get_user_ticks();

@@ -83,6 +83,15 @@ namespace P64
       std::vector<Object*> objects{};
       std::vector<PrefabParams> objectsToAdd{};
 
+      struct PendingCompInit
+      {
+        Object* obj{};
+        char* dataPtr{};
+        uint8_t compId{};
+        std::vector<uint8_t> initData{};
+      };
+      std::vector<PendingCompInit> pendingCompInit{};
+
       // create a direct lookup table for the first few IDs
       // most scene probably don't exceed that much anyway
       std::array<Object*, 128> idLookup{};
@@ -100,7 +109,8 @@ namespace P64
       uint16_t id;
 
       void loadSceneConfig();
-      Object* loadObject(uint8_t* &objFile, std::function<void(Object&)> callback = {});
+      Object* loadObject(uint8_t* &objFile, std::function<void(Object&)> callback = {}, bool deferComponentInit = false);
+      void runPendingComponentInit();
       void loadScene();
 
     public:
