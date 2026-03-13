@@ -9,6 +9,8 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <filesystem>
+#include <format>
 
 #include "imgui.h"
 #include "../imgui/theme.h"
@@ -21,6 +23,8 @@
 #include "parts/toolchainOverlay.h"
 #include "SDL3/SDL_dialog.h"
 #include "../imgui/notification.h"
+
+namespace fs = std::filesystem;
 
 void ImDrawCallback_ImplSDLGPU3_SetSamplerRepeat(const ImDrawList* parent_list, const ImDrawCmd* cmd);
 
@@ -227,6 +231,14 @@ void Editor::Launcher::draw()
     auto paths = Editor::RecentProjects::recentPaths;
     int index = 0;
     for(auto path : paths) {
+      auto json = Utils::JSON::loadFile(path);
+      if (json.empty()) continue;
+      std::string projectName = json.value("name", "");
+      std::string editorVersion = json.value("editorVersion", PYRITE_VERSION);
+      fs::path projPath{path};
+      auto writeTime = fs::last_write_time(projPath);
+      std::string writeTimeString = std::format("{:%Y-%m-%d}", writeTime);
+
       //expand arrow
       ImGui::TableNextRow(ImGuiTableRowFlags_None, 48_px);//TODO make this number bigger when expanded
       ImGui::TableSetColumnIndex(0);
@@ -238,7 +250,7 @@ void Editor::Launcher::draw()
       ImGui::AlignTextToFramePadding();
       ImGui::BeginGroup();
       ImGui::PushFont(nullptr, 16_px);
-      ImGui::TextUnformatted("My Project Name");
+      ImGui::TextUnformatted(projectName.c_str());
       ImGui::PopFont();
       ImGui::PushFont(ImGui::Theme::getFontMono(), 16_px);
       ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
@@ -253,12 +265,12 @@ void Editor::Launcher::draw()
       //last modified
       ImGui::TableSetColumnIndex(2);
       ImGui::AlignTextToFramePadding();
-      ImGui::TextUnformatted("Three Days Ago");
+      ImGui::TextUnformatted(writeTimeString.c_str());
 
       //editor ersion
       ImGui::TableSetColumnIndex(3);
       ImGui::AlignTextToFramePadding();
-      ImGui::TextUnformatted("0.6.0");
+      ImGui::TextUnformatted(editorVersion.c_str());
 
       //open context menu
       ImGui::TableSetColumnIndex(4);

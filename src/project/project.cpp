@@ -63,6 +63,7 @@ std::string Project::ProjectConf::serialize() const {
     .set("romName", romName)
     .set("pathEmu", pathEmu)
     .set("pathN64Inst", pathN64Inst)
+    .set("editorVersion", PYRITE_VERSION)
     .set("sceneIdOnBoot", sceneIdOnBoot)
     .set("sceneIdOnReset", sceneIdOnReset)
     .set("sceneIdLastOpened", sceneIdLastOpened)
@@ -74,6 +75,7 @@ void Project::Project::deserialize(const nlohmann::json &doc) {
   conf.romName = doc.value("romName", "pyrite64");
   conf.pathEmu = doc.value("pathEmu", "ares");
   conf.pathN64Inst = doc.value("pathN64Inst", "");
+  conf.editorVersion = doc.value("editorVersion", PYRITE_VERSION);
   conf.sceneIdOnBoot = doc.value("sceneIdOnBoot", 1);
   conf.sceneIdOnReset = doc.value("sceneIdOnReset", 1);
   conf.sceneIdLastOpened = doc.value("sceneIdLastOpened", 1);
