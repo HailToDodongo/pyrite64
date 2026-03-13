@@ -58,6 +58,19 @@ Editor::Launcher::Launcher(SDL_GPUDevice* device)
 {
   ctx.toolchain.scan();
   Editor::RecentProjects::getMostRecentPath();
+  projectEntries = {};
+  for(auto path : Editor::RecentProjects::recentPaths) {
+    auto json = Utils::JSON::loadFile(path);
+    if (json.empty()) continue;
+    Editor::ProjectEntry entry;
+    entry.name = json.value("name", "");
+    entry.path = path;
+    entry.editorVersion = json.value("editorVersion", PYRITE_VERSION);
+    fs::path projPath{path};
+    auto writeTime = fs::last_write_time(projPath);
+    entry.lastModified = std::format("{:%Y-%m-%d}", writeTime);
+    projectEntries.push_back(entry);
+  }
 }
 
 Editor::Launcher::~Launcher() {
@@ -228,21 +241,20 @@ void Editor::Launcher::draw()
     }
     ImGui::PopStyleColor();
 
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0,0,0,0));
     auto paths = Editor::RecentProjects::recentPaths;
     int index = 0;
-    for(auto path : paths) {
-      auto json = Utils::JSON::loadFile(path);
-      if (json.empty()) continue;
-      std::string projectName = json.value("name", "");
-      std::string editorVersion = json.value("editorVersion", PYRITE_VERSION);
-      fs::path projPath{path};
-      auto writeTime = fs::last_write_time(projPath);
-      std::string writeTimeString = std::format("{:%Y-%m-%d}", writeTime);
-
+    for(auto entry : projectEntries) {
       //expand arrow
+      ImGui::PushID(index);
       ImGui::TableNextRow(ImGuiTableRowFlags_None, 48_px);//TODO make this number bigger when expanded
       ImGui::TableSetColumnIndex(0);
-      ImGui::AlignTextToFramePadding();
+      float y = ImGui::GetCursorPosY();
+      ImGuiSelectableFlags selectableFlags = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
+      if (ImGui::Selectable("##rowSelectable", false, selectableFlags, ImVec2(0, 48_px))) {
+        Editor::Actions::call(Editor::Actions::Type::PROJECT_OPEN, entry.path);
+      }
+      ImGui::SetCursorPosY(y + 8_px);
       ImGui::TextUnformatted(ICON_MDI_CHEVRON_RIGHT);
 
       //project name
@@ -250,45 +262,41 @@ void Editor::Launcher::draw()
       ImGui::AlignTextToFramePadding();
       ImGui::BeginGroup();
       ImGui::PushFont(nullptr, 16_px);
-      ImGui::TextUnformatted(projectName.c_str());
+      ImGui::TextUnformatted(entry.name.c_str());
       ImGui::PopFont();
       ImGui::PushFont(ImGui::Theme::getFontMono(), 16_px);
       ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
-      ImGui::TextUnformatted(path.c_str());
+      ImGui::TextUnformatted(entry.path.c_str());
       ImGui::PopStyleColor();
       ImGui::PopFont();
       ImGui::EndGroup();
-      if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
-        Editor::Actions::call(Editor::Actions::Type::PROJECT_OPEN, path);
-      }
 
       //last modified
       ImGui::TableSetColumnIndex(2);
       ImGui::AlignTextToFramePadding();
-      ImGui::TextUnformatted(writeTimeString.c_str());
+      ImGui::TextUnformatted(entry.lastModified.c_str());
 
       //editor ersion
       ImGui::TableSetColumnIndex(3);
       ImGui::AlignTextToFramePadding();
-      ImGui::TextUnformatted(editorVersion.c_str());
+      ImGui::TextUnformatted(entry.editorVersion.c_str());
 
       //open context menu
       ImGui::TableSetColumnIndex(4);
       ImGui::AlignTextToFramePadding();
-      ImGui::PushID(index); // Unique ID for each row's popup
       if (ImGui::Button(ICON_MDI_DOTS_HORIZONTAL)) {
         ImGui::OpenPopup("ProjectContextMenu");
       }
 
       if (ImGui::BeginPopup("ProjectContextMenu")) {
-        if (ImGui::MenuItem("Reveal in Explorer")) { /* ... */ }
-        if (ImGui::MenuItem("Delete Reference", NULL, false, true)) { /* ... */ }
+        Editor::Launcher::showContextMenu(entry.path);
         ImGui::EndPopup();
       }
       ImGui::PopID();
       index++;
     }
     ImGui::EndTable();
+    ImGui::PopStyleColor();
   }
 
   // version + credits
@@ -313,4 +321,32 @@ void Editor::Launcher::draw()
   ToolchainOverlay::draw();
 
   ImGui::End();
+}
+
+
+void Editor::Launcher::showContextMenu(const std::string& path) {
+#if defined(_WIN32)
+  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in Explorer";
+#elif defined(__APPLE__)
+  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in Finder";
+#else
+  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in File Manager";
+#endif
+  if(ImGui::MenuItem(showPrompt.c_str())) {
+    if (!Utils::Proc::openInFileBrowser(path)) {
+      Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File Explorer. This may be due to WSL path conversion failure.");
+    }
+  }
+  
+  if(ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Copy Path")) {
+    SDL_SetClipboardText(path.c_str());
+  }
+  
+  if(ImGui::MenuItem(ICON_MDI_RENAME " Rename Project")) {
+    //TODO
+  }
+  
+  if(ImGui::MenuItem(ICON_MDI_DELETE " Remove from List")) {
+    //TODO
+  }
 }
