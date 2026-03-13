@@ -146,7 +146,7 @@ P64::Object* P64::Scene::loadObject(uint8_t* &objFile, std::function<void(Object
       pending.obj = obj;
       pending.dataPtr = objCompDataPtr;
       pending.compId = compId;
-      pending.initData.assign(ptrIn + 4, ptrIn + argSize);
+      pending.initData = ptrIn + 4;
     }
     else
     {
@@ -178,7 +178,7 @@ void P64::Scene::runPendingComponentInit()
   for(auto &pending : pendingCompInit)
   {
     const auto &compDef = COMP_TABLE[pending.compId];
-    compDef.initDel(*pending.obj, pending.dataPtr, pending.initData.data());
+    compDef.initDel(*pending.obj, pending.dataPtr, pending.initData);
   }
   pendingCompInit.clear();
 }

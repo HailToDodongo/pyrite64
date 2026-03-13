@@ -88,7 +88,7 @@ namespace P64
         Object* obj{};
         char* dataPtr{};
         uint8_t compId{};
-        std::vector<uint8_t> initData{};
+        uint8_t* initData{};
       };
       std::vector<PendingCompInit> pendingCompInit{};
 
