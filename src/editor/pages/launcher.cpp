@@ -7,6 +7,8 @@
 #include <atomic>
 #include <cstdio>
 #include <mutex>
+#include <string>
+#include <vector>
 
 #include "imgui.h"
 #include "../imgui/theme.h"
@@ -51,6 +53,7 @@ Editor::Launcher::Launcher(SDL_GPUDevice* device)
   texBG{device, "data/img/splashBG.png"}
 {
   ctx.toolchain.scan();
+  Editor::RecentProjects::getMostRecentPath();
 }
 
 Editor::Launcher::~Launcher() {
@@ -58,7 +61,7 @@ Editor::Launcher::~Launcher() {
 
 void Editor::Launcher::draw()
 {
-  float BTN_SPACING = 300_px;
+  float BTN_SPACING = 160_px;
   const auto &toolState = ctx.toolchain.getState();
   auto &io = ImGui::GetIO();
 
@@ -75,7 +78,7 @@ void Editor::Launcher::draw()
   // BG
   ImGui::GetWindowDrawList()->AddCallback(ImDrawCallback_ImplSDLGPU3_SetSamplerRepeat, nullptr);
 
-  float topBgHeight = 7_px;
+  float topBgHeight = 5_px;
   float bottomBgHeight = 3_px;
   float bgRepeatsX = io.DisplaySize.x / texBG.getWidth();
   ImGui::SetCursorPos({0,0});
@@ -104,21 +107,18 @@ void Editor::Launcher::draw()
     ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
   }
 
-  auto logoSize = texTitle.getSize(0.65 * ImGui::Theme::zoomFactor);
-  ImGui::SetCursorPos({
-    centerPos.x - (logoSize.x/2) + 16_px,
-    28_px
-  });
+  auto logoSize = texTitle.getSize(0.4 * ImGui::Theme::zoomFactor);
+  ImGui::SetCursorPos({32_px, 24_px});
   ImGui::Image(ImTextureID(texTitle.getGPUTex()),logoSize);
 
   auto renderButton = [&](Renderer::Texture &img, const char* text, bool& hover, int &posX) -> bool
   {
-    auto btnSizeAdd = img.getSize(hover ? 0.85f : 0.8f);
+    auto btnSizeAdd = img.getSize(hover ? 0.45f : 0.4f);
     btnSizeAdd *= ImGui::Theme::zoomFactor;
 
     ImVec2 btnPos{
       posX  - (btnSizeAdd.x/2),
-      midBgPointY - (btnSizeAdd.y/2),
+      72_px - (btnSizeAdd.y/2),
     };
 
     ImGui::SetCursorPos(btnPos);
@@ -131,7 +131,7 @@ void Editor::Launcher::draw()
 
     renderSubText(
       btnPos.x + (btnSizeAdd.x / 2),
-      btnSizeAdd, midBgPointY, text
+      btnSizeAdd, 72_px, text
     );
 
     posX += BTN_SPACING;
@@ -146,10 +146,9 @@ void Editor::Launcher::draw()
   bool validToolchain = toolState.hasToolchain && toolState.hasLibdragon && toolState.hasTiny3d;
   int buttonCount = validToolchain ? 3 : 1;
 
-  // screen center
-  int posX = (int)centerPos.x - 6_px;
+  int posX = (int)io.DisplaySize.x - BTN_SPACING + 48_px;
   if(buttonCount == 3) {
-    posX -= (BTN_SPACING);
+    posX -= (BTN_SPACING * 2);
   }
   
   if(buttonCount == 3) 
@@ -204,6 +203,81 @@ void Editor::Launcher::draw()
   }
 
   ImGui::PopStyleColor(3);
+
+  // recent files
+  ImGui::SetCursorPos({8_px, (float)texBG.getHeight() * topBgHeight - 40_px});
+  ImGui::PushStyleColor(ImGuiCol_TableHeaderBg, ImVec4(0,0,0,0));
+  if (ImGui::BeginTable("RecentProjects", 5, ImGuiTableFlags_NoBordersInBody)) {
+    ImGui::PushFont(nullptr, 20_px);
+    ImGui::TableSetupColumn(ICON_MDI_CHEVRON_RIGHT, ImGuiTableColumnFlags_WidthFixed, 32_px);
+    ImGui::TableSetupColumn("Project\nName");
+    ImGui::TableSetupColumn("Last\nEdit", ImGuiTableColumnFlags_WidthFixed, 120_px);
+    ImGui::TableSetupColumn("Editor\nVersion", ImGuiTableColumnFlags_WidthFixed, 80_px);
+    ImGui::TableSetupColumn(ICON_MDI_COG, ImGuiTableColumnFlags_WidthFixed, 32_px);
+    ImGui::PopFont();
+    ImGui::TableNextRow(ImGuiTableRowFlags_Headers, 50_px); 
+    for (int column = 0; column < 5; column++) {
+      ImGui::TableSetColumnIndex(column);
+      const char* column_name = ImGui::TableGetColumnName(column);
+      if (column == 0 || column == 4) ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 8_px);
+      ImGui::TextUnformatted(column_name);
+    }
+    ImGui::PopStyleColor();
+
+    auto paths = Editor::RecentProjects::recentPaths;
+    int index = 0;
+    for(auto path : paths) {
+      //expand arrow
+      ImGui::TableNextRow(ImGuiTableRowFlags_None, 48_px);//TODO make this number bigger when expanded
+      ImGui::TableSetColumnIndex(0);
+      ImGui::AlignTextToFramePadding();
+      ImGui::TextUnformatted(ICON_MDI_CHEVRON_RIGHT);
+
+      //project name
+      ImGui::TableSetColumnIndex(1);
+      ImGui::AlignTextToFramePadding();
+      ImGui::BeginGroup();
+      ImGui::PushFont(nullptr, 16_px);
+      ImGui::TextUnformatted("My Project Name");
+      ImGui::PopFont();
+      ImGui::PushFont(ImGui::Theme::getFontMono(), 16_px);
+      ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
+      ImGui::TextUnformatted(path.c_str());
+      ImGui::PopStyleColor();
+      ImGui::PopFont();
+      ImGui::EndGroup();
+      if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
+        Editor::Actions::call(Editor::Actions::Type::PROJECT_OPEN, path);
+      }
+
+      //last modified
+      ImGui::TableSetColumnIndex(2);
+      ImGui::AlignTextToFramePadding();
+      ImGui::TextUnformatted("Three Days Ago");
+
+      //editor ersion
+      ImGui::TableSetColumnIndex(3);
+      ImGui::AlignTextToFramePadding();
+      ImGui::TextUnformatted("0.6.0");
+
+      //open context menu
+      ImGui::TableSetColumnIndex(4);
+      ImGui::AlignTextToFramePadding();
+      ImGui::PushID(index); // Unique ID for each row's popup
+      if (ImGui::Button(ICON_MDI_DOTS_HORIZONTAL)) {
+        ImGui::OpenPopup("ProjectContextMenu");
+      }
+
+      if (ImGui::BeginPopup("ProjectContextMenu")) {
+        if (ImGui::MenuItem("Reveal in Explorer")) { /* ... */ }
+        if (ImGui::MenuItem("Delete Reference", NULL, false, true)) { /* ... */ }
+        ImGui::EndPopup();
+      }
+      ImGui::PopID();
+      index++;
+    }
+    ImGui::EndTable();
+  }
 
   // version + credits
   {
