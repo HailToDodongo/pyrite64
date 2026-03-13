@@ -59,7 +59,17 @@ namespace P64::Renderer::BigTex
     rdpq_tex_multi_begin();
       rdpq_tex_upload(TILE0, &texU, &texParamsU);
       rdpq_tex_upload(TILE1, &texV, &texParamsV);
-      rdpq_tex_multi_end();
+    rdpq_tex_multi_end();
+
+    rdpq_mode_begin();
+      rdpq_mode_blender(0);
+      rdpq_mode_combiner(RDPQ_COMBINER2(
+        (1, 0, TEX0, TEX1),     (0,0,0,1),
+        (1, 0, PRIM, COMBINED), (0,0,0,1)
+      ));
+      rdpq_mode_filter(FILTER_POINT);
+    rdpq_mode_end();
+
     dpl = rspq_block_end();
   }
 

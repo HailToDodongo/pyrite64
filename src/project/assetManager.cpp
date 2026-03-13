@@ -106,7 +106,11 @@ namespace
     Project::FileType type = Project::FileType::UNKNOWN;
     if (ext == ".png") {
       type = Project::FileType::IMAGE;
-      outPath = changeExt(outPath, ".sprite");
+      if (path.string().ends_with(".bci.png")) {
+        outPath = changeExt(outPath, ".bci");
+      } else {
+        outPath = changeExt(outPath, ".sprite");
+      }
     } else if (ext == ".wav" || ext == ".mp3") {
       type = Project::FileType::AUDIO;
       outPath = changeExt(outPath, ".wav64");
@@ -140,7 +144,6 @@ namespace
     };
 
     entry.conf.baseScale = 16;
-
     auto pathMeta = path;
     pathMeta += ".conf";
     if (fs::exists(pathMeta)) {

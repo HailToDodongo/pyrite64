@@ -29,16 +29,15 @@ namespace
   {
     rspq_block_begin();
 
-    T3DModelState state = t3d_model_state_create();
-    state.drawConf = nullptr;
-    state.lastBlendMode = 0;
+    P64::Renderer::WIP_T3DModelState state{};
 
     T3DModelIter it = t3d_model_iter_create(model, T3D_CHUNK_TYPE_OBJECT);
     while(t3d_model_iter_next(&it))
     {
-      it.object->material->blendMode = 0;
-      t3d_model_draw_material(it.object->material, &state);
+      auto *mat = (P64::Renderer::WIP_T3DMaterial*)it.object->material;
+      mat->begin(state);
       t3d_model_draw_object(it.object, nullptr);
+      mat->end(state);
     }
 
     if(state.lastVertFXFunc != T3D_VERTEX_FX_NONE)t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0, 0);
@@ -118,7 +117,12 @@ namespace P64::Comp
       while(t3d_model_iter_next(&it)) {
         if(it.object->userBlock)return; // already recorded the model
         rspq_block_begin();
-          t3d_model_draw_material(it.object->material, nullptr);
+
+          Renderer::WIP_T3DModelState state{};
+          auto *mat = (Renderer::WIP_T3DMaterial*)it.object->material;
+          mat->begin(state);
+          t3d_model_draw_object(it.object, nullptr);
+          mat->end(state);
           t3d_model_draw_object(it.object, nullptr);
 
           if(it.object->material->vertexFxFunc) { // @TODO: fix this in t3d

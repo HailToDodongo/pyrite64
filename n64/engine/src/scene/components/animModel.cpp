@@ -104,9 +104,7 @@ namespace P64::Comp
       ++i;
     }
 
-    T3DModelState state = t3d_model_state_create();
-    state.drawConf = nullptr;
-    state.lastBlendMode = 0;
+    Renderer::WIP_T3DModelState state{};
 
     if(data->model->userBlock)return; // already recorded the model
     rspq_block_begin();
@@ -115,9 +113,10 @@ namespace P64::Comp
     it = t3d_model_iter_create(data->model, T3D_CHUNK_TYPE_OBJECT);
     while(t3d_model_iter_next(&it))
     {
-      it.object->material->blendMode = 0;
-      t3d_model_draw_material(it.object->material, &state);
+      auto *mat = (P64::Renderer::WIP_T3DMaterial*)it.object->material;
+      mat->begin(state);
       t3d_model_draw_object(it.object, boneSeg);
+      mat->end(state);
     }
 
     if(state.lastVertFXFunc != T3D_VERTEX_FX_NONE)t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0, 0);

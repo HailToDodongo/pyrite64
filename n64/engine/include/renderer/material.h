@@ -39,4 +39,67 @@ namespace P64::Renderer
 
     void end();
   };
+
+  // @TODO: temporary hack to migrate t3d materials:
+  struct WIP_T3DModelState {
+    uint64_t lastCC{0};
+    uint64_t lastOtherMode{0};
+    uint32_t lastRenderFlags{0};
+
+    uint16_t lastTextureIdxA{0xFFFF};
+    uint16_t lastTextureIdxB{0xFFFF};
+    uint16_t lastUvGenParams[2]{0,0};
+
+    color_t lastPrimColor{};
+    color_t lastEnvColor{};
+    color_t lastBlendColor{};
+    uint8_t lastVertFXFunc{0};
+    uint8_t lastFogMode{0xFF};
+  };
+
+  // @TODO: temporary hack to migrate t3d materials:
+  typedef struct {
+    float low;
+    float height;
+    int8_t mask;
+    int8_t shift;
+    uint8_t mirror;
+    uint8_t clamp;
+  } WIP_T3DMaterialAxis;
+
+  // @TODO: temporary hack to migrate t3d materials:
+  struct WIP_T3DMaterial
+  {
+    typedef struct {
+      sprite_t* texture;
+      uint16_t texReference; // dynamic/offscreen texture if non-zero, can be set in fast64
+      uint16_t texAssetIdx;
+      uint16_t texWidth;
+      uint16_t texHeight;
+
+      WIP_T3DMaterialAxis s;
+      WIP_T3DMaterialAxis t;
+    } WIP_T3DMaterialTexture;
+
+    uint64_t colorCombiner;
+    uint64_t otherModeValue;
+    uint64_t otherModeMask;
+    uint32_t blendMode;
+    uint32_t renderFlags;
+
+    uint8_t _unused00_; // see: T3D_ALPHA_MODE_xxx
+    uint8_t fogMode; // see: T3D_FOG_MODE_xxx
+    uint8_t setColorFlags;
+    uint8_t vertexFxFunc;
+
+    color_t primColor;
+    color_t envColor;
+    color_t blendColor;
+
+    WIP_T3DMaterialTexture textureA;
+    WIP_T3DMaterialTexture textureB;
+
+    void begin(WIP_T3DModelState &state);
+    void end(WIP_T3DModelState &state);
+  };
 }

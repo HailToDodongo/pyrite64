@@ -14,6 +14,63 @@
 
 namespace fs = std::filesystem;
 
+namespace
+{
+  bool matWriter(Build::SceneCtx &sceneCtx, std::shared_ptr<BinaryFile> f, const T3DM::Material &material, uint32_t matIdx)
+  {
+    f->write(material.colorCombiner);
+    f->write(material.otherModeValue);
+    f->write(material.otherModeMask);
+    f->write(material.blendMode);
+    f->write(material.drawFlags);
+
+    f->write<uint8_t>(42);
+    f->write(material.fogMode);
+    f->write<uint8_t>(
+      material.setPrimColor |
+      (material.setEnvColor << 1) |
+      (material.setBlendColor << 2)
+    );
+    f->write(material.vertexFxFunc);
+
+    f->writeArray(material.primColor, 4);
+    f->writeArray(material.envColor, 4);
+    f->writeArray(material.blendColor, 4);
+
+    std::vector materials{&material.texA, &material.texB};
+    for(const T3DM::MaterialTexture* mat_ : materials) {
+      const T3DM::MaterialTexture&mat = *mat_;
+
+      f->write((uint32_t)0); // runtime pointer
+
+      if(!mat.texPathRom.empty()) {
+        auto asset = sceneCtx.project->getAssets().getByPath(mat.texPath);
+        uint32_t assetIdx = sceneCtx.assetUUIDToIdx[asset->getUUID()];
+        f->write<uint16_t>(0);
+        f->write<uint16_t>(assetIdx);
+      } else {
+        f->write<uint16_t>(mat.texReference);
+        f->write<uint16_t>(0xFFFF);
+      }
+
+      f->write((uint16_t)mat.texWidth);
+      f->write((uint16_t)mat.texHeight);
+
+      auto writeTile = [&](const T3DM::TileParam &tile) {
+        f->write(tile.low);
+        f->write(tile.high);
+        f->write(tile.mask);
+        f->write(tile.shift);
+        f->write(tile.mirror);
+        f->write(tile.clamp);
+      };
+      writeTile(mat.s);
+      writeTile(mat.t);
+    }
+    return true;
+  }
+}
+
 bool Build::buildT3DCollision(
   Project::Project &project, SceneCtx &sceneCtx,
   const std::unordered_set<std::string> &meshes,
@@ -73,7 +130,7 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
 
     sceneCtx.files.push_back(Utils::FS::toUnixPath(model.outPath));
 
-    if(assetBuildNeeded(model, t3dmPath)) {
+    if(assetBuildNeeded(model, t3dmPath))  {
       fs::create_directories(t3dmDir);
 
       T3DM::Config config{
@@ -86,6 +143,9 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
         .assetPath = "assets/",
         .assetPathFull = fs::absolute(project.getPath() + "/assets").string(),
         .projectPath = projectPath,
+        .materialWriter = [&sceneCtx](std::shared_ptr<BinaryFile> f, const T3DM::Material &material, uint32_t matIdx) {
+          return matWriter(sceneCtx, f, material, matIdx);
+        }
       };
 
       auto t3dm = T3DM::parseGLTF(model.path.c_str(), config);
