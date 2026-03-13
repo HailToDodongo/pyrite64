@@ -16,6 +16,7 @@ namespace Project
     std::string romName{};
     std::string pathEmu{};
     std::string pathN64Inst{};
+    std::string editorVersion{};
 
     uint32_t sceneIdOnBoot{1};
     uint32_t sceneIdOnReset{1};
