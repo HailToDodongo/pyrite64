@@ -51,7 +51,7 @@ namespace
     if (dstHash.empty() || srcHash != dstHash) {
       //printf("Copying updated engine file: %s\n", src.string().c_str());
       fs::copy_file(src, dst, fs::copy_options::overwrite_existing);
-      return 1;
+      return (dst.extension() == ".h");
     }
     return 0;
   }

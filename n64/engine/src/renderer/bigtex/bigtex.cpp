@@ -7,6 +7,7 @@
 #include "bigtex.h"
 #include <vector>
 
+#include "renderer/material.h"
 #include "renderer/pipelineBigTex.h"
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
@@ -29,8 +30,9 @@ void P64::Renderer::BigTex::patchT3DM(T3DModel &model)
   uint8_t baseAddrMat = (TEX_BASE_ADDR >> 16) & 0xFF;
   for(auto &obj : objects)
   {
-    auto *mat = obj->material;
-    if(mat->textureA.texReference == 0xFF)continue;
+    auto *mat = (P64::Renderer::WIP_T3DMaterial*)obj->material;
+
+    if(mat->textureB.texReference == 0xFF)continue;
     if(mat->textureA.texWidth != 256)continue;
 
     uint8_t matIdx = 0;
@@ -38,42 +40,23 @@ void P64::Renderer::BigTex::patchT3DM(T3DModel &model)
       matIdx = textures.reserveTexture();
       //debugf("Tex[%d]: <placeholder> (%s)\n", matIdx, mat->name);
     } else {
-      //std::string bc1Path{mat->textureA.texPath};
-      auto len = strlen(mat->textureA.texPath);
-      // ends in ".sprite", replace with ".bci"
-      mat->textureA.texPath[len - 6] = 'b';
-      mat->textureA.texPath[len - 5] = 'c';
-      mat->textureA.texPath[len - 4] = 'i';
-      mat->textureA.texPath[len - 3] = '\0';
-
-      matIdx = textures.addTexture(mat->textureA.texPath);
-      //debugf("Tex[%d]: %s (%s)\n", matIdx, mat->textureA.texPath, mat->name);
+      auto texPath = AssetManager::getPathByIndex(mat->textureA.texAssetIdx);
+      matIdx = textures.addTexture(texPath);
     }
 
-    mat->otherModeMask |= SOM_SAMPLE_MASK;
-    mat->otherModeValue |= SOM_SAMPLE_POINT;
-
-    // Override material for UV texture gradients
     mat->renderFlags &= ~T3D_FLAG_SHADED;
     mat->renderFlags |= T3D_FLAG_NO_LIGHT;
-    mat->textureA.texPath = nullptr;
-    mat->textureB.texPath = nullptr;
-    mat->textureA.texReference = 0xFF;
-    mat->textureB.texReference = 0xFF;
-
+    mat->textureB.texReference = 0;
     mat->primColor = {(uint8_t)(baseAddrMat + matIdx),0,0,0xFF};
-    mat->colorCombiner = RDPQ_COMBINER2(
-      (1, 0, TEX0, TEX1),     (0,0,0,1),
-      (1, 0, PRIM, COMBINED), (0,0,0,1)
-    );
-
     ++matIdx;
   }
 
   rspq_block_begin();
-    auto t3dState = t3d_model_state_create();
-    for(auto obj : objects) {
-      t3d_model_draw_material(obj->material, &t3dState);
+    for(auto obj : objects)
+    {
+      auto *mat = (P64::Renderer::WIP_T3DMaterial*)obj->material;
+      rdpq_set_prim_color(mat->primColor);
+      t3d_state_set_drawflags(static_cast<enum T3DDrawFlags>(mat->renderFlags));
       t3d_model_draw_object(obj, nullptr);
     }
     t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0,0);
