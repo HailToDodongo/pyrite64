@@ -57,7 +57,14 @@ Editor::Launcher::Launcher(SDL_GPUDevice* device)
   texBG{device, "data/img/splashBG.png"}
 {
   ctx.toolchain.scan();
-  Editor::RecentProjects::getMostRecentPath();
+  updateProjectEntries();
+}
+
+Editor::Launcher::~Launcher() {
+}
+
+void Editor::Launcher::updateProjectEntries() {
+  Editor::RecentProjects::load();
   projectEntries = {};
   for(auto path : Editor::RecentProjects::recentPaths) {
     auto json = Utils::JSON::loadFile(path);
@@ -69,11 +76,9 @@ Editor::Launcher::Launcher(SDL_GPUDevice* device)
     fs::path projPath{path};
     auto writeTime = fs::last_write_time(projPath);
     entry.lastModified = std::format("{:%Y-%m-%d}", writeTime);
+    entry.expand = false;
     projectEntries.push_back(entry);
   }
-}
-
-Editor::Launcher::~Launcher() {
 }
 
 void Editor::Launcher::draw()
@@ -95,8 +100,8 @@ void Editor::Launcher::draw()
   // BG
   ImGui::GetWindowDrawList()->AddCallback(ImDrawCallback_ImplSDLGPU3_SetSamplerRepeat, nullptr);
 
-  float topBgHeight = 5_px;
-  float bottomBgHeight = 3_px;
+  float topBgHeight = 4.5_px;
+  float bottomBgHeight = 2.5_px;
   float bgRepeatsX = io.DisplaySize.x / texBG.getWidth();
   ImGui::SetCursorPos({0,0});
   ImGui::Image(ImTextureID(texBG.getGPUTex()),
@@ -222,40 +227,66 @@ void Editor::Launcher::draw()
   ImGui::PopStyleColor(3);
 
   // recent files
-  ImGui::SetCursorPos({8_px, (float)texBG.getHeight() * topBgHeight - 40_px});
-  ImGui::PushStyleColor(ImGuiCol_TableHeaderBg, ImVec4(0,0,0,0));
+  ImGui::SetCursorPos({8_px, (float)texBG.getHeight() * topBgHeight + 8_px});
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0,0,0,0));
   if (ImGui::BeginTable("RecentProjects", 5, ImGuiTableFlags_NoBordersInBody)) {
-    ImGui::PushFont(nullptr, 20_px);
-    ImGui::TableSetupColumn(ICON_MDI_CHEVRON_RIGHT, ImGuiTableColumnFlags_WidthFixed, 32_px);
+    
+    //header
+    ImGui::PushStyleColor(ImGuiCol_TableHeaderBg, ImVec4(0,0,0,0));
+    const char* expandLabel = expandAll ? ICON_MDI_CHEVRON_DOWN : ICON_MDI_CHEVRON_RIGHT;
+    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 32_px);
     ImGui::TableSetupColumn("Project\nName");
-    ImGui::TableSetupColumn("Last\nEdit", ImGuiTableColumnFlags_WidthFixed, 120_px);
+    ImGui::TableSetupColumn("Last\nModified", ImGuiTableColumnFlags_WidthFixed, 120_px);
     ImGui::TableSetupColumn("Editor\nVersion", ImGuiTableColumnFlags_WidthFixed, 80_px);
-    ImGui::TableSetupColumn(ICON_MDI_COG, ImGuiTableColumnFlags_WidthFixed, 32_px);
-    ImGui::PopFont();
+    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 32_px);
+    ImGui::PushFont(nullptr, 16_px);
     ImGui::TableNextRow(ImGuiTableRowFlags_Headers, 50_px); 
     for (int column = 0; column < 5; column++) {
       ImGui::TableSetColumnIndex(column);
-      const char* column_name = ImGui::TableGetColumnName(column);
-      if (column == 0 || column == 4) ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 8_px);
-      ImGui::TextUnformatted(column_name);
+      //ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 8_px);
+      const char* columnName = ImGui::TableGetColumnName(column);
+      if (column == 0 && ImGui::Button(expandLabel, ImVec2(32_px, 32_px))) {
+        expandAll = !expandAll;
+        for(auto &entry : projectEntries) entry.expand = expandAll;
+      } else if (column == 4 && ImGui::Button(ICON_MDI_COG, ImVec2(32_px, 32_px))) {
+        ImGui::OpenPopup("HeaderContextMenu");
+      } else ImGui::TextUnformatted(columnName);
     }
+    ImGui::PopFont();
     ImGui::PopStyleColor();
+    if (ImGui::BeginPopup("HeaderContextMenu")) {
+      Editor::Launcher::showHeaderContextMenu();
+      ImGui::EndPopup();
+    }
 
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0,0,0,0));
+    //separator
+    float y = ImGui::GetCursorScreenPos().y;
+    y -= 16_px;
+    ImGui::SetCursorPosY(y);
+    ImGui::GetWindowDrawList()->AddLine(
+      ImVec2(8_px, y), 
+      ImVec2(io.DisplaySize.x - 8_px, y), 
+      ImGui::GetColorU32(ImGuiCol_Separator), 
+      1_px
+    );
+    
     auto paths = Editor::RecentProjects::recentPaths;
     int index = 0;
-    for(auto entry : projectEntries) {
+    for (auto& entry : projectEntries) {
       //expand arrow
       ImGui::PushID(index);
-      ImGui::TableNextRow(ImGuiTableRowFlags_None, 48_px);//TODO make this number bigger when expanded
+      float rowHeight = entry.expand ? 48_px : 32_px;
+      ImGui::TableNextRow(ImGuiTableRowFlags_None, rowHeight);
       ImGui::TableSetColumnIndex(0);
       float y = ImGui::GetCursorPosY();
       ImGuiSelectableFlags selectableFlags = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
-      if (ImGui::Selectable("##rowSelectable", false, selectableFlags, ImVec2(0, 48_px))) {
+      if (ImGui::Selectable("##SelectableRow", false, selectableFlags, ImVec2(0, rowHeight))) {
         Editor::Actions::call(Editor::Actions::Type::PROJECT_OPEN, entry.path);
       }
-      ImGui::SetCursorPosY(y + 8_px);
-      ImGui::TextUnformatted(ICON_MDI_CHEVRON_RIGHT);
+      ImGui::SetCursorPosY(y);
+      if (ImGui::Button(entry.expand ? ICON_MDI_CHEVRON_DOWN : ICON_MDI_CHEVRON_RIGHT)) {
+        entry.expand = !entry.expand;
+      }
 
       //project name
       ImGui::TableSetColumnIndex(1);
@@ -264,11 +295,13 @@ void Editor::Launcher::draw()
       ImGui::PushFont(nullptr, 16_px);
       ImGui::TextUnformatted(entry.name.c_str());
       ImGui::PopFont();
-      ImGui::PushFont(ImGui::Theme::getFontMono(), 16_px);
-      ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
-      ImGui::TextUnformatted(entry.path.c_str());
-      ImGui::PopStyleColor();
-      ImGui::PopFont();
+      if (entry.expand) {
+        ImGui::PushFont(ImGui::Theme::getFontMono(), 16_px);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
+        ImGui::TextUnformatted(entry.path.c_str());
+        ImGui::PopStyleColor();
+        ImGui::PopFont();
+      }
       ImGui::EndGroup();
 
       //last modified
@@ -289,15 +322,15 @@ void Editor::Launcher::draw()
       }
 
       if (ImGui::BeginPopup("ProjectContextMenu")) {
-        Editor::Launcher::showContextMenu(entry.path);
+        Editor::Launcher::showProjectContextMenu(entry.path);
         ImGui::EndPopup();
       }
       ImGui::PopID();
       index++;
     }
     ImGui::EndTable();
-    ImGui::PopStyleColor();
   }
+  ImGui::PopStyleColor();
 
   // version + credits
   {
@@ -323,8 +356,13 @@ void Editor::Launcher::draw()
   ImGui::End();
 }
 
+void Editor::Launcher::showHeaderContextMenu() {
+  if(ImGui::MenuItem(ICON_MDI_RELOAD " Reload List")) {
+    updateProjectEntries();
+  }
+}
 
-void Editor::Launcher::showContextMenu(const std::string& path) {
+void Editor::Launcher::showProjectContextMenu(const std::string& path) {
 #if defined(_WIN32)
   std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in Explorer";
 #elif defined(__APPLE__)
@@ -347,6 +385,7 @@ void Editor::Launcher::showContextMenu(const std::string& path) {
   }
   
   if(ImGui::MenuItem(ICON_MDI_DELETE " Remove from List")) {
-    //TODO
+    Editor::RecentProjects::removePath(path);
+    updateProjectEntries();
   }
 }
