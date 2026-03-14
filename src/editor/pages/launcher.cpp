@@ -380,10 +380,6 @@ void Editor::Launcher::showProjectContextMenu(const std::string& path) {
     SDL_SetClipboardText(path.c_str());
   }
   
-  if(ImGui::MenuItem(ICON_MDI_RENAME " Rename Project")) {
-    //TODO
-  }
-  
   if(ImGui::MenuItem(ICON_MDI_DELETE " Remove from List")) {
     Editor::RecentProjects::removePath(path);
     updateProjectEntries();
