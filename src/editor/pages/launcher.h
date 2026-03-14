@@ -14,6 +14,7 @@ namespace Editor
     std::string path;
     std::string editorVersion;
     std::string lastModified;
+    bool expand;
   };
 
   class Launcher
@@ -25,13 +26,16 @@ namespace Editor
       Renderer::Texture texBtnTool;
       Renderer::Texture texBG;
       std::vector<ProjectEntry> projectEntries;
+      bool expandAll;
 
     public:
       Launcher(SDL_GPUDevice* device);
       ~Launcher();
 
       void draw();
-      void showContextMenu(const std::string& path);
+      void updateProjectEntries();
+      void showHeaderContextMenu();
+      void showProjectContextMenu(const std::string& path);
 
   };
 }

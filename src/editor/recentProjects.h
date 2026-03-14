@@ -13,4 +13,7 @@ namespace Editor::RecentProjects {
   std::string getJsonPath();
   std::string getMostRecentPath();
   void setMostRecentPath(const std::string &path);
+  void removePath(const std::string &path);
+  void save();
+  void load();
 }

@@ -19,18 +19,7 @@ namespace Editor::RecentProjects {
   }
 
   std::string getMostRecentPath() {
-    if (!recentPaths.empty()) return recentPaths.front();
-    
-    nlohmann::json json;
-    try {
-      json = Utils::JSON::loadFile(getJsonPath());
-      if (!json.is_array()) return "";
-      recentPaths = json.get<std::vector<std::string>>();
-    } catch (const std::exception& e) {
-      fprintf(stderr, "Error loading recent.json: %s\n", e.what());
-      return "";
-    }
-
+    if (recentPaths.empty()) load();
     if (recentPaths.empty()) return "";
     return recentPaths.front();
   }
@@ -38,12 +27,30 @@ namespace Editor::RecentProjects {
   void setMostRecentPath(const std::string &path) {
     recentPaths.erase(std::remove(recentPaths.begin(), recentPaths.end(), path), recentPaths.end());
     recentPaths.insert(recentPaths.begin(), path);
+    save();
+  }
 
+  void removePath(const std::string &path) {
+    recentPaths.erase(std::remove(recentPaths.begin(), recentPaths.end(), path), recentPaths.end());
+    save();
+  }
+
+  void save() {
     try {
       nlohmann::json json = recentPaths;
       Utils::FS::saveTextFile(getJsonPath(), json.dump(2));
     } catch (const std::exception& e) {
       fprintf(stderr, "Error saving recent.json: %s\n", e.what());
+    }
+  }
+
+  void load() {
+    nlohmann::json json;
+    try {
+      json = Utils::JSON::loadFile(getJsonPath());
+      if (json.is_array()) recentPaths = json.get<std::vector<std::string>>();
+    } catch (const std::exception& e) {
+      fprintf(stderr, "Error loading recent.json: %s\n", e.what());
     }
   }
 }
