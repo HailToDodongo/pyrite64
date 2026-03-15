@@ -236,7 +236,8 @@ std::string Project::AssetConf::serialize() const {
 Project::AssetManager::AssetManager(Project* pr)
   : project{pr}
 {
-  defaultScript = Utils::FS::loadTextFile("data/scripts/default.cpp");
+  defaultObjScript = Utils::FS::loadTextFile("data/scripts/defaultObject.cpp");
+  defaultGlobalScript = Utils::FS::loadTextFile("data/scripts/defaultGlobal.cpp");
 }
 
 Project::AssetManager::~AssetManager() {
@@ -722,7 +723,7 @@ void Project::AssetManager::clearNodeGraphDirty(uint64_t uuid)
   savedNodeGraphState.erase(uuid);
 }
 
-bool Project::AssetManager::createScript(const std::string &name, const std::string &subDir) {
+bool Project::AssetManager::createScript(const std::string &name, bool isGlobal, const std::string &subDir) {
   // Catch forbidden characters
   if (name.find_first_of("/\\:*?\"<>|") != std::string::npos) {
     return false;
@@ -752,7 +753,7 @@ bool Project::AssetManager::createScript(const std::string &name, const std::str
 
   auto filePath = dirPath / (name + ".cpp");
 
-  uint64_t uuid = Utils::Hash::sha256_64bit("CODE:" + filePath.string() + std::to_string(rand()));
+  uint64_t uuid = Utils::Hash::randomU64();
   auto uuidStr = std::format("{:016X}", uuid);
   uuidStr[0] = 'C'; // avoid leading numbers since it's used as a namespace name
 
@@ -760,7 +761,7 @@ bool Project::AssetManager::createScript(const std::string &name, const std::str
     return false;
   }
 
-  auto code = defaultScript;
+  auto code = isGlobal ? defaultGlobalScript : defaultObjScript;
   code = Utils::replaceAll(code, "__UUID__", uuidStr);
 
   Utils::FS::saveTextFile(filePath, code);
@@ -782,7 +783,7 @@ uint64_t Project::AssetManager::createNodeGraph(const std::string &name)
   Utils::FS::saveTextFile(filePath, "{\"nodes\": [], \"links\": []}");
   reload();
 
-  auto entry = getByName(name);
+  auto entry = getByName(name + ".p64graph");
   return entry ? entry->getUUID() : 0;
 }
 

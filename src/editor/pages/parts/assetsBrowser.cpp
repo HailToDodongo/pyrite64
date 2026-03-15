@@ -51,6 +51,8 @@ namespace
     return left + "/" + right;
   }
 
+  std::string scriptName{};
+  int scriptType{0};
 }
 
 void Editor::AssetsBrowser::draw() {
@@ -531,6 +533,8 @@ void Editor::AssetsBrowser::draw() {
     )) {
       if(activeTab == TAB_IDX_SCRIPTS) {
         newScriptDir = dirState;
+        scriptName = "New_Script";
+        scriptType = 0;
         ImGui::OpenPopup("NewScript");
       } else {
         ctx.project->getScenes().add();
@@ -551,13 +555,29 @@ void Editor::AssetsBrowser::draw() {
 
   ImGui::Dummy({0, 10_px});
 
+  ImGui::SetNextWindowSize(ImVec2(250_px, 0));
   if(ImGui::BeginPopup("NewScript"))
   {
-    static char scriptName[128] = "New_Script";
-    ImGui::Text("Enter script name:");
-    ImGui::InputText("##Name", scriptName, sizeof(scriptName));
-    if (ImGui::Button("Create")) {
-      if (ctx.project->getAssets().createScript(scriptName, newScriptDir)) {
+    ImTable::start("SCRIPT");
+
+    ImTable::add("Type");
+    const char* scriptTypes[] = {"Object Script", "Global Script", "Node Graph"};
+    ImGui::Combo("##ScriptType", &scriptType, scriptTypes, IM_ARRAYSIZE(scriptTypes));
+
+    ImTable::add("Name");
+    ImGui::InputText("##ScriptName", &scriptName);
+
+    ImTable::end();
+    // right align buttons
+    ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - 112_px);
+    if (ImGui::Button("Create"))
+    {
+      bool res{false};
+      if(scriptType == 0)res = ctx.project->getAssets().createScript(scriptName, false, newScriptDir);
+      if(scriptType == 1)res = ctx.project->getAssets().createScript(scriptName, true, newScriptDir);
+      if(scriptType == 2)res = ctx.project->getAssets().createNodeGraph(scriptName) != 0;
+
+      if (res) {
         ImGui::CloseCurrentPopup();
       } else {
         Editor::Noti::add(

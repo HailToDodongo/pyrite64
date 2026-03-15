@@ -103,7 +103,8 @@ namespace Project
       std::unordered_map<uint64_t, std::string> savedNodeGraphState{};
       std::unordered_map<uint64_t, std::string> dirtyNodeGraphState{};
 
-      std::string defaultScript{};
+      std::string defaultObjScript{};
+      std::string defaultGlobalScript{};
       std::shared_ptr<Renderer::Texture> fallbackTex{};
 
       void reloadEntry(AssetManagerEntry &entry, const std::string &path);
@@ -172,7 +173,7 @@ namespace Project
 
       void save();
 
-      bool createScript(const std::string &name, const std::string &subDir = {});
+      bool createScript(const std::string &name, bool isGlobal, const std::string &subDir = {});
       uint64_t createNodeGraph(const std::string &name);
   };
 }
