@@ -7,9 +7,6 @@
 #include <atomic>
 #include <mutex>
 #include <SDL3/SDL.h>
-#include <filesystem>
-
-namespace fs = std::filesystem;
 
 #include "../context.h"
 
@@ -37,10 +34,7 @@ bool Utils::FilePicker::open(std::function<void(const std::string&path)> cb, con
   resultUserCb = cb;
   SDL_PropertiesID props = SDL_CreateProperties();
   SDL_SetPointerProperty(props, SDL_PROP_FILE_DIALOG_WINDOW_POINTER, ctx.window);
-  if (!options.defaultPath.empty()) {
-    auto dir = fs::path(options.defaultPath).parent_path().string();
-    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_LOCATION_STRING, dir.c_str());
-  }
+  //SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_LOCATION_STRING, default_location);
   SDL_SetBooleanProperty(props, SDL_PROP_FILE_DIALOG_MANY_BOOLEAN, false);
   if(!options.title.empty()) {
     SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_TITLE_STRING, options.title.c_str());
