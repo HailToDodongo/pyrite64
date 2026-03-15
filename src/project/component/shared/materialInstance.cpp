@@ -2,10 +2,10 @@
 * @copyright 2026 - Max Bebök
 * @license MIT
 */
-#include "material.h"
+#include "materialInstance.h"
 #include "../../scene/object.h"
 
-void Project::Component::Shared::Material::build(Utils::BinaryFile &file, Object &obj)
+void Project::Component::Shared::MaterialInstance::build(Utils::BinaryFile &file, Object &obj)
 {
   uint16_t setMask = 0;
   if(setDepth.resolve(obj)) setMask |= 1 << 0;

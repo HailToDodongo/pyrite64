@@ -16,7 +16,7 @@ namespace Project
 
 namespace Project::Component::Shared
 {
-  struct Material
+  struct MaterialInstance
   {
     PROP_BOOL(setDepth);
     PROP_S32(depth);

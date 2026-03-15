@@ -64,7 +64,7 @@ namespace
   {
     auto *tex = tile == TILE0 ? &mat->textureA : &mat->textureB;
 
-    debugf("Tex: TILE%d A:%08X R:%08X, wh: %f %f\n", tile, tex->texAssetIdx, tex->texReference, (double)tex->s.height, (double)tex->s.low);
+    //P64::Log::info("Tex: TILE%d A:%08X R:%08X, wh: %d %d", tile, tex->texAssetIdx, tex->texReference, tex->texWidth, tex->texHeight);
 
     if(tex->texAssetIdx != 0xFFFF || tex->texReference)
     {
