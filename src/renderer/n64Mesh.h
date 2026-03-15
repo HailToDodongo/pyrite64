@@ -37,7 +37,7 @@ namespace Renderer
       Renderer::Scene *scene{};
 
     public:
-      void fromT3DM(const Project::Assets::Model3D &t3dmData, Project::AssetManager &assetManager);
+      void fromT3DM(const Project::Assets::Model3D &model3d, Project::AssetManager &assetManager);
 
       void recreate(Renderer::Scene &sc);
       void draw(

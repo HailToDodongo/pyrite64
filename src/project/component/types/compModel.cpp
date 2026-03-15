@@ -91,7 +91,7 @@ namespace Project::Component::Model
       throw std::runtime_error(error);
     }
 
-    auto &meshes = data.filter.filterT3DM(t3dm->t3dmData.models, obj, true);
+    auto &meshes = data.filter.filterT3DM(t3dm->model.t3dm.models, obj, true);
 
     ctx.fileObj.write<uint16_t>(id);
     ctx.fileObj.write<uint8_t>(data.layerIdx.resolve(obj));
@@ -148,13 +148,13 @@ namespace Project::Component::Model
         if(t3dm)
         {
           if(changed || data.filter.cache.empty()) {
-            data.filter.filterT3DM(t3dm->t3dmData.models, obj, true);
+            data.filter.filterT3DM(t3dm->model.t3dm.models, obj, true);
           }
 
           for(auto idx : data.filter.cache) {
             ImGui::Text("%s@%s",
-              t3dm->t3dmData.models[idx].name.c_str(),
-              t3dm->t3dmData.models[idx].materialName.c_str()
+              t3dm->model.t3dm.models[idx].name.c_str(),
+              t3dm->model.t3dm.models[idx].materialName.c_str()
             );
           }
         }
@@ -242,7 +242,7 @@ namespace Project::Component::Model
     if (!asset || !asset->mesh3D) {
       return;
     }
-    auto &meshes = data.filter.filterT3DM(asset->t3dmData.models, obj, true);
+    auto &meshes = data.filter.filterT3DM(asset->model.t3dm.models, obj, true);
     data.obj3D.draw(pass, cmdBuff, meshes);
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);

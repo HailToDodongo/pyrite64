@@ -139,9 +139,8 @@ void Project::Assets::Material::fromT3D(::Project::AssetManager &assets, const T
       if(asset) {
         tex.set.value = true;
         tex.texUUID.value = asset->getUUID();
-
-        tex.width.value = asset->texture->getWidth();
-        tex.height.value = asset->texture->getHeight();
+        // tex.width.value = asset->texture->getWidth();
+        // tex.height.value = asset->texture->getHeight();
       }
     }
 

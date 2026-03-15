@@ -130,28 +130,30 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
 
     sceneCtx.files.push_back(Utils::FS::toUnixPath(model.outPath));
 
-    if(assetBuildNeeded(model, t3dmPath))  {
+    if(assetBuildNeeded(model, t3dmPath))
+    {
       fs::create_directories(t3dmDir);
 
       T3DM::Config config{
         .globalScale = (float)model.conf.baseScale,
-        .animSampleRate = 60,
-        //.ignoreMaterials = args.checkArg("--ignore-materials"),
-        //.ignoreTransforms = args.checkArg("--ignore-transforms"),
         .createBVH = model.conf.gltfBVH,
         .verbose = false,
         .assetPath = "assets/",
         .assetPathFull = fs::absolute(project.getPath() + "/assets").string(),
         .projectPath = projectPath,
-        .materialWriter = [&sceneCtx](std::shared_ptr<BinaryFile> f, const T3DM::Material &material, uint32_t matIdx) {
-          return matWriter(sceneCtx, f, material, matIdx);
-        }
       };
 
-      auto t3dm = T3DM::parseGLTF(model.path.c_str(), config);
+      auto &t3dm = model.model.t3dm;
 
-      std::vector<T3DM::CustomChunk> customChunks{};
-      T3DM::writeT3DM(config, t3dm, t3dmPath.string().c_str(), customChunks);
+      config.materialWriter = [&sceneCtx, &model](std::shared_ptr<BinaryFile> f, const T3DM::Material &material, uint32_t matIdx) {
+        auto pyriteMat = model.model.t3dm.materials.find(material.name);
+        if(pyriteMat != model.model.t3dm.materials.end()) {
+          printf("Using custom material writer for '%s'\n", material.name.c_str());
+        }
+        return matWriter(sceneCtx, f, material, matIdx);
+      };
+
+      T3DM::writeT3DM(config, t3dm, t3dmPath.string().c_str());
 
       int compr = (int)model.conf.compression - 1;
       if(compr < 0)compr = 1; // @TODO: pull default compression level
