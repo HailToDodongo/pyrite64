@@ -7,10 +7,13 @@
 #include "ccMapping.h"
 #include "tiny3d/tools/gltf_importer/src/parser/rdp.h"
 
+#define __LIBDRAGON_N64SYS_H 1
+#define PhysicalAddr(a) (uint64_t)(a)
+#include "include/rdpq_macros.h"
+#include "include/rdpq_mode.h"
+
 namespace
 {
-  constexpr uint64_t RDPQ_COMBINER_2PASS = (uint64_t)(1) << 63;
-
   constexpr uint32_t getBits(uint64_t value, uint32_t start, uint32_t end) {
     return (value << (63 - end)) >> (63 - end + start);
   }
@@ -43,23 +46,23 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Project::Asse
 
   part.material.vertexFX = t3dMat.vertexFX.value;
 
-  // @TODO
-  //part.material.otherModeH = t3dMat.otherModeValue >> 32;
-  // @TODO
-  //part.material.otherModeL = t3dMat.otherModeValue & 0xFFFFFFFF;
-
-  part.material.flags = 0;//t3dMat.drawFlags; // @TODO
+  uint64_t otherModes = 0;
+  if (cc & RDPQ_COMBINER_2PASS) {
+    otherModes |= SOM_CYCLE_2;
+  }
+  if (t3dMat.filterSet.value) {
+    otherModes |= ((uint64_t)t3dMat.filter.value << SOM_SAMPLE_SHIFT) & SOM_SAMPLE_MASK;
+  }
+  part.material.otherModeH = otherModes >> 32;
+  part.material.otherModeL = otherModes & 0xFFFFFFFF;
 
   // @TODO
   //part.material.flags |= t3dMat.setBlendColor ? UniformN64Material::FLAG_SET_BLEND_COL : 0;
-  // @TODO
-  //part.material.flags |= t3dMat.setEnvColor ? UniformN64Material::FLAG_SET_ENV_COL : 0;
-  // @TODO
-  //part.material.flags |= t3dMat.setPrimColor ? UniformN64Material::FLAG_SET_PRIM_COL : 0;
 
-  if (cc & RDPQ_COMBINER_2PASS) {
-    part.material.otherModeH |= G_CYC_2CYCLE;
-  }
+  part.material.flags = t3dMat.drawFlags.value;
+
+  part.material.flags |= t3dMat.envColorSet.value ? UniformN64Material::FLAG_SET_ENV_COL : 0;
+  part.material.flags |= t3dMat.primColorSet.value ? UniformN64Material::FLAG_SET_PRIM_COL : 0;
 
   part.material.lightDir[0].w = 0.0f; // no alpha clip
   if (t3dMat.alphaComp.value  != 0) {

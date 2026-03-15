@@ -5,6 +5,12 @@
 #pragma once
 #include "json.hpp"
 #include "../../utils/prop.h"
+#include "tiny3d/tools/gltf_importer/src/structs.h"
+
+namespace Project
+{
+  class AssetManager;
+}
 
 namespace Project::Assets
 {
@@ -51,6 +57,8 @@ namespace Project::Assets
 
     // T3D settings
     PROP_U32(vertexFX);
+    PROP_U32(drawFlags);
+    PROP_U32(fogToAlpha);
 
     // Values
     PROP_U32(k4); PROP_BOOL(k4k5Set);
@@ -62,5 +70,7 @@ namespace Project::Assets
 
     [[nodiscard]] nlohmann::json serialize() const;
     void deserialize(const nlohmann::json &doc);
+
+    void fromT3D(::Project::AssetManager &assets, const T3DM::Material &mat);
   };
 }

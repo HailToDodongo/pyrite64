@@ -305,8 +305,13 @@ void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::str
           .models = t3dData.models,
           .skeletons = t3dData.skeletons,
           .animations = t3dData.animations,
-          .materials = {} // @TODO
+          .materials = {}
         };
+
+        for(const auto &t3dMat : t3dData.materials) {
+          auto &mat = entry.t3dmData.materials[t3dMat.first];
+          mat.fromT3D(*this, t3dMat.second);
+        }
 
         if (!entry.t3dmData.models.empty()) {
           if (!entry.mesh3D) {
@@ -363,15 +368,6 @@ void Project::AssetManager::reload() {
     }
   }
 
-  // now load models (after all textures are there now)
-  for (auto &typed : entries) {
-    for (auto &entry : typed) {
-      if (entry.type == FileType::MODEL_3D) {
-        reloadEntry(entry, entry.path);
-      }
-    }
-  }
-
   auto codePath = getCodePath(project);
   for (const auto &entry : fs::recursive_directory_iterator{codePath}) {
     if (entry.is_regular_file()) {
@@ -402,6 +398,15 @@ void Project::AssetManager::reload() {
     {
       entriesMap[entry.getUUID()] = {(int)entry.type, idx};
       ++idx;
+    }
+  }
+
+  // now load models (after all textures are there now)
+  for (auto &typed : entries) {
+    for (auto &entry : typed) {
+      if (entry.type == FileType::MODEL_3D) {
+        reloadEntry(entry, entry.path);
+      }
     }
   }
 }
