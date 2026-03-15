@@ -196,10 +196,7 @@ void Editor::Launcher::draw()
       }, {
         .title="Choose Project File (.p64proj)",
         .isDirectory = false,
-        .customFilters = {{"Pyrite64 Project", "p64proj"}},
-#ifndef _WIN32 //this bit is already handled on Windows
-        .defaultPath = Editor::RecentProjects::getMostRecentPath()
-#endif
+        .customFilters = {{"Pyrite64 Project", "p64proj"}}
       });
     }
   }
