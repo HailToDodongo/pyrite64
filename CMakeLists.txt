@@ -268,6 +268,9 @@ add_executable(pyrite64 src/main.cpp
         src/editor/preferences.h
         src/editor/preferences.cpp
         src/editor/pages/parts/assets/modelEditor.cpp
+        src/project/assets/material.h
+        src/project/assets/material.cpp
+        src/project/assets/model3d.h
 )
 
 target_include_directories(pyrite64 PRIVATE

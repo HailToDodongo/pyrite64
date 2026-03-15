@@ -6,9 +6,12 @@
 #include "mesh.h"
 #include "texture.h"
 #include "uniforms.h"
+#include "../project/assets/model3d.h"
 #include "tiny3d/tools/gltf_importer/src/structs.h"
 
-namespace Project { class AssetManager; }
+namespace Project {
+  class AssetManager;
+}
 
 namespace Renderer
 {
@@ -34,7 +37,7 @@ namespace Renderer
       Renderer::Scene *scene{};
 
     public:
-      void fromT3DM(const T3DM::T3DMData &t3dmData, Project::AssetManager &assetManager);
+      void fromT3DM(const Project::Assets::Model3D &t3dmData, Project::AssetManager &assetManager);
 
       void recreate(Renderer::Scene &sc);
       void draw(

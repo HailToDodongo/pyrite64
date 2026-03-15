@@ -26,30 +26,43 @@ namespace
     if (c == CC_A_TEX0) c = CC_A_TEX1;
     else if (c == CC_A_TEX1) c = CC_A_TEX0;
   }
+
+  int integerToPow2(int x){
+    int res = 0;
+    while(1<<res < x) res++;
+    return res;
+  }
 }
 
-void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const T3DM::Material &t3dMat)
+void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Project::Assets::Material &t3dMat)
 {
-  auto &texA = t3dMat.texA;
-  auto &texB = t3dMat.texB;
+  auto &texA = t3dMat.tex0;
+  auto &texB = t3dMat.tex1;
 
-  uint64_t cc = t3dMat.colorCombiner;
+  uint64_t cc = t3dMat.cc.value;
 
-  part.material.vertexFX = t3dMat.vertexFxFunc;
-  part.material.otherModeH = t3dMat.otherModeValue >> 32;
-  part.material.otherModeL = t3dMat.otherModeValue & 0xFFFFFFFF;
-  part.material.flags = t3dMat.drawFlags;
+  part.material.vertexFX = t3dMat.vertexFX.value;
 
-  part.material.flags |= t3dMat.setBlendColor ? UniformN64Material::FLAG_SET_BLEND_COL : 0;
-  part.material.flags |= t3dMat.setEnvColor ? UniformN64Material::FLAG_SET_ENV_COL : 0;
-  part.material.flags |= t3dMat.setPrimColor ? UniformN64Material::FLAG_SET_PRIM_COL : 0;
+  // @TODO
+  //part.material.otherModeH = t3dMat.otherModeValue >> 32;
+  // @TODO
+  //part.material.otherModeL = t3dMat.otherModeValue & 0xFFFFFFFF;
+
+  part.material.flags = 0;//t3dMat.drawFlags; // @TODO
+
+  // @TODO
+  //part.material.flags |= t3dMat.setBlendColor ? UniformN64Material::FLAG_SET_BLEND_COL : 0;
+  // @TODO
+  //part.material.flags |= t3dMat.setEnvColor ? UniformN64Material::FLAG_SET_ENV_COL : 0;
+  // @TODO
+  //part.material.flags |= t3dMat.setPrimColor ? UniformN64Material::FLAG_SET_PRIM_COL : 0;
 
   if (cc & RDPQ_COMBINER_2PASS) {
     part.material.otherModeH |= G_CYC_2CYCLE;
   }
 
   part.material.lightDir[0].w = 0.0f; // no alpha clip
-  if (t3dMat.otherModeValue & RDP::SOM::ALPHA_COMPARE) {
+  if (t3dMat.alphaComp.value  != 0) {
     part.material.lightDir[0].w = 0.5f;
   }
 
@@ -69,70 +82,44 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const T3DM::Materia
     switchAlphaTex2Cycle(part.material.cc1Alpha[i]);
   }
 
-  part.material.colPrim = {
-    t3dMat.primColor[0] / 255.0f,
-    t3dMat.primColor[1] / 255.0f,
-    t3dMat.primColor[2] / 255.0f,
-    t3dMat.primColor[3] / 255.0f
-  };
-  part.material.colEnv = {
-    t3dMat.envColor[0] / 255.0f,
-    t3dMat.envColor[1] / 255.0f,
-    t3dMat.envColor[2] / 255.0f,
-    t3dMat.envColor[3] / 255.0f,
-  };
+  part.material.colPrim = t3dMat.primColor.value;
+  part.material.colEnv = t3dMat.envColor.value;
 
   part.material.mask = {
-    texA.s.mask, texA.t.mask,
-    texB.s.mask, texB.t.mask,
+    std::pow(2, integerToPow2(texA.width.value)),
+    std::pow(2, integerToPow2(texA.height.value)),
+    std::pow(2, integerToPow2(texB.width.value)),
+    std::pow(2, integerToPow2(texB.height.value)),
   };
+
   part.material.low = {
-    texA.s.low, texA.t.low,
-    texB.s.low, texB.t.low,
+    texA.offsetS.value, texA.offsetT.value,
+    texB.offsetS.value, texB.offsetT.value,
   };
-  part.material.high = {
-    texA.s.high, texA.t.high,
-    texB.s.high, texB.t.high,
-  };
-
-  part.material.mask = {
-    std::pow(2, texA.s.mask),
-    std::pow(2, texA.t.mask),
-    std::pow(2, texB.s.mask),
-    std::pow(2, texB.t.mask),
+  part.material.high = part.material.low + glm::vec4{
+    texA.width.value - 1, texA.height.value - 1,
+    texB.width.value - 1, texB.height.value - 1,
   };
 
   part.material.shift = {
-    1.0f / std::pow(2, texA.s.shift),
-    1.0f / std::pow(2, texA.t.shift),
-    1.0f / std::pow(2, texB.s.shift),
-    1.0f / std::pow(2, texB.t.shift),
+    1.0f / std::pow(2, texA.scaleS.value),
+    1.0f / std::pow(2, texA.scaleT.value),
+    1.0f / std::pow(2, texB.scaleS.value),
+    1.0f / std::pow(2, texB.scaleT.value),
   };
-
 
   /*
  # quantize the low/high values into 0.25 pixel increments
  conf[8:] = np.round(conf[8:] * 4) / 4
-
- # if clamp is on, negate the mask value
- if t0.S.clamp: conf[0] = -conf[0]
- if t0.T.clamp: conf[1] = -conf[1]
- if t1.S.clamp: conf[2] = -conf[2]
- if t1.T.clamp: conf[3] = -conf[3]
-
- # if mirror is on, negate the high value
- if t0.S.mirror: conf[12] = -conf[12]
- if t0.T.mirror: conf[13] = -conf[13]
- if t1.S.mirror: conf[14] = -conf[14]
- if t1.T.mirror: conf[15] = -conf[15]
   */
-  if (texA.s.clamp) part.material.mask[0] = -part.material.mask[0];
-  if (texA.t.clamp) part.material.mask[1] = -part.material.mask[1];
-  if (texB.s.clamp) part.material.mask[2] = -part.material.mask[2];
-  if (texB.t.clamp) part.material.mask[3] = -part.material.mask[3];
 
-  if (texA.s.mirror) part.material.high[0] = -part.material.high[0];
-  if (texA.t.mirror) part.material.high[1] = -part.material.high[1];
-  if (texB.s.mirror) part.material.high[2] = -part.material.high[2];
-  if (texB.t.mirror) part.material.high[3] = -part.material.high[3];
+  if (texA.repeatS.value <= 1.0f) part.material.mask[0] = -part.material.mask[0];
+  if (texA.repeatT.value <= 1.0f) part.material.mask[1] = -part.material.mask[1];
+  if (texB.repeatS.value <= 1.0f) part.material.mask[2] = -part.material.mask[2];
+  if (texB.repeatT.value <= 1.0f) part.material.mask[3] = -part.material.mask[3];
+
+  if (texA.mirrorS.value) part.material.high[0] = -part.material.high[0];
+  if (texA.mirrorT.value) part.material.high[1] = -part.material.high[1];
+  if (texB.mirrorS.value) part.material.high[2] = -part.material.high[2];
+  if (texB.mirrorT.value) part.material.high[3] = -part.material.high[3];
 }

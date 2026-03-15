@@ -300,7 +300,14 @@ void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::str
           .projectPath = fs::path{project->getPath()},
         };
 
-        entry.t3dmData = T3DM::parseGLTF(path.c_str(), config);
+        auto t3dData = T3DM::parseGLTF(path.c_str(), config);
+        entry.t3dmData = {
+          .models = t3dData.models,
+          .skeletons = t3dData.skeletons,
+          .animations = t3dData.animations,
+          .materials = {} // @TODO
+        };
+
         if (!entry.t3dmData.models.empty()) {
           if (!entry.mesh3D) {
             entry.mesh3D = std::make_shared<Renderer::N64Mesh>();
