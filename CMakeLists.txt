@@ -245,8 +245,7 @@ add_executable(pyrite64 src/main.cpp
         src/project/component/types/compConstraint.cpp
         src/project/component/types/compCulling.cpp
         src/editor/pages/parts/nodeEditor.cpp
-        src/project/component/shared/material.h
-        src/project/component/shared/material.cpp
+        src/project/component/shared/materialInstance.cpp
         src/project/component/shared/meshFilter.cpp
         src/project/graph/nodes/baseNode.h
         src/project/graph/nodes/nodeWait.h

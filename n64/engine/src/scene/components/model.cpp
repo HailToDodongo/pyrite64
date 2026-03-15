@@ -9,6 +9,7 @@
 #include <t3d/t3dmodel.h>
 
 #include "../../renderer/bigtex/bigtex.h"
+#include "lib/logger.h"
 #include "renderer/material.h"
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
@@ -34,6 +35,7 @@ namespace
     T3DModelIter it = t3d_model_iter_create(model, T3D_CHUNK_TYPE_OBJECT);
     while(t3d_model_iter_next(&it))
     {
+      //P64::Log::info("Object: %s", it.object->name);
       auto *mat = (P64::Renderer::WIP_T3DMaterial*)it.object->material;
       mat->begin(state);
       t3d_model_draw_object(it.object, nullptr);

@@ -14,7 +14,7 @@
 #include "../../../renderer/scene.h"
 #include "../../../utils/meshGen.h"
 #include "../../../shader/defines.h"
-#include "../shared/material.h"
+#include "../shared/materialInstance.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/matrix_decompose.hpp"
@@ -28,7 +28,7 @@ namespace Project::Component::AnimModel
     PROP_U64(model);
     PROP_S32(layerIdx);
 
-    Shared::Material material{};
+    Shared::MaterialInstance material{};
 
     Renderer::Object obj3D{};
     Utils::AABB aabb{};
