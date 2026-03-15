@@ -19,13 +19,14 @@ namespace
   constinit glm::vec4 lastEnv{};
 }
 
-void Renderer::N64Mesh::fromT3DM(const Project::Assets::Model3D &t3dmData, Project::AssetManager &assetManager)
+void Renderer::N64Mesh::fromT3DM(const Project::Assets::Model3D &model3d, Project::AssetManager &assetManager)
 {
   loaded = false;
   mesh.vertices.clear();
   mesh.indices.clear();
   parts.clear();
 
+  auto &t3dmData = model3d.t3dm;
   parts.resize(t3dmData.models.size());
   auto part = parts.begin();
 
@@ -39,11 +40,11 @@ void Renderer::N64Mesh::fromT3DM(const Project::Assets::Model3D &t3dmData, Proje
     part->indicesCount = model.triangles.size() * 3;
 
     Project::Assets::Material matDummy{};
-    auto mat = t3dmData.materials.find(model.materialName);
-    if(mat != t3dmData.materials.end()) {
+    auto mat = model3d.materials.find(model.materialName);
+    if(mat != model3d.materials.end()) {
       N64Material::convert(*part, mat->second);
     }
-    const auto &material = (mat != t3dmData.materials.end()) ? mat->second : matDummy;
+    const auto &material = (mat != model3d.materials.end()) ? mat->second : matDummy;
 
     part->texBindings[0].texture = part->refTex0.lock()->getGPUTex();
     part->texBindings[0].sampler = texSamplerRepeat;

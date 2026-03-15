@@ -14,13 +14,7 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
   ImGui::Begin("Model", nullptr, ImGuiWindowFlags_NoCollapse);
   ImGui::Text("Model: %s", model->name.c_str());
 
-
-  for(auto &model : model->t3dmData.models)
-  {
-
-  }
-
-  for(auto &entry : model->t3dmData.materials)
+  for(auto &entry : model->model.t3dm.materials)
   {
     auto label = "Material: " + entry.first;
     if (ImGui::CollapsingHeader(label.c_str(), ImGuiTreeNodeFlags_DefaultOpen))

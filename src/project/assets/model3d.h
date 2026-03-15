@@ -11,9 +11,7 @@ namespace Project::Assets
 {
   struct Model3D
   {
-    std::vector<T3DM::Model> models{};
-    std::vector<T3DM::Bone> skeletons{};
-    std::vector<T3DM::Anim> animations{};
+    T3DM::T3DMData t3dm{};
     std::unordered_map<std::string, Material> materials{};
   };
 }

@@ -291,8 +291,6 @@ void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::str
         T3DM::Config config{
           .globalScale = (float)entry.conf.baseScale,
           .animSampleRate = 60,
-          //.ignoreMaterials = args.checkArg("--ignore-materials"),
-          //.ignoreTransforms = args.checkArg("--ignore-transforms"),
           .createBVH = entry.conf.gltfBVH,
           .verbose = false,
           .assetPath = "assets/",
@@ -300,24 +298,21 @@ void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::str
           .projectPath = fs::path{project->getPath()},
         };
 
-        auto t3dData = T3DM::parseGLTF(path.c_str(), config);
-        entry.t3dmData = {
-          .models = t3dData.models,
-          .skeletons = t3dData.skeletons,
-          .animations = t3dData.animations,
-          .materials = {}
+        entry.model = {
+          .t3dm = T3DM::parseGLTF(path.c_str(), config),
+          .materials = {},
         };
 
-        for(const auto &t3dMat : t3dData.materials) {
-          auto &mat = entry.t3dmData.materials[t3dMat.first];
+        for(const auto &t3dMat : entry.model.t3dm.materials) {
+          auto &mat = entry.model.materials[t3dMat.first];
           mat.fromT3D(*this, t3dMat.second);
         }
 
-        if (!entry.t3dmData.models.empty()) {
+        if (!entry.model.t3dm.models.empty()) {
           if (!entry.mesh3D) {
             entry.mesh3D = std::make_shared<Renderer::N64Mesh>();
           }
-          entry.mesh3D->fromT3DM(entry.t3dmData, *this);
+          entry.mesh3D->fromT3DM(entry.model, *this);
         }
       } catch (std::exception &e) {
         Utils::Logger::log("Failed to load 3D model asset: " + entry.path + " - " + e.what(), Utils::Logger::LEVEL_ERROR);
