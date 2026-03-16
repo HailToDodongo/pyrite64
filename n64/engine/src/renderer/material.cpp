@@ -5,8 +5,10 @@
 #include <renderer/material.h>
 
 #include "lib/logger.h"
+#include "scene/scene.h"
+#include "scene/sceneManager.h"
 
-void P64::Renderer::Material::begin(Object &obj)
+void P64::Renderer::MaterialInstance::begin(Object &obj)
 {
   if(!doesAnything())return;
 
@@ -41,7 +43,7 @@ void P64::Renderer::Material::begin(Object &obj)
   }
 }
 
-void P64::Renderer::Material::end()
+void P64::Renderer::MaterialInstance::end()
 {
   if(fresnel != 0)
   {
@@ -60,9 +62,9 @@ namespace
     return (x & (x - 1)) == 0;
   }
 
-  void set_texture(P64::Renderer::WIP_T3DMaterial *mat, rdpq_tile_t tile)
+  void set_texture(P64::Renderer::Material *mat, rdpq_tile_t tile)
   {
-    auto *tex = tile == TILE0 ? &mat->textureA : &mat->textureB;
+    /*auto *tex = tile == TILE0 ? &mat->textureA : &mat->textureB;
 
     //P64::Log::info("Tex: TILE%d A:%08X R:%08X, wh: %d %d", tile, tex->texAssetIdx, tex->texReference, tex->texWidth, tex->texHeight);
 
@@ -101,9 +103,7 @@ namespace
         }
       }
 
-      /*if(conf && conf->tileCb) {
-        conf->tileCb(conf->userData, &texParam, tile);
-      }*/
+
 
       // @TODO: don't upload texture if only the tile settings differ
       if(tex->texReference) {
@@ -119,94 +119,114 @@ namespace
           rdpq_sprite_upload(tile, tex->texture, &texParam);
         }
       }
-    }
+    }*/
   }
+}
+
+namespace
+{
+  struct DynamicData
+  {
+    char* data{};
+
+    template<typename T>
+    const T& fetch() {
+      auto res = (T*)data;
+      data += sizeof(T);
+      return *res;
+    }
+  };
 }
 
 // @TODO: temporary hack to migrate t3d:
-void P64::Renderer::WIP_T3DMaterial::begin(WIP_T3DModelState &state)
+void P64::Renderer::Material::begin(WIP_T3DModelState &state)
 {
-  auto mat = this;
-  if(mat->fogMode != T3D_FOG_MODE_DEFAULT && mat->fogMode != state.lastFogMode) {
-    state.lastFogMode = mat->fogMode;
-    t3d_fog_set_enabled(mat->fogMode == T3D_FOG_MODE_ACTIVE);
+  state = {};
+  DynamicData ptr{data};
+
+  if(sets(FLAG_OVERRIDE)) {
+    rdpq_mode_push();
   }
 
-  if(state.lastVertFXFunc != mat->vertexFxFunc || (
-    mat->vertexFxFunc && (state.lastUvGenParams[0] != mat->textureA.texWidth || state.lastUvGenParams[1] != mat->textureA.texHeight)
-  )) {
-    state.lastVertFXFunc = mat->vertexFxFunc;
-    state.lastUvGenParams[0] = mat->textureA.texWidth;
-    state.lastUvGenParams[1] = mat->textureA.texHeight;
-    t3d_state_set_vertex_fx(
-      static_cast<T3DVertexFX>(state.lastVertFXFunc),
-      (int16_t)state.lastUvGenParams[0],
-      (int16_t)state.lastUvGenParams[1]
-    );
+  rdpq_mode_begin();
+
+  if(sets(FLAG_TEX0)) {
+    auto &tile = ptr.fetch<Tile>();
+    // @TODO:
+  }
+  if(sets(FLAG_TEX1)) {
+    auto &tile = ptr.fetch<Tile>();
+    // @TODO:
+  }
+  debugf("FLAGS: %08lX\n", flagsData);
+
+  if(sets(FLAG_CC)) {
+    rdpq_mode_combiner(ptr.fetch<rdpq_combiner_t>());
+  }
+  if(sets(FLAG_BLENDER)) {
+    rdpq_mode_blender(ptr.fetch<rdpq_blender_t>());
+  }
+  if(sets(FLAG_FOG)) {
+    rdpq_mode_fog(ptr.fetch<rdpq_blender_t>());
+  }
+  if(sets(FLAG_PRIM)) {
+    rdpq_set_prim_color(ptr.fetch<color_t>());
+  }
+  if(sets(FLAG_ENV)) {
+    rdpq_set_env_color(ptr.fetch<color_t>());
+  }
+  if(sets(FLAG_ZPRIM)) {
+    const auto zPrim = ptr.fetch<int16_t>();
+    const auto zDelta = ptr.fetch<int16_t>();
+    rdpq_mode_zoverride(true, zPrim, zDelta);
+  }
+  if(sets(FLAG_ALPHA_COMP)) {
+    rdpq_mode_alphacompare(ptr.fetch<uint8_t>());
+  }
+  if(sets(FLAG_K4K5)) {
+    const auto k4 = ptr.fetch<uint8_t>();
+    const auto k5 = ptr.fetch<uint8_t>();
+    rdpq_set_yuv_parms(0, 0, 0, 0, k4, k5);
+  }
+  if(sets(FLAG_PRIMLOD)) {
+    rdpq_set_prim_lod_frac(ptr.fetch<uint8_t>());
+  }
+  if(sets(FLAG_AA)) {
+    rdpq_mode_antialias(getAA());
+  }
+  if(sets(FLAG_DITHER)) {
+    rdpq_mode_dithering(getDither());
+  }
+  if(sets(FLAG_FILTER)) {
+    rdpq_mode_filter(getFilter());
+  }
+  if(sets(FLAG_ZMODE)) {
+    rdpq_mode_zbuf(getZRead(), getZWrite());
+  }
+  if(sets(FLAG_PERSP)) {
+    rdpq_mode_persp(getModePersp());
   }
 
-  // now apply rdpq settings, these are independent of the t3d state
-  // and only need to happen before a `t3d_tri_draw` call
-  if(mat->colorCombiner)
-  {
-    bool setCC         = mat->colorCombiner != state.lastCC;
-    bool setTexture    = state.lastTextureIdxA != mat->textureA.texAssetIdx || state.lastTextureIdxB != mat->textureB.texAssetIdx;
-    bool setOtherMode  = state.lastOtherMode != mat->otherModeValue || setTexture;
-    bool setPrimColor  = (mat->setColorFlags & 0b001) && color_to_packed32(state.lastPrimColor) != color_to_packed32(mat->primColor);
-    bool setEnvColor   = (mat->setColorFlags & 0b010) && color_to_packed32(state.lastEnvColor) != color_to_packed32(mat->envColor);
-    bool setBlendColor = (mat->setColorFlags & 0b100) || (mat->otherModeValue & SOM_ALPHACOMPARE_THRESHOLD);
-    setBlendColor = setBlendColor && color_to_packed32(state.lastBlendColor) != color_to_packed32(mat->blendColor);
+  rdpq_mode_end();
 
-    if(setCC || setOtherMode || setTexture) {
-      rdpq_sync_pipe();
-    }
-
-    if(setTexture)
-    {
-      state.lastTextureIdxA = mat->textureA.texAssetIdx;
-      state.lastTextureIdxB = mat->textureB.texAssetIdx;
-      rdpq_sync_load();
-
-      rdpq_tex_multi_begin();
-        set_texture(mat, TILE0);
-        set_texture(mat, TILE1);
-      rdpq_tex_multi_end();
-    }
-
-    if(setCC) {
-      state.lastCC = mat->colorCombiner;
-      rdpq_mode_combiner(mat->colorCombiner);
-    }
-
-    if(setPrimColor) {
-      state.lastPrimColor = mat->primColor;
-      rdpq_set_prim_color(mat->primColor);
-    }
-
-    if(setBlendColor) {
-      state.lastBlendColor = mat->blendColor;
-      rdpq_set_blend_color(mat->blendColor);
-    }
-
-    if(setEnvColor) {
-      state.lastEnvColor = mat->envColor;
-      rdpq_set_env_color(mat->envColor);
-    }
-
-    if(setOtherMode) {
-      __rdpq_mode_change_som(mat->otherModeMask, mat->otherModeValue);
-      state.lastOtherMode = mat->otherModeValue;
-    }
+  if(sets(FLAG_T3D_VERT_FX)) {
+    /*const auto fn = ptr.fetch<int16_t>();
+    const auto arg0 = ptr.fetch<int16_t>();
+    const auto arg1 = ptr.fetch<int16_t>();
+    t3d_state_set_vertex_fx(static_cast<T3DVertexFX>(fn), arg0, arg1);
+    */
+    assertf(false, "@TODO: FLAG_T3D_VERT_FX");
   }
 
-  if(mat->renderFlags != state.lastRenderFlags) {
-    t3d_state_set_drawflags(static_cast<T3DDrawFlags>(mat->renderFlags));
-    state.lastRenderFlags = mat->renderFlags;
-  }
+  // @TODO: optimize to u8
+  t3d_state_set_drawflags(static_cast<T3DDrawFlags>(t3dDrawFlags));
 }
 
-void P64::Renderer::WIP_T3DMaterial::end(WIP_T3DModelState &state)
+void P64::Renderer::Material::end(WIP_T3DModelState &state)
 {
+  if(sets(FLAG_OVERRIDE)) {
+    rdpq_mode_pop();
+  }
 }
 
 

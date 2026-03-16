@@ -157,8 +157,10 @@ void Project::Assets::Material::fromT3D(::Project::AssetManager &assets, const T
   convertTex(matT3D.texA, tex0);
   convertTex(matT3D.texB, tex1);
 
+  ccSet.value = true;
   cc.value = matT3D.colorCombiner;
   drawFlags.value = matT3D.drawFlags;
+
   vertexFX.value = matT3D.vertexFxFunc;
 
   if(matT3D.fogMode == T3D_FOG_MODE_ACTIVE) {

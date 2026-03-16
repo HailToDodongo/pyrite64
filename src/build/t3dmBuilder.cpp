@@ -11,35 +11,61 @@
 #include "../utils/logger.h"
 #include "../utils/proc.h"
 #include "tiny3d/tools/gltf_importer/src/parser.h"
+#include "../../n64/engine/include/renderer/material.h"
 
 namespace fs = std::filesystem;
 
 namespace
 {
-  bool matWriter(Build::SceneCtx &sceneCtx, std::shared_ptr<BinaryFile> f, const T3DM::Material &material, uint32_t matIdx)
-  {
-    f->write(material.colorCombiner);
-    f->write(material.otherModeValue);
-    f->write(material.otherModeMask);
-    f->write(material.blendMode);
-    f->write(material.drawFlags);
+  bool matWriter(
+    Build::SceneCtx &sceneCtx,
+    std::shared_ptr<BinaryFile> f,
+    const Project::Assets::Material &mat
+  ) {
+    uint32_t flags = 0;
 
-    f->write<uint8_t>(42);
-    f->write(material.fogMode);
-    f->write<uint8_t>(
-      material.setPrimColor |
-      (material.setEnvColor << 1) |
-      (material.setBlendColor << 2)
-    );
-    f->write(material.vertexFxFunc);
+    auto posStart = f->getPos();
+    f->write<uint32_t>(0); // set later
+    f->write<uint32_t>(mat.drawFlags.value);
 
-    f->writeArray(material.primColor, 4);
-    f->writeArray(material.envColor, 4);
-    f->writeArray(material.blendColor, 4);
+    if(mat.ccSet.value) {
+      flags |= P64::Renderer::Material::FLAG_CC;
+      f->write(mat.cc.value);
+    }
+    if(mat.blenderSet.value) {
+      flags |= P64::Renderer::Material::FLAG_BLENDER;
+      f->write(mat.blender.value);
+    }
+    if(mat.fogSet.value) {
+      flags |= P64::Renderer::Material::FLAG_FOG;
+      f->write(mat.fog.value);
+    }
+    if(mat.primColorSet.value) {
+      flags |= P64::Renderer::Material::FLAG_PRIM;
+      auto col = mat.primColor.value * 255.0f;
+      f->write((uint8_t)col.r);
+      f->write((uint8_t)col.g);
+      f->write((uint8_t)col.b);
+      f->write((uint8_t)col.a);
+    }
+    if(mat.envColorSet.value) {
+      flags |= P64::Renderer::Material::FLAG_ENV;
+      auto col = mat.envColor.value * 255.0f;
+      f->write((uint8_t)col.r);
+      f->write((uint8_t)col.g);
+      f->write((uint8_t)col.b);
+      f->write((uint8_t)col.a);
+    }
 
-    std::vector materials{&material.texA, &material.texB};
-    for(const T3DM::MaterialTexture* mat_ : materials) {
-      const T3DM::MaterialTexture&mat = *mat_;
+    f->posPush();
+      f->setPos(posStart);
+      f->write(flags);
+    f->posPop();
+
+    //std::vector materials{&material.texA, &material.texB};
+    //for(const T3DM::MaterialTexture* mat_ : materials)
+/*    {
+      const T3DM::MaterialTexture&mat;// = *mat_;
 
       f->write((uint32_t)0); // runtime pointer
 
@@ -67,6 +93,7 @@ namespace
       writeTile(mat.s);
       writeTile(mat.t);
     }
+    */
     return true;
   }
 }
@@ -146,11 +173,12 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
       auto &t3dm = model.model.t3dm;
 
       config.materialWriter = [&sceneCtx, &model](std::shared_ptr<BinaryFile> f, const T3DM::Material &material, uint32_t matIdx) {
-        auto pyriteMat = model.model.t3dm.materials.find(material.name);
-        if(pyriteMat != model.model.t3dm.materials.end()) {
+        auto pyriteMat = model.model.materials.find(material.name);
+        if(pyriteMat != model.model.materials.end()) {
           printf("Using custom material writer for '%s'\n", material.name.c_str());
+          return matWriter(sceneCtx, f, pyriteMat->second);
         }
-        return matWriter(sceneCtx, f, material, matIdx);
+        throw std::runtime_error("Missing material: " + material.name);
       };
 
       T3DM::writeT3DM(config, t3dm, t3dmPath.string().c_str());

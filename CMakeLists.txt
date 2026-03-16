@@ -271,6 +271,7 @@ add_executable(pyrite64 src/main.cpp
         src/project/assets/material.h
         src/project/assets/material.cpp
         src/project/assets/model3d.h
+        src/n64/libdragon.h
 )
 
 target_include_directories(pyrite64 PRIVATE
@@ -286,6 +287,7 @@ target_include_directories(pyrite64 PRIVATE
     vendored/tiny3d/tools/gltf_importer/src/lib
     vendored/libdragon
     vendored/SDL_shadercross/include
+    src/n64
     n64
 )
 

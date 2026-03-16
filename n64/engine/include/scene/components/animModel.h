@@ -34,7 +34,7 @@ namespace P64::Comp
       uint8_t flags{0};
 
     public:
-      Renderer::Material material{};
+      Renderer::MaterialInstance material{};
       float blendFactor{0.5f};
 
       void setMainAnim(int16_t idx);
