@@ -21,7 +21,7 @@ namespace
     uint16_t assetIdx;
     uint8_t layer;
     uint8_t flags;
-    P64::Renderer::Material material;
+    P64::Renderer::MaterialInstance material;
     uint8_t meshIdxCount;
     uint8_t meshIndices[];
   };
@@ -36,13 +36,15 @@ namespace
     while(t3d_model_iter_next(&it))
     {
       //P64::Log::info("Object: %s", it.object->name);
-      auto *mat = (P64::Renderer::WIP_T3DMaterial*)it.object->material;
+      auto *mat = (P64::Renderer::Material*)it.object->material;
+      assert(mat);
       mat->begin(state);
+      rdpq_sync_tile(); // @TODO: auto-sync
       t3d_model_draw_object(it.object, nullptr);
       mat->end(state);
     }
 
-    if(state.lastVertFXFunc != T3D_VERTEX_FX_NONE)t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0, 0);
+    //if(state.lastVertFXFunc != T3D_VERTEX_FX_NONE)t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0, 0);
     model->userBlock = rspq_block_end();
   }
 
@@ -121,11 +123,10 @@ namespace P64::Comp
         rspq_block_begin();
 
           Renderer::WIP_T3DModelState state{};
-          auto *mat = (Renderer::WIP_T3DMaterial*)it.object->material;
+          auto *mat = (Renderer::Material*)it.object->material;
           mat->begin(state);
           t3d_model_draw_object(it.object, nullptr);
           mat->end(state);
-          t3d_model_draw_object(it.object, nullptr);
 
           if(it.object->material->vertexFxFunc) { // @TODO: fix this in t3d
             t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0,0);

@@ -5,11 +5,14 @@
 #pragma once
 #include <libdragon.h>
 
-#include "scene/scene.h"
+namespace P64
+{
+  class Object;
+}
 
 namespace P64::Renderer
 {
-  struct Material
+  struct MaterialInstance
   {
     constexpr static uint16_t MASK_DEPTH  = 1 << 0;
     constexpr static uint16_t MASK_PRIM   = 1 << 1;
@@ -57,47 +60,78 @@ namespace P64::Renderer
     uint8_t lastFogMode{0xFF};
   };
 
-  // @TODO: temporary hack to migrate t3d materials:
-  typedef struct {
-    float low;
-    float height;
-    int8_t mask;
-    int8_t shift;
-    uint8_t mirror;
-    uint8_t clamp;
-  } WIP_T3DMaterialAxis;
-
-  // @TODO: temporary hack to migrate t3d materials:
-  struct WIP_T3DMaterial
+  struct Material
   {
-    typedef struct {
-      sprite_t* texture;
-      uint16_t texReference; // dynamic/offscreen texture if non-zero, can be set in fast64
+    struct TileAxis {
+      float offset;
+      int16_t repeat;
+      int8_t scale;
+      int8_t mirror;
+    };
+
+    struct Tile {
       uint16_t texAssetIdx;
-      uint16_t texWidth;
-      uint16_t texHeight;
+      uint16_t texReference;
+      TileAxis s;
+      TileAxis t;
+    };
 
-      WIP_T3DMaterialAxis s;
-      WIP_T3DMaterialAxis t;
-    } WIP_T3DMaterialTexture;
+    // flags which settings to set: (NOTE: keep in sync with the builder!)
+    constexpr static uint32_t FLAG_AA         = 1 << 0;
+    constexpr static uint32_t FLAG_FOG        = 1 << 1;
+    constexpr static uint32_t FLAG_DITHER     = 1 << 2;
+    constexpr static uint32_t FLAG_FILTER     = 1 << 3;
+    constexpr static uint32_t FLAG_ZMODE      = 1 << 4;
+    constexpr static uint32_t FLAG_ZPRIM      = 1 << 5;
+    constexpr static uint32_t FLAG_PERSP      = 1 << 6;
+    constexpr static uint32_t FLAG_ALPHA_COMP = 1 << 7;
 
-    uint64_t colorCombiner;
-    uint64_t otherModeValue;
-    uint64_t otherModeMask;
-    uint32_t blendMode;
-    uint32_t renderFlags;
+    constexpr static uint32_t FLAG_TEX0       = 1 << 8;
+    constexpr static uint32_t FLAG_TEX1       = 1 << 9;
+    constexpr static uint32_t FLAG_CC         = 1 << 10;
+    constexpr static uint32_t FLAG_BLENDER    = 1 << 11;
+    constexpr static uint32_t FLAG_K4K5       = 1 << 12;
+    constexpr static uint32_t FLAG_PRIMLOD    = 1 << 13;
+    constexpr static uint32_t FLAG_PRIM       = 1 << 14;
+    constexpr static uint32_t FLAG_ENV        = 1 << 15;
 
-    uint8_t _unused00_; // see: T3D_ALPHA_MODE_xxx
-    uint8_t fogMode; // see: T3D_FOG_MODE_xxx
-    uint8_t setColorFlags;
-    uint8_t vertexFxFunc;
+    constexpr static uint32_t FLAG_T3D_VERT_FX = 1 << 16;
+    constexpr static uint32_t FLAG_T3D_        = 1 << 17;
 
-    color_t primColor;
-    color_t envColor;
-    color_t blendColor;
+    constexpr static uint32_t FLAG_OVERRIDE    = 1 << 18;
 
-    WIP_T3DMaterialTexture textureA;
-    WIP_T3DMaterialTexture textureB;
+    // some data is stored directly in the flag value:
+
+    [[nodiscard]] constexpr rdpq_antialias_t getAA() const {
+      return static_cast<rdpq_antialias_t>(flagsData >> 19 & 0b11);
+    }
+
+    [[nodiscard]] constexpr rdpq_filter_t getFilter() const {
+      return static_cast<rdpq_filter_t>(flagsData >> 21 & 0b11);
+    }
+
+    [[nodiscard]] constexpr bool getZRead() const {
+      return flagsData & (1 << 23);
+    }
+    [[nodiscard]] constexpr bool getZWrite() const {
+      return flagsData & (1 << 24);
+    }
+    [[nodiscard]] constexpr bool getModePersp() const {
+      return flagsData & (1 << 25);
+    }
+    [[nodiscard]] constexpr rdpq_dither_t getDither() const {
+      return static_cast<rdpq_dither_t>(flagsData >> 26 & 0b1111);
+    }
+
+    uint32_t flagsData;
+    uint32_t t3dDrawFlags;
+
+    [[nodiscard]] constexpr bool sets(uint32_t flag) const {
+      return (flagsData & flag) != 0;
+    }
+
+    // data values follow here
+    char data[];
 
     void begin(WIP_T3DModelState &state);
     void end(WIP_T3DModelState &state);

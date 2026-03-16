@@ -20,7 +20,7 @@ namespace
     uint16_t assetIdx;
     uint8_t layer;
     uint8_t flags;
-    P64::Renderer::Material material;
+    P64::Renderer::MaterialInstance material;
   };
 }
 
@@ -113,7 +113,7 @@ namespace P64::Comp
     it = t3d_model_iter_create(data->model, T3D_CHUNK_TYPE_OBJECT);
     while(t3d_model_iter_next(&it))
     {
-      auto *mat = (P64::Renderer::WIP_T3DMaterial*)it.object->material;
+      auto *mat = (P64::Renderer::Material*)it.object->material;
       mat->begin(state);
       t3d_model_draw_object(it.object, boneSeg);
       mat->end(state);
