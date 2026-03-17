@@ -102,6 +102,44 @@ namespace
       f->write<uint8_t>(mat.vertexFX.value);
     }
 
+    if(mat.alphaCompSet.value) {
+      flags |= P64::Renderer::Material::FLAG_ALPHA_COMP;
+      f->write<uint8_t>(mat.alphaComp.value);
+    }
+
+    if(mat.k4k5Set.value) {
+      flags |= P64::Renderer::Material::FLAG_K4K5;
+      f->write<uint8_t>(mat.k4.value);
+      f->write<uint8_t>(mat.k5.value);
+    }
+
+    if(mat.primLodSet.value) {
+      flags |= P64::Renderer::Material::FLAG_PRIMLOD;
+      f->write<uint8_t>(mat.primLod.value);
+    }
+
+    if(mat.aaSet.value) {
+      flags |= P64::Renderer::Material::FLAG_AA;
+      flags |= (mat.aa.value & 0b11) << 19;
+    }
+    if(mat.ditherSet.value) {
+      flags |= P64::Renderer::Material::FLAG_DITHER;
+      flags |= (mat.dither.value & 0b1111) << 26;
+    }
+    if(mat.filterSet.value) {
+      flags |= P64::Renderer::Material::FLAG_FILTER;
+      flags |= (mat.filter.value & 0b11) << 21;
+    }
+    if(mat.zmodeSet.value) {
+      flags |= P64::Renderer::Material::FLAG_ZMODE;
+      flags |= (mat.zRead.value ? 1 : 0) << 23;
+      flags |= (mat.zWrite.value ? 1 : 0) << 24;
+    }
+    if(mat.perspSet.value) {
+      flags |= P64::Renderer::Material::FLAG_PERSP;
+      flags |= (mat.persp.value ? 1 : 0) << 25;
+    }
+
     f->posPush();
       f->setPos(posStart);
       f->write(flags);

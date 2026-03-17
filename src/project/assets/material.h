@@ -43,7 +43,9 @@ namespace Project::Assets
     PROP_U32(fog);     PROP_BOOL(fogSet);
     PROP_U32(dither);  PROP_BOOL(ditherSet);
     PROP_U32(filter);  PROP_BOOL(filterSet);
-    PROP_U32(zmode);   PROP_BOOL(zmodeSet);
+
+    PROP_BOOL(zRead); PROP_BOOL(zWrite);
+    PROP_BOOL(zmodeSet);
 
     PROP_S32(zprim); PROP_BOOL(zprimSet);
     PROP_S32(zdelta);
