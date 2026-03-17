@@ -125,5 +125,11 @@ namespace P64::Renderer
 
     void begin(MaterialState &state);
     void end(MaterialState &state);
+
+    void destroy() {
+      flagsData = 0;
+    }
+
+    const Tile* getTile(uint8_t idx);
   };
 }
