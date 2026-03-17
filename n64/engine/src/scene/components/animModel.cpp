@@ -104,7 +104,7 @@ namespace P64::Comp
       ++i;
     }
 
-    Renderer::WIP_T3DModelState state{};
+    Renderer::MaterialState state{};
 
     if(data->model->userBlock)return; // already recorded the model
     rspq_block_begin();
@@ -119,7 +119,6 @@ namespace P64::Comp
       mat->end(state);
     }
 
-    if(state.lastVertFXFunc != T3D_VERTEX_FX_NONE)t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0, 0);
     data->model->userBlock = rspq_block_end();
   }
 

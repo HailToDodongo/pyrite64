@@ -28,6 +28,37 @@ namespace
     f->write<uint32_t>(0); // set later
     f->write<uint32_t>(mat.drawFlags.value);
 
+
+    auto writeTex = [&](const Project::Assets::MaterialTex &tex)
+    {
+      auto assetIdx = sceneCtx.assetUUIDToIdx.find(tex.texUUID.value);
+      if(assetIdx == sceneCtx.assetUUIDToIdx.end()) {
+        throw std::runtime_error("Material Texture UUID not found: " + std::to_string(tex.texUUID.value));
+      }
+
+      f->write<uint16_t>(assetIdx->second);
+      f->write<uint16_t>(tex.placeholder.value);
+
+      f->write<uint16_t>(tex.offsetS.value * 8.0f);
+      f->write<uint16_t>(tex.repeatS.value * 16);
+      f->write<int8_t>(tex.scaleS.value);
+      f->write<int8_t>(tex.mirrorS.value ? 1 : 0);
+
+      f->write<uint16_t>(tex.offsetT.value * 8.0f);
+      f->write<uint16_t>(tex.repeatT.value * 16);
+      f->write<int8_t>(tex.scaleT.value);
+      f->write<int8_t>(tex.mirrorT.value ? 1 : 0);
+    };
+
+    if(mat.tex0.set.value) {
+      flags |= P64::Renderer::Material::FLAG_TEX0;
+      writeTex(mat.tex0);
+    }
+    if(mat.tex1.set.value) {
+      flags |= P64::Renderer::Material::FLAG_TEX1;
+      writeTex(mat.tex1);
+    }
+
     if(mat.ccSet.value) {
       flags |= P64::Renderer::Material::FLAG_CC;
       f->write(mat.cc.value);
@@ -57,43 +88,25 @@ namespace
       f->write((uint8_t)col.a);
     }
 
+    if(mat.zprimSet.value) {
+      flags |= P64::Renderer::Material::FLAG_ZPRIM;
+      f->write<int16_t>(mat.zprim.value);
+      f->write<int16_t>(mat.zdelta.value);
+    }
+
+    if(mat.vertexFX.value != 0)
+    {
+      flags |= P64::Renderer::Material::FLAG_T3D_VERT_FX;
+      f->write<uint16_t>(mat.tex0.width.value);
+      f->write<uint16_t>(mat.tex0.height.value);
+      f->write<uint8_t>(mat.vertexFX.value);
+    }
+
     f->posPush();
       f->setPos(posStart);
       f->write(flags);
     f->posPop();
 
-    //std::vector materials{&material.texA, &material.texB};
-    //for(const T3DM::MaterialTexture* mat_ : materials)
-/*    {
-      const T3DM::MaterialTexture&mat;// = *mat_;
-
-      f->write((uint32_t)0); // runtime pointer
-
-      if(!mat.texPathRom.empty()) {
-        auto asset = sceneCtx.project->getAssets().getByPath(mat.texPath);
-        uint32_t assetIdx = sceneCtx.assetUUIDToIdx[asset->getUUID()];
-        f->write<uint16_t>(0);
-        f->write<uint16_t>(assetIdx);
-      } else {
-        f->write<uint16_t>(mat.texReference);
-        f->write<uint16_t>(0xFFFF);
-      }
-
-      f->write((uint16_t)mat.texWidth);
-      f->write((uint16_t)mat.texHeight);
-
-      auto writeTile = [&](const T3DM::TileParam &tile) {
-        f->write(tile.low);
-        f->write(tile.high);
-        f->write(tile.mask);
-        f->write(tile.shift);
-        f->write(tile.mirror);
-        f->write(tile.clamp);
-      };
-      writeTile(mat.s);
-      writeTile(mat.t);
-    }
-    */
     return true;
   }
 }

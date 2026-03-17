@@ -45,8 +45,8 @@ namespace Project::Assets
     PROP_U32(filter);  PROP_BOOL(filterSet);
     PROP_U32(zmode);   PROP_BOOL(zmodeSet);
 
-    PROP_U32(zprim); PROP_BOOL(zprimSet);
-    PROP_U32(zdelta);
+    PROP_S32(zprim); PROP_BOOL(zprimSet);
+    PROP_S32(zdelta);
 
     PROP_BOOL(persp);    PROP_BOOL(perspSet);
     PROP_U32(alphaComp); PROP_BOOL(alphaCompSet);

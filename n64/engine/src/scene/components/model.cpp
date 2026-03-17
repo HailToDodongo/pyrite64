@@ -29,8 +29,7 @@ namespace
   void recordWholeModel(T3DModel *model)
   {
     rspq_block_begin();
-
-    P64::Renderer::WIP_T3DModelState state{};
+    P64::Renderer::MaterialState state{};
 
     T3DModelIter it = t3d_model_iter_create(model, T3D_CHUNK_TYPE_OBJECT);
     while(t3d_model_iter_next(&it))
@@ -39,12 +38,10 @@ namespace
       auto *mat = (P64::Renderer::Material*)it.object->material;
       assert(mat);
       mat->begin(state);
-      rdpq_sync_tile(); // @TODO: auto-sync
       t3d_model_draw_object(it.object, nullptr);
       mat->end(state);
     }
 
-    //if(state.lastVertFXFunc != T3D_VERTEX_FX_NONE)t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0, 0);
     model->userBlock = rspq_block_end();
   }
 
@@ -122,15 +119,12 @@ namespace P64::Comp
         if(it.object->userBlock)return; // already recorded the model
         rspq_block_begin();
 
-          Renderer::WIP_T3DModelState state{};
+          Renderer::MaterialState state{};
           auto *mat = (Renderer::Material*)it.object->material;
           mat->begin(state);
           t3d_model_draw_object(it.object, nullptr);
           mat->end(state);
 
-          if(it.object->material->vertexFxFunc) { // @TODO: fix this in t3d
-            t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0,0);
-          }
         it.object->userBlock = rspq_block_end();
       }
       //t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0,0);

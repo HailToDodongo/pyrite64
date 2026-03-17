@@ -26,7 +26,7 @@ void P64::Renderer::BigTex::patchT3DM(T3DModel &model)
     if(it.object->userBlock)return; // already processed
     objects.push_back(it.object);
   }
-
+/*
   uint8_t baseAddrMat = (TEX_BASE_ADDR >> 16) & 0xFF;
   for(auto &obj : objects)
   {
@@ -50,13 +50,13 @@ void P64::Renderer::BigTex::patchT3DM(T3DModel &model)
     mat->primColor = {(uint8_t)(baseAddrMat + matIdx),0,0,0xFF};
     ++matIdx;
   }
-
+*/
   rspq_block_begin();
     for(auto obj : objects)
     {
-      auto *mat = (P64::Renderer::WIP_T3DMaterial*)obj->material;
-      rdpq_set_prim_color(mat->primColor);
-      t3d_state_set_drawflags(static_cast<enum T3DDrawFlags>(mat->renderFlags));
+      auto *mat = (P64::Renderer::Material*)obj->material;
+      //rdpq_set_prim_color(mat->primColor);
+      //t3d_state_set_drawflags(static_cast<enum T3DDrawFlags>(mat->renderFlags));
       t3d_model_draw_object(obj, nullptr);
     }
     t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0,0);

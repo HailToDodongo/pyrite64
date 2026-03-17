@@ -58,73 +58,6 @@ void P64::Renderer::MaterialInstance::end()
 
 namespace
 {
-  inline bool is_power_of_two(uint16_t x) {
-    return (x & (x - 1)) == 0;
-  }
-
-  void set_texture(P64::Renderer::Material *mat, rdpq_tile_t tile)
-  {
-    /*auto *tex = tile == TILE0 ? &mat->textureA : &mat->textureB;
-
-    //P64::Log::info("Tex: TILE%d A:%08X R:%08X, wh: %d %d", tile, tex->texAssetIdx, tex->texReference, tex->texWidth, tex->texHeight);
-
-    if(tex->texAssetIdx != 0xFFFF || tex->texReference)
-    {
-      if(tex->texAssetIdx != 0xFFFF && !tex->texture) {
-        tex->texture = static_cast<sprite_t*>(
-          P64::AssetManager::getByIndex(tex->texAssetIdx)
-        );
-      }
-
-      rdpq_texparms_t texParam = (rdpq_texparms_t){};
-      texParam.s.translate = tex->s.low;
-      texParam.s.mirror = tex->s.mirror;
-      texParam.s.repeats = REPEAT_INFINITE;
-      texParam.s.scale_log = (int)tex->s.shift;
-
-      if(tex->s.clamp) {
-        if(is_power_of_two(tex->texWidth)) {
-          texParam.s.repeats = (tex->s.height+1.0f) / (float)tex->texWidth;
-        } else {
-          texParam.s.repeats = 1;
-        }
-      }
-
-      texParam.t.translate = tex->t.low;
-      texParam.t.mirror = tex->t.mirror;
-      texParam.t.repeats = REPEAT_INFINITE;
-      texParam.t.scale_log = (int)tex->t.shift;
-
-      if(tex->t.clamp) {
-        if(is_power_of_two(tex->texHeight)) {
-          texParam.t.repeats = (tex->t.height+1.0f) / (float)tex->texHeight;
-        } else {
-          texParam.t.repeats = 1;
-        }
-      }
-
-
-
-      // @TODO: don't upload texture if only the tile settings differ
-      if(tex->texReference) {
-        P64::Log::error("Dynamic textures not supported yet! (%08X | %08X/%08X)", tex->texReference, mat->textureA.texAssetIdx, mat->textureB.texAssetIdx);
-        //assertf(false, "Dynamic textures not supported yet");
-        //if(conf && conf->dynTextureCb)conf->dynTextureCb(conf->userData, mat, &texParam, tile);
-      } else {
-        P64::Log::info("Load texture: %d\n", tex->texAssetIdx);
-        rdpq_sync_tile();
-        if(tile == TILE1 && mat->textureA.texAssetIdx == mat->textureB.texAssetIdx) {
-          rdpq_tex_reuse(TILE1, &texParam);
-        } else {
-          rdpq_sprite_upload(tile, tex->texture, &texParam);
-        }
-      }
-    }*/
-  }
-}
-
-namespace
-{
   struct DynamicData
   {
     char* data{};
@@ -136,13 +69,30 @@ namespace
       return *res;
     }
   };
+
+  constexpr rdpq_texparms_t unpackTile(const P64::Renderer::Material::Tile &tile)
+  {
+    rdpq_texparms_t params{};
+    params.s.translate = static_cast<float>(tile.s.offset) * (1.0f / 8.0f);
+    params.s.scale_log = tile.s.scale;
+    params.s.repeats = static_cast<float>(tile.s.repeat) * (1.0f / 16.0f);
+    params.s.mirror = tile.s.mirror;
+
+    params.t.translate = static_cast<float>(tile.t.offset) * (1.0f / 8.0f);
+    params.t.scale_log = tile.t.scale;
+    params.t.repeats = static_cast<float>(tile.t.repeat) * (1.0f / 16.0f);
+    params.t.mirror = tile.t.mirror;
+    return params;
+  }
 }
 
-// @TODO: temporary hack to migrate t3d:
-void P64::Renderer::Material::begin(WIP_T3DModelState &state)
+void P64::Renderer::Material::begin(MaterialState &state)
 {
   state = {};
   DynamicData ptr{data};
+  uint8_t t3dVertFxFunc{};
+  uint16_t t3dVertFxArg0{};
+  uint16_t t3dVertFxArg1{};
 
   if(sets(FLAG_OVERRIDE)) {
     rdpq_mode_push();
@@ -150,15 +100,38 @@ void P64::Renderer::Material::begin(WIP_T3DModelState &state)
 
   rdpq_mode_begin();
 
-  if(sets(FLAG_TEX0)) {
-    auto &tile = ptr.fetch<Tile>();
-    // @TODO:
+  if(sets(FLAG_TEX0) || sets(FLAG_TEX1))
+  {
+    bool setsBothTex = sets(FLAG_TEX0) && sets(FLAG_TEX1);
+    if(setsBothTex)rdpq_tex_multi_begin();
+
+    uint16_t lastTexIdx = 0xFFFF;
+
+    if(sets(FLAG_TEX0))
+    {
+      auto &tile = ptr.fetch<Tile>();
+      auto params = unpackTile(tile);
+      lastTexIdx = tile.texAssetIdx;
+      auto sprite = (sprite_t*)AssetManager::getByIndex(tile.texAssetIdx);
+      rdpq_sprite_upload(TILE0, sprite, &params);
+      assert(sprite);
+    }
+    if(sets(FLAG_TEX1))
+    {
+      auto &tile = ptr.fetch<Tile>();
+      auto params = unpackTile(tile);
+
+      if(lastTexIdx != tile.texAssetIdx)
+      {
+        auto sprite = (sprite_t*)AssetManager::getByIndex(tile.texAssetIdx);
+        assert(sprite);
+        rdpq_sprite_upload(TILE1, sprite, &params);
+      } else {
+        rdpq_tex_reuse(TILE1, &params);
+      }
+    }
+    if(setsBothTex)rdpq_tex_multi_end();
   }
-  if(sets(FLAG_TEX1)) {
-    auto &tile = ptr.fetch<Tile>();
-    // @TODO:
-  }
-  debugf("FLAGS: %08lX\n", flagsData);
 
   if(sets(FLAG_CC)) {
     rdpq_mode_combiner(ptr.fetch<rdpq_combiner_t>());
@@ -180,6 +153,13 @@ void P64::Renderer::Material::begin(WIP_T3DModelState &state)
     const auto zDelta = ptr.fetch<int16_t>();
     rdpq_mode_zoverride(true, zPrim, zDelta);
   }
+
+  if(sets(FLAG_T3D_VERT_FX)) {
+    t3dVertFxArg0 = ptr.fetch<uint16_t>();
+    t3dVertFxArg1 = ptr.fetch<uint16_t>();
+    t3dVertFxFunc = ptr.fetch<uint8_t>();
+  }
+
   if(sets(FLAG_ALPHA_COMP)) {
     rdpq_mode_alphacompare(ptr.fetch<uint8_t>());
   }
@@ -209,21 +189,24 @@ void P64::Renderer::Material::begin(WIP_T3DModelState &state)
 
   rdpq_mode_end();
 
+  // t3d calls should be at the end to avoid needless ucode switches,
+  // after the material t3d calls for the mesh follow
   if(sets(FLAG_T3D_VERT_FX)) {
-    /*const auto fn = ptr.fetch<int16_t>();
-    const auto arg0 = ptr.fetch<int16_t>();
-    const auto arg1 = ptr.fetch<int16_t>();
-    t3d_state_set_vertex_fx(static_cast<T3DVertexFX>(fn), arg0, arg1);
-    */
-    assertf(false, "@TODO: FLAG_T3D_VERT_FX");
+    t3d_state_set_vertex_fx(
+      static_cast<T3DVertexFX>(t3dVertFxFunc),
+      t3dVertFxArg0, t3dVertFxArg1
+    );
   }
 
   // @TODO: optimize to u8
   t3d_state_set_drawflags(static_cast<T3DDrawFlags>(t3dDrawFlags));
 }
 
-void P64::Renderer::Material::end(WIP_T3DModelState &state)
+void P64::Renderer::Material::end(MaterialState &state)
 {
+  if(sets(FLAG_T3D_VERT_FX)) {
+    t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0, 0);
+  }
   if(sets(FLAG_OVERRIDE)) {
     rdpq_mode_pop();
   }
