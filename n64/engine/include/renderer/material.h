@@ -43,28 +43,18 @@ namespace P64::Renderer
     void end();
   };
 
-  // @TODO: temporary hack to migrate t3d materials:
-  struct WIP_T3DModelState {
-    uint64_t lastCC{0};
-    uint64_t lastOtherMode{0};
-    uint32_t lastRenderFlags{0};
-
+  struct MaterialState {
     uint16_t lastTextureIdxA{0xFFFF};
     uint16_t lastTextureIdxB{0xFFFF};
-    uint16_t lastUvGenParams[2]{0,0};
-
-    color_t lastPrimColor{};
-    color_t lastEnvColor{};
-    color_t lastBlendColor{};
-    uint8_t lastVertFXFunc{0};
-    uint8_t lastFogMode{0xFF};
+    //uint16_t lastUvGenParams[2]{0,0};
+    //uint8_t lastVertFXFunc{0};
   };
 
   struct Material
   {
     struct TileAxis {
-      float offset;
-      int16_t repeat;
+      uint16_t offset;
+      uint16_t repeat;
       int8_t scale;
       int8_t mirror;
     };
@@ -133,7 +123,7 @@ namespace P64::Renderer
     // data values follow here
     char data[];
 
-    void begin(WIP_T3DModelState &state);
-    void end(WIP_T3DModelState &state);
+    void begin(MaterialState &state);
+    void end(MaterialState &state);
   };
 }
