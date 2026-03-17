@@ -212,4 +212,20 @@ void P64::Renderer::Material::end(MaterialState &state)
   }
 }
 
+const P64::Renderer::Material::Tile* P64::Renderer::Material::getTile(uint8_t idx)
+{
+  assert(idx < 2);
+
+  DynamicData ptr{data};
+  if(sets(FLAG_TEX0)) {
+    if(idx == 0)return &ptr.fetch<Tile>();
+    ptr.fetch<Tile>(); // skip
+  }
+  if(sets(FLAG_TEX1)) {
+    if(idx == 1)return &ptr.fetch<Tile>();
+    ptr.fetch<Tile>(); // skip
+  }
+  return nullptr;
+}
+
 
