@@ -166,10 +166,10 @@ void Project::Assets::Material::fromT3D(::Project::AssetManager &assets, const T
   vertexFX.value = matT3D.vertexFxFunc;
 
   if(matT3D.fogMode == T3D_FOG_MODE_ACTIVE) {
-    fogSet.value = true;
+    //fogSet.value = true;
     fogToAlpha.value = 1;
   } else if(matT3D.fogMode == T3D_FOG_MODE_DISABLED) {
-    fogSet.value = true;
+    //fogSet.value = true;
     fogToAlpha.value = 0;
   }
 
