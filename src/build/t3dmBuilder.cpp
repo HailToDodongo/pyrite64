@@ -132,8 +132,7 @@ namespace
     }
     if(mat.zmodeSet.value) {
       flags |= P64::Renderer::Material::FLAG_ZMODE;
-      flags |= (mat.zRead.value ? 1 : 0) << 23;
-      flags |= (mat.zWrite.value ? 1 : 0) << 24;
+      flags |= (mat.zmode.value ? 1 : 0) << 24;
     }
     if(mat.perspSet.value) {
       flags |= P64::Renderer::Material::FLAG_PERSP;
