@@ -39,19 +39,19 @@ namespace Project::Assets
     // Render-Mode settings
     PROP_U64(cc);      PROP_BOOL(ccSet);
     PROP_U32(blender); PROP_BOOL(blenderSet);
-    PROP_U32(aa);      PROP_BOOL(aaSet);
+    PROP_S32(aa);      PROP_BOOL(aaSet);
     PROP_U32(fog);     PROP_BOOL(fogSet);
-    PROP_U32(dither);  PROP_BOOL(ditherSet);
-    PROP_U32(filter);  PROP_BOOL(filterSet);
+    PROP_S32(dither);  PROP_BOOL(ditherSet);
+    PROP_S32(filter);  PROP_BOOL(filterSet);
 
-    PROP_BOOL(zRead); PROP_BOOL(zWrite);
+    PROP_S32(zmode);
     PROP_BOOL(zmodeSet);
 
     PROP_S32(zprim); PROP_BOOL(zprimSet);
     PROP_S32(zdelta);
 
     PROP_BOOL(persp);    PROP_BOOL(perspSet);
-    PROP_U32(alphaComp); PROP_BOOL(alphaCompSet);
+    PROP_S32(alphaComp); PROP_BOOL(alphaCompSet);
 
     // Textures
     MaterialTex tex0{};

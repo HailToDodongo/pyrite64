@@ -59,7 +59,7 @@ nlohmann::json Project::Assets::Material::serialize() const
     .set(fog).set(fogSet)
     .set(dither).set(ditherSet)
     .set(filter).set(filterSet)
-    .set(zRead).set(zWrite).set(zmodeSet)
+    .set(zmode).set(zmodeSet)
 
     .set(zprim).set(zprimSet)
     .set(zdelta)
@@ -92,9 +92,7 @@ void Project::Assets::Material::deserialize(const nlohmann::json &doc)
   J::readProp(doc, fog);     J::readProp(doc, fogSet);
   J::readProp(doc, dither);  J::readProp(doc, ditherSet);
   J::readProp(doc, filter);  J::readProp(doc, filterSet);
-
-  J::readProp(doc, zmodeSet);
-  J::readProp(doc, zRead); J::readProp(doc, zWrite);
+  J::readProp(doc, zmode);   J::readProp(doc, zmodeSet);
 
   J::readProp(doc, zprim);   J::readProp(doc, zprimSet);
   J::readProp(doc, zdelta);

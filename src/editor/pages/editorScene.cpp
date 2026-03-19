@@ -43,18 +43,39 @@ Editor::Scene::Scene()
     return false;
   });
   needsSanityCheck = true;
+
+  try
+  {
+    auto json = Utils::JSON::loadFile(Utils::Proc::getAppDataPath() / "editorScene.json");
+    if(json.contains("winModels")) {
+      for(const auto& assetUUID : json["winModels"]) {
+        openModelEditor(assetUUID.get<uint64_t>());
+      }
+    }
+  } catch(const std::exception& e) {}
 }
 
 Editor::Scene::~Scene()
 {
+  nlohmann::json conf{};
+  conf["winModels"] = nlohmann::json::array();
+  for(const auto& [assetUUID, _] : modelEditors) {
+    conf["winModels"].push_back(assetUUID);
+  }
+
+  Utils::FS::saveTextFile(Utils::Proc::getAppDataPath() / "editorScene.json", conf.dump(2));
+
   Editor::Actions::registerAction(Editor::Actions::Type::OPEN_NODE_GRAPH, nullptr);
 }
 
 void Editor::Scene::openModelEditor(uint64_t assetUUID)
 {
-  modelEditors.push_back(
-    std::make_unique<ModelEditor>(assetUUID)
-  );
+  auto it = modelEditors.find(assetUUID);
+  if(it != modelEditors.end()) {
+    it->second->focus();
+  } else {
+    modelEditors[assetUUID] = std::make_unique<ModelEditor>(assetUUID);
+  }
 }
 
 void Editor::Scene::draw()
@@ -188,11 +209,13 @@ void Editor::Scene::draw()
     ImGui::EndPopup();
   }
 
-  for(auto &modelEditor : modelEditors) {
-    if (!modelEditor->draw(dockSpaceID)) {
-      //delIndices.push_back(&modelEditor - &modelEditors[0]);
+  std::vector<uint64_t> delUUIDs{};
+  for(auto &[uuid, editor] : modelEditors) {
+    if (!editor->draw(dockSpaceID)) {
+      delUUIDs.push_back(uuid);
     }
   }
+  for(auto &uuid : delUUIDs)modelEditors.erase(uuid);
 
   ImGui::Begin("Object");
     objectInspector.draw();
@@ -221,7 +244,6 @@ void Editor::Scene::draw()
     ImGui::Begin("Layers");
       layerInspector.draw();
     ImGui::End();
-
   }
 
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2_px, 2_px));

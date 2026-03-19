@@ -27,7 +27,7 @@ namespace Editor
 
       // Editors
       std::vector<std::shared_ptr<NodeEditor>> nodeEditors{};
-      std::vector<std::shared_ptr<ModelEditor>> modelEditors{};
+      std::map<uint64_t, std::shared_ptr<ModelEditor>> modelEditors{};
       PreferenceOverlay prefOverlay{};
       ProjectSettings projectSettings{};
       AssetsBrowser assetsBrowser{};
