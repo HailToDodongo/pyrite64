@@ -56,6 +56,47 @@ namespace
     "Cel-shade Alpha\0"
     "Outline\0"
     "UV Offset\0";
+
+  void toggleProp(const char* name, bool &propState, auto cb)
+  {
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::AlignTextToFramePadding();
+
+    ImGui::PushFont(nullptr, 18.0_px);
+
+    if(ImGui::IconButton(
+      propState
+      ? ICON_MDI_CHECKBOX_MARKED_CIRCLE
+      : ICON_MDI_CHECKBOX_BLANK_CIRCLE_OUTLINE,
+      {24_px,24_px},
+      ImVec4{1,1,1,1}
+    )) {
+      propState = !propState;
+      //Editor::UndoRedo::getHistory().markChanged("Edit " + name);
+    }
+    ImGui::PopFont();
+    ImGui::SameLine();
+
+    ImGui::SameLine();
+    ImGui::Text("%s", name);
+    ImGui::TableSetColumnIndex(1);
+
+    if(!propState)ImGui::BeginDisabled();
+    ImGui::PushID(name);
+    cb();
+    ImGui::PopID();
+    if(!propState)ImGui::EndDisabled();
+  }
+
+  template<typename T>
+  void toggleProp(const char* name, bool &propState, Property<T> &prop)
+  {
+    toggleProp(name, propState, [&prop](){
+      ImTable::typedInput(&prop.value);
+    });
+
+  }
 }
 
 bool Editor::ModelEditor::draw(ImGuiID defDockId)
@@ -91,8 +132,12 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
     {
       auto &mat = entry.second;
 
-      ImTable::start("Mat", nullptr, labelWidth);
-      ImTable::addProp("Override", mat.isCustom);
+      ImTable::start("General", nullptr, labelWidth);
+        ImTable::addProp("Override", mat.isCustom);
+
+      ImTable::add("CC"); ImGui::Text("@TODO");
+      ImTable::add("Blending"); ImGui::Text("@TODO");
+      ImTable::add("Fog"); ImGui::Text("@TODO");
 
       ImTable::end();
 
@@ -178,49 +223,66 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         ImGui::PopID();
       };
 
-      subSection("Values", [&]
-      {
-        ImTable::addProp("Prim-Color", mat.primColor);
-        ImTable::addProp("Env-Color", mat.envColor);
-        ImTable::addProp("Prim-LOD", mat.primLod);
-        mat.primLod.value = glm::clamp(mat.primLod.value, 0u, 255u);
-        ImTable::addProp("K4", mat.k4);
-        mat.k4.value = glm::clamp(mat.k4.value, 0u, 255u);
-        ImTable::addProp("K5", mat.k5);
-        mat.k5.value = glm::clamp(mat.k5.value, 0u, 255u);
-      });
-
       subSection("Texture 0", [&]{ drawMatTex(mat.tex0); });
       subSection("Texture 1", [&]{ drawMatTex(mat.tex1); });
       subSection("Sampling", [&]
       {
-        ImTable::addProp("Perspective", mat.persp);
+        toggleProp("Perspect.", mat.primLodSet.value, mat.persp);
 
-        ImTable::add("Dither");
-        ImGui::Combo("##Dither", &mat.dither.value, DITHER_MODES);
+        toggleProp("Dither", mat.ditherSet.value, [&] {
+          ImGui::Combo("##Dither", &mat.dither.value, DITHER_MODES);
+        });
 
-        ImTable::add("Filter");
-        int val = mat.filter.value == 0 ? 0 : 1; // map 2->1
-        ImGui::Combo("##Filtering", &val, "Nearest\0Bilinear\0");
-        mat.filter.value = val == 0 ? 0 : 2;
+        toggleProp("Filtering", mat.filterSet.value, [&] {
+          int val = mat.filter.value == 0 ? 0 : 1; // map 2->1
+          ImGui::Combo("##", &val, "Nearest\0Bilinear\0");
+          mat.filter.value = val == 0 ? 0 : 2;
+        });
+      });
+
+      subSection("Values", [&]
+      {
+        toggleProp("Prim", mat.primColorSet.value, mat.primColor);
+        toggleProp("Env", mat.envColorSet.value, mat.envColor);
+        toggleProp("LOD", mat.primLodSet.value, mat.primLod);
+        toggleProp("K4/K5", mat.k4k5Set.value, mat.k4k5);
+
+        mat.primLod.value = glm::clamp(mat.primLod.value, 0u, 255u);
+        mat.k4k5.value = glm::clamp(mat.k4k5.value, 0, 255);
       });
 
       subSection("Render Modes", [&]
       {
-        ImTable::add("Alpha-Clip");
-        ImGui::SliderInt("##AC", &mat.alphaComp.value, 0, 255,
-          mat.alphaComp.value == 0 ? "<Off>" : "%d"
-        );
-
-        ImTable::add("Depth");
-        ImGui::Combo("##Depth", &mat.zmode.value, Z_MODES);
-
-        ImTable::add("Anti-Alias");
-        ImGui::Combo("##AA", &mat.aa.value, AA_MODES);
-
-        ImTable::add("Vertex-Effect");
+        ImTable::add("Vertex FX");
         ImGui::Combo("##Vert", &mat.vertexFX.value, VERTEX_EFFECTS);
         ImTable::addProp("Fog to Alpha", mat.fogToAlpha);
+
+        toggleProp("Alpha-Clip", mat.alphaCompSet.value, [&] {
+          ImGui::SliderInt("##AC", &mat.alphaComp.value, 0, 255,
+            mat.alphaComp.value == 0 ? "<Off>" : "%d"
+          );
+        });
+
+        toggleProp("Depth", mat.zmodeSet.value, [&] {
+          ImGui::Combo("##", &mat.zmode.value, Z_MODES);
+        });
+
+        toggleProp("Fixed-Z", mat.zprimSet.value, [&]
+        {
+          ImGui::BeginGroup();
+            float width = ImGui::CalcItemWidth() - 4_px;
+            ImGui::PushMultiItemsWidths(2, width);
+            ImGui::InputInt("##0", &mat.zprim.value);
+
+            ImGui::PopItemWidth(); ImGui::SameLine();
+            ImGui::InputInt("##1", &mat.zdelta.value);
+            ImGui::PopItemWidth();
+          ImGui::EndGroup();
+        });
+
+        toggleProp("Anti-Alias", mat.aaSet.value, [&] {
+          ImGui::Combo("##AA", &mat.aa.value, AA_MODES);
+        });
       });
 
     }

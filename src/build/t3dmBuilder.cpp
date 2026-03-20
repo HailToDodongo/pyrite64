@@ -109,8 +109,8 @@ namespace
 
     if(mat.k4k5Set.value) {
       flags |= P64::Renderer::Material::FLAG_K4K5;
-      f->write<uint8_t>(mat.k4.value);
-      f->write<uint8_t>(mat.k5.value);
+      f->write<uint8_t>(mat.k4k5.value[0]);
+      f->write<uint8_t>(mat.k4k5.value[1]);
     }
 
     if(mat.primLodSet.value) {

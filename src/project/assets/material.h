@@ -64,8 +64,8 @@ namespace Project::Assets
     PROP_BOOL(fogToAlpha);
 
     // Values
-    PROP_U32(k4); PROP_BOOL(k4k5Set);
-    PROP_U32(k5);
+    PROP_IVEC2(k4k5);
+    PROP_BOOL(k4k5Set);
 
     PROP_U32(primLod); PROP_BOOL(primLodSet);
     PROP_VEC4(primColor); PROP_BOOL(primColorSet);

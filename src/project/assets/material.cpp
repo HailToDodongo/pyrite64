@@ -68,8 +68,7 @@ nlohmann::json Project::Assets::Material::serialize() const
     .set(drawFlags)
     .set(fogToAlpha)
 
-    .set(k4).set(k4k5Set)
-    .set(k5)
+    .set(k4k5).set(k4k5Set)
 
     .set(primLod).set(primLodSet)
     .set(primColor).set(primColorSet)
@@ -108,8 +107,7 @@ void Project::Assets::Material::deserialize(const nlohmann::json &doc)
   J::readProp(doc, fogToAlpha);
 
   J::readProp(doc, k4k5Set);
-  J::readProp(doc, k4);
-  J::readProp(doc, k5);
+  J::readProp(doc, k4k5);
 
   J::readProp(doc, primLod);   J::readProp(doc, primLodSet);
   J::readProp(doc, primColor); J::readProp(doc, primColorSet);
