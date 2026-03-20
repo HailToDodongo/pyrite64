@@ -37,16 +37,16 @@ namespace
       }
 
       f->write<uint16_t>(assetIdx->second);
-      f->write<uint16_t>(tex.placeholder.value);
+      f->write<uint16_t>(tex.dynTexture.value ? 1 : 0); // @TODO
 
-      f->write<uint16_t>(tex.offsetS.value * 8.0f);
-      f->write<uint16_t>(tex.repeatS.value * 16);
-      f->write<int8_t>(tex.scaleS.value);
+      f->write<uint16_t>(tex.offset.value[0] * 8.0f);
+      f->write<uint16_t>(tex.repeat.value[0] * 16);
+      f->write<int8_t>(tex.scale.value[0]);
       f->write<int8_t>(tex.mirrorS.value ? 1 : 0);
 
-      f->write<uint16_t>(tex.offsetT.value * 8.0f);
-      f->write<uint16_t>(tex.repeatT.value * 16);
-      f->write<int8_t>(tex.scaleT.value);
+      f->write<uint16_t>(tex.offset.value[1] * 8.0f);
+      f->write<uint16_t>(tex.repeat.value[1] * 16);
+      f->write<int8_t>(tex.scale.value[1]);
       f->write<int8_t>(tex.mirrorT.value ? 1 : 0);
     };
 
@@ -97,8 +97,8 @@ namespace
     if(mat.vertexFX.value != 0)
     {
       flags |= P64::Renderer::Material::FLAG_T3D_VERT_FX;
-      f->write<uint16_t>(mat.tex0.width.value);
-      f->write<uint16_t>(mat.tex0.height.value);
+      f->write<uint16_t>(mat.tex0.texSize.value[0]);
+      f->write<uint16_t>(mat.tex0.texSize.value[1]);
       f->write<uint8_t>(mat.vertexFX.value);
     }
 

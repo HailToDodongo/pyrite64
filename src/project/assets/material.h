@@ -18,13 +18,14 @@ namespace Project::Assets
   {
     PROP_BOOL(set);
     PROP_U64(texUUID);
-    PROP_U32(placeholder);
-    PROP_U32(width);
-    PROP_U32(height);
+    PROP_IVEC2(texSize);
 
-    PROP_FLOAT(offsetS); PROP_FLOAT(offsetT);
-    PROP_S32(scaleS);    PROP_S32(scaleT);
-    PROP_FLOAT(repeatS); PROP_FLOAT(repeatT);
+    PROP_BOOL(dynTexture);
+    PROP_BOOL(dynTileScroll);
+
+    PROP_VEC2(offset);
+    PROP_IVEC2(scale);
+    PROP_VEC2(repeat);
     PROP_BOOL(mirrorS);  PROP_BOOL(mirrorT);
 
     [[nodiscard]] nlohmann::json serialize() const;

@@ -89,26 +89,26 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Project::Asse
   part.material.colEnv = t3dMat.envColor.value;
 
   part.material.mask = {
-    std::pow(2, integerToPow2(texA.width.value)),
-    std::pow(2, integerToPow2(texA.height.value)),
-    std::pow(2, integerToPow2(texB.width.value)),
-    std::pow(2, integerToPow2(texB.height.value)),
+    std::pow(2, integerToPow2(texA.texSize.value[0])),
+    std::pow(2, integerToPow2(texA.texSize.value[1])),
+    std::pow(2, integerToPow2(texB.texSize.value[0])),
+    std::pow(2, integerToPow2(texB.texSize.value[1])),
   };
 
   part.material.low = {
-    texA.offsetS.value, texA.offsetT.value,
-    texB.offsetS.value, texB.offsetT.value,
+    texA.offset.value,
+    texB.offset.value
   };
   part.material.high = part.material.low + glm::vec4{
-    texA.width.value - 1, texA.height.value - 1,
-    texB.width.value - 1, texB.height.value - 1,
+    texA.texSize.value[0] - 1, texA.texSize.value[0] - 1,
+    texB.texSize.value[0] - 1, texB.texSize.value[0] - 1,
   };
 
   part.material.shift = {
-    1.0f / std::pow(2, texA.scaleS.value),
-    1.0f / std::pow(2, texA.scaleT.value),
-    1.0f / std::pow(2, texB.scaleS.value),
-    1.0f / std::pow(2, texB.scaleT.value),
+    1.0f / std::pow(2, texA.scale.value[0]),
+    1.0f / std::pow(2, texA.scale.value[1]),
+    1.0f / std::pow(2, texB.scale.value[0]),
+    1.0f / std::pow(2, texB.scale.value[1]),
   };
 
   /*
@@ -116,10 +116,10 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Project::Asse
  conf[8:] = np.round(conf[8:] * 4) / 4
   */
 
-  if (texA.repeatS.value <= 1.0f) part.material.mask[0] = -part.material.mask[0];
-  if (texA.repeatT.value <= 1.0f) part.material.mask[1] = -part.material.mask[1];
-  if (texB.repeatS.value <= 1.0f) part.material.mask[2] = -part.material.mask[2];
-  if (texB.repeatT.value <= 1.0f) part.material.mask[3] = -part.material.mask[3];
+  if (texA.repeat.value[0] <= 1.0f) part.material.mask[0] = -part.material.mask[0];
+  if (texA.repeat.value[1] <= 1.0f) part.material.mask[1] = -part.material.mask[1];
+  if (texB.repeat.value[0] <= 1.0f) part.material.mask[2] = -part.material.mask[2];
+  if (texB.repeat.value[1] <= 1.0f) part.material.mask[3] = -part.material.mask[3];
 
   if (texA.mirrorS.value) part.material.high[0] = -part.material.high[0];
   if (texA.mirrorT.value) part.material.high[1] = -part.material.high[1];
