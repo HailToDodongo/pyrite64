@@ -158,6 +158,7 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         drawMatTex(mat.tex0);
         ImTable::end();
       }
+
       if(ImGui::CollapsingSubHeader("Texture 1", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("TEX1", nullptr, labelWidth))
       {
         drawMatTex(mat.tex1);
@@ -175,7 +176,6 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         int val = mat.filter.value == 0 ? 0 : 1; // map 2->1
         ImGui::Combo("##Filtering", &val, "Nearest\0Bilinear\0");
         mat.filter.value = val == 0 ? 0 : 2;
-
 
         ImTable::end();
       }

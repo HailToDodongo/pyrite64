@@ -35,6 +35,7 @@ namespace ImGui
 {
   inline bool CollapsingSubHeader(const char* label, ImGuiTreeNodeFlags flags = 0)
   {
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 8_px);
     ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
