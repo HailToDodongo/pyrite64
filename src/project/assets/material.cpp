@@ -125,6 +125,13 @@ void Project::Assets::Material::fromT3D(::Project::AssetManager &assets, const T
 
   *this = {};
 
+  // implicit defaults, set values but don't actually set
+  persp.value = true;
+  zmode.value = 0b11;
+  dither.value = 15;
+  primColor.value = {0.0f, 0.0f, 0.0f, 1.0f};
+  envColor.value = {0.5f, 0.5f, 0.5f, 1.0f};
+
   //isCustom.value = false;
   auto convertTex = [&assets](const T3DM::MaterialTexture &mat, MaterialTex &tex)
   {

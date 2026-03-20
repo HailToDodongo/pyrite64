@@ -12,6 +12,10 @@ namespace
 {
   ImVec2 DEF_WIN_SIZE{400, 400};
 
+  constexpr bool isPow2(int x) {
+    return (x & (x - 1)) == 0 && x > 0;
+  }
+
   constexpr auto Z_MODES = "None\0Read\0Write\0Read+Write\0";
   constexpr auto AA_MODES = "None\0Standard\0Reduced\0";
 
@@ -45,6 +49,13 @@ namespace
     "None / Noise\0"
     "None / None\0";
 
+  constexpr auto VERTEX_EFFECTS =
+    "None\0"
+    "Spherical UV\0"
+    "Cel-shade Color\0"
+    "Cel-shade Alpha\0"
+    "Outline\0"
+    "UV Offset\0";
 }
 
 bool Editor::ModelEditor::draw(ImGuiID defDockId)
@@ -57,11 +68,20 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
   auto screenSize = ImGui::GetMainViewport()->WorkSize;
   ImGui::SetNextWindowPos({(screenSize.x - DEF_WIN_SIZE.x) / 2, (screenSize.y - DEF_WIN_SIZE.y) / 2}, ImGuiCond_FirstUseEver);
 
-  ImVec2 labelWidth = {85_px, -1.0f};
-
   bool isOpen = true;
   ImGui::Begin(winName.c_str(), &isOpen);
   ImGui::Text("Model: %s", model->name.c_str());
+
+  ImVec2 labelWidth = {85_px, -1.0f};
+
+  auto subSection = [&labelWidth](const char* name, auto cb)
+  {
+    if(ImGui::CollapsingSubHeader(name, ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start(name, nullptr, labelWidth))
+    {
+      cb();
+      ImTable::end();
+    }
+  };
 
   for(auto &entry : model->model.materials)
   {
@@ -73,19 +93,7 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
 
       ImTable::start("Mat", nullptr, labelWidth);
       ImTable::addProp("Override", mat.isCustom);
-      //if(mat.isCustom.value)
-      {
-        ImTable::add("Depth");
-        ImGui::Combo("##Depth", &mat.zmode.value, Z_MODES);
 
-        ImTable::add("Anti-Alias");
-        ImGui::Combo("##AA", &mat.aa.value, AA_MODES);
-
-        ImTable::add("Alpha-Clip");
-        ImGui::SliderInt("##AC", &mat.alphaComp.value, 0, 255,
-          mat.alphaComp.value == 0 ? "<Off>" : "%d"
-        );
-      }
       ImTable::end();
 
       const auto &assets = ctx.project->getAssets().getTypeEntries(Project::FileType::IMAGE);
@@ -136,7 +144,24 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         ImGui::EndGroup();
         tex.scale.value -= 5;
 
-        ImTable::addProp("Repeat", tex.repeat);
+
+        bool repFix[2] = {!isPow2(tex.texSize.value[0]), !isPow2(tex.texSize.value[1])};
+        ImTable::add("Repeat");
+        ImGui::BeginGroup();
+        ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth() - 4_px);
+          for(int i=0; i<2; ++i)
+          {
+            if(repFix[i])ImGui::BeginDisabled();
+            ImGui::InputFloat(i == 0 ? "##R0" : "##R1", &tex.repeat.value[i]);
+            if(repFix[i]) {
+              ImGui::EndDisabled();
+              tex.repeat.value[i] = 1.0f;
+            }
+            ImGui::PopItemWidth();
+            if(i == 0)ImGui::SameLine();
+          }
+        ImGui::EndGroup();
+
         tex.repeat.value = glm::clamp(tex.repeat.value, 0.0f, 2048.0f);
 
         ImTable::add("Mirror");
@@ -153,19 +178,21 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         ImGui::PopID();
       };
 
-      if(ImGui::CollapsingSubHeader("Texture 0", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("TEX1", nullptr, labelWidth))
+      subSection("Values", [&]
       {
-        drawMatTex(mat.tex0);
-        ImTable::end();
-      }
+        ImTable::addProp("Prim-Color", mat.primColor);
+        ImTable::addProp("Env-Color", mat.envColor);
+        ImTable::addProp("Prim-LOD", mat.primLod);
+        mat.primLod.value = glm::clamp(mat.primLod.value, 0u, 255u);
+        ImTable::addProp("K4", mat.k4);
+        mat.k4.value = glm::clamp(mat.k4.value, 0u, 255u);
+        ImTable::addProp("K5", mat.k5);
+        mat.k5.value = glm::clamp(mat.k5.value, 0u, 255u);
+      });
 
-      if(ImGui::CollapsingSubHeader("Texture 1", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("TEX1", nullptr, labelWidth))
-      {
-        drawMatTex(mat.tex1);
-        ImTable::end();
-      }
-
-      if(ImGui::CollapsingSubHeader("Sampler", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Mat", nullptr, labelWidth))
+      subSection("Texture 0", [&]{ drawMatTex(mat.tex0); });
+      subSection("Texture 1", [&]{ drawMatTex(mat.tex1); });
+      subSection("Sampling", [&]
       {
         ImTable::addProp("Perspective", mat.persp);
 
@@ -176,9 +203,25 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         int val = mat.filter.value == 0 ? 0 : 1; // map 2->1
         ImGui::Combo("##Filtering", &val, "Nearest\0Bilinear\0");
         mat.filter.value = val == 0 ? 0 : 2;
+      });
 
-        ImTable::end();
-      }
+      subSection("Render Modes", [&]
+      {
+        ImTable::add("Alpha-Clip");
+        ImGui::SliderInt("##AC", &mat.alphaComp.value, 0, 255,
+          mat.alphaComp.value == 0 ? "<Off>" : "%d"
+        );
+
+        ImTable::add("Depth");
+        ImGui::Combo("##Depth", &mat.zmode.value, Z_MODES);
+
+        ImTable::add("Anti-Alias");
+        ImGui::Combo("##AA", &mat.aa.value, AA_MODES);
+
+        ImTable::add("Vertex-Effect");
+        ImGui::Combo("##Vert", &mat.vertexFX.value, VERTEX_EFFECTS);
+        ImTable::addProp("Fog to Alpha", mat.fogToAlpha);
+      });
 
     }
     ImGui::PopID();
