@@ -59,9 +59,9 @@ namespace Project::Assets
     MaterialTex tex1{};
 
     // T3D settings
-    PROP_U32(vertexFX);
+    PROP_S32(vertexFX);
     PROP_U32(drawFlags);
-    PROP_U32(fogToAlpha);
+    PROP_BOOL(fogToAlpha);
 
     // Values
     PROP_U32(k4); PROP_BOOL(k4k5Set);
