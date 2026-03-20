@@ -39,6 +39,10 @@ namespace Utils::JSON
         doc[key] = { vec.x, vec.y };
       }
 
+      void set(const std::string &key, const glm::vec2 &vec) {
+        doc[key] = { vec.x, vec.y };
+      }
+
       void set(const std::string &key, const glm::vec3 &vec) {
         doc[key] = { vec.x, vec.y, vec.z };
       }

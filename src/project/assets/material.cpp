@@ -21,11 +21,12 @@ nlohmann::json Project::Assets::MaterialTex::serialize() const
   auto doc = Utils::JSON::Builder{}
     .set(set)
     .set(texUUID)
-    .set(placeholder)
-    .set(width).set(height)
-    .set(offsetS).set(offsetT)
-    .set(scaleS).set(scaleT)
-    .set(repeatS).set(repeatT)
+    .set(dynTexture)
+    .set(dynTileScroll)
+    .set(texSize)
+    .set(offset)
+    .set(scale)
+    .set(repeat)
     .set(mirrorS).set(mirrorT)
     .doc;
 
@@ -36,15 +37,12 @@ void Project::Assets::MaterialTex::deserialize(const nlohmann::json &doc)
 {
   J::readProp(doc, set);
   J::readProp(doc, texUUID);
-  J::readProp(doc, placeholder);
-  J::readProp(doc, width);
-  J::readProp(doc, height);
-  J::readProp(doc, offsetS);
-  J::readProp(doc, offsetT);
-  J::readProp(doc, scaleS);
-  J::readProp(doc, scaleT);
-  J::readProp(doc, repeatS);
-  J::readProp(doc, repeatT);
+  J::readProp(doc, dynTexture);
+  J::readProp(doc, dynTileScroll);
+  J::readProp(doc, texSize);
+  J::readProp(doc, offset);
+  J::readProp(doc, scale);
+  J::readProp(doc, repeat);
   J::readProp(doc, mirrorS);
   J::readProp(doc, mirrorT);
 }
@@ -131,8 +129,8 @@ void Project::Assets::Material::fromT3D(::Project::AssetManager &assets, const T
   auto convertTex = [&assets](const T3DM::MaterialTexture &mat, MaterialTex &tex)
   {
     tex.set.value = false;
-    tex.width.value = mat.texWidth;
-    tex.height.value = mat.texHeight;
+    tex.texSize.value[0] = mat.texWidth;
+    tex.texSize.value[1] = mat.texHeight;
 
     if(!mat.texPathRom.empty()) {
       auto asset = assets.getByPath(mat.texPath);
@@ -144,12 +142,12 @@ void Project::Assets::Material::fromT3D(::Project::AssetManager &assets, const T
       }
     }
 
-    tex.offsetS.value = mat.s.low;
-    tex.offsetT.value = mat.t.low;
-    tex.scaleS.value = mat.s.shift;
-    tex.scaleT.value = mat.t.shift;
-    tex.repeatS.value = mat.s.clamp ? 1.0f : REPEAT_INFINITE;
-    tex.repeatT.value = mat.t.clamp ? 1.0f : REPEAT_INFINITE;
+    tex.offset.value = {mat.s.low, mat.t.low};
+    tex.scale.value = {mat.s.shift, mat.t.shift};
+    tex.repeat.value = {
+      mat.s.clamp ? 1.0f : REPEAT_INFINITE,
+      mat.t.clamp ? 1.0f : REPEAT_INFINITE
+    };
     tex.mirrorS.value = mat.s.mirror;
     tex.mirrorT.value = mat.t.mirror;
   };
