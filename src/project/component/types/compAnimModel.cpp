@@ -174,7 +174,7 @@ namespace Project::Component::AnimModel
       return;
     }
 
-    data.obj3D.draw(pass, cmdBuff);
+    data.obj3D.draw(pass, cmdBuff, &asset->model);
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)

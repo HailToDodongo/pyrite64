@@ -33,38 +33,13 @@ void Renderer::N64Mesh::fromT3DM(const Project::Assets::Model3D &model3d, Projec
   uint16_t idx = 0;
   for (auto &model : t3dmData.models)
   {
-    part->refTex0 = assetManager.getFallbackTexture();
-    part->refTex1 = part->refTex0;
-
     part->indicesOffset = mesh.indices.size();
     part->indicesCount = model.triangles.size() * 3;
 
-    Project::Assets::Material matDummy{};
-    auto mat = model3d.materials.find(model.materialName);
-    if(mat != model3d.materials.end()) {
-      N64Material::convert(*part, mat->second);
-    }
-    const auto &material = (mat != model3d.materials.end()) ? mat->second : matDummy;
-
-    part->texBindings[0].texture = part->refTex0.lock()->getGPUTex();
+    part->materialName = model.materialName;
+    part->texBindings[0].texture = assetManager.getFallbackTexture()->getGPUTex();
     part->texBindings[0].sampler = texSamplerRepeat;
     part->texBindings[1] = part->texBindings[0];
-
-    if (material.tex0.set.value) {
-      auto texEntry = assetManager.getEntryByUUID(material.tex0.texUUID.value);
-      if (texEntry && texEntry->texture) {
-        part->texBindings[0].texture = texEntry->texture->getGPUTex();
-        part->refTex0 = texEntry->texture;
-      }
-    }
-
-    if (material.tex1.set.value) {
-      auto texEntry = assetManager.getEntryByUUID(material.tex1.texUUID.value);
-      if (texEntry && texEntry->texture) {
-        part->texBindings[1].texture = texEntry->texture->getGPUTex();
-        part->refTex1 = texEntry->texture;
-      }
-    }
 
     //model.material.colorCombiner
     for (auto &tri : model.triangles) {
@@ -108,6 +83,7 @@ void Renderer::N64Mesh::recreate(Renderer::Scene &sc) {
 void Renderer::N64Mesh::draw(
   SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdBuff, UniformsObject &uniforms,
   const std::vector<uint32_t> &partsIndices,
+  const Project::Assets::Model3D &model,
   const UniformsOverrides& overrides
 )
 {
@@ -115,13 +91,28 @@ void Renderer::N64Mesh::draw(
 
   auto drawPart = [&](MeshPart &part)
   {
-    if(part.refTex1.expired() || part.refTex0.expired()) {
-      loaded = false;
-      return;
-    }
-
     uint32_t flags = uniforms.mat.flags;
     uint32_t blender = uniforms.mat.blender.x;
+
+    auto matEntry = model.materials.find(part.materialName);
+    if(matEntry != model.materials.end()) {
+      const auto &mat = matEntry->second;
+      N64Material::convert(part, mat);
+
+      if (mat.tex0.set.value) {
+        auto texEntry = ctx.project->getAssets().getEntryByUUID(mat.tex0.texUUID.value);
+        if (texEntry && texEntry->texture) {
+          part.texBindings[0].texture = texEntry->texture->getGPUTex();
+        }
+      }
+
+      if (mat.tex1.set.value) {
+        auto texEntry = ctx.project->getAssets().getEntryByUUID(mat.tex1.texUUID.value);
+        if (texEntry && texEntry->texture) {
+          part.texBindings[1].texture = texEntry->texture->getGPUTex();
+        }
+      }
+    }
 
     if(part.material.flags & UniformN64Material::FLAG_SET_PRIM_COL) {
       lastPrim = part.material.colPrim;

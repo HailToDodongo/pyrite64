@@ -197,7 +197,7 @@ namespace Project::Component::CollMesh
     }
     auto &meshes = data.filter.filterT3DM(asset->model.t3dm.models, obj, false);
 
-    data.obj3D.draw(pass, cmdBuff, meshes);
+    data.obj3D.draw(pass, cmdBuff, &asset->model, meshes);
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)
