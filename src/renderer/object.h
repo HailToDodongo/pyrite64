@@ -45,6 +45,7 @@ namespace Renderer
       void draw(
         SDL_GPURenderPass* pass,
         SDL_GPUCommandBuffer* cmdBuff,
+        const Project::Assets::Model3D *model = nullptr,
         const std::vector<uint32_t> &parts = {}
       );
   };

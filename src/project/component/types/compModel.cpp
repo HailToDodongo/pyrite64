@@ -190,8 +190,9 @@ namespace Project::Component::Model
   void draw3D(Object& obj, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPURenderPass* pass)
   {
     Data &data = *static_cast<Data*>(entry.data.get());
+    auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
+
     if (!data.obj3D.isMeshLoaded()) {
-      auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
       if (asset && asset->mesh3D) {
         if (!asset->mesh3D->isLoaded()) {
           asset->mesh3D->recreate(*ctx.scene);
@@ -238,12 +239,11 @@ namespace Project::Component::Model
       data.obj3D.uniform.mat.blender.y = data.obj3D.uniform.mat.blender.x;
     }
 
-    auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
     if (!asset || !asset->mesh3D) {
       return;
     }
     auto &meshes = data.filter.filterT3DM(asset->model.t3dm.models, obj, true);
-    data.obj3D.draw(pass, cmdBuff, meshes);
+    data.obj3D.draw(pass, cmdBuff, &asset->model, meshes);
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)
