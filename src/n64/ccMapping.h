@@ -148,4 +148,18 @@ namespace N64::CC
   uint64_t packCC(const glm::ivec4 &cc0Color, const glm::ivec4 &cc0Alpha, const glm::ivec4 &cc1Color, const glm::ivec4 &cc1Alpha);
 
   void unpackMappedCC(uint64_t cc, glm::ivec4 &cc0Color, glm::ivec4 &cc0Alpha, glm::ivec4 &cc1Color, glm::ivec4 &cc1Alpha);
+
+  struct Usage
+  {
+    bool tex0{};
+    bool tex1{};
+    bool prim{};
+    bool shade{};
+    bool env{};
+    bool lod{};
+    bool k4k5{};
+    bool twoCycle{};
+  };
+
+  Usage getUsage(uint64_t cc);
 }

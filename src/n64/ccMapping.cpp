@@ -3,6 +3,7 @@
 * @license MIT
 */
 #include "ccMapping.h"
+#include "libdragon.h"
 
 namespace
 {
@@ -65,5 +66,50 @@ void N64::CC::unpackMappedCC(uint64_t cc, glm::ivec4 &cc0Color, glm::ivec4 &cc0A
     switchColTex2Cycle(cc1Color[i]);
     switchAlphaTex2Cycle(cc1Alpha[i]);
   }
+}
+
+N64::CC::Usage N64::CC::getUsage(uint64_t cc)
+{
+  Usage usage{};
+
+  usage.twoCycle = (cc & RDPQ_COMBINER_2PASS) != 0;
+  glm::ivec4 ccColor[2];
+  glm::ivec4 ccAlpha[2];
+  unpackMappedCC(cc, ccColor[0], ccAlpha[0], ccColor[1], ccAlpha[1]);
+
+  for (int c = 0; c < (usage.twoCycle ? 2 : 1); ++c)
+  {
+    for (int i=0; i<4; ++i)
+    {
+      switch(ccColor[c][i]) {
+        case CC_C_TEX0: usage.tex0 = true; break;
+        case CC_C_TEX1: usage.tex1 = true; break;
+        case CC_C_PRIM: usage.prim = true; break;
+        case CC_C_SHADE: usage.shade = true; break;
+        case CC_C_ENV: usage.env = true; break;
+        case CC_C_TEX0_ALPHA: usage.tex0 = true; break;
+        case CC_C_TEX1_ALPHA: usage.tex1 = true; break;
+        case CC_C_PRIM_ALPHA: usage.prim = true; break;
+        case CC_C_SHADE_ALPHA: usage.shade = true; break;
+        case CC_C_ENV_ALPHA: usage.env = true; break;
+        case CC_C_PRIM_LOD_FRAC: usage.lod = true; break;
+        case CC_C_K4: usage.k4k5 = true; break;
+        case CC_C_K5: usage.k4k5 = true; break;
+        default: break;
+      }
+
+      switch(ccAlpha[c][i]) {
+        case CC_A_TEX0: usage.tex0 = true; break;
+        case CC_A_TEX1: usage.tex1 = true; break;
+        case CC_A_PRIM: usage.prim = true; break;
+        case CC_A_SHADE: usage.shade = true; break;
+        case CC_A_ENV: usage.env = true; break;
+        case CC_A_PRIM_LOD_FRAC: usage.lod = true; break;
+        default: break;
+      }
+    }
+  }
+
+  return usage;
 }
 

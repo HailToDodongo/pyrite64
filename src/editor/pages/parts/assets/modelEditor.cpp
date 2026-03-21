@@ -175,15 +175,21 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
 
       ImTable::end();
 
+      auto usage = N64::CC::getUsage(mat.cc.value);
+      // enforce disabling unused values
+      if(!usage.prim)mat.primColorSet.value = false;
+      if(!usage.env)mat.envColorSet.value = false;
+      if(!usage.k4k5)mat.k4k5Set.value = false;
+      if(!usage.lod)mat.primLodSet.value = false;
+
       subSection("Color-Combiner", [&]
       {
-        bool twoCycle = mat.cc.value & RDPQ_COMBINER_2PASS;
         ImTable::add("2-Cycle");
-        ImGui::Checkbox("##2C", &twoCycle);
+        ImGui::Checkbox("##2C", &usage.twoCycle);
 
         glm::ivec4 cc[2], cca[2];
         N64::CC::unpackCC(mat.cc.value, cc[0], cca[0], cc[1], cca[1]);
-        for(int c = 0; c < (twoCycle ? 2 : 1); ++c)
+        for(int c = 0; c < (usage.twoCycle ? 2 : 1); ++c)
         {
           ImGui::PushID(c);
           ImTable::add("A");
@@ -219,13 +225,13 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
             N64::CC::NAMES_ALPHA_C[cca[c][2]], N64::CC::NAMES_ALPHA_D[cca[c][3]]
          );
 
-          if(twoCycle && c == 0) {
+          if(usage.twoCycle && c == 0) {
             ImGui::Dummy({0, 4_px});
           }
         }
 
         mat.cc.value = N64::CC::packCC(cc[0], cca[0], cc[1], cca[1]);
-        if(twoCycle)mat.cc.value |= RDPQ_COMBINER_2PASS;
+        if(usage.twoCycle)mat.cc.value |= RDPQ_COMBINER_2PASS;
       });
 
       const auto &assets = ctx.project->getAssets().getTypeEntries(Project::FileType::IMAGE);
@@ -303,8 +309,9 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         ImGui::PopID();
       };
 
-      subSection("Texture 0", [&]{ drawMatTex(mat.tex0); });
-      subSection("Texture 1", [&]{ drawMatTex(mat.tex1); });
+      if(usage.tex0)subSection("Texture 0", [&]{ drawMatTex(mat.tex0); });
+      if(usage.tex1)subSection("Texture 1", [&]{ drawMatTex(mat.tex1); });
+
       subSection("Sampling", [&]
       {
         toggleProp("Perspect.", mat.perspSet.value, mat.persp);
@@ -320,16 +327,19 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         });
       });
 
-      subSection("Values", [&]
+      if(usage.prim || usage.env || usage.lod || usage.k4k5)
       {
-        toggleProp("Prim", mat.primColorSet.value, mat.primColor);
-        toggleProp("Env", mat.envColorSet.value, mat.envColor);
-        toggleProp("LOD", mat.primLodSet.value, mat.primLod);
-        toggleProp("K4/K5", mat.k4k5Set.value, mat.k4k5);
+        subSection("Values", [&]
+        {
+          if(usage.prim)toggleProp("Prim", mat.primColorSet.value, mat.primColor);
+          if(usage.env)toggleProp("Env", mat.envColorSet.value, mat.envColor);
+          if(usage.lod)toggleProp("LOD", mat.primLodSet.value, mat.primLod);
+          if(usage.k4k5)toggleProp("K4/K5", mat.k4k5Set.value, mat.k4k5);
 
-        mat.primLod.value = glm::clamp(mat.primLod.value, 0u, 255u);
-        mat.k4k5.value = glm::clamp(mat.k4k5.value, 0, 255);
-      });
+          mat.primLod.value = glm::clamp(mat.primLod.value, 0u, 255u);
+          mat.k4k5.value = glm::clamp(mat.k4k5.value, 0, 255);
+        });
+      }
 
       subSection("Render Modes", [&]
       {
@@ -362,9 +372,9 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         });
       });
 
+      ImGui::Dummy({0, 2_px});
     }
     ImGui::PopID();
-
   }
 
   ImGui::End();
