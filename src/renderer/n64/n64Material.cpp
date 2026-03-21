@@ -3,8 +3,7 @@
 * @license MIT
 */
 #include "n64Material.h"
-#include "../../shader/defines.h"
-#include "ccMapping.h"
+#include "../../n64/ccMapping.h"
 #include "tiny3d/tools/gltf_importer/src/parser/rdp.h"
 
 #define __LIBDRAGON_N64SYS_H 1
@@ -14,22 +13,6 @@
 
 namespace
 {
-  constexpr uint32_t getBits(uint64_t value, uint32_t start, uint32_t end) {
-    return (value << (63 - end)) >> (63 - end + start);
-  }
-
-  constexpr void switchColTex2Cycle(int32_t &c) {
-    if (c == CC_C_TEX0) c = CC_C_TEX1;
-    else if (c == CC_C_TEX1) c = CC_C_TEX0;
-    else if (c == CC_C_TEX0_ALPHA) c = CC_C_TEX1_ALPHA;
-    else if (c == CC_C_TEX1_ALPHA) c = CC_C_TEX0_ALPHA;
-  }
-
-  constexpr void switchAlphaTex2Cycle(int32_t &c) {
-    if (c == CC_A_TEX0) c = CC_A_TEX1;
-    else if (c == CC_A_TEX1) c = CC_A_TEX0;
-  }
-
   int integerToPow2(int x){
     int res = 0;
     while(1<<res < x) res++;
@@ -69,21 +52,7 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Project::Asse
     part.material.lightDir[0].w = 0.5f;
   }
 
-  part.material.cc0Color = { getBits(cc, 52, 55), getBits(cc, 28, 31), getBits(cc, 47, 51), getBits(cc, 15, 17) };
-  part.material.cc0Alpha = { getBits(cc, 44, 46), getBits(cc, 12, 14), getBits(cc, 41, 43), getBits(cc, 9, 11)  };
-  part.material.cc1Color = { getBits(cc, 37, 40), getBits(cc, 24, 27), getBits(cc, 32, 36), getBits(cc, 6, 8)   };
-  part.material.cc1Alpha = { getBits(cc, 21, 23), getBits(cc, 3, 5),   getBits(cc, 18, 20), getBits(cc, 0, 2)   };
-
-  for (int i=0; i<4; ++i) {
-    part.material.cc0Color[i] = CC_MAP_COLOR[i][part.material.cc0Color[i]];
-    part.material.cc1Color[i] = CC_MAP_COLOR[i][part.material.cc1Color[i]];
-
-    part.material.cc0Alpha[i] = CC_MAP_ALPHA[i][part.material.cc0Alpha[i]];
-    part.material.cc1Alpha[i] = CC_MAP_ALPHA[i][part.material.cc1Alpha[i]];
-
-    switchColTex2Cycle(part.material.cc1Color[i]);
-    switchAlphaTex2Cycle(part.material.cc1Alpha[i]);
-  }
+  N64::CC::unpackMappedCC(cc, part.material.cc0Color, part.material.cc0Alpha, part.material.cc1Color, part.material.cc1Alpha);
 
   part.material.colPrim = t3dMat.primColor.value;
   part.material.colEnv = t3dMat.envColor.value;

@@ -38,7 +38,9 @@ namespace Project::Assets
     PROP_BOOL(isCustom);
 
     // Render-Mode settings
-    PROP_U64(cc);      PROP_BOOL(ccSet);
+    PROP_U64(cc);
+    PROP_BOOL(ccSet);
+
     PROP_U32(blender); PROP_BOOL(blenderSet);
     PROP_S32(aa);      PROP_BOOL(aaSet);
     PROP_U32(fog);     PROP_BOOL(fogSet);

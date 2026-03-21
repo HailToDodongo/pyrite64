@@ -4,9 +4,12 @@
 */
 #include "modelEditor.h"
 
+#include "libdragon.h"
+#include "ccMapping.h"
 #include "imgui_internal.h"
 #include "../../../../context.h"
 #include "../../../imgui/helper.h"
+
 
 namespace
 {
@@ -95,7 +98,42 @@ namespace
     toggleProp(name, propState, [&prop](){
       ImTable::typedInput(&prop.value);
     });
+  }
 
+  void sideBySide(auto cbA, auto cbB)
+  {
+    ImGui::BeginGroup();
+    ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth() - 4_px);
+    cbA();
+    ImGui::PopItemWidth(); ImGui::SameLine();
+    cbB();
+    ImGui::PopItemWidth();
+    ImGui::EndGroup();
+  }
+
+  void printCC(const char* a, const char* b, const char* c, const char* d)
+  {
+    auto nonZero = [](const char* s){ return s[0] != '0'; };
+
+    std::string s{};
+    // check if mul does something
+    if(nonZero(c) && (nonZero(a) || nonZero(b)))
+    {
+      if(nonZero(a) && nonZero(b)) {
+        s += std::string{"("} + a + " - " + b + ")";
+      } else {
+        s += nonZero(a) ? a : b;
+      }
+      s += std::string{" * "} + c;
+    }
+
+    if(nonZero(d)) {
+      if(!s.empty())s += " + ";
+      s += d;
+    }
+    if(s.empty())s = "0";
+
+    ImGui::Text("%s", s.c_str());
   }
 }
 
@@ -133,13 +171,62 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
       auto &mat = entry.second;
 
       ImTable::start("General", nullptr, labelWidth);
-        ImTable::addProp("Override", mat.isCustom);
-
-      ImTable::add("CC"); ImGui::Text("@TODO");
-      ImTable::add("Blending"); ImGui::Text("@TODO");
-      ImTable::add("Fog"); ImGui::Text("@TODO");
+      ImTable::addProp("Override", mat.isCustom);
 
       ImTable::end();
+
+      subSection("Color-Combiner", [&]
+      {
+        bool twoCycle = mat.cc.value & RDPQ_COMBINER_2PASS;
+        ImTable::add("2-Cycle");
+        ImGui::Checkbox("##2C", &twoCycle);
+
+        glm::ivec4 cc[2], cca[2];
+        N64::CC::unpackCC(mat.cc.value, cc[0], cca[0], cc[1], cca[1]);
+        for(int c = 0; c < (twoCycle ? 2 : 1); ++c)
+        {
+          ImGui::PushID(c);
+          ImTable::add("A");
+          sideBySide(
+            [&]{ ImGui::Combo("##C0C_A",  &cc[c][0], N64::CC::NAMES_COL_A.data(), N64::CC::NAMES_COL_A.size()); },
+            [&]{ ImGui::Combo("##C0A_A", &cca[c][0], N64::CC::NAMES_ALPHA_A.data(), N64::CC::NAMES_ALPHA_A.size()); }
+          );
+          ImTable::add("B");
+          sideBySide(
+            [&]{ ImGui::Combo("##C0C_B",  &cc[c][1], N64::CC::NAMES_COL_B.data(), N64::CC::NAMES_COL_B.size()); },
+            [&]{ ImGui::Combo("##C0A_B", &cca[c][1], N64::CC::NAMES_ALPHA_B.data(), N64::CC::NAMES_ALPHA_B.size()); }
+          );
+          ImTable::add("C");
+          sideBySide(
+            [&]{ ImGui::Combo("##C0C_C",  &cc[c][2], N64::CC::NAMES_COL_C.data(), N64::CC::NAMES_COL_C.size()); },
+            [&]{ ImGui::Combo("##C0A_C", &cca[c][2], N64::CC::NAMES_ALPHA_C.data(), N64::CC::NAMES_ALPHA_C.size()); }
+          );
+          ImTable::add("D");
+          sideBySide(
+            [&]{ ImGui::Combo("##C0C_D",  &cc[c][3], N64::CC::NAMES_COL_D.data(), N64::CC::NAMES_COL_D.size()); },
+            [&]{ ImGui::Combo("##C0A_D", &cca[c][3], N64::CC::NAMES_ALPHA_D.data(), N64::CC::NAMES_ALPHA_D.size()); }
+          );
+          ImGui::PopID();
+
+          ImTable::add("Color");
+          printCC(
+            N64::CC::NAMES_COL_A[cc[c][0]], N64::CC::NAMES_COL_B[cc[c][1]],
+            N64::CC::NAMES_COL_C[cc[c][2]], N64::CC::NAMES_COL_D[cc[c][3]]
+          );
+          ImTable::add("Alpha");
+          printCC(
+            N64::CC::NAMES_ALPHA_A[cca[c][0]], N64::CC::NAMES_ALPHA_B[cca[c][1]],
+            N64::CC::NAMES_ALPHA_C[cca[c][2]], N64::CC::NAMES_ALPHA_D[cca[c][3]]
+         );
+
+          if(twoCycle && c == 0) {
+            ImGui::Dummy({0, 4_px});
+          }
+        }
+
+        mat.cc.value = N64::CC::packCC(cc[0], cca[0], cc[1], cca[1]);
+        if(twoCycle)mat.cc.value |= RDPQ_COMBINER_2PASS;
+      });
 
       const auto &assets = ctx.project->getAssets().getTypeEntries(Project::FileType::IMAGE);
 
@@ -180,15 +267,11 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
 
         ImTable::add("Scale");
         tex.scale.value += 5;
-        ImGui::BeginGroup();
-        ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth() - 4_px);
-          ImGui::Combo("##S0", &tex.scale.value[0], TILE_SCALES);
-          ImGui::PopItemWidth(); ImGui::SameLine();
-          ImGui::Combo("##S1", &tex.scale.value[1], TILE_SCALES);
-          ImGui::PopItemWidth();
-        ImGui::EndGroup();
+        sideBySide(
+          [&]{ ImGui::Combo("##S0", &tex.scale.value[0], TILE_SCALES); },
+          [&]{ ImGui::Combo("##S1", &tex.scale.value[1], TILE_SCALES); }
+        );
         tex.scale.value -= 5;
-
 
         bool repFix[2] = {!isPow2(tex.texSize.value[0]), !isPow2(tex.texSize.value[1])};
         ImTable::add("Repeat");
@@ -210,16 +293,13 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         tex.repeat.value = glm::clamp(tex.repeat.value, 0.0f, 2048.0f);
 
         ImTable::add("Mirror");
-        ImGui::BeginGroup();
-          float width = ImGui::CalcItemWidth() - 4_px;
-          ImGui::PushMultiItemsWidths(2, width);
-          ImGui::Checkbox("##MS", &tex.mirrorS.value);
-          ImGui::PopItemWidth(); ImGui::SameLine();
-          ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (width / 2) - 27_px);
-          ImGui::Checkbox("##MT", &tex.mirrorT.value);
-          ImGui::PopItemWidth();
-        ImGui::EndGroup();
-
+        sideBySide(
+          [&]{ ImGui::Checkbox("##MS", &tex.mirrorS.value); },
+          [&] {
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (ImGui::CalcItemWidth() - 4_px / 2) - 27_px);
+            ImGui::Checkbox("##MT", &tex.mirrorT.value);
+          }
+        );
         ImGui::PopID();
       };
 
@@ -227,7 +307,7 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
       subSection("Texture 1", [&]{ drawMatTex(mat.tex1); });
       subSection("Sampling", [&]
       {
-        toggleProp("Perspect.", mat.primLodSet.value, mat.persp);
+        toggleProp("Perspect.", mat.perspSet.value, mat.persp);
 
         toggleProp("Dither", mat.ditherSet.value, [&] {
           ImGui::Combo("##Dither", &mat.dither.value, DITHER_MODES);
@@ -253,6 +333,9 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
 
       subSection("Render Modes", [&]
       {
+        ImTable::add("Blending"); ImGui::Text("@TODO");
+        ImTable::add("Fog"); ImGui::Text("@TODO");
+
         ImTable::add("Vertex FX");
         ImGui::Combo("##Vert", &mat.vertexFX.value, VERTEX_EFFECTS);
         ImTable::addProp("Fog to Alpha", mat.fogToAlpha);
@@ -267,17 +350,11 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
           ImGui::Combo("##", &mat.zmode.value, Z_MODES);
         });
 
-        toggleProp("Fixed-Z", mat.zprimSet.value, [&]
-        {
-          ImGui::BeginGroup();
-            float width = ImGui::CalcItemWidth() - 4_px;
-            ImGui::PushMultiItemsWidths(2, width);
-            ImGui::InputInt("##0", &mat.zprim.value);
-
-            ImGui::PopItemWidth(); ImGui::SameLine();
-            ImGui::InputInt("##1", &mat.zdelta.value);
-            ImGui::PopItemWidth();
-          ImGui::EndGroup();
+        toggleProp("Fixed-Z", mat.zprimSet.value, [&] {
+          sideBySide(
+            [&]{ ImGui::InputInt("##0", &mat.zprim.value); },
+            [&]{ ImGui::InputInt("##1", &mat.zdelta.value); }
+          );
         });
 
         toggleProp("Anti-Alias", mat.aaSet.value, [&] {
