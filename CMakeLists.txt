@@ -216,7 +216,6 @@ add_executable(pyrite64 src/main.cpp
         src/renderer/n64Mesh.cpp
         src/renderer/n64/n64Material.h
         src/renderer/n64/n64Material.cpp
-        src/renderer/n64/ccMapping.h
         src/project/component/types/compLight.cpp
         src/project/component/types/compCamera.cpp
         src/editor/imgui/helper.cpp
@@ -272,6 +271,8 @@ add_executable(pyrite64 src/main.cpp
         src/project/assets/material.cpp
         src/project/assets/model3d.h
         src/n64/libdragon.h
+        src/n64/ccMapping.cpp
+        src/n64/ccMapping.cpp
 )
 
 target_include_directories(pyrite64 PRIVATE

@@ -13,3 +13,4 @@ extern "C" {
 
 #include "../vendored/libdragon/include/graphics.h"
 #include "../vendored/libdragon/include/rdpq_mode.h"
+#include "../vendored/libdragon/include/rdpq_macros.h"
