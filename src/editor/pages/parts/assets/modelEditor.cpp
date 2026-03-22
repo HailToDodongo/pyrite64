@@ -202,10 +202,24 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
       subSection("Color-Combiner", [&]
       {
         ImTable::add("2-Cycle");
-        ImGui::Checkbox("##2C", &usage.twoCycle);
 
         glm::ivec4 cc[2], cca[2];
         N64::CC::unpackCC(mat.cc.value, cc[0], cca[0], cc[1], cca[1]);
+
+        if(ImGui::Checkbox("##2C", &usage.twoCycle) && usage.twoCycle)
+        {
+          // if we enable 2-cycle mode, force a pass-through by default
+          cc[1][0] = N64::CC::NAMES_COL_A.size() - 1;
+          cc[1][1] = N64::CC::NAMES_COL_B.size() - 1;
+          cc[1][2] = N64::CC::NAMES_COL_C.size() - 1;
+          cc[1][3] = 0;
+
+          cca[1][0] = N64::CC::NAMES_ALPHA_A.size() - 1;
+          cca[1][1] = N64::CC::NAMES_ALPHA_B.size() - 1;
+          cca[1][2] = N64::CC::NAMES_ALPHA_C.size() - 1;
+          cca[1][3] = 0;
+        }
+
         for(int c = 0; c < (usage.twoCycle ? 2 : 1); ++c)
         {
           ImGui::PushID(c);
