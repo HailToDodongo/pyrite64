@@ -415,6 +415,11 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
       if(mat.isCustom.value && oldMat != mat) {
         model->conf.data["materials"][entry.first] = mat.serialize();
         assetManager.markAssetMetaDirty(model->getUUID());
+
+        if(oldMat.tex0.texSize != mat.tex0.texSize) {
+          assetManager.save();
+          assetManager.reloadAssetByUUID(model->getUUID());
+        }
       }
     }
     ImGui::PopID();
