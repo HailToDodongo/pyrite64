@@ -290,6 +290,11 @@ void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::str
     case FileType::MODEL_3D:
     {
       try{
+        if(!entry.conf.data.contains("materials")) {
+          entry.conf.data["materials"] = nlohmann::json::object();
+        }
+        auto &savedMats = entry.conf.data["materials"];
+
         entry.model = {
           .t3dm = T3DM::parseGLTF(path.c_str(), {
             .globalScale = (float)entry.conf.baseScale,
@@ -299,13 +304,17 @@ void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::str
             .assetPath = "assets/",
             .assetPathFull = fs::absolute(project->getPath() + "/assets").string(),
             .projectPath = fs::path{project->getPath()},
+            .getMaterialInfo = [&](const std::string &matName, T3DM::Config::MatInfo &matInfo) -> bool
+            {
+              if(!savedMats.contains(matName))return false;
+              auto &matData = savedMats[matName];
+              matInfo.texSizeX = matData["tex0"]["texSize"][0];
+              matInfo.texSizeY = matData["tex0"]["texSize"][1];
+              matInfo.pointFilter = matData["filter"] != 0;
+              return true;
+            },
           }), .materials = {},
         };
-
-        if(!entry.conf.data.contains("materials")) {
-          entry.conf.data["materials"] = nlohmann::json::object();
-        }
-        auto &savedMats = entry.conf.data["materials"];
 
         for(const auto &t3dMat : entry.model.t3dm.materials) {
           auto &mat = entry.model.materials[t3dMat.first];
