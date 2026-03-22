@@ -15,6 +15,7 @@
 #include "../../../utils/meshGen.h"
 #include "../../../shader/defines.h"
 #include "../shared/materialInstance.h"
+#include "../../../editor/pages/editorScene.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/matrix_decompose.hpp"
@@ -117,6 +118,14 @@ namespace Project::Component::Model
       ImTable::addAssetVecComboBox("Model", modelList, data.model.value, [&data](auto) {
         data.obj3D.removeMesh();
       });
+
+      if(ctx.experimentalFeatures)
+      {
+        ImTable::add("");
+        if(ImGui::Button(ICON_MDI_PENCIL " Open Model Editor")) {
+          ctx.editorScene->openModelEditor(data.model.value);
+        }
+      }
 
       std::vector<const char*> layerNames{};
       for (auto &layer : scene->conf.layers3D) {
