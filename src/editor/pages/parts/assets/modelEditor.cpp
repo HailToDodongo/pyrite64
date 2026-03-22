@@ -139,7 +139,8 @@ namespace
 
 bool Editor::ModelEditor::draw(ImGuiID defDockId)
 {
-  auto model = ctx.project->getAssets().getEntryByUUID(assetUUID);
+  auto &assetManager = ctx.project->getAssets();
+  auto model = assetManager.getEntryByUUID(assetUUID);
   if(!model)return false;
 
   winName = "Model: " + model->name;
@@ -162,6 +163,7 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
     }
   };
 
+  std::string matToRemove{};
   for(auto &entry : model->model.materials)
   {
     auto label = "Material: " + entry.first;
@@ -173,13 +175,12 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
       ImTable::start("General", nullptr, labelWidth);
       if(ImTable::addProp("Override", mat.isCustom))
       {
-        ctx.project->getAssets().markAssetMetaDirty(model->getUUID());
         if(mat.isCustom.value) {
           model->conf.data["materials"][entry.first] = mat.serialize();
         } else {
-          model->conf.data["materials"].erase(entry.first);
-          ctx.project->getAssets().reloadAssetByUUID(model->getUUID());
+          matToRemove = entry.first; // defer to not break loop
         }
+        assetManager.markAssetMetaDirty(model->getUUID());
       }
       ImTable::end();
 
@@ -257,7 +258,7 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         }
       });
 
-      const auto &assets = ctx.project->getAssets().getTypeEntries(Project::FileType::IMAGE);
+      const auto &assets = assetManager.getTypeEntries(Project::FileType::IMAGE);
 
       auto drawMatTex = [&](Project::Assets::MaterialTex &tex) {
         ImGui::PushID(&tex);
@@ -272,7 +273,7 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
           tex.texSize.value[0] = 32;
           tex.texSize.value[0] = 32;
 
-          auto asset = ctx.project->getAssets().getEntryByUUID(tex.texUUID.value);
+          auto asset = assetManager.getEntryByUUID(tex.texUUID.value);
           if (asset && asset->texture) {
             auto imgSize = asset->texture->getSize();
             tex.texSize.value[0] = imgSize.x;
@@ -399,13 +400,21 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
 
       if(mat.isCustom.value && oldMat != mat) {
         model->conf.data["materials"][entry.first] = mat.serialize();
-        ctx.project->getAssets().markAssetMetaDirty(model->getUUID());
+        assetManager.markAssetMetaDirty(model->getUUID());
       }
     }
     ImGui::PopID();
   }
-
   ImGui::End();
+
+  if(!matToRemove.empty())
+  {
+    model->conf.data["materials"].erase(matToRemove);
+    assetManager.markAssetMetaDirty(model->getUUID());
+    assetManager.save();
+    assetManager.reloadAssetByUUID(model->getUUID());
+  }
+
   return isOpen;
 }
 
