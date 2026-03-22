@@ -92,6 +92,7 @@ namespace
       Utils::JSON::readProp(doc, conf.fontId);
       Utils::JSON::readProp(doc, conf.fontCharset);
 
+      conf.data = doc.contains("data") ? doc["data"] : nlohmann::json::object();
       conf.exclude = doc["exclude"];
     }
   }
@@ -233,6 +234,7 @@ std::string Project::AssetConf::serialize() const {
     .set(fontId)
     .set(fontCharset)
     .set("exclude", exclude)
+    .set("data", data)
     .toString();
 }
 
@@ -288,24 +290,30 @@ void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::str
     case FileType::MODEL_3D:
     {
       try{
-        T3DM::Config config{
-          .globalScale = (float)entry.conf.baseScale,
-          .animSampleRate = 60,
-          .createBVH = entry.conf.gltfBVH,
-          .verbose = false,
-          .assetPath = "assets/",
-          .assetPathFull = fs::absolute(project->getPath() + "/assets").string(),
-          .projectPath = fs::path{project->getPath()},
+        entry.model = {
+          .t3dm = T3DM::parseGLTF(path.c_str(), {
+            .globalScale = (float)entry.conf.baseScale,
+            .animSampleRate = 60,
+            .createBVH = entry.conf.gltfBVH,
+            .verbose = false,
+            .assetPath = "assets/",
+            .assetPathFull = fs::absolute(project->getPath() + "/assets").string(),
+            .projectPath = fs::path{project->getPath()},
+          }), .materials = {},
         };
 
-        entry.model = {
-          .t3dm = T3DM::parseGLTF(path.c_str(), config),
-          .materials = {},
-        };
+        if(!entry.conf.data.contains("materials")) {
+          entry.conf.data["materials"] = nlohmann::json::object();
+        }
+        auto &savedMats = entry.conf.data["materials"];
 
         for(const auto &t3dMat : entry.model.t3dm.materials) {
           auto &mat = entry.model.materials[t3dMat.first];
-          mat.fromT3D(*this, t3dMat.second);
+          if(savedMats.contains(t3dMat.first)) {
+            mat.deserialize(savedMats[t3dMat.first]);
+          } else {
+            mat.fromT3D(*this, t3dMat.second);
+          }
         }
 
         if (!entry.model.t3dm.models.empty()) {

@@ -171,9 +171,25 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
       auto &mat = entry.second;
 
       ImTable::start("General", nullptr, labelWidth);
-      ImTable::addProp("Override", mat.isCustom);
-
+      if(ImTable::addProp("Override", mat.isCustom))
+      {
+        ctx.project->getAssets().markAssetMetaDirty(model->getUUID());
+        if(mat.isCustom.value) {
+          model->conf.data["materials"][entry.first] = mat.serialize();
+        } else {
+          model->conf.data["materials"].erase(entry.first);
+          ctx.project->getAssets().reloadAssetByUUID(model->getUUID());
+        }
+      }
       ImTable::end();
+
+      if(!mat.isCustom.value)
+      {
+        ImGui::PopID();
+        continue;
+      }
+
+      auto oldMat = mat;
 
       auto usage = N64::CC::getUsage(mat.cc.value);
       // enforce disabling unused values
@@ -230,8 +246,15 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
           }
         }
 
+        if(!usage.twoCycle) {
+          cc[1] = cc[0];
+          cca[1] = cca[0];
+        }
+
         mat.cc.value = N64::CC::packCC(cc[0], cca[0], cc[1], cca[1]);
-        if(usage.twoCycle)mat.cc.value |= RDPQ_COMBINER_2PASS;
+        if(usage.twoCycle) {
+          mat.cc.value |= RDPQ_COMBINER_2PASS;
+        }
       });
 
       const auto &assets = ctx.project->getAssets().getTypeEntries(Project::FileType::IMAGE);
@@ -373,6 +396,11 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
       });
 
       ImGui::Dummy({0, 2_px});
+
+      if(mat.isCustom.value && oldMat != mat) {
+        model->conf.data["materials"][entry.first] = mat.serialize();
+        ctx.project->getAssets().markAssetMetaDirty(model->getUUID());
+      }
     }
     ImGui::PopID();
   }

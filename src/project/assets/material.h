@@ -30,6 +30,8 @@ namespace Project::Assets
 
     [[nodiscard]] nlohmann::json serialize() const;
     void deserialize(const nlohmann::json &doc);
+
+    bool operator==(const MaterialTex & tex) const = default;
   };
 
   struct Material
@@ -77,5 +79,7 @@ namespace Project::Assets
     void deserialize(const nlohmann::json &doc);
 
     void fromT3D(::Project::AssetManager &assets, const T3DM::Material &mat);
+
+    bool operator==(const Material & mat) const = default;
   };
 }

@@ -124,6 +124,10 @@ struct Property
   T& resolve(OBJ &obj) {
     return resolve(obj.propOverrides);
   }
+
+  bool operator==(const Property<T> &other) const {
+    return value == other.value;
+  }
 };
 
 using PropU32 = Property<uint32_t>;

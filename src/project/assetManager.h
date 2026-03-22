@@ -62,6 +62,9 @@ namespace Project
     PROP_U32(fontId);
     PROP_STRING(fontCharset);
 
+    // extra arbitrary data assets can store
+    nlohmann::json data{};
+
     std::string serialize() const;
   };
 
