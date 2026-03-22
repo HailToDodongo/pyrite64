@@ -149,11 +149,10 @@ namespace Project::Component::Model
 
       ImTable::end();
 
+      auto t3dm = ctx.project->getAssets().getEntryByUUID(data.model.value);
       if(ImGui::CollapsingSubHeader("Mesh Filter", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Filter", &obj))
       {
         bool changed = ImTable::addObjProp("Filter", data.filter.meshFilter);
-
-        auto t3dm = ctx.project->getAssets().getEntryByUUID(data.model.value);
         if(t3dm)
         {
           if(changed || data.filter.cache.empty()) {
@@ -171,7 +170,7 @@ namespace Project::Component::Model
         ImTable::end();
       }
 
-      if(ImGui::CollapsingSubHeader("Material Sets", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Mat", &obj))
+      if(t3dm && ImGui::CollapsingSubHeader("Material Sets", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Mat", &obj))
       {
         ImTable::addObjProp<int32_t>("Depth", data.material.depth, [](int32_t *depth)
         {
