@@ -92,6 +92,24 @@ void Project::SceneManager::add() {
   reload();
 }
 
+void Project::SceneManager::remove(int id) {
+  auto scenesPath = getScenePath(project);
+  auto scenePath = fs::path{scenesPath} / std::to_string(id);
+
+  if (loadedScene && loadedScene->getId() == id) {
+    delete loadedScene;
+    loadedScene = nullptr;
+  }
+
+  printf("Remove-Scene: %s\n", scenePath.c_str());
+  fs::remove_all(scenePath);
+  reload();
+
+  if (!loadedScene && !entries.empty()) {
+    loadScene(entries.front().id);
+  }
+}
+
 void Project::SceneManager::loadScene(int id) {
   if (loadedScene) {
     loadedScene->save();
