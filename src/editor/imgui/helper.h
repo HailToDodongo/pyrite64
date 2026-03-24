@@ -18,6 +18,8 @@
 #include "glm/gtc/type_ptr.hpp"
 #include <functional>
 
+#include "imgui_internal.h"
+
 namespace TPL
 {
   template <typename C, typename T>
@@ -33,6 +35,17 @@ namespace TPL
 
 namespace ImGui
 {
+  inline void SideBySide(auto cbA, auto cbB, float sizeOffset = 0)
+  {
+    BeginGroup();
+    ImGui::PushMultiItemsWidths(2, CalcItemWidth() - sizeOffset);
+    cbA();
+    PopItemWidth(); SameLine();
+    cbB();
+    PopItemWidth();
+    EndGroup();
+  }
+
   inline bool CollapsingSubHeader(const char* label, ImGuiTreeNodeFlags flags = 0)
   {
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 8_px);

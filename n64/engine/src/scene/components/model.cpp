@@ -21,9 +21,16 @@ namespace
     uint16_t assetIdx;
     uint8_t layer;
     uint8_t flags;
-    P64::Renderer::MaterialInstance material;
     uint8_t meshIdxCount;
     uint8_t meshIndices[];
+
+    // Followed by: (after 4byte align)
+    P64::Renderer::MaterialInstance* getMatInstance()
+    {
+      auto matInst = (uint32_t)meshIndices + meshIdxCount;
+      matInst = (matInst + 3) & ~0b11;
+      return (P64::Renderer::MaterialInstance*)matInst;
+    }
   };
 
   void recordWholeModel(T3DModel *model)
@@ -80,7 +87,11 @@ namespace P64::Comp
 {
   uint32_t Model::getAllocSize(uint16_t* initData)
   {
-    return sizeof(Model) + (sizeof(uint8_t) * ((InitData*)initData)->meshIdxCount);
+    auto mat = ((InitData*)initData)->getMatInstance();
+    uint32_t size = sizeof(Model) + (sizeof(uint8_t) * ((InitData*)initData)->meshIdxCount);
+    size = (size + 3) & ~0b11; // round up to 4 byte align for the material instance
+    size += mat->dataSize;
+    return size;
   }
 
   void Model::initDelete([[maybe_unused]] Object& obj, Model* data, void* initData_)
@@ -97,12 +108,15 @@ namespace P64::Comp
     assert(data->model != nullptr);
     data->layerIdx = initData->layer;
     data->flags = initData->flags;
-    data->material = initData->material;
 
     data->meshIdxCount = initData->meshIdxCount;
     for(uint8_t i = 0; i < initData->meshIdxCount; ++i) {
       data->meshIndices[i] = initData->meshIndices[i];
     }
+
+    auto matInstanceInit = initData->getMatInstance();
+    auto matInstance = data->getMatInstance();
+    memcpy(matInstance, matInstanceInit, matInstanceInit->dataSize);
 
     bool isBigTex = SceneManager::getCurrent().getConf().pipeline == SceneConf::Pipeline::BIG_TEX_256;
     bool separate = (data->flags & FLAG_CULLING) || (data->meshIdxCount != 0);
@@ -140,8 +154,9 @@ namespace P64::Comp
     t3d_mat4fp_from_srt(mat, obj.scale, obj.rot, obj.pos);
 
     if(data->layerIdx)DrawLayer::use3D(data->layerIdx);
+    auto material = data->getMatInstance();
 
-    data->material.begin(obj);
+    material->begin(obj);
 
     t3d_matrix_set(mat, true);
 
@@ -167,7 +182,7 @@ namespace P64::Comp
       }
     }
 
-    data->material.end();
+    material->end();
     if(data->layerIdx)DrawLayer::useDefault();
   }
 }

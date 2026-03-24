@@ -23,11 +23,17 @@ namespace P64::Comp
 
     T3DModel *model{};
     RingMat4FP matFP{};
-    Renderer::MaterialInstance material{};
     uint8_t layerIdx{0};
     uint8_t flags{0};
     uint8_t meshIdxCount{0};
     uint8_t meshIndices[];
+    //Renderer::MaterialInstance material{};
+
+    Renderer::MaterialInstance* getMatInstance() {
+      auto matInst = (uint32_t)meshIndices + meshIdxCount;
+      matInst = (matInst + 3) & ~0b11;
+      return (Renderer::MaterialInstance*)matInst;
+    }
 
     static uint32_t getAllocSize([[maybe_unused]] uint16_t* initData);
 

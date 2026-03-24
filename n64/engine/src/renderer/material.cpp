@@ -8,6 +8,39 @@
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
 
+namespace
+{
+  struct DynamicData
+  {
+    char* data{};
+
+    template<typename T>
+    const T& fetch() {
+      auto res = (T*)data;
+      data += sizeof(T);
+      return *res;
+    }
+  };
+
+  constexpr rdpq_texparms_t unpackTile(const P64::Renderer::Material::Tile &tile)
+  {
+    rdpq_texparms_t params{};
+    params.s.translate = static_cast<float>(tile.s.offset) * (1.0f / 8.0f);
+    params.s.scale_log = tile.s.scale;
+    params.s.repeats = static_cast<float>(tile.s.repeat) * (1.0f / 16.0f);
+    params.s.mirror = tile.s.mirror;
+
+    params.t.translate = static_cast<float>(tile.t.offset) * (1.0f / 8.0f);
+    params.t.scale_log = tile.t.scale;
+    params.t.repeats = static_cast<float>(tile.t.repeat) * (1.0f / 16.0f);
+    params.t.mirror = tile.t.mirror;
+    return params;
+  }
+
+  constinit rspq_block_t *dynBlock[8]{};
+  constinit uint32_t dynBlockCount{0};
+}
+
 void P64::Renderer::MaterialInstance::begin(Object &obj)
 {
   if(!doesAnything())return;
@@ -39,6 +72,27 @@ void P64::Renderer::MaterialInstance::begin(Object &obj)
 
     light.apply();
   }
+
+  //debugf("MaterialInstance begin: setMask=%04X (%d)\n", setMask, setsSlots());
+  if(setsSlots())
+  {
+    for(uint32_t slot=0; slot<8; ++slot)
+    {
+      if(setMask & (1 << (8 + slot)))
+      {
+        debugf("  Slot %lu: texAssetIdx=%lu, texReference=%lu\n", slot, texSlots[slot].texAssetIdx, texSlots[slot].texReference);
+        auto &tile = texSlots[slot];
+        auto params = unpackTile(tile);
+        rspq_block_begin();
+          auto tex =  (sprite_t*)AssetManager::getByIndex(tile.texAssetIdx);
+          rdpq_sprite_upload(TILE0, tex, &params);
+          dynBlock[dynBlockCount] = rspq_block_end();
+
+        rspq_block_set_ph(nullptr, (rspq_block_t*)slot, dynBlock[dynBlockCount]);
+        ++dynBlockCount;
+      }
+    }
+  }
 }
 
 void P64::Renderer::MaterialInstance::end()
@@ -51,36 +105,11 @@ void P64::Renderer::MaterialInstance::end()
   {
     rdpq_mode_pop();
   }
-}
 
-namespace
-{
-  struct DynamicData
-  {
-    char* data{};
-
-    template<typename T>
-    const T& fetch() {
-      auto res = (T*)data;
-      data += sizeof(T);
-      return *res;
-    }
-  };
-
-  constexpr rdpq_texparms_t unpackTile(const P64::Renderer::Material::Tile &tile)
-  {
-    rdpq_texparms_t params{};
-    params.s.translate = static_cast<float>(tile.s.offset) * (1.0f / 8.0f);
-    params.s.scale_log = tile.s.scale;
-    params.s.repeats = static_cast<float>(tile.s.repeat) * (1.0f / 16.0f);
-    params.s.mirror = tile.s.mirror;
-
-    params.t.translate = static_cast<float>(tile.t.offset) * (1.0f / 8.0f);
-    params.t.scale_log = tile.t.scale;
-    params.t.repeats = static_cast<float>(tile.t.repeat) * (1.0f / 16.0f);
-    params.t.mirror = tile.t.mirror;
-    return params;
+  for(uint32_t i=0; i<dynBlockCount; ++i) {
+    rdpq_call_deferred((void (*)(void*))rspq_block_free, dynBlock[i]);
   }
+  dynBlockCount = 0;
 }
 
 void P64::Renderer::Material::begin(MaterialState &state)
@@ -90,6 +119,18 @@ void P64::Renderer::Material::begin(MaterialState &state)
   uint8_t t3dVertFxFunc{};
   uint16_t t3dVertFxArg0{};
   uint16_t t3dVertFxArg1{};
+
+  /*debugf("Set flags: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+    sets(FLAG_OVERRIDE) ? "OVERRIDE" : "",  sets(FLAG_TEX0) ? "TEX0" : "",
+    sets(FLAG_TEX1) ? "TEX1" : "",          sets(FLAG_CC) ? "CC" : "",
+    sets(FLAG_BLENDER) ? "BLENDER" : "",    sets(FLAG_FOG) ? "FOG" : "",
+    sets(FLAG_PRIM) ? "PRIM" : "",          sets(FLAG_ENV) ? "ENV" : "",
+    sets(FLAG_ZPRIM) ? "ZPRIM" : "",        sets(FLAG_T3D_VERT_FX) ? "T3D_VERT_FX" : "",
+    sets(FLAG_ALPHA_COMP) ? "A-COMP" : "",  sets(FLAG_K4K5) ? "K4K5" : "",
+    sets(FLAG_PRIMLOD) ? "PRIMLOD" : "",    sets(FLAG_AA) ? "AA" : "",
+    sets(FLAG_DITHER) ? "DITHER" : "",      sets(FLAG_FILTER) ? "FILTER" : "",
+    sets(FLAG_ZMODE) ? "ZMODE" : "",        sets(FLAG_PERSP) ? "PERSP" : ""
+  );*/
 
   if(sets(FLAG_OVERRIDE)) {
     rdpq_mode_push();
@@ -108,23 +149,33 @@ void P64::Renderer::Material::begin(MaterialState &state)
     {
       auto &tile = ptr.fetch<Tile>();
       auto params = unpackTile(tile);
-      lastTexIdx = tile.texAssetIdx;
-      auto sprite = (sprite_t*)AssetManager::getByIndex(tile.texAssetIdx);
-      rdpq_sprite_upload(TILE0, sprite, &params);
-      assert(sprite);
+      if(tile.texAssetIdx != 0xFFFF) {
+        lastTexIdx = tile.texAssetIdx;
+        auto sprite = (sprite_t*)AssetManager::getByIndex(tile.texAssetIdx);
+        assert(sprite);
+        rdpq_sprite_upload(TILE0, sprite, &params);
+      } else {
+        rspq_block_run((rspq_block_t*)(uint32_t)tile.texReference);
+      }
     }
+
     if(sets(FLAG_TEX1))
     {
       auto &tile = ptr.fetch<Tile>();
       auto params = unpackTile(tile);
 
-      if(lastTexIdx != tile.texAssetIdx)
+      if(tile.texAssetIdx != 0xFFFF)
       {
-        auto sprite = (sprite_t*)AssetManager::getByIndex(tile.texAssetIdx);
-        assert(sprite);
-        rdpq_sprite_upload(TILE1, sprite, &params);
+        if(lastTexIdx != tile.texAssetIdx)
+        {
+          auto sprite = (sprite_t*)AssetManager::getByIndex(tile.texAssetIdx);
+          assert(sprite);
+          rdpq_sprite_upload(TILE1, sprite, &params);
+        } else {
+          rdpq_tex_reuse(TILE1, &params);
+        }
       } else {
-        rdpq_tex_reuse(TILE1, &params);
+        rspq_block_run((rspq_block_t*)(uint32_t)tile.texReference);
       }
     }
     if(setsBothTex)rdpq_tex_multi_end();

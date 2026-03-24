@@ -28,35 +28,17 @@ namespace
     f->write<uint32_t>(0); // set later
     f->write<uint32_t>(mat.drawFlags.value);
 
-
-    auto writeTex = [&](const Project::Assets::MaterialTex &tex)
-    {
-      auto assetIdx = sceneCtx.assetUUIDToIdx.find(tex.texUUID.value);
-      if(assetIdx == sceneCtx.assetUUIDToIdx.end()) {
-        throw std::runtime_error("Material Texture UUID not found: " + std::to_string(tex.texUUID.value));
-      }
-
-      f->write<uint16_t>(assetIdx->second);
-      f->write<uint16_t>(tex.dynTexture.value ? 1 : 0); // @TODO
-
-      f->write<uint16_t>(tex.offset.value[0] * 8.0f);
-      f->write<uint16_t>(tex.repeat.value[0] * 16);
-      f->write<int8_t>(tex.scale.value[0]);
-      f->write<int8_t>(tex.mirrorS.value ? 1 : 0);
-
-      f->write<uint16_t>(tex.offset.value[1] * 8.0f);
-      f->write<uint16_t>(tex.repeat.value[1] * 16);
-      f->write<int8_t>(tex.scale.value[1]);
-      f->write<int8_t>(tex.mirrorT.value ? 1 : 0);
-    };
-
     if(mat.tex0.set.value) {
       flags |= P64::Renderer::Material::FLAG_TEX0;
-      writeTex(mat.tex0);
+      Utils::BinaryFile subFile{};
+      mat.tex0.build(subFile, sceneCtx);
+      f->writeArray(subFile.getData().data(), subFile.getSize());
     }
     if(mat.tex1.set.value) {
       flags |= P64::Renderer::Material::FLAG_TEX1;
-      writeTex(mat.tex1);
+      Utils::BinaryFile subFile{};
+      mat.tex1.build(subFile, sceneCtx);
+      f->writeArray(subFile.getData().data(), subFile.getSize());
     }
 
     if(mat.ccSet.value) {

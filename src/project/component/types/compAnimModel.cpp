@@ -17,6 +17,7 @@
 #include "../shared/materialInstance.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include "../../../editor/pages/parts/assets/matInstanceEditor.h"
 #include "glm/gtx/matrix_decompose.hpp"
 
 #include "../shared/meshFilter.h"
@@ -74,7 +75,7 @@ namespace Project::Component::AnimModel
     ctx.fileObj.write<uint16_t>(id);
     ctx.fileObj.write<uint8_t>(data.layerIdx.resolve(obj));
     ctx.fileObj.write<uint8_t>(0); // flags, unused
-    data.material.build(ctx.fileObj, obj);
+    data.material.build(ctx.fileObj, ctx, obj);
   }
 
   void draw(Object &obj, Entry &entry)
@@ -102,28 +103,8 @@ namespace Project::Component::AnimModel
 
       ImTable::end();
 
-      if(ImGui::CollapsingSubHeader("Material Sets", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Mat", &obj))
-      {
-        ImTable::addObjProp<int32_t>("Depth", data.material.depth, [](int32_t *depth)
-        {
-          std::array<const char*, 4> items = {"None", "Read", "Write", "Read+Write"};
-          return ImGui::Combo("##", depth, items.data(), items.size());
-        }, &data.material.setDepth);
-
-        ImTable::addObjProp("Prim-Color", data.material.prim, &data.material.setPrim);
-        ImTable::addObjProp("Env-Color", data.material.env, &data.material.setEnv);
-        ImTable::addObjProp("Fresnel", data.material.fresnel, &data.material.setFresnel);
-        if(data.material.fresnel.resolve(obj.propOverrides) != 0)
-        {
-          ImTable::addObjProp("Fres-Color", data.material.fresnelColor);
-        }
-        // ImTable::addObjProp("Lighting", data.material.lighting, &data.material.setLighting);
-
-        ImTable::end();
-      }
-
+      Editor::MatInstanceEditor::draw(data.material, obj, data.model.value);
       ImGui::Dummy({0,4});
-
     }
   }
 
