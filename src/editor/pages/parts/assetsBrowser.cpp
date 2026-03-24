@@ -499,12 +499,16 @@ void Editor::AssetsBrowser::draw() {
       auto activeScene = ctx.project->getScenes().getLoadedScene();
 
       bool isSelected = activeScene && (activeScene->getId() == scene.id);
+      const auto &liveName = isSelected ? activeScene->getName() : scene.name;
+      const auto &displayName = liveName.empty() ? "(unnamed)" : liveName;
+      auto buttonLabel = displayName + "##" + std::to_string(scene.id);
+
       if(isSelected) {
         ImGui::PushStyleColor(ImGuiCol_Button, {0.5f,0.5f,0.7f,1});
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.5f,0.5f,0.7f,0.8f});
       }
 
-      if (ImGui::Button(scene.name.c_str(), textBtnSize)) {
+      if (ImGui::Button(buttonLabel.c_str(), textBtnSize)) {
         ctx.project->getScenes().loadScene(scene.id);
         ctx.project->conf.sceneIdLastOpened = scene.id;
         ctx.project->saveConfig();
@@ -514,7 +518,7 @@ void Editor::AssetsBrowser::draw() {
 
       if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
       {
-        ImGui::SetTooltip("Scene: %s\nID: %d", scene.name.c_str(), scene.id);
+        ImGui::SetTooltip("Scene: %s\nID: %d", displayName.c_str(), scene.id);
       }
     }
   }

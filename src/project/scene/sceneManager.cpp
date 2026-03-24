@@ -96,6 +96,7 @@ void Project::SceneManager::loadScene(int id) {
   if (loadedScene) {
     loadedScene->save();
     delete loadedScene;
+    reload(); // ensure names are up to date in case the loaded scene was renamed
   }
   //if we load a scene we should clear the undo history
   Editor::UndoRedo::getHistory().clear();
