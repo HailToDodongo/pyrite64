@@ -4,8 +4,14 @@
 */
 #pragma once
 #include "json.hpp"
+#include "../../utils/binaryFile.h"
 #include "../../utils/prop.h"
 #include "tiny3d/tools/gltf_importer/src/structs.h"
+
+namespace Build
+{
+  struct SceneCtx;
+}
 
 namespace Project
 {
@@ -30,6 +36,7 @@ namespace Project::Assets
 
     [[nodiscard]] nlohmann::json serialize() const;
     void deserialize(const nlohmann::json &doc);
+    void build(Utils::BinaryFile &file, Build::SceneCtx &sceneCtx) const;
 
     bool operator==(const MaterialTex & tex) const = default;
   };

@@ -156,6 +156,13 @@ namespace Utils
         return oldPos;
       }
 
+      void atPos(uint32_t tempPos, auto cb)
+      {
+        posPush(tempPos);
+        cb();
+        posPop();
+      }
+
       void align(uint32_t alignment) {
         uint32_t pos = getPos();
         uint32_t offset = pos % alignment;

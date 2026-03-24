@@ -12,37 +12,6 @@ namespace P64
 
 namespace P64::Renderer
 {
-  struct MaterialInstance
-  {
-    constexpr static uint16_t MASK_DEPTH  = 1 << 0;
-    constexpr static uint16_t MASK_PRIM   = 1 << 1;
-    constexpr static uint16_t MASK_ENV    = 1 << 2;
-    constexpr static uint16_t MASK_LIGHT  = 1 << 3;
-
-    uint16_t setMask{};
-    uint8_t fresnel{};
-    uint8_t valFlags{};
-    color_t colorPrim{};
-    color_t colorEnv{};
-    color_t colorFresnel{};
-
-    [[nodiscard]] constexpr bool doesAnything() const {
-      return setMask != 0;
-    }
-
-    constexpr uint16_t getDepthRead() const {
-      return valFlags & 0b01;
-    }
-
-    constexpr uint16_t getDepthWrite() const {
-      return valFlags & 0b10;
-    }
-
-    void begin(Object &obj);
-
-    void end();
-  };
-
   struct MaterialState {
     uint16_t lastTextureIdxA{0xFFFF};
     uint16_t lastTextureIdxB{0xFFFF};
@@ -131,5 +100,54 @@ namespace P64::Renderer
     }
 
     const Tile* getTile(uint8_t idx);
+  };
+
+  struct MaterialInstance
+  {
+    constexpr static uint16_t MASK_DEPTH  = 1 << 0;
+    constexpr static uint16_t MASK_PRIM   = 1 << 1;
+    constexpr static uint16_t MASK_ENV    = 1 << 2;
+    constexpr static uint16_t MASK_LIGHT  = 1 << 3;
+
+    constexpr static uint16_t MASK_SLOT0  = 1 << 8;
+    constexpr static uint16_t MASK_SLOT1  = 1 << 9;
+    constexpr static uint16_t MASK_SLOT2  = 1 << 10;
+    constexpr static uint16_t MASK_SLOT3  = 1 << 11;
+    constexpr static uint16_t MASK_SLOT4  = 1 << 12;
+    constexpr static uint16_t MASK_SLOT5  = 1 << 13;
+    constexpr static uint16_t MASK_SLOT6  = 1 << 14;
+    constexpr static uint16_t MASK_SLOT7  = 1 << 15;
+
+    uint32_t dataSize{}; // dynamic, @TODO: optmize space / alignemnt
+    uint16_t setMask{};
+    uint8_t fresnel{};
+    uint8_t valFlags{};
+    color_t colorPrim{};
+    color_t colorEnv{};
+    color_t colorFresnel{};
+
+    private:
+      Material::Tile texSlots[];
+
+    public:
+      [[nodiscard]] constexpr bool doesAnything() const {
+        return setMask != 0;
+      }
+
+      [[nodiscard]] constexpr bool setsSlots() const {
+        return (setMask & 0xFF00) != 0;
+      }
+
+      constexpr uint16_t getDepthRead() const {
+        return valFlags & 0b01;
+      }
+
+      constexpr uint16_t getDepthWrite() const {
+        return valFlags & 0b10;
+      }
+
+      void begin(Object &obj);
+      void end();
+
   };
 }

@@ -273,6 +273,10 @@ add_executable(pyrite64 src/main.cpp
         src/n64/libdragon.h
         src/n64/ccMapping.cpp
         src/n64/ccMapping.cpp
+        src/editor/pages/parts/assets/textureEditor.h
+        src/editor/pages/parts/assets/textureEditor.cpp
+        src/editor/pages/parts/assets/matInstanceEditor.h
+        src/editor/pages/parts/assets/matInstanceEditor.cpp
 )
 
 target_include_directories(pyrite64 PRIVATE

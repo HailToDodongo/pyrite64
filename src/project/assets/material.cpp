@@ -47,6 +47,36 @@ void Project::Assets::MaterialTex::deserialize(const nlohmann::json &doc)
   J::readProp(doc, mirrorT);
 }
 
+void Project::Assets::MaterialTex::build(
+  Utils::BinaryFile &file,
+  Build::SceneCtx &sceneCtx
+) const
+{
+  bool isDynamic = dynTexture.value;
+  if(isDynamic) {
+    file.write<uint16_t>(0xFFFF);
+    file.write<uint16_t>(0);
+  } else {
+    auto assetIdx = sceneCtx.assetUUIDToIdx.find(texUUID.value);
+    if(assetIdx == sceneCtx.assetUUIDToIdx.end()) {
+      throw std::runtime_error("Material Texture UUID not found: " + std::to_string(texUUID.value));
+    }
+
+    file.write<uint16_t>(assetIdx->second);
+    file.write<uint16_t>(0);
+  }
+
+  file.write<uint16_t>(offset.value[0] * 8.0f);
+  file.write<uint16_t>(repeat.value[0] * 16);
+  file.write<int8_t>(scale.value[0]);
+  file.write<int8_t>(mirrorS.value ? 1 : 0);
+
+  file.write<uint16_t>(offset.value[1] * 8.0f);
+  file.write<uint16_t>(repeat.value[1] * 16);
+  file.write<int8_t>(scale.value[1]);
+  file.write<int8_t>(mirrorT.value ? 1 : 0);
+}
+
 nlohmann::json Project::Assets::Material::serialize() const
 {
   auto doc = Utils::JSON::Builder{}
