@@ -124,6 +124,7 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
   ImGui::Text("Model: %s", model->name.c_str());
 
   ImVec2 labelWidth = {85_px, -1.0f};
+  bool needsReload = false;
 
   auto subSection = [&labelWidth](const char* name, auto cb)
   {
@@ -243,8 +244,8 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         }
       });
 
-      auto drawMatTex = [&](Project::Assets::MaterialTex &tex) {
-        ImGui::PushID(&tex);
+      auto drawMatTex = [&](Project::Assets::MaterialTex &tex, uint32_t id) {
+        ImGui::PushID(id + 0xFF);
 
         ImTable::addProp("Dynamic", tex.dynTexture);
 
@@ -259,8 +260,8 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
 
       mat.tex0.set.value = usage.tex0;
       mat.tex1.set.value = usage.tex1;
-      if(usage.tex0)subSection("Texture 0", [&]{ drawMatTex(mat.tex0); });
-      if(usage.tex1)subSection("Texture 1", [&]{ drawMatTex(mat.tex1); });
+      if(usage.tex0)subSection("Texture 0", [&]{ drawMatTex(mat.tex0, 0); });
+      if(usage.tex1)subSection("Texture 1", [&]{ drawMatTex(mat.tex1, 1); });
 
       subSection("Sampling", [&]
       {
@@ -329,8 +330,7 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         assetManager.markAssetMetaDirty(model->getUUID());
 
         if(oldMat.tex0.texSize != mat.tex0.texSize) {
-          assetManager.save();
-          assetManager.reloadAssetByUUID(model->getUUID());
+          needsReload = true;
         }
       }
     }
@@ -338,10 +338,34 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
   }
   ImGui::End();
 
+  // update placeholder indices
+  uint32_t slot = 0;
+  for(auto &entry : model->model.materials)
+  {
+    auto &mat = entry.second;
+    if(mat.isCustom.value)
+    {
+      if(mat.tex0.dynTexture.value) {
+        mat.tex0.dynPlaceholder.value = slot++;
+        if(slot >= 8)break;
+      }
+      if(mat.tex1.dynTexture.value) {
+        mat.tex1.dynPlaceholder.value = slot++;
+        if(slot >= 8)break;
+      }
+    }
+  }
+
   if(!matToRemove.empty())
   {
     model->conf.data["materials"].erase(matToRemove);
     assetManager.markAssetMetaDirty(model->getUUID());
+    assetManager.save();
+    assetManager.reloadAssetByUUID(model->getUUID());
+  }
+
+  if(needsReload)
+  {
     assetManager.save();
     assetManager.reloadAssetByUUID(model->getUUID());
   }

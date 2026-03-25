@@ -75,6 +75,10 @@ namespace Project::Component::AnimModel
     ctx.fileObj.write<uint16_t>(id);
     ctx.fileObj.write<uint8_t>(data.layerIdx.resolve(obj));
     ctx.fileObj.write<uint8_t>(0); // flags, unused
+
+    data.material.validateWithModel(
+      ctx.project->getAssets().getEntryByUUID(data.model.value)->model
+    );
     data.material.build(ctx.fileObj, ctx, obj);
   }
 
@@ -128,17 +132,6 @@ namespace Project::Component::AnimModel
       if(data.layerIdx.value == 0)data.obj3D.uniform.mat.flags |= T3D_FLAG_NO_LIGHT;
     }
 
-
-    data.obj3D.overrides.setPrim = data.material.setPrim.resolve(obj.propOverrides);
-    data.obj3D.overrides.setEnv = data.material.setEnv.resolve(obj.propOverrides);
-
-    if(data.obj3D.overrides.setPrim) {
-      data.obj3D.overrides.colPrim = data.material.prim.resolve(obj.propOverrides);
-    }
-    if(data.obj3D.overrides.setEnv) {
-      data.obj3D.overrides.colEnv = data.material.env.resolve(obj.propOverrides);
-    }
-
     data.obj3D.setObjectID(obj.uuid);
 
     // @TODO: tidy-up
@@ -155,7 +148,9 @@ namespace Project::Component::AnimModel
       return;
     }
 
+    data.obj3D.matInstance = &data.material;
     data.obj3D.draw(pass, cmdBuff, &asset->model);
+    data.obj3D.matInstance = nullptr;
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)

@@ -12,6 +12,11 @@
 
 namespace Project
 {
+  namespace Assets
+  {
+    struct Model3D;
+  }
+
   class Object;
 }
 
@@ -77,5 +82,7 @@ namespace Project::Component::Shared
     }
 
     void build(Utils::BinaryFile &file, Build::SceneCtx &ctx, Object& obj);
+
+    void validateWithModel(const Assets::Model3D &model);
   };
 }

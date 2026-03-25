@@ -10,6 +10,11 @@
 #include "tiny3d/tools/gltf_importer/src/structs.h"
 
 namespace Project {
+  namespace Component::Shared
+  {
+    struct MaterialInstance;
+  }
+
   class AssetManager;
 }
 
@@ -44,7 +49,7 @@ namespace Renderer
         SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdBuff, UniformsObject &uniforms,
         const std::vector<uint32_t> &partsIndices,
         const Project::Assets::Model3D &model,
-        const UniformsOverrides& overrides = {}
+        const Project::Component::Shared::MaterialInstance *matInstance
       );
 
       const Utils::AABB& getAABB() const { return mesh.getAABB(); }

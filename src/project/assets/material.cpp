@@ -23,6 +23,8 @@ nlohmann::json Project::Assets::MaterialTex::serialize() const
     .set(texUUID)
     .set(dynTexture)
     .set(dynTileScroll)
+    .set(dynTileIdx)
+    .set(dynPlaceholder)
     .set(texSize)
     .set(offset)
     .set(scale)
@@ -39,6 +41,8 @@ void Project::Assets::MaterialTex::deserialize(const nlohmann::json &doc)
   J::readProp(doc, texUUID);
   J::readProp(doc, dynTexture);
   J::readProp(doc, dynTileScroll);
+  J::readProp(doc, dynTileIdx);
+  J::readProp(doc, dynPlaceholder);
   J::readProp(doc, texSize);
   J::readProp(doc, offset);
   J::readProp(doc, scale);
@@ -52,10 +56,9 @@ void Project::Assets::MaterialTex::build(
   Build::SceneCtx &sceneCtx
 ) const
 {
-  bool isDynamic = dynTexture.value;
-  if(isDynamic) {
+  if(dynTexture.value) {
     file.write<uint16_t>(0xFFFF);
-    file.write<uint16_t>(0);
+    file.write<uint16_t>(dynPlaceholder.value);
   } else {
     auto assetIdx = sceneCtx.assetUUIDToIdx.find(texUUID.value);
     if(assetIdx == sceneCtx.assetUUIDToIdx.end()) {
@@ -63,15 +66,15 @@ void Project::Assets::MaterialTex::build(
     }
 
     file.write<uint16_t>(assetIdx->second);
-    file.write<uint16_t>(0);
+    file.write<uint16_t>(dynPlaceholder.value);
   }
 
-  file.write<uint16_t>(offset.value[0] * 8.0f);
+  file.write<uint16_t>(offset.value[0] * 64.0f);
   file.write<uint16_t>(repeat.value[0] * 16);
   file.write<int8_t>(scale.value[0]);
   file.write<int8_t>(mirrorS.value ? 1 : 0);
 
-  file.write<uint16_t>(offset.value[1] * 8.0f);
+  file.write<uint16_t>(offset.value[1] * 64.0f);
   file.write<uint16_t>(repeat.value[1] * 16);
   file.write<int8_t>(scale.value[1]);
   file.write<int8_t>(mirrorT.value ? 1 : 0);
