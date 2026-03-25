@@ -25,24 +25,19 @@ void Editor::MatInstanceEditor::draw(
   }
 
   auto &firstMat = t3dm->model.materials.begin()->second;
-  uint32_t slotIdx = 0;
-  for(auto &[slot, tex] : t3dm->model.materials)
-  {
-    if(tex.tex0.dynTexture.value || tex.tex0.texUUID.value) {
-      matInst.texSlots[slotIdx].set.value = true;
-      ImGui::PushID(slotIdx);
-      ImTable::add("Placeholder");
-      ImGui::Text("Slot #%u", slotIdx);
-      TextureEditor::draw(matInst.texSlots[slotIdx]);
-      ImGui::PopID();
+  matInst.validateWithModel(t3dm->model);
 
-      ImGui::Dummy(ImVec2(0, 6_px));
-      ++slotIdx;
-    }
-  }
-  // disable rest of the slots
-  for(; slotIdx < 8; ++slotIdx) {
-    matInst.texSlots[slotIdx].set.value = false;
+  for(uint32_t slotIdx = 0; slotIdx<8; ++slotIdx)
+  {
+    if(!matInst.texSlots[slotIdx].set.value)continue;
+
+    ImGui::PushID(slotIdx);
+    ImTable::add("Placeholder");
+    ImGui::Text("Slot #%u", slotIdx);
+    TextureEditor::draw(matInst.texSlots[slotIdx]);
+    ImGui::PopID();
+
+    ImGui::Dummy(ImVec2(0, 6_px));
   }
 
   if(!firstMat.zmodeSet.value) {

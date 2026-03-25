@@ -84,9 +84,8 @@ void Renderer::N64Mesh::draw(
   SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdBuff, UniformsObject &uniforms,
   const std::vector<uint32_t> &partsIndices,
   const Project::Assets::Model3D &model,
-  const UniformsOverrides& overrides
-)
-{
+  const Project::Component::Shared::MaterialInstance *matInstance
+) {
   if (!scene)return;
 
   auto drawPart = [&](MeshPart &part)
@@ -94,36 +93,40 @@ void Renderer::N64Mesh::draw(
     uint32_t flags = uniforms.mat.flags;
     uint32_t blender = uniforms.mat.blender.x;
 
+    uint32_t slotIdx = 0;
     auto matEntry = model.materials.find(part.materialName);
     if(matEntry != model.materials.end()) {
-      const auto &mat = matEntry->second;
+      auto mat = matEntry->second;
+
+      auto resolveTex = [&](Project::Assets::MaterialTex &tex, int texBinding)
+      {
+        if (tex.set.value) {
+          if(tex.dynTexture.value && slotIdx < 8) {
+            tex = matInstance->texSlots[slotIdx];
+            ++slotIdx;
+          }
+          auto texEntry = ctx.project->getAssets().getEntryByUUID(tex.texUUID.value);
+          if (texEntry && texEntry->texture) {
+            part.texBindings[texBinding].texture = texEntry->texture->getGPUTex();
+          }
+        }
+      };
+      resolveTex(mat.tex0, 0);
+      resolveTex(mat.tex1, 1);
+
       N64Material::convert(part, mat);
-
-      if (mat.tex0.set.value) {
-        auto texEntry = ctx.project->getAssets().getEntryByUUID(mat.tex0.texUUID.value);
-        if (texEntry && texEntry->texture) {
-          part.texBindings[0].texture = texEntry->texture->getGPUTex();
-        }
-      }
-
-      if (mat.tex1.set.value) {
-        auto texEntry = ctx.project->getAssets().getEntryByUUID(mat.tex1.texUUID.value);
-        if (texEntry && texEntry->texture) {
-          part.texBindings[1].texture = texEntry->texture->getGPUTex();
-        }
-      }
     }
 
     if(part.material.flags & UniformN64Material::FLAG_SET_PRIM_COL) {
       lastPrim = part.material.colPrim;
     } else {
-      if(overrides.setPrim)lastPrim = overrides.colPrim;
+      if(matInstance->setPrim.value)lastPrim = matInstance->prim.value;
     }
 
     if(part.material.flags & UniformN64Material::FLAG_SET_ENV_COL) {
       lastEnv = part.material.colEnv;
     } else {
-      if(overrides.setEnv)lastEnv = overrides.colEnv;
+      if(matInstance->setEnv.value)lastEnv = matInstance->env.value;
     }
 
     uniforms.mat = part.material;

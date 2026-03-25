@@ -28,17 +28,24 @@ namespace
     f->write<uint32_t>(0); // set later
     f->write<uint32_t>(mat.drawFlags.value);
 
+    int placeholders = 0;
     if(mat.tex0.set.value) {
       flags |= P64::Renderer::Material::FLAG_TEX0;
+      if(mat.tex0.dynTexture.value)++placeholders;
       Utils::BinaryFile subFile{};
       mat.tex0.build(subFile, sceneCtx);
       f->writeArray(subFile.getData().data(), subFile.getSize());
     }
     if(mat.tex1.set.value) {
       flags |= P64::Renderer::Material::FLAG_TEX1;
+      if(mat.tex1.dynTexture.value)++placeholders;
       Utils::BinaryFile subFile{};
       mat.tex1.build(subFile, sceneCtx);
       f->writeArray(subFile.getData().data(), subFile.getSize());
+    }
+
+    if(placeholders == 2) {
+      flags |= P64::Renderer::Material::FLAG_DUAL_PH;
     }
 
     if(mat.ccSet.value) {

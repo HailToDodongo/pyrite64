@@ -26,6 +26,14 @@ namespace P64::Renderer
       uint16_t repeat;
       int8_t scale;
       int8_t mirror;
+
+      void setOffset(float offs) {
+        offset = static_cast<uint16_t>(offs * 64.0f);
+      }
+      void setRepeat(float rep) {
+        repeat = static_cast<uint16_t>(rep * 16.0f);
+      }
+
     };
 
     struct Tile {
@@ -33,6 +41,11 @@ namespace P64::Renderer
       uint16_t texReference;
       TileAxis s;
       TileAxis t;
+
+      void setOffset(float offsetS, float offsetT) {
+        this->s.setOffset(offsetS);
+        this->t.setOffset(offsetT);
+      }
     };
 
     // flags which settings to set: (NOTE: keep in sync with the builder!)
@@ -58,6 +71,7 @@ namespace P64::Renderer
     constexpr static uint32_t FLAG_T3D_        = 1 << 17;
 
     constexpr static uint32_t FLAG_OVERRIDE    = 1 << 18;
+    constexpr static uint32_t FLAG_DUAL_PH     = 1 << 19;
 
     // some data is stored directly in the flag value:
 
@@ -144,6 +158,14 @@ namespace P64::Renderer
 
       constexpr uint16_t getDepthWrite() const {
         return valFlags & 0b10;
+      }
+
+      Material::Tile* getPlaceholder(uint32_t slot)
+      {
+        if(setMask & (1 << (8 + slot))) {
+          return &texSlots[slot];
+        }
+        return nullptr;
       }
 
       void begin(Object &obj);

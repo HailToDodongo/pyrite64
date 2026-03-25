@@ -3,6 +3,8 @@
 * @license MIT
 */
 #include "materialInstance.h"
+
+#include "../../assets/model3d.h"
 #include "../../scene/object.h"
 
 void Project::Component::Shared::MaterialInstance::build(Utils::BinaryFile &file, Build::SceneCtx &ctx, Object &obj)
@@ -43,4 +45,31 @@ void Project::Component::Shared::MaterialInstance::build(Utils::BinaryFile &file
   file.atPos(posStart, [&]{
     file.write<uint32_t>(size);
   });
+}
+
+void Project::Component::Shared::MaterialInstance::validateWithModel(const Assets::Model3D &model)
+{
+  uint32_t slotIdx = 0;
+  for(auto &[slot, tex] : model.materials)
+  {
+    if(tex.tex0.dynTexture.value)
+    {
+      texSlots[slotIdx].set.value = true;
+      texSlots[slotIdx].dynPlaceholder.value = 0;
+      ++slotIdx;
+      if(slotIdx >= 8)break;
+    }
+    if(tex.tex1.dynTexture.value)
+    {
+      texSlots[slotIdx].set.value = true;
+      texSlots[slotIdx].dynPlaceholder.value = 1;
+      ++slotIdx;
+      if(slotIdx >= 8)break;
+    }
+  }
+
+  // disable the rest of the slots
+  for(; slotIdx < 8; ++slotIdx) {
+    texSlots[slotIdx].set.value = false;
+  }
 }

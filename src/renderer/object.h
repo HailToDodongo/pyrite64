@@ -8,6 +8,7 @@
 #include "mesh.h"
 #include "n64Mesh.h"
 #include "uniforms.h"
+#include "../project/component/shared/materialInstance.h"
 
 namespace Renderer
 {
@@ -23,7 +24,7 @@ namespace Renderer
 
     public:
       UniformsObject uniform{};
-      UniformsOverrides overrides{};
+      const Project::Component::Shared::MaterialInstance *matInstance{};
 
       void setObjectID(uint32_t id) {
         uniform.objectID = id;

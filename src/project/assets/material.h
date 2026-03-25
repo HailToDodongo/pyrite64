@@ -28,6 +28,8 @@ namespace Project::Assets
 
     PROP_BOOL(dynTexture);
     PROP_BOOL(dynTileScroll);
+    PROP_S32(dynPlaceholder);
+    PROP_S32(dynTileIdx); // only used in the material instance to know the tile
 
     PROP_VEC2(offset);
     PROP_IVEC2(scale);

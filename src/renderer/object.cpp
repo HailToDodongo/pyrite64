@@ -28,6 +28,6 @@ void Renderer::Object::draw(
     mesh->draw(pass);
   }
   if(n64Mesh && model) {
-    n64Mesh->draw(pass, cmdBuff, uniform, parts, *model, overrides);
+    n64Mesh->draw(pass, cmdBuff, uniform, parts, *model, matInstance);
   }
 }
