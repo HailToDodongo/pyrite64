@@ -77,31 +77,38 @@ void P64::Renderer::MaterialInstance::begin(Object &obj)
   if(setsSlots())
   {
     uint16_t lastAssetIdx = 0xFFFF;
-    for(uint32_t slot=0; slot<8; ++slot)
+    for(uint32_t s=0; s<8; ++s)
     {
-      if(setMask & (1 << (8 + slot)))
+      if(setMask & (1 << (8 + s)))
       {
-        debugf("  Slot %lu: texAssetIdx=%lu, texReference=%lu\n", slot, texSlots[slot].texAssetIdx, texSlots[slot].texReference);
-        auto &tile = texSlots[slot];
-        debugf("tile: %04X %04X\n", tile.s.offset, tile.t.offset);
-        auto params = unpackTile(tile);
-        debugf("    : %f %f\n", (double)params.s.translate, (double)params.t.translate);
+        //debugf("  Slot %lu: texAssetIdx=%lu, texReference=%lu\n", slot, texSlots[slot].texAssetIdx, texSlots[slot].texReference);
+        auto &slot = texSlots[s];
+        //debugf("tile: %04X %04X\n", tile.s.offset, tile.t.offset);
+        auto params = unpackTile(slot.tile);
+        //debugf("    : %f %f\n", (double)params.s.translate, (double)params.t.translate);
 
-        rspq_block_begin();
+        //debugf("blocks: %p %p %p\n", slot.block[0], slot.block[1], slot.block[2]);
+
+        auto tmp = slot.block[0];
+        slot.block[0] = slot.block[2];
+        slot.block[2] = slot.block[1];
+        slot.block[1] = tmp;
+
+        rspq_block_begin_reuse(slot.block[0]);
           /*if(lastAssetIdx == tile.texAssetIdx)
           {
             // @TODO: handle
             rdpq_tex_reuse((rdpq_tile_t)slot, &params);
           } else*/
           {
-            auto tex =  (sprite_t*)AssetManager::getByIndex(tile.texAssetIdx);
-            rdpq_sprite_upload((rdpq_tile_t)texSlots[slot].texReference, tex, &params);
-            dynBlock[dynBlockCount] = rspq_block_end();
+            auto tex =  (sprite_t*)AssetManager::getByIndex(slot.tile.texAssetIdx);
+            rdpq_sprite_upload((rdpq_tile_t)texSlots[s].tile.texReference, tex, &params);
+            slot.block[0] = rspq_block_end();
           }
 
-          lastAssetIdx = tile.texAssetIdx;
+          lastAssetIdx = slot.tile.texAssetIdx;
 
-        rspq_block_set_ph(nullptr, (rspq_block_t*)slot, dynBlock[dynBlockCount]);
+        rspq_block_set_ph(nullptr, (rspq_block_t*)s, slot.block[0]);
         ++dynBlockCount;
       }
     }
@@ -119,10 +126,6 @@ void P64::Renderer::MaterialInstance::end()
     rdpq_mode_pop();
   }
 
-  // @TODO: optimize
-  for(uint32_t i=0; i<dynBlockCount; ++i) {
-    rdpq_call_deferred((void (*)(void*))rspq_block_free, dynBlock[i]);
-  }
   dynBlockCount = 0;
 }
 
@@ -134,7 +137,7 @@ void P64::Renderer::Material::begin(MaterialState &state)
   uint16_t t3dVertFxArg0{};
   uint16_t t3dVertFxArg1{};
 
-  debugf("Set flags: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+  /*debugf("Set flags: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
     sets(FLAG_OVERRIDE) ? "OVERRIDE" : "",  sets(FLAG_TEX0) ? "TEX0" : "",
     sets(FLAG_TEX1) ? "TEX1" : "",          sets(FLAG_CC) ? "CC" : "",
     sets(FLAG_BLENDER) ? "BLENDER" : "",    sets(FLAG_FOG) ? "FOG" : "",
@@ -144,7 +147,7 @@ void P64::Renderer::Material::begin(MaterialState &state)
     sets(FLAG_PRIMLOD) ? "PRIMLOD" : "",    sets(FLAG_AA) ? "AA" : "",
     sets(FLAG_DITHER) ? "DITHER" : "",      sets(FLAG_FILTER) ? "FILTER" : "",
     sets(FLAG_ZMODE) ? "ZMODE" : "",        sets(FLAG_PERSP) ? "PERSP" : ""
-  );
+  );*/
 
   if(sets(FLAG_OVERRIDE)) {
     rdpq_mode_push();
@@ -169,7 +172,7 @@ void P64::Renderer::Material::begin(MaterialState &state)
         assert(sprite);
         rdpq_sprite_upload(TILE0, sprite, &params);
       } else {
-        debugf("  Slot 0: texReference=%lu\n", tile.texReference);
+        //debugf("  Slot 0: texReference=%lu\n", tile.texReference);
         rspq_block_run((rspq_block_t*)(uint32_t)tile.texReference);
       }
     }
@@ -190,7 +193,7 @@ void P64::Renderer::Material::begin(MaterialState &state)
           rdpq_tex_reuse(TILE1, &params);
         }
       } else {
-        debugf("  Slot 1: texReference=%lu\n", tile.texReference);
+        //debugf("  Slot 1: texReference=%lu\n", tile.texReference);
         rspq_block_run((rspq_block_t*)(uint32_t)tile.texReference);
       }
     }

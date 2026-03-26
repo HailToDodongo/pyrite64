@@ -69,7 +69,13 @@ namespace P64::Comp
     assert(data->model != nullptr);
     data->layerIdx = initData->layer;
     data->flags = initData->flags;
-    data->material = initData->material;
+
+    // struct has move/copy removed for safety and to avoid accidental copies.
+    // but we still need to memcpy here, the warning is wrong anyways as it's still a trivial type
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wclass-memaccess"
+      memcpy(&data->material, &initData->material, initData->material.dataSize);
+    #pragma GCC diagnostic pop
 
     /*bool isBigTex = SceneManager::getCurrent().getConf().pipeline == SceneConf::Pipeline::BIG_TEX_256;
 

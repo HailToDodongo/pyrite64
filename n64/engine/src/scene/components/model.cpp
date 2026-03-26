@@ -115,8 +115,14 @@ namespace P64::Comp
     }
 
     auto matInstanceInit = initData->getMatInstance();
-    auto matInstance = data->getMatInstance();
-    memcpy(matInstance, matInstanceInit, matInstanceInit->dataSize);
+    auto &matInstance = data->getMatInstance();
+
+    // struct has move/copy removed for safety and to avoid accidental copies.
+    // but we still need to memcpy here, the warning is wrong anyways as it's still a trivial type
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wclass-memaccess"
+      memcpy(&matInstance, matInstanceInit, matInstanceInit->dataSize);
+    #pragma GCC diagnostic pop
 
     bool isBigTex = SceneManager::getCurrent().getConf().pipeline == SceneConf::Pipeline::BIG_TEX_256;
     bool separate = (data->flags & FLAG_CULLING) || (data->meshIdxCount != 0);
@@ -154,9 +160,9 @@ namespace P64::Comp
     t3d_mat4fp_from_srt(mat, obj.scale, obj.rot, obj.pos);
 
     if(data->layerIdx)DrawLayer::use3D(data->layerIdx);
-    auto material = data->getMatInstance();
+    auto &material = data->getMatInstance();
 
-    material->begin(obj);
+    material.begin(obj);
 
     t3d_matrix_set(mat, true);
 
@@ -182,7 +188,7 @@ namespace P64::Comp
       }
     }
 
-    material->end();
+    material.end();
     if(data->layerIdx)DrawLayer::useDefault();
   }
 }

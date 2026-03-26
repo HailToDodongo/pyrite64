@@ -37,6 +37,9 @@ void Project::Component::Shared::MaterialInstance::build(Utils::BinaryFile &file
   for(int i=0; i<8; ++i)
   {
     if(texSlots[i].set.value) {
+      file.write<uint32_t>(0); // runtime pointer
+      file.write<uint32_t>(0); // runtime pointer
+      file.write<uint32_t>(0); // runtime pointer
       texSlots[i].build(file, ctx);
     }
   }

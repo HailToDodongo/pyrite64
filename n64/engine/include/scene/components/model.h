@@ -29,10 +29,10 @@ namespace P64::Comp
     uint8_t meshIndices[];
     //Renderer::MaterialInstance material{};
 
-    Renderer::MaterialInstance* getMatInstance() {
+    Renderer::MaterialInstance& getMatInstance() {
       auto matInst = (uint32_t)meshIndices + meshIdxCount;
       matInst = (matInst + 3) & ~0b11;
-      return (Renderer::MaterialInstance*)matInst;
+      return *(Renderer::MaterialInstance*)matInst;
     }
 
     static uint32_t getAllocSize([[maybe_unused]] uint16_t* initData);
