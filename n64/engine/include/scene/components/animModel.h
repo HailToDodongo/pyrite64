@@ -40,6 +40,10 @@ namespace P64::Comp
       void setMainAnim(int16_t idx);
       void setBlendAnim(int16_t idx);
 
+      Renderer::MaterialInstance& getMatInstance() {
+        return material;
+      }
+
       T3DAnim* getMainAnim() {
         if (animIdxMain < 0) return nullptr;
         return &anims[animIdxMain];

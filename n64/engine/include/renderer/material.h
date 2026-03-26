@@ -4,6 +4,7 @@
 */
 #pragma once
 #include <libdragon.h>
+#include "../lib/types.h"
 
 namespace P64
 {
@@ -141,9 +142,18 @@ namespace P64::Renderer
     color_t colorFresnel{};
 
     private:
-      Material::Tile texSlots[];
+      struct Slot
+      {
+        rspq_block_t *block[3]{};
+        Material::Tile tile{};
+      };
+
+      Slot texSlots[];
 
     public:
+      MaterialInstance() = default;
+      CLASS_NO_COPY_MOVE(MaterialInstance);
+
       [[nodiscard]] constexpr bool doesAnything() const {
         return setMask != 0;
       }
@@ -163,7 +173,7 @@ namespace P64::Renderer
       Material::Tile* getPlaceholder(uint32_t slot)
       {
         if(setMask & (1 << (8 + slot))) {
-          return &texSlots[slot];
+          return &texSlots[slot].tile;
         }
         return nullptr;
       }
