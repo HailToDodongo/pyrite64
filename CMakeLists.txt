@@ -128,6 +128,8 @@ add_executable(pyrite64 src/main.cpp
         src/renderer/texture.cpp
         src/renderer/texture.h
         src/project/project.cpp
+        src/editor/recentProjects.h
+        src/editor/recentProjects.cpp
         src/editor/actions.h
         src/editor/actions.cpp
         src/editor/undoRedo.h
