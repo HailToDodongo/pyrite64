@@ -3,11 +3,17 @@
 * @license MIT
 */
 #pragma once
+#include <iterator>
 #include <libdragon.h>
 #include "../lib/types.h"
 
 namespace P64
 {
+  namespace Comp {
+    struct Model;
+    struct AnimModel;
+  }
+
   class Object;
 }
 
@@ -126,40 +132,78 @@ namespace P64::Renderer
     const Tile* getTile(uint8_t idx);
   };
 
+  /**
+   * 'MaterialInstance' defines a per-components state of additional material settings.
+   * While the material of an object is immutable, this struct here can be modified.
+   * This allows things like prim/env color or texture placeholders to be set on a per-object basis.
+   */
   struct MaterialInstance
   {
-    constexpr static uint16_t MASK_DEPTH  = 1 << 0;
-    constexpr static uint16_t MASK_PRIM   = 1 << 1;
-    constexpr static uint16_t MASK_ENV    = 1 << 2;
-    constexpr static uint16_t MASK_LIGHT  = 1 << 3;
-
-    constexpr static uint16_t MASK_SLOT0  = 1 << 8;
-    constexpr static uint16_t MASK_SLOT1  = 1 << 9;
-    constexpr static uint16_t MASK_SLOT2  = 1 << 10;
-    constexpr static uint16_t MASK_SLOT3  = 1 << 11;
-    constexpr static uint16_t MASK_SLOT4  = 1 << 12;
-    constexpr static uint16_t MASK_SLOT5  = 1 << 13;
-    constexpr static uint16_t MASK_SLOT6  = 1 << 14;
-    constexpr static uint16_t MASK_SLOT7  = 1 << 15;
-
-    constexpr static uint16_t MAX_SLOTS = 8;
-
-    uint32_t dataSize{}; // dynamic, @TODO: optmize space / alignemnt
-    uint16_t setMask{};
-    uint8_t fresnel{};
-    uint8_t valFlags{};
-    color_t colorPrim{};
-    color_t colorEnv{};
-    color_t colorFresnel{};
+    friend class Comp::Model;
+    friend class Comp::AnimModel;
 
     private:
-      struct Slot
+      constexpr static uint16_t MASK_DEPTH  = 1 << 0;
+      constexpr static uint16_t MASK_PRIM   = 1 << 1;
+      constexpr static uint16_t MASK_ENV    = 1 << 2;
+      constexpr static uint16_t MASK_LIGHT  = 1 << 3;
+
+      constexpr static uint16_t MASK_SLOT0  = 1 << 8;
+      constexpr static uint16_t MASK_SLOT1  = 1 << 9;
+      constexpr static uint16_t MASK_SLOT2  = 1 << 10;
+      constexpr static uint16_t MASK_SLOT3  = 1 << 11;
+      constexpr static uint16_t MASK_SLOT4  = 1 << 12;
+      constexpr static uint16_t MASK_SLOT5  = 1 << 13;
+      constexpr static uint16_t MASK_SLOT6  = 1 << 14;
+      constexpr static uint16_t MASK_SLOT7  = 1 << 15;
+
+      constexpr static uint16_t MAX_SLOTS = 8;
+
+    // (Note: member order matters here as the editor prepares the data at build-time)
+      uint32_t dataSize{}; // dynamic, @TODO: optmize space / alignemnt
+      uint16_t setMask{};
+      uint8_t fresnel{};
+      uint8_t valFlags{};
+    public:
+
+      // Prim-color, only takes effect if the model material doesn't set it already
+      color_t colorPrim{};
+      // Env-color, only takes effect if the model material doesn't set it already
+      color_t colorEnv{};
+
+    private:
+      color_t colorFresnel{};
+
+      struct Placeholder
       {
-        rspq_block_t *block[3]{};
-        Material::Tile tile{};
+        friend struct MaterialInstance;
+
+        private:
+          rspq_block_t *block[3]{};
+        public:
+          // Tile settings, after making modifications call 'update()'.
+          Material::Tile tile{};
+
+          /**
+           * Applies changes made to 'tile' so they can be used for rendering.
+           * You are *not* required to call this each frame, only when things change.
+           * However, this function should never be called more than once per frame.
+           */
+          void update();
       };
 
-      Slot texSlots[];
+      Placeholder placeholders[];
+
+      void begin(Object &obj);
+      void end();
+
+      [[nodiscard]] constexpr uint16_t getDepthRead() const {
+        return valFlags & 0b01;
+      }
+
+      [[nodiscard]] constexpr uint16_t getDepthWrite() const {
+        return valFlags & 0b10;
+      }
 
     public:
       MaterialInstance() = default;
@@ -167,32 +211,59 @@ namespace P64::Renderer
 
       ~MaterialInstance();
 
+      /**
+       * Checks if this instance has at least one setting enabled.
+       * If this returns false, it means this instance if effective a no-op and doesn't need to be applied at all.
+       * @return true if it does anything, false if not
+       */
       [[nodiscard]] constexpr bool doesAnything() const {
         return setMask != 0;
       }
 
-      [[nodiscard]] constexpr bool setsSlots() const {
+      /**
+       * Checks if this instance has at least one active placeholder.
+       * This information is baked into the instance at build-time, and needs to be set in the editor.
+       * @return true if at least one placeholder is set, false if not
+       */
+      [[nodiscard]] constexpr bool setsAnyPlaceholder() const {
         return (setMask & 0xFF00) != 0;
       }
 
-      constexpr uint16_t getDepthRead() const {
-        return valFlags & 0b01;
+      /**
+       * Checks if a specific placeholder-slot is active.
+       * @param idx the slot index (0-7)
+       * @return true if the slot is active, false if not
+       */
+      [[nodiscard]] constexpr bool setsPlaceholder(uint32_t idx) const {
+        return setMask & (1 << (8 + idx));
       }
 
-      constexpr uint16_t getDepthWrite() const {
-        return valFlags & 0b10;
-      }
-
-      Material::Tile* getPlaceholder(uint32_t slot)
+      /**
+       * Returns a placeholder for a given slot (0-7).
+       * This must be set up in the editor to be available at runtime, otherwise this will return a nullptr.
+       *
+       * On the returned placeholder you can then modify tile-settings or the texture (depending on the setup).
+       * When done, call 'update()' on it to prepare the changed data for future drawing.
+       *
+       * @param slot the slot index (0-7)
+       * @return placeholder or nullptr if not set up
+       */
+      Placeholder* getPlaceholder(uint32_t slot)
       {
         if(setMask & (1 << (MAX_SLOTS + slot))) {
-          return &texSlots[slot].tile;
+          return &placeholders[slot];
         }
         return nullptr;
       }
 
-      void begin(Object &obj);
-      void end();
+      /**
+       * Returns the allocated size of this object in bytes.
+       * (This is used internally to manage allocation and copying).
+       * @return size in bytes
+       */
+      [[nodiscard]] uint32_t getSize() const {
+        return dataSize;
+      }
 
   };
 }

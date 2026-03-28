@@ -47,7 +47,6 @@ namespace P64::Comp
   {
     auto *initData = (InitData*)initData_;
     if (initData == nullptr) {
-
       auto it = t3d_model_iter_create(data->model, T3D_CHUNK_TYPE_ANIM);
       uint32_t i=0;
       while(t3d_model_iter_next(&it)) {
@@ -74,7 +73,7 @@ namespace P64::Comp
     // but we still need to memcpy here, the warning is wrong anyways as it's still a trivial type
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wclass-memaccess"
-      memcpy(&data->material, &initData->material, initData->material.dataSize);
+      memcpy(&data->material, &initData->material, initData->material.getSize());
     #pragma GCC diagnostic pop
 
     /*bool isBigTex = SceneManager::getCurrent().getConf().pipeline == SceneConf::Pipeline::BIG_TEX_256;
