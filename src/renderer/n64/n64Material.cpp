@@ -39,6 +39,8 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Project::Asse
   part.material.otherModeH = otherModes >> 32;
   part.material.otherModeL = otherModes & 0xFFFFFFFF;
 
+  part.material.primLodDepth[1] = t3dMat.primLod.value / 256.0f; // intentional 0x100 instead 0xFF
+
   // @TODO
   //part.material.flags |= t3dMat.setBlendColor ? UniformN64Material::FLAG_SET_BLEND_COL : 0;
 
@@ -47,15 +49,12 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Project::Asse
   part.material.flags |= t3dMat.envColorSet.value ? UniformN64Material::FLAG_SET_ENV_COL : 0;
   part.material.flags |= t3dMat.primColorSet.value ? UniformN64Material::FLAG_SET_PRIM_COL : 0;
 
-  part.material.lightDir[0].w = 0.0f; // no alpha clip
-  if (t3dMat.alphaComp.value  != 0) {
-    part.material.lightDir[0].w = 0.5f;
-  }
+  part.material.lightDir[0].w = t3dMat.alphaComp.value / 255.0f;
 
   N64::CC::unpackMappedCC(cc, part.material.cc0Color, part.material.cc0Alpha, part.material.cc1Color, part.material.cc1Alpha);
 
-  part.material.colPrim = t3dMat.primColor.value;
-  part.material.colEnv = t3dMat.envColor.value;
+  part.material.colPrim = t3dMat.primColor.value * 255.0f / 256.0f;
+  part.material.colEnv = t3dMat.envColor.value * 255.0f / 256.0f;
 
   part.material.mask = {
     std::pow(2, integerToPow2(texA.texSize.value[0])),

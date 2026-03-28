@@ -32,7 +32,7 @@ void Editor::TextureEditor::draw(Project::Assets::MaterialTex &tex)
   auto &assetManager = ctx.project->getAssets();
   const auto &assets = assetManager.getTypeEntries(Project::FileType::IMAGE);
 
-  ImTable::addAssetVecComboBox("Texture", assets, tex.texUUID.value);//, [&data](auto) { data.obj3D.removeMesh(); });
+  ImTable::addAssetVecComboBox("Texture", assets, tex.texUUID.value);
 
   tex.texSize.value[0] = 32;
   tex.texSize.value[0] = 32;
@@ -47,8 +47,15 @@ void Editor::TextureEditor::draw(Project::Assets::MaterialTex &tex)
     float maxWidth = ImGui::GetContentRegionAvail().x - 8_px;
     if (maxWidth > 128_px)maxWidth = 128_px;
     float imgRatio = imgSize.x / imgSize.y;
-    imgSize.x = maxWidth;
-    imgSize.y = maxWidth / imgRatio;
+    if(imgSize.x >= imgSize.y)
+    {
+      imgSize.x = maxWidth;
+      imgSize.y = maxWidth / imgRatio;
+    } else {
+      imgSize.y = maxWidth;
+      imgSize.x = maxWidth * imgRatio;
+    }
+
     ImGui::Image(ImTextureRef(asset->texture->getGPUTex()), imgSize);
     ImGui::BeginDisabled();
     ImTable::addProp("Size", tex.texSize);

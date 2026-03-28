@@ -36,9 +36,19 @@ namespace
     params.t.mirror = tile.t.mirror;
     return params;
   }
+}
 
-  constinit rspq_block_t *dynBlock[8]{};
-  constinit uint32_t dynBlockCount{0};
+P64::Renderer::MaterialInstance::~MaterialInstance()
+{
+  for(int s=0; s<MAX_SLOTS; ++s)
+  {
+    if(setMask & (1 << (MAX_SLOTS + s)))
+    {
+      if(texSlots[s].block[0])rspq_block_free(texSlots[s].block[0]);
+      if(texSlots[s].block[1])rspq_block_free(texSlots[s].block[1]);
+      if(texSlots[s].block[2])rspq_block_free(texSlots[s].block[2]);
+    }
+  }
 }
 
 void P64::Renderer::MaterialInstance::begin(Object &obj)
@@ -76,18 +86,16 @@ void P64::Renderer::MaterialInstance::begin(Object &obj)
   //debugf("MaterialInstance begin: setMask=%04X (%d)\n", setMask, setsSlots());
   if(setsSlots())
   {
-    uint16_t lastAssetIdx = 0xFFFF;
-    for(uint32_t s=0; s<8; ++s)
+    for(uint32_t s=0; s<MAX_SLOTS; ++s)
     {
-      if(setMask & (1 << (8 + s)))
+      if(setMask & (1 << (MAX_SLOTS + s)))
       {
-        //debugf("  Slot %lu: texAssetIdx=%lu, texReference=%lu\n", slot, texSlots[slot].texAssetIdx, texSlots[slot].texReference);
         auto &slot = texSlots[s];
-        //debugf("tile: %04X %04X\n", tile.s.offset, tile.t.offset);
         auto params = unpackTile(slot.tile);
-        //debugf("    : %f %f\n", (double)params.s.translate, (double)params.t.translate);
 
-        //debugf("blocks: %p %p %p\n", slot.block[0], slot.block[1], slot.block[2]);
+        /*debugf("MaterialInstance: setting slot %lu, assetIdx=%04X, phIndex=%d, phType=%d\n",
+          s, slot.tile.texAssetIdx, slot.tile.phIndex, (int)slot.tile.phType
+        );*/
 
         auto tmp = slot.block[0];
         slot.block[0] = slot.block[2];
@@ -95,21 +103,22 @@ void P64::Renderer::MaterialInstance::begin(Object &obj)
         slot.block[1] = tmp;
 
         rspq_block_begin_reuse(slot.block[0]);
-          /*if(lastAssetIdx == tile.texAssetIdx)
-          {
-            // @TODO: handle
-            rdpq_tex_reuse((rdpq_tile_t)slot, &params);
-          } else*/
+
+          auto rdpTile = (rdpq_tile_t)texSlots[s].tile.phIndex;
+          if(slot.tile.phType == Material::Tile::PlaceholderType::FULL)
           {
             auto tex =  (sprite_t*)AssetManager::getByIndex(slot.tile.texAssetIdx);
-            rdpq_sprite_upload((rdpq_tile_t)texSlots[s].tile.texReference, tex, &params);
-            slot.block[0] = rspq_block_end();
+            rdpq_sprite_upload(rdpTile, tex, &params);
+          } else {
+            rdpq_set_tile_size(TILE0,
+              params.s.translate, params.t.translate,
+              params.s.translate + 64.0f,
+              params.t.translate + 64.0f
+            );
           }
 
-          lastAssetIdx = slot.tile.texAssetIdx;
-
-        rspq_block_set_ph(nullptr, (rspq_block_t*)s, slot.block[0]);
-        ++dynBlockCount;
+        slot.block[0] = rspq_block_end();
+        rspq_block_set_ph((rspq_block_t*)s, slot.block[0]);
       }
     }
   }
@@ -125,8 +134,6 @@ void P64::Renderer::MaterialInstance::end()
   {
     rdpq_mode_pop();
   }
-
-  dynBlockCount = 0;
 }
 
 void P64::Renderer::Material::begin(MaterialState &state)
@@ -152,7 +159,6 @@ void P64::Renderer::Material::begin(MaterialState &state)
   if(sets(FLAG_OVERRIDE)) {
     rdpq_mode_push();
   }
-
   rdpq_mode_begin();
 
   if(sets(FLAG_TEX0) || sets(FLAG_TEX1))
@@ -162,41 +168,35 @@ void P64::Renderer::Material::begin(MaterialState &state)
 
     uint16_t lastTexIdx = 0xFFFF;
 
-    if(sets(FLAG_TEX0))
+    auto handleTexture = [&](rdpq_tile_t rdpTile)
     {
       auto &tile = ptr.fetch<Tile>();
       auto params = unpackTile(tile);
-      if(tile.texAssetIdx != 0xFFFF) {
-        lastTexIdx = tile.texAssetIdx;
-        auto sprite = (sprite_t*)AssetManager::getByIndex(tile.texAssetIdx);
-        assert(sprite);
-        rdpq_sprite_upload(TILE0, sprite, &params);
+
+      //debugf("Texture[%d]: assetIdx=%04X, phIndex=%d, phType=%d\n", rdpTile, tile.texAssetIdx, tile.phIndex, (int)tile.phType);
+
+      if(tile.phType == Tile::PlaceholderType::FULL) {
+        rspq_block_run((rspq_block_t*)(uint32_t)tile.phIndex);
       } else {
-        //debugf("  Slot 0: texReference=%lu\n", tile.texReference);
-        rspq_block_run((rspq_block_t*)(uint32_t)tile.texReference);
-      }
-    }
 
-    if(sets(FLAG_TEX1))
-    {
-      auto &tile = ptr.fetch<Tile>();
-      auto params = unpackTile(tile);
-
-      if(tile.texAssetIdx != 0xFFFF)
-      {
-        if(lastTexIdx != tile.texAssetIdx)
-        {
+        if(lastTexIdx != tile.texAssetIdx) {
           auto sprite = (sprite_t*)AssetManager::getByIndex(tile.texAssetIdx);
           assert(sprite);
-          rdpq_sprite_upload(TILE1, sprite, &params);
+          rdpq_sprite_upload(rdpTile, sprite, &params);
+          lastTexIdx = tile.texAssetIdx;
         } else {
-          rdpq_tex_reuse(TILE1, &params);
+          rdpq_tex_reuse(rdpTile, &params);
         }
-      } else {
-        //debugf("  Slot 1: texReference=%lu\n", tile.texReference);
-        rspq_block_run((rspq_block_t*)(uint32_t)tile.texReference);
+
+        if(tile.phType == Tile::PlaceholderType::TILE) {
+          rspq_block_run((rspq_block_t*)(uint32_t)tile.phIndex);
+        }
       }
-    }
+    };
+
+    if(sets(FLAG_TEX0))handleTexture(TILE0);
+    if(sets(FLAG_TEX1))handleTexture(TILE1);
+
     if(setsBothTex)rdpq_tex_multi_end();
   }
 

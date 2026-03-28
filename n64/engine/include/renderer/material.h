@@ -38,10 +38,19 @@ namespace P64::Renderer
     };
 
     struct Tile {
+      enum class PlaceholderType : uint8_t {
+        NONE = 0, TILE = 1, FULL = 2,
+      };
+
       uint16_t texAssetIdx;
-      uint16_t texReference;
+      PlaceholderType phType;
+      uint8_t phIndex;
       TileAxis s;
       TileAxis t;
+
+      [[nodiscard]] constexpr bool isPlaceholder() const {
+        return phType != PlaceholderType::NONE;
+      }
 
       void setOffset(float offsetS, float offsetT) {
         this->s.setOffset(offsetS);
@@ -133,6 +142,8 @@ namespace P64::Renderer
     constexpr static uint16_t MASK_SLOT6  = 1 << 14;
     constexpr static uint16_t MASK_SLOT7  = 1 << 15;
 
+    constexpr static uint16_t MAX_SLOTS = 8;
+
     uint32_t dataSize{}; // dynamic, @TODO: optmize space / alignemnt
     uint16_t setMask{};
     uint8_t fresnel{};
@@ -154,6 +165,8 @@ namespace P64::Renderer
       MaterialInstance() = default;
       CLASS_NO_COPY_MOVE(MaterialInstance);
 
+      ~MaterialInstance();
+
       [[nodiscard]] constexpr bool doesAnything() const {
         return setMask != 0;
       }
@@ -172,7 +185,7 @@ namespace P64::Renderer
 
       Material::Tile* getPlaceholder(uint32_t slot)
       {
-        if(setMask & (1 << (8 + slot))) {
+        if(setMask & (1 << (MAX_SLOTS + slot))) {
           return &texSlots[slot].tile;
         }
         return nullptr;

@@ -40,7 +40,7 @@ namespace Project::Component::Shared
     PROP_S32(fresnel);
     PROP_VEC4(fresnelColor);
 
-    Assets::MaterialTex texSlots[8]{};
+    std::array<Assets::MaterialTex, 8> texSlots{};
 
     nlohmann::json serialize() const {
       return Utils::JSON::Builder{}

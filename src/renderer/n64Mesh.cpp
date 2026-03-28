@@ -101,8 +101,12 @@ void Renderer::N64Mesh::draw(
       auto resolveTex = [&](Project::Assets::MaterialTex &tex, int texBinding)
       {
         if (tex.set.value) {
-          if(tex.dynTexture.value && slotIdx < 8) {
+          if(tex.dynType.value == tex.DYN_TYPE_FULL && slotIdx < 8) {
             tex = matInstance->texSlots[slotIdx];
+            ++slotIdx;
+          }
+          else if(tex.dynType.value == tex.DYN_TYPE_TILE && slotIdx < 8) {
+            tex.offset = matInstance->texSlots[slotIdx].offset;
             ++slotIdx;
           }
           auto texEntry = ctx.project->getAssets().getEntryByUUID(tex.texUUID.value);

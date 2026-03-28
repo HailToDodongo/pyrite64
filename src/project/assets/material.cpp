@@ -21,9 +21,7 @@ nlohmann::json Project::Assets::MaterialTex::serialize() const
   auto doc = Utils::JSON::Builder{}
     .set(set)
     .set(texUUID)
-    .set(dynTexture)
-    .set(dynTileScroll)
-    .set(dynTileIdx)
+    .set(dynType)
     .set(dynPlaceholder)
     .set(texSize)
     .set(offset)
@@ -39,9 +37,7 @@ void Project::Assets::MaterialTex::deserialize(const nlohmann::json &doc)
 {
   J::readProp(doc, set);
   J::readProp(doc, texUUID);
-  J::readProp(doc, dynTexture);
-  J::readProp(doc, dynTileScroll);
-  J::readProp(doc, dynTileIdx);
+  J::readProp(doc, dynType);
   J::readProp(doc, dynPlaceholder);
   J::readProp(doc, texSize);
   J::readProp(doc, offset);
@@ -56,18 +52,19 @@ void Project::Assets::MaterialTex::build(
   Build::SceneCtx &sceneCtx
 ) const
 {
-  if(dynTexture.value) {
+  auto assetIdx = sceneCtx.assetUUIDToIdx.find(texUUID.value);
+  if(assetIdx == sceneCtx.assetUUIDToIdx.end()) {
     file.write<uint16_t>(0xFFFF);
-    file.write<uint16_t>(dynPlaceholder.value);
-  } else {
-    auto assetIdx = sceneCtx.assetUUIDToIdx.find(texUUID.value);
-    if(assetIdx == sceneCtx.assetUUIDToIdx.end()) {
+
+    if(dynType.value == DYN_TYPE_NONE) {
       throw std::runtime_error("Material Texture UUID not found: " + std::to_string(texUUID.value));
     }
-
+  } else {
     file.write<uint16_t>(assetIdx->second);
-    file.write<uint16_t>(dynPlaceholder.value);
   }
+
+  file.write<uint8_t>(dynType.value);
+  file.write<uint8_t>(dynPlaceholder.value);
 
   file.write<uint16_t>(offset.value[0] * 64.0f);
   file.write<uint16_t>(repeat.value[0] * 16);
