@@ -110,10 +110,11 @@ void P64::Renderer::MaterialInstance::begin(Object &obj)
             auto tex =  (sprite_t*)AssetManager::getByIndex(slot.tile.texAssetIdx);
             rdpq_sprite_upload(rdpTile, tex, &params);
           } else {
+            // Note: for tile placeholders, "repeats" stores the texture size
             rdpq_set_tile_size(TILE0,
               params.s.translate, params.t.translate,
-              params.s.translate + 64.0f,
-              params.t.translate + 64.0f
+              params.s.translate + params.s.repeats,
+              params.t.translate + params.t.repeats
             );
           }
 

@@ -55,22 +55,25 @@ void Project::Component::Shared::MaterialInstance::validateWithModel(const Asset
   uint32_t slotIdx = 0;
   for(auto &[slot, tex] : model.materials)
   {
-    if(tex.tex0.dynType.value)
+    auto handleTex = [&](const Assets::MaterialTex &t, int tileIdx)
     {
-      texSlots[slotIdx].set.value = true;
-      texSlots[slotIdx].dynPlaceholder.value = 0;
-      texSlots[slotIdx].dynType = tex.tex0.dynType;
-      ++slotIdx;
-      if(slotIdx >= texSlots.size())break;
-    }
-    if(tex.tex1.dynType.value)
-    {
-      texSlots[slotIdx].set.value = true;
-      texSlots[slotIdx].dynPlaceholder.value = 1;
-      texSlots[slotIdx].dynType = tex.tex1.dynType;
-      ++slotIdx;
-      if(slotIdx >= texSlots.size())break;
-    }
+      if(t.dynType.value)
+      {
+        texSlots[slotIdx].set.value = true;
+        texSlots[slotIdx].dynPlaceholder.value = tileIdx;
+        texSlots[slotIdx].dynType = t.dynType;
+
+        if(t.dynType.value == Assets::MaterialTex::DYN_TYPE_TILE) {
+          // store texture size in repeat
+          texSlots[slotIdx].repeat.value = t.texSize.value;
+        }
+        ++slotIdx;
+      }
+    };
+    handleTex(tex.tex0, 0);
+    if(slotIdx >= texSlots.size())break;
+    handleTex(tex.tex1, 1);
+    if(slotIdx >= texSlots.size())break;
   }
 
   // disable the rest of the slots
