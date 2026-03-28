@@ -42,13 +42,43 @@ P64::Renderer::MaterialInstance::~MaterialInstance()
 {
   for(int s=0; s<MAX_SLOTS; ++s)
   {
-    if(setMask & (1 << (MAX_SLOTS + s)))
-    {
-      if(texSlots[s].block[0])rspq_block_free(texSlots[s].block[0]);
-      if(texSlots[s].block[1])rspq_block_free(texSlots[s].block[1]);
-      if(texSlots[s].block[2])rspq_block_free(texSlots[s].block[2]);
-    }
+    if(!setsPlaceholder(s))continue;
+    if(placeholders[s].block[0])rspq_block_free(placeholders[s].block[0]);
+    if(placeholders[s].block[1])rspq_block_free(placeholders[s].block[1]);
+    if(placeholders[s].block[2])rspq_block_free(placeholders[s].block[2]);
   }
+}
+
+void P64::Renderer::MaterialInstance::Placeholder::update()
+{
+  auto params = unpackTile(tile);
+
+  /*debugf("MaterialInstance: setting slot %lu, assetIdx=%04X, phIndex=%d, phType=%d\n",
+    s, slot.tile.texAssetIdx, slot.tile.phIndex, (int)slot.tile.phType
+  );*/
+
+  auto tmp = block[0];
+  block[0] = block[2];
+  block[2] = block[1];
+  block[1] = tmp;
+
+  rspq_block_begin_reuse(block[0]);
+
+  auto rdpTile = (rdpq_tile_t)tile.phIndex;
+  if(tile.phType == Material::Tile::PlaceholderType::FULL)
+  {
+    auto tex =  (sprite_t*)AssetManager::getByIndex(tile.texAssetIdx);
+    rdpq_sprite_upload(rdpTile, tex, &params);
+  } else {
+    // Note: for tile placeholders, "repeats" stores the texture size
+    rdpq_set_tile_size(TILE0,
+      params.s.translate, params.t.translate,
+      params.s.translate + params.s.repeats,
+      params.t.translate + params.t.repeats
+    );
+  }
+
+  block[0] = rspq_block_end();
 }
 
 void P64::Renderer::MaterialInstance::begin(Object &obj)
@@ -84,42 +114,10 @@ void P64::Renderer::MaterialInstance::begin(Object &obj)
   }
 
   //debugf("MaterialInstance begin: setMask=%04X (%d)\n", setMask, setsSlots());
-  if(setsSlots())
-  {
-    for(uint32_t s=0; s<MAX_SLOTS; ++s)
-    {
-      if(setMask & (1 << (MAX_SLOTS + s)))
-      {
-        auto &slot = texSlots[s];
-        auto params = unpackTile(slot.tile);
-
-        /*debugf("MaterialInstance: setting slot %lu, assetIdx=%04X, phIndex=%d, phType=%d\n",
-          s, slot.tile.texAssetIdx, slot.tile.phIndex, (int)slot.tile.phType
-        );*/
-
-        auto tmp = slot.block[0];
-        slot.block[0] = slot.block[2];
-        slot.block[2] = slot.block[1];
-        slot.block[1] = tmp;
-
-        rspq_block_begin_reuse(slot.block[0]);
-
-          auto rdpTile = (rdpq_tile_t)texSlots[s].tile.phIndex;
-          if(slot.tile.phType == Material::Tile::PlaceholderType::FULL)
-          {
-            auto tex =  (sprite_t*)AssetManager::getByIndex(slot.tile.texAssetIdx);
-            rdpq_sprite_upload(rdpTile, tex, &params);
-          } else {
-            // Note: for tile placeholders, "repeats" stores the texture size
-            rdpq_set_tile_size(TILE0,
-              params.s.translate, params.t.translate,
-              params.s.translate + params.s.repeats,
-              params.t.translate + params.t.repeats
-            );
-          }
-
-        slot.block[0] = rspq_block_end();
-        rspq_block_set_ph((rspq_block_t*)s, slot.block[0]);
+  if(setsAnyPlaceholder()) {
+    for(uint32_t s=0; s<MAX_SLOTS; ++s) {
+      if(setsPlaceholder(s)) {
+        rspq_block_set_ph((rspq_block_t*)s, placeholders[s].block[0]);
       }
     }
   }
