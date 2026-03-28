@@ -39,7 +39,9 @@ void Editor::MatInstanceEditor::draw(
 
     if(slot.dynType.value == Project::Assets::MaterialTex::DYN_TYPE_TILE)
     {
-      ImTable::addProp("Offset", slot.offset);
+      ImTable::add("Offset");
+      ImGui::DragFloat2("##Offset", &slot.offset.value.x, 0.25f, 0.0f, 1023.75f, "%.2f");
+
       slot.offset.value = glm::clamp(slot.offset.value, 0.0f, 1023.75f);
     } else if(slot.dynType.value == Project::Assets::MaterialTex::DYN_TYPE_FULL) {
       TextureEditor::draw(matInst.texSlots[slotIdx]);
