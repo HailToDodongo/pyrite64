@@ -22,14 +22,16 @@ namespace Project::Assets
 {
   struct MaterialTex
   {
+    constexpr static int DYN_TYPE_NONE = 0;
+    constexpr static int DYN_TYPE_TILE = 1;
+    constexpr static int DYN_TYPE_FULL = 2;
+
     PROP_BOOL(set);
     PROP_U64(texUUID);
     PROP_IVEC2(texSize);
 
-    PROP_BOOL(dynTexture);
-    PROP_BOOL(dynTileScroll);
+    PROP_S32(dynType);
     PROP_S32(dynPlaceholder);
-    PROP_S32(dynTileIdx); // only used in the material instance to know the tile
 
     PROP_VEC2(offset);
     PROP_IVEC2(scale);

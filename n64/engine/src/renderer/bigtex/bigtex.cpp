@@ -34,7 +34,7 @@ void P64::Renderer::BigTex::patchT3DM(T3DModel &model)
     auto *tile = mat->getTile(0);
     if(tile)
     {
-      if (tile->texReference) {
+      if (tile->isPlaceholder()) {
         matIdx = textures.reserveTexture();
         //debugf("Tex[%d]: <placeholder> (%s)\n", matIdx, mat->name);
       } else {

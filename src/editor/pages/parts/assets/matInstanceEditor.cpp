@@ -27,14 +27,23 @@ void Editor::MatInstanceEditor::draw(
   auto &firstMat = t3dm->model.materials.begin()->second;
   matInst.validateWithModel(t3dm->model);
 
-  for(uint32_t slotIdx = 0; slotIdx<8; ++slotIdx)
+  for(uint32_t slotIdx = 0; slotIdx<matInst.texSlots.size(); ++slotIdx)
   {
-    if(!matInst.texSlots[slotIdx].set.value)continue;
+    auto &slot = matInst.texSlots[slotIdx];
+    if(!slot.set.value)continue;
+//    assert(slot.dynType.value != 0);
 
     ImGui::PushID(slotIdx);
     ImTable::add("Placeholder");
     ImGui::Text("Slot #%u", slotIdx);
-    TextureEditor::draw(matInst.texSlots[slotIdx]);
+
+    if(slot.dynType.value == Project::Assets::MaterialTex::DYN_TYPE_TILE)
+    {
+      ImTable::addProp("Offset", slot.offset);
+      slot.offset.value = glm::clamp(slot.offset.value, 0.0f, 1023.75f);
+    } else if(slot.dynType.value == Project::Assets::MaterialTex::DYN_TYPE_FULL) {
+      TextureEditor::draw(matInst.texSlots[slotIdx]);
+    }
     ImGui::PopID();
 
     ImGui::Dummy(ImVec2(0, 6_px));

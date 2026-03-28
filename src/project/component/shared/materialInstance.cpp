@@ -16,9 +16,9 @@ void Project::Component::Shared::MaterialInstance::build(Utils::BinaryFile &file
   if(setLighting.resolve(obj)) setMask |= 1 << 3;
   if(setFresnel.resolve(obj)) setMask |= 1 << 4;
 
-  for(int i=0; i<8; ++i) {
+  for(int i=0; i<texSlots.size(); ++i) {
     if(texSlots[i].set.value) {
-      setMask |= 1 << (8 + i);
+      setMask |= 1 << (texSlots.size() + i);
     }
   }
 
@@ -34,7 +34,7 @@ void Project::Component::Shared::MaterialInstance::build(Utils::BinaryFile &file
   file.writeRGBA(env.resolve(obj));
   file.writeRGBA(fresnelColor.resolve(obj));
 
-  for(int i=0; i<8; ++i)
+  for(int i=0; i<texSlots.size(); ++i)
   {
     if(texSlots[i].set.value) {
       file.write<uint32_t>(0); // runtime pointer
@@ -55,24 +55,26 @@ void Project::Component::Shared::MaterialInstance::validateWithModel(const Asset
   uint32_t slotIdx = 0;
   for(auto &[slot, tex] : model.materials)
   {
-    if(tex.tex0.dynTexture.value)
+    if(tex.tex0.dynType.value)
     {
       texSlots[slotIdx].set.value = true;
       texSlots[slotIdx].dynPlaceholder.value = 0;
+      texSlots[slotIdx].dynType = tex.tex0.dynType;
       ++slotIdx;
-      if(slotIdx >= 8)break;
+      if(slotIdx >= texSlots.size())break;
     }
-    if(tex.tex1.dynTexture.value)
+    if(tex.tex1.dynType.value)
     {
       texSlots[slotIdx].set.value = true;
       texSlots[slotIdx].dynPlaceholder.value = 1;
+      texSlots[slotIdx].dynType = tex.tex1.dynType;
       ++slotIdx;
-      if(slotIdx >= 8)break;
+      if(slotIdx >= texSlots.size())break;
     }
   }
 
   // disable the rest of the slots
-  for(; slotIdx < 8; ++slotIdx) {
+  for(; slotIdx < texSlots.size(); ++slotIdx) {
     texSlots[slotIdx].set.value = false;
   }
 }

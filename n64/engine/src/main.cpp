@@ -50,6 +50,8 @@ int main()
 
   rdpq_init();
   //rdpq_debug_start();
+  //rdpq_debug_log(true);
+
 #if RSPQ_PROFILE
   rspq_profile_start();
 #endif

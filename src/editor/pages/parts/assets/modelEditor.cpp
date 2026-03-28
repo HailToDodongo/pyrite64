@@ -247,9 +247,10 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
       auto drawMatTex = [&](Project::Assets::MaterialTex &tex, uint32_t id) {
         ImGui::PushID(id + 0xFF);
 
-        ImTable::addProp("Dynamic", tex.dynTexture);
+        ImTable::add("Placeholder");
+        ImGui::Combo("##PH", &tex.dynType.value, "None\0" "Tile\0" "Texture + Tile\0");
 
-        if(tex.dynTexture.value) {
+        if(tex.dynType.value == tex.DYN_TYPE_FULL) {
           ImTable::addProp("Size", tex.texSize);
         } else {
           TextureEditor::draw(tex);
@@ -345,11 +346,11 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
     auto &mat = entry.second;
     if(mat.isCustom.value)
     {
-      if(mat.tex0.dynTexture.value) {
+      if(mat.tex0.dynType.value) {
         mat.tex0.dynPlaceholder.value = slot++;
         if(slot >= 8)break;
       }
-      if(mat.tex1.dynTexture.value) {
+      if(mat.tex1.dynType.value) {
         mat.tex1.dynPlaceholder.value = slot++;
         if(slot >= 8)break;
       }
