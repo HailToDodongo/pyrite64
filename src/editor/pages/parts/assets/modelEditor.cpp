@@ -293,23 +293,26 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         });
       }
 
-      subSection("Render Modes", [&]
+      subSection("Geometry Modes", [&]
       {
-        ImTable::add("Blending"); ImGui::Text("@TODO");
-        ImTable::add("Fog"); ImGui::Text("@TODO");
-
         ImTable::add("Vertex FX");
         ImGui::Combo("##Vert", &mat.vertexFX.value, VERTEX_EFFECTS);
-        ImTable::addProp("Fog to Alpha", mat.fogToAlpha);
 
         ImTable::add("Unlit");
         ImGui::CheckboxFlags("##Unlit", &mat.drawFlags.value, T3D::FLAG_NO_LIGHT);
+
+        ImTable::addProp("Fog to Alpha", mat.fogToAlpha);
 
         ImTable::add("Cull-Front");
         ImGui::CheckboxFlags("##CF", &mat.drawFlags.value, T3D::FLAG_CULL_FRONT);
         ImTable::add("Cull-Back");
         ImGui::CheckboxFlags("##CB", &mat.drawFlags.value, T3D::FLAG_CULL_BACK);
+      });
 
+      subSection("Render Modes", [&]
+      {
+        ImTable::add("Blending"); ImGui::Text("@TODO");
+        ImTable::add("Fog"); ImGui::Text("@TODO");
 
         toggleProp("Alpha-Clip", mat.alphaCompSet.value, [&] {
           ImGui::SliderInt("##AC", &mat.alphaComp.value, 0, 255,
