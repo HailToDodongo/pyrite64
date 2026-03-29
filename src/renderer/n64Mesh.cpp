@@ -90,7 +90,6 @@ void Renderer::N64Mesh::draw(
 
   auto drawPart = [&](MeshPart &part)
   {
-    uint32_t flags = uniforms.mat.flags;
     uint32_t blender = uniforms.mat.blender.x;
 
     uint32_t slotIdx = 0;
@@ -137,8 +136,6 @@ void Renderer::N64Mesh::draw(
     uniforms.mat.colPrim = lastPrim;
     uniforms.mat.colEnv = lastEnv;
     uniforms.mat.blender.x = blender;
-
-    uniforms.mat.flags |= flags;
 
     // @TODO: move out
     float clip = uniforms.mat.lightDir[0].w;

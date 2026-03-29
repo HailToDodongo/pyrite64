@@ -228,6 +228,9 @@ void main()
   if((DRAW_FLAGS & T3D_FLAG_CULL_BACK) != 0 && !gl_FrontFacing) {
     discard;
   }
+  if((DRAW_FLAGS & T3D_FLAG_CULL_FRONT) != 0 && gl_FrontFacing) {
+    discard;
+  }
 
   // @TODO: handle flat shading
   //vec4 ccShade = geoModeSelect(G_SHADE_SMOOTH, cc_shade_flat, cc_shade);

@@ -123,7 +123,7 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
   ImGui::Begin(winName.c_str(), &isOpen);
   ImGui::Text("Model: %s", model->name.c_str());
 
-  ImVec2 labelWidth = {85_px, -1.0f};
+  ImVec2 labelWidth = {89_px, -1.0f};
   bool needsReload = false;
 
   auto subSection = [&labelWidth](const char* name, auto cb)
@@ -301,6 +301,15 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         ImTable::add("Vertex FX");
         ImGui::Combo("##Vert", &mat.vertexFX.value, VERTEX_EFFECTS);
         ImTable::addProp("Fog to Alpha", mat.fogToAlpha);
+
+        ImTable::add("Unlit");
+        ImGui::CheckboxFlags("##Unlit", &mat.drawFlags.value, T3D::FLAG_NO_LIGHT);
+
+        ImTable::add("Cull-Front");
+        ImGui::CheckboxFlags("##CF", &mat.drawFlags.value, T3D::FLAG_CULL_FRONT);
+        ImTable::add("Cull-Back");
+        ImGui::CheckboxFlags("##CB", &mat.drawFlags.value, T3D::FLAG_CULL_BACK);
+
 
         toggleProp("Alpha-Clip", mat.alphaCompSet.value, [&] {
           ImGui::SliderInt("##AC", &mat.alphaComp.value, 0, 255,
