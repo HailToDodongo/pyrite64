@@ -19,12 +19,7 @@ namespace
   constexpr ImVec2 RAW_BUTTON_SIZE = ImVec2(110, 90);
   constexpr float RAW_BUTTON_SPACING = 50;
 
-
   constinit int checkTimer = 0;
-
-  std::string projectName{};
-  std::string projectSafeName{};
-  std::string projectPath{};
 
   // draws a rounded square with text inside
   void drawStep(ImVec2 &pps, const char* text, bool done, bool nextArrow = true)
@@ -124,8 +119,8 @@ bool Editor::ToolchainOverlay::draw()
     bool STEP_DONE[] = {
       (isWindows)? !toolState.mingwPath.empty() : !toolState.toolchainPath.empty(),
       toolState.hasToolchain,
-      toolState.hasLibdragon,
-      toolState.hasTiny3d
+      toolState.hasLibdragon && toolState.upToDateLibs,
+      toolState.hasTiny3d && toolState.upToDateLibs
     };
     constexpr int steps = std::size(STEPS);
 
