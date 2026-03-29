@@ -160,11 +160,8 @@ void Editor::AssetInspector::draw() {
 
       ImGui::EndTable();
 
-      if(ctx.experimentalFeatures)
-      {
-        if(ImGui::Button(ICON_MDI_PENCIL " Open Model Editor")) {
-          ctx.editorScene->openModelEditor(asset->getUUID());
-        }
+      if(ImGui::Button(ICON_MDI_PENCIL " Open Model Editor")) {
+        ctx.editorScene->openModelEditor(asset->getUUID());
       }
     }
   }

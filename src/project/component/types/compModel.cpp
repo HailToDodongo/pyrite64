@@ -124,12 +124,9 @@ namespace Project::Component::Model
         data.obj3D.removeMesh();
       });
 
-      if(ctx.experimentalFeatures)
-      {
-        ImTable::add("");
-        if(ImGui::Button(ICON_MDI_PENCIL " Open Model Editor")) {
-          ctx.editorScene->openModelEditor(data.model.value);
-        }
+      ImTable::add("");
+      if(ImGui::Button(ICON_MDI_PENCIL " Open Model Editor")) {
+        ctx.editorScene->openModelEditor(data.model.value);
       }
 
       std::vector<const char*> layerNames{};

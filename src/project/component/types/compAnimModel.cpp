@@ -15,6 +15,7 @@
 #include "../../../utils/meshGen.h"
 #include "../../../shader/defines.h"
 #include "../shared/materialInstance.h"
+#include "../../../editor/pages/editorScene.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "../../../editor/pages/parts/assets/matInstanceEditor.h"
@@ -93,6 +94,11 @@ namespace Project::Component::AnimModel
     if (ImTable::start("Comp", &obj)) {
       ImTable::add("Name", entry.name);
       ImTable::addAssetVecComboBox("Model", modelList, data.model.value, [&data](auto) { data.obj3D.removeMesh(); });
+
+      ImTable::add("");
+      if(ImGui::Button(ICON_MDI_PENCIL " Open Model Editor")) {
+        ctx.editorScene->openModelEditor(data.model.value);
+      }
 
       std::vector<const char*> layerNames{};
       for (auto &layer : scene->conf.layers3D) {
