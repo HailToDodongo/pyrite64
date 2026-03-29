@@ -125,6 +125,8 @@ namespace P64::Comp
       memcpy(&matInstance, matInstanceInit, matInstanceInit->dataSize);
     #pragma GCC diagnostic pop
 
+    matInstance.init();
+
     bool isBigTex = SceneManager::getCurrent().getConf().pipeline == SceneConf::Pipeline::BIG_TEX_256;
     bool separate = (data->flags & FLAG_CULLING) || (data->meshIdxCount != 0);
 
