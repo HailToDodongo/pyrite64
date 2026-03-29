@@ -83,6 +83,7 @@ bool Build::buildProject(const std::string &configPath)
     _putenv_s("PATH", "C:\\msys64\\mingw64\\bin;C:\\msys64\\usr\\bin");
   #endif
 
+  auto fsPath = fs::absolute(fs::path{path} / "filesystem");
   auto fsDataPath = fs::absolute(fs::path{path} / "filesystem" / "p64");
   if (!fs::exists(fsDataPath)) {
     fs::create_directories(fsDataPath);
@@ -103,6 +104,32 @@ bool Build::buildProject(const std::string &configPath)
         || entry.type == Project::FileType::CODE_GLOBAL
       ) continue;
       sceneCtx.addAsset(entry);
+    }
+  }
+
+  // check if files got added/removed, in which case trigger an asset rebuild.
+  // This is needed as some assets reference others via indices.
+  {
+    auto fileNames = sceneCtx.files;
+    std::sort(fileNames.begin(), fileNames.end());
+    auto fileStr = Utils::join(fileNames, " ");
+
+    auto oldFileStr = Utils::FS::loadTextFile(fsDataPath / "fileList.txt");
+    if(fileStr != oldFileStr)
+    {
+      Utils::Logger::log("Asset list changed, clean asset dependencies");
+      Utils::FS::delTypeRecursive(fsPath, ".t3dm");
+      Utils::FS::delTypeRecursive(fsPath, ".pf");
+      fs::remove_all(fsDataPath);
+      fs::create_directories(fsDataPath);
+
+      cleanProject(project, {
+        .code = true,
+        .assets = false,
+        .engine = false,
+      });
+
+      Utils::FS::saveTextFile(fsDataPath / "fileList.txt", fileStr);
     }
   }
 
@@ -204,17 +231,7 @@ bool Build::buildProject(const std::string &configPath)
   );
 
   auto mkPath = fs::absolute(path) / "Makefile";
-  auto oldMakefile = Utils::FS::loadTextFile(mkPath);
-  if (makefile != oldMakefile) {
-    Utils::Logger::log("Makefile changed, clean build");
-    Utils::FS::saveTextFile(mkPath, makefile);
-
-    cleanProject(project, {
-      .code = true,
-      .assets = false,
-      .engine = false,
-    });
-  }
+  Utils::FS::saveTextFile(mkPath, makefile);
 
   {
     Utils::BinaryFile f{};

@@ -51,4 +51,10 @@ namespace Utils::FS
     return res;
   }
 
+  /**
+   * Deletes all files with a specific extension in a directory and its subdirectories.
+   * @param basePath
+   * @param fileExt
+   */
+  void delTypeRecursive(const fs::path &basePath, const std::string &fileExt);
 }
