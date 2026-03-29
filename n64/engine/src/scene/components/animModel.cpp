@@ -40,7 +40,7 @@ namespace P64::Comp
 
   uint32_t AnimModel::getAllocSize(uint16_t* initData)
   {
-    return sizeof(AnimModel);
+    return sizeof(AnimModel) - sizeof(Renderer::MaterialInstance) + ((InitData*)initData)->material.getSize();
   }
 
   void AnimModel::initDelete([[maybe_unused]] Object& obj, AnimModel* data, void* initData_)
@@ -75,6 +75,8 @@ namespace P64::Comp
     #pragma GCC diagnostic ignored "-Wclass-memaccess"
       memcpy(&data->material, &initData->material, initData->material.getSize());
     #pragma GCC diagnostic pop
+
+    data->material.init();
 
     /*bool isBigTex = SceneManager::getCurrent().getConf().pipeline == SceneConf::Pipeline::BIG_TEX_256;
 
@@ -119,6 +121,7 @@ namespace P64::Comp
     while(t3d_model_iter_next(&it))
     {
       auto *mat = (P64::Renderer::Material*)it.object->material;
+      assert(mat);
       mat->begin(state);
       t3d_model_draw_object(it.object, boneSeg);
       mat->end(state);

@@ -58,6 +58,10 @@ namespace P64::Renderer
         return phType != PlaceholderType::NONE;
       }
 
+      void setTexture(uint16_t assetIdx) {
+        texAssetIdx = assetIdx;
+      }
+
       void setOffset(float offsetS, float offsetT) {
         this->s.setOffset(offsetS);
         this->t.setOffset(offsetT);
@@ -194,6 +198,7 @@ namespace P64::Renderer
 
       Placeholder placeholders[];
 
+      void init();
       void begin(Object &obj);
       void end();
 

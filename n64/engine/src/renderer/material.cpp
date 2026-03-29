@@ -53,14 +53,16 @@ void P64::Renderer::MaterialInstance::Placeholder::update()
 {
   auto params = unpackTile(tile);
 
-  /*debugf("MaterialInstance: setting slot %lu, assetIdx=%04X, phIndex=%d, phType=%d\n",
-    s, slot.tile.texAssetIdx, slot.tile.phIndex, (int)slot.tile.phType
+  /*debugf("MaterialInstance %p: setting slot, assetIdx=%04X, phIndex=%d, phType=%d\n",
+  this, tile.texAssetIdx, tile.phIndex, (int)tile.phType
   );*/
 
   auto tmp = block[0];
   block[0] = block[2];
   block[2] = block[1];
   block[1] = tmp;
+
+  //debugf("Blocks: %p %p %p\n", block[0], block[1], block[2]);
 
   rspq_block_begin_reuse(block[0]);
 
@@ -79,6 +81,13 @@ void P64::Renderer::MaterialInstance::Placeholder::update()
   }
 
   block[0] = rspq_block_end();
+}
+
+void P64::Renderer::MaterialInstance::init()
+{
+  for(int s=0; s<MAX_SLOTS; ++s) {
+    if(setsPlaceholder(s))placeholders[s].update();
+  }
 }
 
 void P64::Renderer::MaterialInstance::begin(Object &obj)
@@ -113,10 +122,10 @@ void P64::Renderer::MaterialInstance::begin(Object &obj)
     light.apply();
   }
 
-  //debugf("MaterialInstance begin: setMask=%04X (%d)\n", setMask, setsSlots());
   if(setsAnyPlaceholder()) {
     for(uint32_t s=0; s<MAX_SLOTS; ++s) {
       if(setsPlaceholder(s)) {
+        //debugf("Set placeholder %lu -> %p\n", s, placeholders[s].block[0]);
         rspq_block_set_ph((rspq_block_t*)s, placeholders[s].block[0]);
       }
     }
@@ -172,7 +181,7 @@ void P64::Renderer::Material::begin(MaterialState &state)
       auto &tile = ptr.fetch<Tile>();
       auto params = unpackTile(tile);
 
-      //debugf("Texture[%d]: assetIdx=%04X, phIndex=%d, phType=%d\n", rdpTile, tile.texAssetIdx, tile.phIndex, (int)tile.phType);
+      debugf("Texture[%d]: assetIdx=%04X, phIndex=%d, phType=%d\n", rdpTile, tile.texAssetIdx, tile.phIndex, (int)tile.phType);
 
       if(tile.phType == Tile::PlaceholderType::FULL) {
         rspq_block_run((rspq_block_t*)(uint32_t)tile.phIndex);
