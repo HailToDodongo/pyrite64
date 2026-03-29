@@ -92,6 +92,7 @@ namespace
       Utils::JSON::readProp(doc, conf.fontId);
       Utils::JSON::readProp(doc, conf.fontCharset);
 
+      conf.data = doc.contains("data") ? doc["data"] : nlohmann::json::object();
       conf.exclude = doc["exclude"];
     }
   }
@@ -106,7 +107,11 @@ namespace
     Project::FileType type = Project::FileType::UNKNOWN;
     if (ext == ".png") {
       type = Project::FileType::IMAGE;
-      outPath = changeExt(outPath, ".sprite");
+      if (path.string().ends_with(".bci.png")) {
+        outPath = changeExt(outPath, ".bci");
+      } else {
+        outPath = changeExt(outPath, ".sprite");
+      }
     } else if (ext == ".wav" || ext == ".mp3") {
       type = Project::FileType::AUDIO;
       outPath = changeExt(outPath, ".wav64");
@@ -140,7 +145,6 @@ namespace
     };
 
     entry.conf.baseScale = 16;
-
     auto pathMeta = path;
     pathMeta += ".conf";
     if (fs::exists(pathMeta)) {
@@ -230,6 +234,7 @@ std::string Project::AssetConf::serialize() const {
     .set(fontId)
     .set(fontCharset)
     .set("exclude", exclude)
+    .set("data", data)
     .toString();
 }
 
@@ -285,24 +290,46 @@ void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::str
     case FileType::MODEL_3D:
     {
       try{
-        T3DM::Config config{
-          .globalScale = (float)entry.conf.baseScale,
-          .animSampleRate = 60,
-          //.ignoreMaterials = args.checkArg("--ignore-materials"),
-          //.ignoreTransforms = args.checkArg("--ignore-transforms"),
-          .createBVH = entry.conf.gltfBVH,
-          .verbose = false,
-          .assetPath = "assets/",
-          .assetPathFull = fs::absolute(project->getPath() + "/assets").string(),
-          .projectPath = fs::path{project->getPath()},
+        if(!entry.conf.data.contains("materials")) {
+          entry.conf.data["materials"] = nlohmann::json::object();
+        }
+        auto &savedMats = entry.conf.data["materials"];
+
+        entry.model = {
+          .t3dm = T3DM::parseGLTF(path.c_str(), {
+            .globalScale = (float)entry.conf.baseScale,
+            .animSampleRate = 60,
+            .createBVH = entry.conf.gltfBVH,
+            .verbose = false,
+            .assetPath = "assets/",
+            .assetPathFull = fs::absolute(project->getPath() + "/assets").string(),
+            .projectPath = fs::path{project->getPath()},
+            .getMaterialInfo = [&](const std::string &matName, T3DM::Config::MatInfo &matInfo) -> bool
+            {
+              if(!savedMats.contains(matName))return false;
+              auto &matData = savedMats[matName];
+              matInfo.texSizeX = matData["tex0"]["texSize"][0];
+              matInfo.texSizeY = matData["tex0"]["texSize"][1];
+              matInfo.pointFilter = matData["filter"] != 0;
+              return true;
+            },
+          }), .materials = {},
         };
 
-        entry.t3dmData = T3DM::parseGLTF(path.c_str(), config);
-        if (!entry.t3dmData.models.empty()) {
+        for(const auto &t3dMat : entry.model.t3dm.materials) {
+          auto &mat = entry.model.materials[t3dMat.first];
+          if(savedMats.contains(t3dMat.first)) {
+            mat.deserialize(savedMats[t3dMat.first]);
+          } else {
+            mat.fromT3D(*this, t3dMat.second);
+          }
+        }
+
+        if (!entry.model.t3dm.models.empty()) {
           if (!entry.mesh3D) {
             entry.mesh3D = std::make_shared<Renderer::N64Mesh>();
           }
-          entry.mesh3D->fromT3DM(entry.t3dmData, *this);
+          entry.mesh3D->fromT3DM(entry.model, *this);
         }
       } catch (std::exception &e) {
         Utils::Logger::log("Failed to load 3D model asset: " + entry.path + " - " + e.what(), Utils::Logger::LEVEL_ERROR);
@@ -353,15 +380,6 @@ void Project::AssetManager::reload() {
     }
   }
 
-  // now load models (after all textures are there now)
-  for (auto &typed : entries) {
-    for (auto &entry : typed) {
-      if (entry.type == FileType::MODEL_3D) {
-        reloadEntry(entry, entry.path);
-      }
-    }
-  }
-
   auto codePath = getCodePath(project);
   for (const auto &entry : fs::recursive_directory_iterator{codePath}) {
     if (entry.is_regular_file()) {
@@ -392,6 +410,15 @@ void Project::AssetManager::reload() {
     {
       entriesMap[entry.getUUID()] = {(int)entry.type, idx};
       ++idx;
+    }
+  }
+
+  // now load models (after all textures are there now)
+  for (auto &typed : entries) {
+    for (auto &entry : typed) {
+      if (entry.type == FileType::MODEL_3D) {
+        reloadEntry(entry, entry.path);
+      }
     }
   }
 }

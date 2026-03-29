@@ -1,0 +1,2390 @@
+{
+  "conf": {
+    "audioFreq": 32000,
+    "clearColor": [
+      0.6895161271095276,
+      0.6895161271095276,
+      0.6895161271095276,
+      1.0
+    ],
+    "doClearColor": true,
+    "doClearDepth": false,
+    "fbFormat": 0,
+    "fbHeight": 480,
+    "fbWidth": 640,
+    "filter": 0,
+    "frameLimit": 0,
+    "layers2D": [
+      {
+        "blender": 0,
+        "depthCompare": false,
+        "depthWrite": false,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "2D"
+      }
+    ],
+    "layers3D": [
+      {
+        "blender": 0,
+        "depthCompare": false,
+        "depthWrite": false,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "3D Opaque"
+      },
+      {
+        "blender": 5242944,
+        "depthCompare": false,
+        "depthWrite": false,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "3D Transp."
+      },
+      {
+        "blender": 0,
+        "depthCompare": false,
+        "depthWrite": false,
+        "fog": true,
+        "fogColor": [
+          1.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "fogColorMode": 2,
+        "fogMax": 600.0,
+        "fogMin": 300.0,
+        "name": "New Layer"
+      },
+      {
+        "blender": 5898304,
+        "depthCompare": false,
+        "depthWrite": false,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "Additive"
+      }
+    ],
+    "layersPtx": [
+      {
+        "blender": 0,
+        "depthCompare": true,
+        "depthWrite": true,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "PTX Opaque"
+      }
+    ],
+    "name": "Materials",
+    "renderPipeline": 0
+  },
+  "graph": {
+    "children": [
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "aspect": 0.0,
+              "far": 5000.0,
+              "fov": 50.0,
+              "mode": 0,
+              "near": 100.0,
+              "vpOffset": [
+                0,
+                0
+              ],
+              "vpSize": [
+                640,
+                480
+              ]
+            },
+            "id": 3,
+            "name": "Camera",
+            "uuid": 591397515709753079
+          }
+        ],
+        "enabled": true,
+        "id": 1,
+        "name": "Camera",
+        "pos": [
+          0.0,
+          813.4545288085938,
+          0.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          -0.7071068286895752,
+          0.0,
+          0.0,
+          0.7071067094802856
+        ],
+        "scale": [
+          0.9999967217445374,
+          0.9999847412109375,
+          0.9999715685844421
+        ],
+        "selectable": true,
+        "uuid": 2593312191,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "index": 0,
+              "type": 0
+            },
+            "id": 2,
+            "name": "Light",
+            "uuid": 17810945128247966012
+          }
+        ],
+        "enabled": true,
+        "id": 3,
+        "name": "Ambient Light",
+        "pos": [
+          213.67779541015625,
+          403.06719970703125,
+          144.808349609375
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 2808468358,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 2,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true,
+                "tex0": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex1": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex2": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex3": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex4": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex5": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex6": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex7": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                }
+              },
+              "meshFilter": "",
+              "model": 9118320995942188086
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 7502720611812266502
+          },
+          {
+            "data": {
+              "args": {
+                "speed": " 1.0"
+              },
+              "script": 14399163358700673335
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 11319216795010992223
+          }
+        ],
+        "enabled": true,
+        "id": 9,
+        "name": "New Object",
+        "pos": [
+          -200.0,
+          0.0,
+          210.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.3393552303314209,
+          0.33937588334083557,
+          0.6163625717163086,
+          0.6243070363998413
+        ],
+        "scale": [
+          1.1987731456756592,
+          1.1987706422805786,
+          1.1988002061843872
+        ],
+        "selectable": true,
+        "uuid": 1998424333,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false,
+                "tex0": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex1": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex2": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex3": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex4": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex5": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex6": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex7": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                }
+              },
+              "meshFilter": "",
+              "model": 14944507456272462708
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 1194680501142561258
+          }
+        ],
+        "enabled": true,
+        "id": 2,
+        "name": "Mats",
+        "pos": [
+          -266.94061279296875,
+          0.0,
+          -233.1068115234375
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 1407552857,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false,
+                "tex0": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex1": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex2": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex3": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex4": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex5": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex6": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex7": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                }
+              },
+              "meshFilter": "",
+              "model": 17660758381478844321
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 7502720611812266502
+          },
+          {
+            "data": {
+              "args": {
+                "speed": " 1.0"
+              },
+              "script": 14399163358700673335
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 11319216795010992223
+          }
+        ],
+        "enabled": true,
+        "id": 4,
+        "name": "New Object",
+        "pos": [
+          -380.0,
+          0.0,
+          -40.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          0.8100000023841858,
+          0.8100000023841858,
+          0.8100000023841858
+        ],
+        "selectable": true,
+        "uuid": 3675270697,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false,
+                "tex0": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex1": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex2": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex3": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex4": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex5": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex6": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex7": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                }
+              },
+              "meshFilter": "",
+              "model": 9118320995942188086
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 7502720611812266502
+          },
+          {
+            "data": {
+              "args": {
+                "speed": " 1.0"
+              },
+              "script": 14399163358700673335
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 11319216795010992223
+          }
+        ],
+        "enabled": true,
+        "id": 6,
+        "name": "New Object",
+        "pos": [
+          -149.79156494140625,
+          0.0,
+          -5.5872650146484375
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.7071067690849304,
+          0.7071067690849304
+        ],
+        "scale": [
+          1.018953800201416,
+          1.0189536809921265,
+          1.0189800262451172
+        ],
+        "selectable": true,
+        "uuid": 3104684992,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false,
+                "tex0": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex1": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex2": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex3": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex4": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex5": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex6": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex7": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                }
+              },
+              "meshFilter": "",
+              "model": 9921605474523115511
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 1194680501142561258
+          }
+        ],
+        "enabled": true,
+        "id": 5,
+        "name": "Mats",
+        "pos": [
+          110.0,
+          0.0,
+          -260.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.125,
+          1.125,
+          1.125
+        ],
+        "selectable": true,
+        "uuid": 2007035330,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 1,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.43529412150382996
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true,
+                "tex0": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex1": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex2": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex3": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex4": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex5": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex6": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex7": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                }
+              },
+              "meshFilter": "",
+              "model": 17660758381478844321
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 7502720611812266502
+          },
+          {
+            "data": {
+              "args": {
+                "speed": " 1.0"
+              },
+              "script": 14399163358700673335
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 11319216795010992223
+          }
+        ],
+        "enabled": true,
+        "id": 7,
+        "name": "New Object",
+        "pos": [
+          -385.13470458984375,
+          0.0,
+          94.85921478271484
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          0.8100000023841858,
+          0.8100000023841858,
+          0.8100000023841858
+        ],
+        "selectable": true,
+        "uuid": 2611017225,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 2,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.4470588266849518
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true,
+                "tex0": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex1": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex2": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex3": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex4": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex5": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex6": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex7": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                }
+              },
+              "meshFilter": "",
+              "model": 17660758381478844321
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 7502720611812266502
+          },
+          {
+            "data": {
+              "args": {
+                "speed": " 1.0"
+              },
+              "script": 14399163358700673335
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 11319216795010992223
+          }
+        ],
+        "enabled": true,
+        "id": 8,
+        "name": "New Object",
+        "pos": [
+          -390.0,
+          0.0,
+          240.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          0.8100000023841858,
+          0.8100000023841858,
+          0.8100000023841858
+        ],
+        "selectable": true,
+        "uuid": 3243736006,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 3,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.4470588266849518
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true,
+                "tex0": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex1": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex2": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex3": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex4": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex5": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex6": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex7": {
+                  "dynTexture": false,
+                  "dynTileScroll": false,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    0.0,
+                    0.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": false,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                }
+              },
+              "meshFilter": "",
+              "model": 17660758381478844321
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 7502720611812266502
+          },
+          {
+            "data": {
+              "args": {
+                "speed": " 1.0"
+              },
+              "script": 14399163358700673335
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 11319216795010992223
+          }
+        ],
+        "enabled": true,
+        "id": 10,
+        "name": "New Object",
+        "pos": [
+          390.0,
+          40.0,
+          280.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          0.6480000019073486,
+          0.6480000019073486,
+          0.6480000019073486
+        ],
+        "selectable": true,
+        "uuid": 2288662660,
+        "uuidPrefab": 0
+      }
+    ],
+    "components": [],
+    "enabled": true,
+    "id": 0,
+    "name": "Scene",
+    "pos": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "propOverrides": {},
+    "proportionalScale": false,
+    "rot": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "selectable": true,
+    "uuid": 4252910706,
+    "uuidPrefab": 0
+  }
+}

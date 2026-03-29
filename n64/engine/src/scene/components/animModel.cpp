@@ -20,7 +20,7 @@ namespace
     uint16_t assetIdx;
     uint8_t layer;
     uint8_t flags;
-    P64::Renderer::Material material;
+    P64::Renderer::MaterialInstance material;
   };
 }
 
@@ -40,14 +40,13 @@ namespace P64::Comp
 
   uint32_t AnimModel::getAllocSize(uint16_t* initData)
   {
-    return sizeof(AnimModel);
+    return sizeof(AnimModel) - sizeof(Renderer::MaterialInstance) + ((InitData*)initData)->material.getSize();
   }
 
   void AnimModel::initDelete([[maybe_unused]] Object& obj, AnimModel* data, void* initData_)
   {
     auto *initData = (InitData*)initData_;
     if (initData == nullptr) {
-
       auto it = t3d_model_iter_create(data->model, T3D_CHUNK_TYPE_ANIM);
       uint32_t i=0;
       while(t3d_model_iter_next(&it)) {
@@ -69,7 +68,15 @@ namespace P64::Comp
     assert(data->model != nullptr);
     data->layerIdx = initData->layer;
     data->flags = initData->flags;
-    data->material = initData->material;
+
+    // struct has move/copy removed for safety and to avoid accidental copies.
+    // but we still need to memcpy here, the warning is wrong anyways as it's still a trivial type
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wclass-memaccess"
+      memcpy(&data->material, &initData->material, initData->material.getSize());
+    #pragma GCC diagnostic pop
+
+    data->material.init();
 
     /*bool isBigTex = SceneManager::getCurrent().getConf().pipeline == SceneConf::Pipeline::BIG_TEX_256;
 
@@ -104,9 +111,7 @@ namespace P64::Comp
       ++i;
     }
 
-    T3DModelState state = t3d_model_state_create();
-    state.drawConf = nullptr;
-    state.lastBlendMode = 0;
+    Renderer::MaterialState state{};
 
     if(data->model->userBlock)return; // already recorded the model
     rspq_block_begin();
@@ -115,12 +120,13 @@ namespace P64::Comp
     it = t3d_model_iter_create(data->model, T3D_CHUNK_TYPE_OBJECT);
     while(t3d_model_iter_next(&it))
     {
-      it.object->material->blendMode = 0;
-      t3d_model_draw_material(it.object->material, &state);
+      auto *mat = (P64::Renderer::Material*)it.object->material;
+      assert(mat);
+      mat->begin(state);
       t3d_model_draw_object(it.object, boneSeg);
+      mat->end(state);
     }
 
-    if(state.lastVertFXFunc != T3D_VERTEX_FX_NONE)t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0, 0);
     data->model->userBlock = rspq_block_end();
   }
 

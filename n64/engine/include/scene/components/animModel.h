@@ -34,11 +34,15 @@ namespace P64::Comp
       uint8_t flags{0};
 
     public:
-      Renderer::Material material{};
       float blendFactor{0.5f};
+      Renderer::MaterialInstance material{};
 
       void setMainAnim(int16_t idx);
       void setBlendAnim(int16_t idx);
+
+      Renderer::MaterialInstance& getMatInstance() {
+        return material;
+      }
 
       T3DAnim* getMainAnim() {
         if (animIdxMain < 0) return nullptr;

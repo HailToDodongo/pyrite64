@@ -6,9 +6,17 @@
 #include "mesh.h"
 #include "texture.h"
 #include "uniforms.h"
+#include "../project/assets/model3d.h"
 #include "tiny3d/tools/gltf_importer/src/structs.h"
 
-namespace Project { class AssetManager; }
+namespace Project {
+  namespace Component::Shared
+  {
+    struct MaterialInstance;
+  }
+
+  class AssetManager;
+}
 
 namespace Renderer
 {
@@ -19,28 +27,29 @@ namespace Renderer
       {
         uint32_t indicesOffset{0};
         uint32_t indicesCount{0};
+        std::string materialName{};
         UniformN64Material material{};
-
         SDL_GPUTextureSamplerBinding texBindings[2]{};
-
-        std::weak_ptr<Renderer::Texture> refTex0{};
-        std::weak_ptr<Renderer::Texture> refTex1{};
       };
     private:
 
       Mesh mesh{};
       std::vector<MeshPart> parts{};
       bool loaded{false};
-      Renderer::Scene *scene{};
+      Scene *scene{};
 
     public:
-      void fromT3DM(const T3DM::T3DMData &t3dmData, Project::AssetManager &assetManager);
+      void fromT3DM(
+        const Project::Assets::Model3D &model3d,
+        Project::AssetManager &assetManager
+      );
 
-      void recreate(Renderer::Scene &sc);
+      void recreate(Scene &sc);
       void draw(
         SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdBuff, UniformsObject &uniforms,
         const std::vector<uint32_t> &partsIndices,
-        const UniformsOverrides& overrides = {}
+        const Project::Assets::Model3D &model,
+        const Project::Component::Shared::MaterialInstance *matInstance
       );
 
       const Utils::AABB& getAABB() const { return mesh.getAABB(); }

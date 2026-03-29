@@ -3,34 +3,378 @@
 * @license MIT
 */
 #include "modelEditor.h"
+
+#include "libdragon.h"
+#include "ccMapping.h"
+#include "textureEditor.h"
 #include "../../../../context.h"
+#include "../../../imgui/helper.h"
+
+namespace
+{
+  ImVec2 DEF_WIN_SIZE{400, 400};
+
+  constexpr auto Z_MODES = "None\0Read\0Write\0Read+Write\0";
+  constexpr auto AA_MODES = "None\0Standard\0Reduced\0";
+
+  constexpr auto DITHER_MODES = "Square / Square\0"
+    "Square / Inv. Square\0"
+    "Square / Noise\0"
+    "Square / None\0"
+    "Bayer / Bayer\0"
+    "Bayer / Inv. Bayer\0"
+    "Bayer / Noise\0"
+    "Bayer / None\0"
+    "Noise / Square\0"
+    "Noise / Inv. Square\0"
+    "Noise / Noise\0"
+    "Noise / None\0"
+    "None / Bayer\0"
+    "None / Inv. Bayer\0"
+    "None / Noise\0"
+    "None / None\0";
+
+  constexpr auto VERTEX_EFFECTS =
+    "None\0"
+    "Spherical UV\0"
+    "Cel-shade Color\0"
+    "Cel-shade Alpha\0"
+    "Outline\0"
+    "UV Offset\0";
+
+  void toggleProp(const char* name, bool &propState, auto cb)
+  {
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::AlignTextToFramePadding();
+
+    ImGui::PushFont(nullptr, 18.0_px);
+
+    if(ImGui::IconButton(
+      propState
+      ? ICON_MDI_CHECKBOX_MARKED_CIRCLE
+      : ICON_MDI_CHECKBOX_BLANK_CIRCLE_OUTLINE,
+      {24_px,24_px},
+      ImVec4{1,1,1,1}
+    )) {
+      propState = !propState;
+      //Editor::UndoRedo::getHistory().markChanged("Edit " + name);
+    }
+    ImGui::PopFont();
+    ImGui::SameLine();
+
+    ImGui::SameLine();
+    ImGui::Text("%s", name);
+    ImGui::TableSetColumnIndex(1);
+
+    if(!propState)ImGui::BeginDisabled();
+    ImGui::PushID(name);
+    cb();
+    ImGui::PopID();
+    if(!propState)ImGui::EndDisabled();
+  }
+
+  template<typename T>
+  void toggleProp(const char* name, bool &propState, Property<T> &prop)
+  {
+    toggleProp(name, propState, [&prop](){
+      ImTable::typedInput(&prop.value);
+    });
+  }
+
+  void printCC(const char* a, const char* b, const char* c, const char* d)
+  {
+    auto nonZero = [](const char* s){ return s[0] != '0'; };
+
+    std::string s{};
+    // check if mul does something
+    if(nonZero(c) && (nonZero(a) || nonZero(b)))
+    {
+      if(nonZero(a) && nonZero(b)) {
+        s += std::string{"("} + a + " - " + b + ")";
+      } else {
+        s += nonZero(a) ? a : b;
+      }
+      s += std::string{" * "} + c;
+    }
+
+    if(nonZero(d)) {
+      if(!s.empty())s += " + ";
+      s += d;
+    }
+    if(s.empty())s = "0";
+
+    ImGui::Text("%s", s.c_str());
+  }
+}
 
 bool Editor::ModelEditor::draw(ImGuiID defDockId)
 {
-  auto model = ctx.project->getAssets().getEntryByUUID(assetUUID);
+  auto &assetManager = ctx.project->getAssets();
+  auto model = assetManager.getEntryByUUID(assetUUID);
   if(!model)return false;
 
-  ImGui::SetNextWindowSize({800,600}, ImGuiCond_Once);
-  ImGui::Begin("Model", nullptr, ImGuiWindowFlags_NoCollapse);
+  winName = "Model: " + model->name;
+  ImGui::SetNextWindowSize(DEF_WIN_SIZE, ImGuiCond_FirstUseEver);
+  auto screenSize = ImGui::GetMainViewport()->WorkSize;
+  ImGui::SetNextWindowPos({(screenSize.x - DEF_WIN_SIZE.x) / 2, (screenSize.y - DEF_WIN_SIZE.y) / 2}, ImGuiCond_FirstUseEver);
+
+  bool isOpen = true;
+  ImGui::Begin(winName.c_str(), &isOpen);
   ImGui::Text("Model: %s", model->name.c_str());
 
+  ImVec2 labelWidth = {85_px, -1.0f};
+  bool needsReload = false;
 
-  for(auto &model : model->t3dmData.models)
+  auto subSection = [&labelWidth](const char* name, auto cb)
   {
+    if(ImGui::CollapsingSubHeader(name, ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start(name, nullptr, labelWidth))
+    {
+      cb();
+      ImTable::end();
+    }
+  };
 
-  }
-
-  for(auto &entry : model->t3dmData.materials)
+  std::string matToRemove{};
+  for(auto &entry : model->model.materials)
   {
     auto label = "Material: " + entry.first;
+    ImGui::PushID(label.c_str());
     if (ImGui::CollapsingHeader(label.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
     {
-      ImGui::Text("This is a fast64 material");
-    }
+      auto &mat = entry.second;
 
+      ImTable::start("General", nullptr, labelWidth);
+      if(ImTable::addProp("Override", mat.isCustom))
+      {
+        if(mat.isCustom.value) {
+          model->conf.data["materials"][entry.first] = mat.serialize();
+        } else {
+          matToRemove = entry.first; // defer to not break loop
+        }
+        assetManager.markAssetMetaDirty(model->getUUID());
+      }
+      ImTable::end();
+
+      if(!mat.isCustom.value)
+      {
+        ImGui::PopID();
+        continue;
+      }
+
+      auto oldMat = mat;
+
+      auto usage = N64::CC::getUsage(mat.cc.value);
+      // enforce disabling unused values
+      if(!usage.prim)mat.primColorSet.value = false;
+      if(!usage.env)mat.envColorSet.value = false;
+      if(!usage.k4k5)mat.k4k5Set.value = false;
+      if(!usage.lod)mat.primLodSet.value = false;
+
+      subSection("Color-Combiner", [&]
+      {
+        ImTable::add("2-Cycle");
+
+        glm::ivec4 cc[2], cca[2];
+        N64::CC::unpackCC(mat.cc.value, cc[0], cca[0], cc[1], cca[1]);
+
+        if(ImGui::Checkbox("##2C", &usage.twoCycle) && usage.twoCycle)
+        {
+          // if we enable 2-cycle mode, force a pass-through by default
+          cc[1][0] = N64::CC::NAMES_COL_A.size() - 1;
+          cc[1][1] = N64::CC::NAMES_COL_B.size() - 1;
+          cc[1][2] = N64::CC::NAMES_COL_C.size() - 1;
+          cc[1][3] = 0;
+
+          cca[1][0] = N64::CC::NAMES_ALPHA_A.size() - 1;
+          cca[1][1] = N64::CC::NAMES_ALPHA_B.size() - 1;
+          cca[1][2] = N64::CC::NAMES_ALPHA_C.size() - 1;
+          cca[1][3] = 0;
+        }
+
+        for(int c = 0; c < (usage.twoCycle ? 2 : 1); ++c)
+        {
+          ImGui::PushID(c);
+          ImTable::add("A");
+          ImGui::SideBySide(
+            [&]{ ImGui::Combo("##C0C_A",  &cc[c][0], N64::CC::NAMES_COL_A.data(), N64::CC::NAMES_COL_A.size()); },
+            [&]{ ImGui::Combo("##C0A_A", &cca[c][0], N64::CC::NAMES_ALPHA_A.data(), N64::CC::NAMES_ALPHA_A.size()); }
+          );
+          ImTable::add("B");
+          ImGui::SideBySide(
+            [&]{ ImGui::Combo("##C0C_B",  &cc[c][1], N64::CC::NAMES_COL_B.data(), N64::CC::NAMES_COL_B.size()); },
+            [&]{ ImGui::Combo("##C0A_B", &cca[c][1], N64::CC::NAMES_ALPHA_B.data(), N64::CC::NAMES_ALPHA_B.size()); }
+          );
+          ImTable::add("C");
+          ImGui::SideBySide(
+            [&]{ ImGui::Combo("##C0C_C",  &cc[c][2], N64::CC::NAMES_COL_C.data(), N64::CC::NAMES_COL_C.size()); },
+            [&]{ ImGui::Combo("##C0A_C", &cca[c][2], N64::CC::NAMES_ALPHA_C.data(), N64::CC::NAMES_ALPHA_C.size()); }
+          );
+          ImTable::add("D");
+          ImGui::SideBySide(
+            [&]{ ImGui::Combo("##C0C_D",  &cc[c][3], N64::CC::NAMES_COL_D.data(), N64::CC::NAMES_COL_D.size()); },
+            [&]{ ImGui::Combo("##C0A_D", &cca[c][3], N64::CC::NAMES_ALPHA_D.data(), N64::CC::NAMES_ALPHA_D.size()); }
+          );
+          ImGui::PopID();
+
+          ImTable::add("Color");
+          printCC(
+            N64::CC::NAMES_COL_A[cc[c][0]], N64::CC::NAMES_COL_B[cc[c][1]],
+            N64::CC::NAMES_COL_C[cc[c][2]], N64::CC::NAMES_COL_D[cc[c][3]]
+          );
+          ImTable::add("Alpha");
+          printCC(
+            N64::CC::NAMES_ALPHA_A[cca[c][0]], N64::CC::NAMES_ALPHA_B[cca[c][1]],
+            N64::CC::NAMES_ALPHA_C[cca[c][2]], N64::CC::NAMES_ALPHA_D[cca[c][3]]
+         );
+
+          if(usage.twoCycle && c == 0) {
+            ImGui::Dummy({0, 4_px});
+          }
+        }
+
+        if(!usage.twoCycle) {
+          cc[1] = cc[0];
+          cca[1] = cca[0];
+        }
+
+        mat.cc.value = N64::CC::packCC(cc[0], cca[0], cc[1], cca[1]);
+        if(usage.twoCycle) {
+          mat.cc.value |= RDPQ_COMBINER_2PASS;
+        }
+      });
+
+      auto drawMatTex = [&](Project::Assets::MaterialTex &tex, uint32_t id) {
+        ImGui::PushID(id + 0xFF);
+
+        ImTable::add("Placeholder");
+        ImGui::Combo("##PH", &tex.dynType.value, "None\0" "Tile\0" "Texture + Tile\0");
+
+        if(tex.dynType.value == tex.DYN_TYPE_FULL) {
+          ImTable::addProp("Size", tex.texSize);
+        } else {
+          TextureEditor::draw(tex);
+        }
+
+        ImGui::PopID();
+      };
+
+      mat.tex0.set.value = usage.tex0;
+      mat.tex1.set.value = usage.tex1;
+      if(usage.tex0)subSection("Texture 0", [&]{ drawMatTex(mat.tex0, 0); });
+      if(usage.tex1)subSection("Texture 1", [&]{ drawMatTex(mat.tex1, 1); });
+
+      subSection("Sampling", [&]
+      {
+        toggleProp("Perspect.", mat.perspSet.value, mat.persp);
+
+        toggleProp("Dither", mat.ditherSet.value, [&] {
+          ImGui::Combo("##Dither", &mat.dither.value, DITHER_MODES);
+        });
+
+        toggleProp("Filtering", mat.filterSet.value, [&] {
+          int val = mat.filter.value == 0 ? 0 : 1; // map 2->1
+          ImGui::Combo("##", &val, "Nearest\0Bilinear\0");
+          mat.filter.value = val == 0 ? 0 : 2;
+        });
+      });
+
+      if(usage.prim || usage.env || usage.lod || usage.k4k5)
+      {
+        subSection("Values", [&]
+        {
+          if(usage.prim)toggleProp("Prim", mat.primColorSet.value, mat.primColor);
+          if(usage.env)toggleProp("Env", mat.envColorSet.value, mat.envColor);
+          if(usage.lod)toggleProp("LOD", mat.primLodSet.value, mat.primLod);
+          if(usage.k4k5)toggleProp("K4/K5", mat.k4k5Set.value, mat.k4k5);
+
+          mat.primLod.value = glm::clamp(mat.primLod.value, 0u, 255u);
+          mat.k4k5.value = glm::clamp(mat.k4k5.value, 0, 255);
+        });
+      }
+
+      subSection("Render Modes", [&]
+      {
+        ImTable::add("Blending"); ImGui::Text("@TODO");
+        ImTable::add("Fog"); ImGui::Text("@TODO");
+
+        ImTable::add("Vertex FX");
+        ImGui::Combo("##Vert", &mat.vertexFX.value, VERTEX_EFFECTS);
+        ImTable::addProp("Fog to Alpha", mat.fogToAlpha);
+
+        toggleProp("Alpha-Clip", mat.alphaCompSet.value, [&] {
+          ImGui::SliderInt("##AC", &mat.alphaComp.value, 0, 255,
+            mat.alphaComp.value == 0 ? "<Off>" : "%d"
+          );
+        });
+
+        toggleProp("Depth", mat.zmodeSet.value, [&] {
+          ImGui::Combo("##", &mat.zmode.value, Z_MODES);
+        });
+
+        toggleProp("Fixed-Z", mat.zprimSet.value, [&] {
+          ImGui::SideBySide(
+            [&]{ ImGui::InputInt("##0", &mat.zprim.value); },
+            [&]{ ImGui::InputInt("##1", &mat.zdelta.value); }
+          );
+        });
+
+        toggleProp("Anti-Alias", mat.aaSet.value, [&] {
+          ImGui::Combo("##AA", &mat.aa.value, AA_MODES);
+        });
+      });
+
+      ImGui::Dummy({0, 2_px});
+
+      if(mat.isCustom.value && oldMat != mat) {
+        model->conf.data["materials"][entry.first] = mat.serialize();
+        assetManager.markAssetMetaDirty(model->getUUID());
+
+        if(oldMat.tex0.texSize != mat.tex0.texSize) {
+          needsReload = true;
+        }
+      }
+    }
+    ImGui::PopID();
+  }
+  ImGui::End();
+
+  // update placeholder indices
+  uint32_t slot = 0;
+  for(auto &entry : model->model.materials)
+  {
+    auto &mat = entry.second;
+    if(mat.isCustom.value)
+    {
+      if(mat.tex0.dynType.value) {
+        mat.tex0.dynPlaceholder.value = slot++;
+        if(slot >= 8)break;
+      }
+      if(mat.tex1.dynType.value) {
+        mat.tex1.dynPlaceholder.value = slot++;
+        if(slot >= 8)break;
+      }
+    }
   }
 
+  if(!matToRemove.empty())
+  {
+    model->conf.data["materials"].erase(matToRemove);
+    assetManager.markAssetMetaDirty(model->getUUID());
+    assetManager.save();
+    assetManager.reloadAssetByUUID(model->getUUID());
+  }
 
-  ImGui::End();
-  return true;
+  if(needsReload)
+  {
+    assetManager.save();
+    assetManager.reloadAssetByUUID(model->getUUID());
+  }
+
+  return isOpen;
+}
+
+void Editor::ModelEditor::focus() const
+{
+  ImGui::SetWindowFocus(winName.c_str());
 }

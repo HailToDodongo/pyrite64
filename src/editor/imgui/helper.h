@@ -18,6 +18,8 @@
 #include "glm/gtc/type_ptr.hpp"
 #include <functional>
 
+#include "imgui_internal.h"
+
 namespace TPL
 {
   template <typename C, typename T>
@@ -33,8 +35,20 @@ namespace TPL
 
 namespace ImGui
 {
+  inline void SideBySide(auto cbA, auto cbB, float sizeOffset = 0)
+  {
+    BeginGroup();
+    ImGui::PushMultiItemsWidths(2, CalcItemWidth() - sizeOffset);
+    cbA();
+    PopItemWidth(); SameLine();
+    cbB();
+    PopItemWidth();
+    EndGroup();
+  }
+
   inline bool CollapsingSubHeader(const char* label, ImGuiTreeNodeFlags flags = 0)
   {
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 8_px);
     ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
@@ -168,17 +182,17 @@ namespace ImTable
     const std::string &getName() const { return name; }
   };
 
-  inline bool start(const char *name, Project::Object *nextObj = nullptr, float width = -1)
+  inline bool start(const char *name, Project::Object *nextObj = nullptr, ImVec2 widths = {-1,-1})
   {
     obj = nullptr;
     if (!ImGui::BeginTable(name, 2))return false;
     obj = nextObj;
-    ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthFixed);
+    ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthFixed, widths[0]);
     ImGui::TableSetupColumn("Input", ImGuiTableColumnFlags_WidthStretch);
 
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(1);
-    ImGui::PushItemWidth(width >= 0 ? width : -FLT_MIN);
+    ImGui::PushItemWidth(widths[1] >= 0 ? widths[1] : -FLT_MIN);
     return true;
   }
 
@@ -482,6 +496,8 @@ namespace ImTable
       return ImGui::InputScalar("##", ImGuiDataType_U16, value);
     } else if constexpr (std::is_same_v<T, uint8_t>) {
       return ImGui::InputScalar("##", ImGuiDataType_U8, value);
+    } else if constexpr (std::is_same_v<T, glm::vec2>) {
+      return ImGui::InputFloat2("##", glm::value_ptr(*value));
     } else if constexpr (std::is_same_v<T, glm::vec3>) {
       return ImGui::InputFloat3("##", glm::value_ptr(*value));
     } else if constexpr (std::is_same_v<T, glm::vec4>) {

@@ -3,40 +3,272 @@
 * @license MIT
 */
 #pragma once
+#include <iterator>
 #include <libdragon.h>
+#include "../lib/types.h"
 
-#include "scene/scene.h"
+namespace P64
+{
+  namespace Comp {
+    struct Model;
+    struct AnimModel;
+  }
+
+  class Object;
+}
 
 namespace P64::Renderer
 {
+  struct MaterialState {
+    uint16_t lastTextureIdxA{0xFFFF};
+    uint16_t lastTextureIdxB{0xFFFF};
+    //uint16_t lastUvGenParams[2]{0,0};
+    //uint8_t lastVertFXFunc{0};
+  };
+
   struct Material
   {
-    constexpr static uint16_t MASK_DEPTH  = 1 << 0;
-    constexpr static uint16_t MASK_PRIM   = 1 << 1;
-    constexpr static uint16_t MASK_ENV    = 1 << 2;
-    constexpr static uint16_t MASK_LIGHT  = 1 << 3;
+    struct TileAxis {
+      uint16_t offset;
+      uint16_t repeat;
+      int8_t scale;
+      int8_t mirror;
 
-    uint16_t setMask{};
-    uint8_t fresnel{};
-    uint8_t valFlags{};
-    color_t colorPrim{};
-    color_t colorEnv{};
-    color_t colorFresnel{};
+      void setOffset(float offs) {
+        offset = static_cast<uint16_t>(offs * 64.0f);
+      }
+      void setRepeat(float rep) {
+        repeat = static_cast<uint16_t>(rep * 16.0f);
+      }
 
-    [[nodiscard]] constexpr bool doesAnything() const {
-      return setMask != 0;
+    };
+
+    struct Tile {
+      enum class PlaceholderType : uint8_t {
+        NONE = 0, TILE = 1, FULL = 2,
+      };
+
+      uint16_t texAssetIdx;
+      PlaceholderType phType;
+      uint8_t phIndex;
+      TileAxis s;
+      TileAxis t;
+
+      [[nodiscard]] constexpr bool isPlaceholder() const {
+        return phType != PlaceholderType::NONE;
+      }
+
+      void setTexture(uint16_t assetIdx) {
+        texAssetIdx = assetIdx;
+      }
+
+      void setOffset(float offsetS, float offsetT) {
+        this->s.setOffset(offsetS);
+        this->t.setOffset(offsetT);
+      }
+    };
+
+    // flags which settings to set: (NOTE: keep in sync with the builder!)
+    constexpr static uint32_t FLAG_AA         = 1 << 0;
+    constexpr static uint32_t FLAG_FOG        = 1 << 1;
+    constexpr static uint32_t FLAG_DITHER     = 1 << 2;
+    constexpr static uint32_t FLAG_FILTER     = 1 << 3;
+    constexpr static uint32_t FLAG_ZMODE      = 1 << 4;
+    constexpr static uint32_t FLAG_ZPRIM      = 1 << 5;
+    constexpr static uint32_t FLAG_PERSP      = 1 << 6;
+    constexpr static uint32_t FLAG_ALPHA_COMP = 1 << 7;
+
+    constexpr static uint32_t FLAG_TEX0       = 1 << 8;
+    constexpr static uint32_t FLAG_TEX1       = 1 << 9;
+    constexpr static uint32_t FLAG_CC         = 1 << 10;
+    constexpr static uint32_t FLAG_BLENDER    = 1 << 11;
+    constexpr static uint32_t FLAG_K4K5       = 1 << 12;
+    constexpr static uint32_t FLAG_PRIMLOD    = 1 << 13;
+    constexpr static uint32_t FLAG_PRIM       = 1 << 14;
+    constexpr static uint32_t FLAG_ENV        = 1 << 15;
+
+    constexpr static uint32_t FLAG_T3D_VERT_FX = 1 << 16;
+    constexpr static uint32_t FLAG_T3D_        = 1 << 17;
+
+    constexpr static uint32_t FLAG_OVERRIDE    = 1 << 18;
+    constexpr static uint32_t FLAG_DUAL_PH     = 1 << 19;
+
+    // some data is stored directly in the flag value:
+
+    [[nodiscard]] constexpr rdpq_antialias_t getAA() const {
+      return static_cast<rdpq_antialias_t>(flagsData >> 19 & 0b11);
     }
 
-    constexpr uint16_t getDepthRead() const {
-      return valFlags & 0b01;
+    [[nodiscard]] constexpr rdpq_filter_t getFilter() const {
+      return static_cast<rdpq_filter_t>(flagsData >> 21 & 0b11);
     }
 
-    constexpr uint16_t getDepthWrite() const {
-      return valFlags & 0b10;
+    [[nodiscard]] constexpr bool getZRead() const {
+      return flagsData & (1 << 23);
+    }
+    [[nodiscard]] constexpr bool getZWrite() const {
+      return flagsData & (1 << 24);
+    }
+    [[nodiscard]] constexpr bool getModePersp() const {
+      return flagsData & (1 << 25);
+    }
+    [[nodiscard]] constexpr rdpq_dither_t getDither() const {
+      return static_cast<rdpq_dither_t>(flagsData >> 26 & 0b1111);
     }
 
-    void begin(Object &obj);
+    uint32_t flagsData;
+    uint32_t t3dDrawFlags;
 
-    void end();
+    [[nodiscard]] constexpr bool sets(uint32_t flag) const {
+      return (flagsData & flag) != 0;
+    }
+
+    // data values follow here
+    char data[];
+
+    void begin(MaterialState &state);
+    void end(MaterialState &state);
+
+    void destroy() {
+      flagsData = 0;
+    }
+
+    const Tile* getTile(uint8_t idx);
+  };
+
+  /**
+   * 'MaterialInstance' defines a per-components state of additional material settings.
+   * While the material of an object is immutable, this struct here can be modified.
+   * This allows things like prim/env color or texture placeholders to be set on a per-object basis.
+   */
+  struct MaterialInstance
+  {
+    friend class Comp::Model;
+    friend class Comp::AnimModel;
+
+    private:
+      constexpr static uint16_t MASK_DEPTH  = 1 << 0;
+      constexpr static uint16_t MASK_PRIM   = 1 << 1;
+      constexpr static uint16_t MASK_ENV    = 1 << 2;
+      constexpr static uint16_t MASK_LIGHT  = 1 << 3;
+
+      constexpr static uint16_t MASK_SLOT0  = 1 << 8;
+      constexpr static uint16_t MASK_SLOT1  = 1 << 9;
+      constexpr static uint16_t MASK_SLOT2  = 1 << 10;
+      constexpr static uint16_t MASK_SLOT3  = 1 << 11;
+      constexpr static uint16_t MASK_SLOT4  = 1 << 12;
+      constexpr static uint16_t MASK_SLOT5  = 1 << 13;
+      constexpr static uint16_t MASK_SLOT6  = 1 << 14;
+      constexpr static uint16_t MASK_SLOT7  = 1 << 15;
+
+      constexpr static uint16_t MAX_SLOTS = 8;
+
+    // (Note: member order matters here as the editor prepares the data at build-time)
+      uint32_t dataSize{}; // dynamic, @TODO: optmize space / alignemnt
+      uint16_t setMask{};
+      uint8_t fresnel{};
+      uint8_t valFlags{};
+    public:
+
+      // Prim-color, only takes effect if the model material doesn't set it already
+      color_t colorPrim{};
+      // Env-color, only takes effect if the model material doesn't set it already
+      color_t colorEnv{};
+
+    private:
+      color_t colorFresnel{};
+
+      struct Placeholder
+      {
+        friend struct MaterialInstance;
+
+        private:
+          rspq_block_t *block[3]{};
+        public:
+          // Tile settings, after making modifications call 'update()'.
+          Material::Tile tile{};
+
+          /**
+           * Applies changes made to 'tile' so they can be used for rendering.
+           * You are *not* required to call this each frame, only when things change.
+           * However, this function should never be called more than once per frame.
+           */
+          void update();
+      };
+
+      Placeholder placeholders[];
+
+      void init();
+      void begin(Object &obj);
+      void end();
+
+      [[nodiscard]] constexpr uint16_t getDepthRead() const {
+        return valFlags & 0b01;
+      }
+
+      [[nodiscard]] constexpr uint16_t getDepthWrite() const {
+        return valFlags & 0b10;
+      }
+
+    public:
+      MaterialInstance() = default;
+      CLASS_NO_COPY_MOVE(MaterialInstance);
+
+      ~MaterialInstance();
+
+      /**
+       * Checks if this instance has at least one setting enabled.
+       * If this returns false, it means this instance if effective a no-op and doesn't need to be applied at all.
+       * @return true if it does anything, false if not
+       */
+      [[nodiscard]] constexpr bool doesAnything() const {
+        return setMask != 0;
+      }
+
+      /**
+       * Checks if this instance has at least one active placeholder.
+       * This information is baked into the instance at build-time, and needs to be set in the editor.
+       * @return true if at least one placeholder is set, false if not
+       */
+      [[nodiscard]] constexpr bool setsAnyPlaceholder() const {
+        return (setMask & 0xFF00) != 0;
+      }
+
+      /**
+       * Checks if a specific placeholder-slot is active.
+       * @param idx the slot index (0-7)
+       * @return true if the slot is active, false if not
+       */
+      [[nodiscard]] constexpr bool setsPlaceholder(uint32_t idx) const {
+        return setMask & (1 << (8 + idx));
+      }
+
+      /**
+       * Returns a placeholder for a given slot (0-7).
+       * This must be set up in the editor to be available at runtime, otherwise this will return a nullptr.
+       *
+       * On the returned placeholder you can then modify tile-settings or the texture (depending on the setup).
+       * When done, call 'update()' on it to prepare the changed data for future drawing.
+       *
+       * @param slot the slot index (0-7)
+       * @return placeholder or nullptr if not set up
+       */
+      Placeholder* getPlaceholder(uint32_t slot)
+      {
+        if(setMask & (1 << (MAX_SLOTS + slot))) {
+          return &placeholders[slot];
+        }
+        return nullptr;
+      }
+
+      /**
+       * Returns the allocated size of this object in bytes.
+       * (This is used internally to manage allocation and copying).
+       * @return size in bytes
+       */
+      [[nodiscard]] uint32_t getSize() const {
+        return dataSize;
+      }
+
   };
 }

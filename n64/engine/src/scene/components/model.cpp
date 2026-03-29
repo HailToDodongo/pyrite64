@@ -9,6 +9,7 @@
 #include <t3d/t3dmodel.h>
 
 #include "../../renderer/bigtex/bigtex.h"
+#include "lib/logger.h"
 #include "renderer/material.h"
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
@@ -20,28 +21,34 @@ namespace
     uint16_t assetIdx;
     uint8_t layer;
     uint8_t flags;
-    P64::Renderer::Material material;
     uint8_t meshIdxCount;
     uint8_t meshIndices[];
+
+    // Followed by: (after 4byte align)
+    P64::Renderer::MaterialInstance* getMatInstance()
+    {
+      auto matInst = (uint32_t)meshIndices + meshIdxCount;
+      matInst = (matInst + 3) & ~0b11;
+      return (P64::Renderer::MaterialInstance*)matInst;
+    }
   };
 
   void recordWholeModel(T3DModel *model)
   {
     rspq_block_begin();
-
-    T3DModelState state = t3d_model_state_create();
-    state.drawConf = nullptr;
-    state.lastBlendMode = 0;
+    P64::Renderer::MaterialState state{};
 
     T3DModelIter it = t3d_model_iter_create(model, T3D_CHUNK_TYPE_OBJECT);
     while(t3d_model_iter_next(&it))
     {
-      it.object->material->blendMode = 0;
-      t3d_model_draw_material(it.object->material, &state);
+      //P64::Log::info("Object: %s", it.object->name);
+      auto *mat = (P64::Renderer::Material*)it.object->material;
+      assert(mat);
+      mat->begin(state);
       t3d_model_draw_object(it.object, nullptr);
+      mat->end(state);
     }
 
-    if(state.lastVertFXFunc != T3D_VERTEX_FX_NONE)t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0, 0);
     model->userBlock = rspq_block_end();
   }
 
@@ -80,13 +87,18 @@ namespace P64::Comp
 {
   uint32_t Model::getAllocSize(uint16_t* initData)
   {
-    return sizeof(Model) + (sizeof(uint8_t) * ((InitData*)initData)->meshIdxCount);
+    auto mat = ((InitData*)initData)->getMatInstance();
+    uint32_t size = sizeof(Model) + (sizeof(uint8_t) * ((InitData*)initData)->meshIdxCount);
+    size = (size + 3) & ~0b11; // round up to 4 byte align for the material instance
+    size += mat->dataSize;
+    return size;
   }
 
   void Model::initDelete([[maybe_unused]] Object& obj, Model* data, void* initData_)
   {
     auto *initData = (InitData*)initData_;
     if (initData == nullptr) {
+      data->getMatInstance().~MaterialInstance();
       data->~Model();
       return;
     }
@@ -97,12 +109,23 @@ namespace P64::Comp
     assert(data->model != nullptr);
     data->layerIdx = initData->layer;
     data->flags = initData->flags;
-    data->material = initData->material;
 
     data->meshIdxCount = initData->meshIdxCount;
     for(uint8_t i = 0; i < initData->meshIdxCount; ++i) {
       data->meshIndices[i] = initData->meshIndices[i];
     }
+
+    auto matInstanceInit = initData->getMatInstance();
+    auto &matInstance = data->getMatInstance();
+
+    // struct has move/copy removed for safety and to avoid accidental copies.
+    // but we still need to memcpy here, the warning is wrong anyways as it's still a trivial type
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wclass-memaccess"
+      memcpy(&matInstance, matInstanceInit, matInstanceInit->dataSize);
+    #pragma GCC diagnostic pop
+
+    matInstance.init();
 
     bool isBigTex = SceneManager::getCurrent().getConf().pipeline == SceneConf::Pipeline::BIG_TEX_256;
     bool separate = (data->flags & FLAG_CULLING) || (data->meshIdxCount != 0);
@@ -118,12 +141,13 @@ namespace P64::Comp
       while(t3d_model_iter_next(&it)) {
         if(it.object->userBlock)return; // already recorded the model
         rspq_block_begin();
-          t3d_model_draw_material(it.object->material, nullptr);
-          t3d_model_draw_object(it.object, nullptr);
 
-          if(it.object->material->vertexFxFunc) { // @TODO: fix this in t3d
-            t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0,0);
-          }
+          Renderer::MaterialState state{};
+          auto *mat = (Renderer::Material*)it.object->material;
+          mat->begin(state);
+          t3d_model_draw_object(it.object, nullptr);
+          mat->end(state);
+
         it.object->userBlock = rspq_block_end();
       }
       //t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0,0);
@@ -139,8 +163,9 @@ namespace P64::Comp
     t3d_mat4fp_from_srt(mat, obj.scale, obj.rot, obj.pos);
 
     if(data->layerIdx)DrawLayer::use3D(data->layerIdx);
+    auto &material = data->getMatInstance();
 
-    data->material.begin(obj);
+    material.begin(obj);
 
     t3d_matrix_set(mat, true);
 
@@ -166,7 +191,7 @@ namespace P64::Comp
       }
     }
 
-    data->material.end();
+    material.end();
     if(data->layerIdx)DrawLayer::useDefault();
   }
 }

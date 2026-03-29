@@ -120,12 +120,12 @@ void Editor::AssetInspector::draw() {
     }
     if (asset->type == FileType::MODEL_3D) {
       uint32_t triCount = 0;
-      for (auto &model : asset->t3dmData.models) {
+      for (auto &model : asset->model.t3dm.models) {
         triCount += model.triangles.size();
       }
 
       uint32_t boneCount = 0;
-      for(auto &skel : asset->t3dmData.skeletons) {
+      for(auto &skel : asset->model.t3dm.skeletons) {
         boneCount += skel.children.size();
       }
 
@@ -135,7 +135,7 @@ void Editor::AssetInspector::draw() {
       ImGui::AlignTextToFramePadding();
         ImGui::Text("Meshes");
         ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%d", static_cast<int>(asset->t3dmData.models.size()));
+        ImGui::Text("%d", static_cast<int>(asset->model.t3dm.models.size()));
 
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(0);
@@ -156,7 +156,7 @@ void Editor::AssetInspector::draw() {
       ImGui::AlignTextToFramePadding();
         ImGui::Text("Animations");
         ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%d", static_cast<int>(asset->t3dmData.animations.size()));
+        ImGui::Text("%d", static_cast<int>(asset->model.t3dm.animations.size()));
 
       ImGui::EndTable();
 

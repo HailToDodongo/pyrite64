@@ -216,7 +216,6 @@ add_executable(pyrite64 src/main.cpp
         src/renderer/n64Mesh.cpp
         src/renderer/n64/n64Material.h
         src/renderer/n64/n64Material.cpp
-        src/renderer/n64/ccMapping.h
         src/project/component/types/compLight.cpp
         src/project/component/types/compCamera.cpp
         src/editor/imgui/helper.cpp
@@ -245,8 +244,7 @@ add_executable(pyrite64 src/main.cpp
         src/project/component/types/compConstraint.cpp
         src/project/component/types/compCulling.cpp
         src/editor/pages/parts/nodeEditor.cpp
-        src/project/component/shared/material.h
-        src/project/component/shared/material.cpp
+        src/project/component/shared/materialInstance.cpp
         src/project/component/shared/meshFilter.cpp
         src/project/graph/nodes/baseNode.h
         src/project/graph/nodes/nodeWait.h
@@ -269,6 +267,16 @@ add_executable(pyrite64 src/main.cpp
         src/editor/preferences.h
         src/editor/preferences.cpp
         src/editor/pages/parts/assets/modelEditor.cpp
+        src/project/assets/material.h
+        src/project/assets/material.cpp
+        src/project/assets/model3d.h
+        src/n64/libdragon.h
+        src/n64/ccMapping.cpp
+        src/n64/ccMapping.cpp
+        src/editor/pages/parts/assets/textureEditor.h
+        src/editor/pages/parts/assets/textureEditor.cpp
+        src/editor/pages/parts/assets/matInstanceEditor.h
+        src/editor/pages/parts/assets/matInstanceEditor.cpp
 )
 
 target_include_directories(pyrite64 PRIVATE
@@ -284,6 +292,7 @@ target_include_directories(pyrite64 PRIVATE
     vendored/tiny3d/tools/gltf_importer/src/lib
     vendored/libdragon
     vendored/SDL_shadercross/include
+    src/n64
     n64
 )
 

@@ -11,8 +11,131 @@
 #include "../utils/logger.h"
 #include "../utils/proc.h"
 #include "tiny3d/tools/gltf_importer/src/parser.h"
+#include "../../n64/engine/include/renderer/material.h"
 
 namespace fs = std::filesystem;
+
+namespace
+{
+  bool matWriter(
+    Build::SceneCtx &sceneCtx,
+    std::shared_ptr<BinaryFile> f,
+    const Project::Assets::Material &mat
+  ) {
+    uint32_t flags = 0;
+
+    auto posStart = f->getPos();
+    f->write<uint32_t>(0); // set later
+    f->write<uint32_t>(mat.drawFlags.value);
+
+    int placeholders = 0;
+    if(mat.tex0.set.value) {
+      flags |= P64::Renderer::Material::FLAG_TEX0;
+      if(mat.tex0.dynType.value)++placeholders;
+      Utils::BinaryFile subFile{};
+      mat.tex0.build(subFile, sceneCtx);
+      f->writeArray(subFile.getData().data(), subFile.getSize());
+    }
+    if(mat.tex1.set.value) {
+      flags |= P64::Renderer::Material::FLAG_TEX1;
+      if(mat.tex1.dynType.value)++placeholders;
+      Utils::BinaryFile subFile{};
+      mat.tex1.build(subFile, sceneCtx);
+      f->writeArray(subFile.getData().data(), subFile.getSize());
+    }
+
+    if(placeholders == 2) {
+      flags |= P64::Renderer::Material::FLAG_DUAL_PH;
+    }
+
+    if(mat.ccSet.value) {
+      flags |= P64::Renderer::Material::FLAG_CC;
+      f->write(mat.cc.value);
+    }
+    if(mat.blenderSet.value) {
+      flags |= P64::Renderer::Material::FLAG_BLENDER;
+      f->write(mat.blender.value);
+    }
+    if(mat.fogSet.value) {
+      flags |= P64::Renderer::Material::FLAG_FOG;
+      f->write(mat.fog.value);
+    }
+    if(mat.primColorSet.value) {
+      flags |= P64::Renderer::Material::FLAG_PRIM;
+      auto col = mat.primColor.value * 255.0f;
+      f->write((uint8_t)col.r);
+      f->write((uint8_t)col.g);
+      f->write((uint8_t)col.b);
+      f->write((uint8_t)col.a);
+    }
+    if(mat.envColorSet.value) {
+      flags |= P64::Renderer::Material::FLAG_ENV;
+      auto col = mat.envColor.value * 255.0f;
+      f->write((uint8_t)col.r);
+      f->write((uint8_t)col.g);
+      f->write((uint8_t)col.b);
+      f->write((uint8_t)col.a);
+    }
+
+    if(mat.zprimSet.value) {
+      flags |= P64::Renderer::Material::FLAG_ZPRIM;
+      f->write<int16_t>(mat.zprim.value);
+      f->write<int16_t>(mat.zdelta.value);
+    }
+
+    if(mat.vertexFX.value != 0)
+    {
+      flags |= P64::Renderer::Material::FLAG_T3D_VERT_FX;
+      f->write<uint16_t>(mat.tex0.texSize.value[0]);
+      f->write<uint16_t>(mat.tex0.texSize.value[1]);
+      f->write<uint8_t>(mat.vertexFX.value);
+    }
+
+    if(mat.alphaCompSet.value) {
+      flags |= P64::Renderer::Material::FLAG_ALPHA_COMP;
+      f->write<uint8_t>(mat.alphaComp.value);
+    }
+
+    if(mat.k4k5Set.value) {
+      flags |= P64::Renderer::Material::FLAG_K4K5;
+      f->write<uint8_t>(mat.k4k5.value[0]);
+      f->write<uint8_t>(mat.k4k5.value[1]);
+    }
+
+    if(mat.primLodSet.value) {
+      flags |= P64::Renderer::Material::FLAG_PRIMLOD;
+      f->write<uint8_t>(mat.primLod.value);
+    }
+
+    if(mat.aaSet.value) {
+      flags |= P64::Renderer::Material::FLAG_AA;
+      flags |= (mat.aa.value & 0b11) << 19;
+    }
+    if(mat.ditherSet.value) {
+      flags |= P64::Renderer::Material::FLAG_DITHER;
+      flags |= (mat.dither.value & 0b1111) << 26;
+    }
+    if(mat.filterSet.value) {
+      flags |= P64::Renderer::Material::FLAG_FILTER;
+      flags |= (mat.filter.value & 0b11) << 21;
+    }
+    if(mat.zmodeSet.value) {
+      flags |= P64::Renderer::Material::FLAG_ZMODE;
+      flags |= (mat.zmode.value ? 1 : 0) << 24;
+    }
+    if(mat.perspSet.value) {
+      flags |= P64::Renderer::Material::FLAG_PERSP;
+      flags |= (mat.persp.value ? 1 : 0) << 25;
+    }
+
+    f->posPush();
+      f->setPos(posStart);
+      f->write(flags);
+    f->posPop();
+
+    return true;
+  }
+}
 
 bool Build::buildT3DCollision(
   Project::Project &project, SceneCtx &sceneCtx,
@@ -73,14 +196,12 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
 
     sceneCtx.files.push_back(Utils::FS::toUnixPath(model.outPath));
 
-    if(assetBuildNeeded(model, t3dmPath)) {
+    if(assetBuildNeeded(model, t3dmPath))
+    {
       fs::create_directories(t3dmDir);
 
       T3DM::Config config{
         .globalScale = (float)model.conf.baseScale,
-        .animSampleRate = 60,
-        //.ignoreMaterials = args.checkArg("--ignore-materials"),
-        //.ignoreTransforms = args.checkArg("--ignore-transforms"),
         .createBVH = model.conf.gltfBVH,
         .verbose = false,
         .assetPath = "assets/",
@@ -88,10 +209,18 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
         .projectPath = projectPath,
       };
 
-      auto t3dm = T3DM::parseGLTF(model.path.c_str(), config);
+      auto &t3dm = model.model.t3dm;
 
-      std::vector<T3DM::CustomChunk> customChunks{};
-      T3DM::writeT3DM(config, t3dm, t3dmPath.string().c_str(), customChunks);
+      config.materialWriter = [&sceneCtx, &model](std::shared_ptr<BinaryFile> f, const T3DM::Material &material, uint32_t matIdx) {
+        auto pyriteMat = model.model.materials.find(material.name);
+        if(pyriteMat != model.model.materials.end()) {
+          printf("Using custom material writer for '%s'\n", material.name.c_str());
+          return matWriter(sceneCtx, f, pyriteMat->second);
+        }
+        throw std::runtime_error("Missing material: " + material.name);
+      };
+
+      T3DM::writeT3DM(config, t3dm, t3dmPath.string().c_str());
 
       int compr = (int)model.conf.compression - 1;
       if(compr < 0)compr = 1; // @TODO: pull default compression level

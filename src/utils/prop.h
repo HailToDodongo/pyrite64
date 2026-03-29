@@ -21,6 +21,7 @@ struct GenericValue
     glm::quat valQuat{};
     glm::vec3 valVec3;
     glm::vec4 valVec4;
+    glm::vec2 valVec2;
     glm::ivec2 valIVec2;
     uint64_t valU64;
     uint32_t valU32;
@@ -45,6 +46,7 @@ struct GenericValue
     else if constexpr (std::is_same_v<T,        bool>)return 8;
     else if constexpr (std::is_same_v<T, std::string>)return 9;
     else if constexpr (std::is_same_v<T,  glm::ivec2>)return 10;
+    else if constexpr (std::is_same_v<T,  glm::vec2>)return 11;
     else static_assert(false, "Unsupported type in GenericValue::get");
   }
 
@@ -59,6 +61,8 @@ struct GenericValue
       return valVec4;
     } else if constexpr (std::is_same_v<T, glm::ivec2>) {
       return valIVec2;
+    } else if constexpr (std::is_same_v<T, glm::vec2>) {
+      return valVec2;
     } else if constexpr (std::is_same_v<T, uint64_t>) {
       return valU64;
     } else if constexpr (std::is_same_v<T, uint32_t>) {
@@ -120,6 +124,10 @@ struct Property
   T& resolve(OBJ &obj) {
     return resolve(obj.propOverrides);
   }
+
+  bool operator==(const Property<T> &other) const {
+    return value == other.value;
+  }
 };
 
 using PropU32 = Property<uint32_t>;
@@ -131,6 +139,7 @@ using PropFloat = Property<float>;
 using PropBool = Property<bool>;
 
 using PropIVec2 = Property<glm::ivec2>;
+using PropVec2 = Property<glm::vec3>;
 using PropVec3 = Property<glm::vec3>;
 using PropVec4 = Property<glm::vec4>;
 using PropQuat = Property<glm::quat>;
@@ -144,6 +153,7 @@ using PropString = Property<std::string>;
 #define PROP_FLOAT(name) Property<float> name{#name}
 #define PROP_BOOL(name) Property<bool> name{#name}
 #define PROP_IVEC2(name) Property<glm::ivec2> name{#name}
+#define PROP_VEC2(name) Property<glm::vec2> name{#name}
 #define PROP_VEC3(name) Property<glm::vec3> name{#name}
 #define PROP_VEC4(name) Property<glm::vec4> name{#name}
 #define PROP_QUAT(name) Property<glm::quat> name{#name}

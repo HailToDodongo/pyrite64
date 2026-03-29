@@ -24,15 +24,8 @@ bool Build::buildTextureAssets(Project::Project &project, SceneCtx &sceneCtx)
   {
     if (image.conf.exclude)continue;
 
-    auto outPath = image.outPath;
-    if(image.conf.format == (int)Utils::TexFormat::BCI_256) {
-      // replace .sprite with .bci
-      outPath = outPath.substr(0, outPath.size() - 7) + ".bci";
-    }
-
-    sceneCtx.files.push_back(Utils::FS::toUnixPath(outPath));
-
-    auto assetPath = fs::path{project.getPath()} / outPath;
+    sceneCtx.files.push_back(Utils::FS::toUnixPath(image.outPath));
+    auto assetPath = fs::path{project.getPath()} / image.outPath;
     auto assetDir = assetPath.parent_path();
     fs::create_directories(assetDir);
 

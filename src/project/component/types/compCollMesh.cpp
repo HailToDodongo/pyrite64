@@ -66,9 +66,9 @@ namespace Project::Component::CollMesh
     // we need a part of a collision mesh, by default (and for perf. reasons)
     // the entire mesh is converted by default.
     // generate a unique file for that instance (and do so via a hash to allow sharing)
-    auto meshes = data.filter.filterT3DM(t3dm->t3dmData.models, obj, false);
+    auto meshes = data.filter.filterT3DM(t3dm->model.t3dm.models, obj, false);
     if(meshes.empty()) { // take all by default
-      for(uint32_t i=0; i<t3dm->t3dmData.models.size(); ++i) {
+      for(uint32_t i=0; i<t3dm->model.t3dm.models.size(); ++i) {
         meshes.push_back(i);
       }
     }
@@ -88,7 +88,7 @@ namespace Project::Component::CollMesh
     {
       std::unordered_set<std::string> meshNames{};
       for(auto meshIdx : meshes) {
-        meshNames.insert(t3dm->t3dmData.models[meshIdx].name);
+        meshNames.insert(t3dm->model.t3dm.models[meshIdx].name);
       }
 
       Build::buildT3DCollision(*ctx.project, ctx, meshNames, t3dm->getId(), modelUUID);
@@ -149,13 +149,13 @@ namespace Project::Component::CollMesh
         bool changed = ImTable::addObjProp("Filter", data.filter.meshFilter);
 
         if(changed || data.filter.cache.empty()) {
-          data.filter.filterT3DM(selModel->t3dmData.models, obj, false);
+          data.filter.filterT3DM(selModel->model.t3dm.models, obj, false);
         }
 
         for(auto idx : data.filter.cache) {
           ImGui::Text("%s@%s",
-            selModel->t3dmData.models[idx].name.c_str(),
-            selModel->t3dmData.models[idx].materialName.c_str()
+            selModel->model.t3dm.models[idx].name.c_str(),
+            selModel->model.t3dm.models[idx].materialName.c_str()
           );
         }
 
@@ -195,9 +195,9 @@ namespace Project::Component::CollMesh
     if (!asset || !asset->mesh3D) {
       return;
     }
-    auto &meshes = data.filter.filterT3DM(asset->t3dmData.models, obj, false);
+    auto &meshes = data.filter.filterT3DM(asset->model.t3dm.models, obj, false);
 
-    data.obj3D.draw(pass, cmdBuff, meshes);
+    data.obj3D.draw(pass, cmdBuff, &asset->model, meshes);
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)

@@ -13,6 +13,7 @@
 #include "../renderer/object.h"
 #include "../utils/codeParser.h"
 #include "../renderer/texture.h"
+#include "assets/model3d.h"
 #include "scene/prefab.h"
 #include "tiny3d/tools/gltf_importer/src/structs.h"
 
@@ -61,6 +62,9 @@ namespace Project
     PROP_U32(fontId);
     PROP_STRING(fontCharset);
 
+    // extra arbitrary data assets can store
+    nlohmann::json data{};
+
     std::string serialize() const;
   };
 
@@ -72,7 +76,7 @@ namespace Project
     std::string romPath{};
     FileType type{};
     std::shared_ptr<Renderer::Texture> texture{nullptr};
-    T3DM::T3DMData t3dmData{};
+    Assets::Model3D model{};
     std::shared_ptr<Renderer::N64Mesh> mesh3D{};
     std::shared_ptr<Prefab> prefab{nullptr};
     AssetConf conf{};

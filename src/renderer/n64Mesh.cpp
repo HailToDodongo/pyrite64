@@ -19,51 +19,27 @@ namespace
   constinit glm::vec4 lastEnv{};
 }
 
-void Renderer::N64Mesh::fromT3DM(const T3DM::T3DMData &t3dmData, Project::AssetManager &assetManager)
+void Renderer::N64Mesh::fromT3DM(const Project::Assets::Model3D &model3d, Project::AssetManager &assetManager)
 {
   loaded = false;
   mesh.vertices.clear();
   mesh.indices.clear();
   parts.clear();
 
+  auto &t3dmData = model3d.t3dm;
   parts.resize(t3dmData.models.size());
   auto part = parts.begin();
 
   uint16_t idx = 0;
   for (auto &model : t3dmData.models)
   {
-    part->refTex0 = assetManager.getFallbackTexture();
-    part->refTex1 = part->refTex0;
-
     part->indicesOffset = mesh.indices.size();
     part->indicesCount = model.triangles.size() * 3;
 
-    T3DM::Material matDummy{};
-    auto mat = t3dmData.materials.find(model.materialName);
-    if(mat != t3dmData.materials.end()) {
-      N64Material::convert(*part, mat->second);
-    }
-    const T3DM::Material &material = (mat != t3dmData.materials.end()) ? mat->second : matDummy;
-
-    part->texBindings[0].texture = part->refTex0.lock()->getGPUTex();
+    part->materialName = model.materialName;
+    part->texBindings[0].texture = assetManager.getFallbackTexture()->getGPUTex();
     part->texBindings[0].sampler = texSamplerRepeat;
     part->texBindings[1] = part->texBindings[0];
-
-    if (!material.texA.texPath.empty()) {
-      auto texEntry = assetManager.getByPath(material.texA.texPath);
-      if (texEntry && texEntry->texture) {
-        part->texBindings[0].texture = texEntry->texture->getGPUTex();
-        part->refTex0 = texEntry->texture;
-      }
-    }
-
-    if (!material.texB.texPath.empty()) {
-      auto texEntry = assetManager.getByPath(material.texB.texPath);
-      if (texEntry && texEntry->texture) {
-        part->texBindings[1].texture = texEntry->texture->getGPUTex();
-        part->refTex1 = texEntry->texture;
-      }
-    }
 
     //model.material.colorCombiner
     for (auto &tri : model.triangles) {
@@ -107,31 +83,54 @@ void Renderer::N64Mesh::recreate(Renderer::Scene &sc) {
 void Renderer::N64Mesh::draw(
   SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdBuff, UniformsObject &uniforms,
   const std::vector<uint32_t> &partsIndices,
-  const UniformsOverrides& overrides
-)
-{
+  const Project::Assets::Model3D &model,
+  const Project::Component::Shared::MaterialInstance *matInstance
+) {
   if (!scene)return;
 
   auto drawPart = [&](MeshPart &part)
   {
-    if(part.refTex1.expired() || part.refTex0.expired()) {
-      loaded = false;
-      return;
-    }
-
     uint32_t flags = uniforms.mat.flags;
     uint32_t blender = uniforms.mat.blender.x;
+
+    uint32_t slotIdx = 0;
+    auto matEntry = model.materials.find(part.materialName);
+    if(matEntry != model.materials.end()) {
+      auto mat = matEntry->second;
+
+      auto resolveTex = [&](Project::Assets::MaterialTex &tex, int texBinding)
+      {
+        if (tex.set.value) {
+          if(tex.dynType.value == tex.DYN_TYPE_FULL && slotIdx < 8) {
+            tex = matInstance->texSlots[slotIdx];
+            ++slotIdx;
+          }
+          else if(tex.dynType.value == tex.DYN_TYPE_TILE && slotIdx < 8) {
+            tex.offset = matInstance->texSlots[slotIdx].offset;
+            ++slotIdx;
+          }
+          auto texEntry = ctx.project->getAssets().getEntryByUUID(tex.texUUID.value);
+          if (texEntry && texEntry->texture) {
+            part.texBindings[texBinding].texture = texEntry->texture->getGPUTex();
+          }
+        }
+      };
+      resolveTex(mat.tex0, 0);
+      resolveTex(mat.tex1, 1);
+
+      N64Material::convert(part, mat);
+    }
 
     if(part.material.flags & UniformN64Material::FLAG_SET_PRIM_COL) {
       lastPrim = part.material.colPrim;
     } else {
-      if(overrides.setPrim)lastPrim = overrides.colPrim;
+      if(matInstance->setPrim.value)lastPrim = matInstance->prim.value;
     }
 
     if(part.material.flags & UniformN64Material::FLAG_SET_ENV_COL) {
       lastEnv = part.material.colEnv;
     } else {
-      if(overrides.setEnv)lastEnv = overrides.colEnv;
+      if(matInstance->setEnv.value)lastEnv = matInstance->env.value;
     }
 
     uniforms.mat = part.material;

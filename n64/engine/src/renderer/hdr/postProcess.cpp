@@ -52,8 +52,6 @@ void P64::Renderer::HDR::PostProcess::endFrame()
   if(!blockRDPScale)
   {
     rspq_block_begin();
-    rdpq_sync_pipe();
-    rdpq_sync_load();
     rdpq_set_mode_standard();
 
     rdpq_mode_begin();

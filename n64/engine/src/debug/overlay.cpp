@@ -185,8 +185,6 @@ void Debug::Overlay::draw(P64::Scene &scene, surface_t* surf)
   float posY = 130;
 
   if(showFrameTime) {
-    rdpq_sync_pipe();
-
     constexpr uint32_t fbCount = 3;
     float viBarWidth = 300;
 

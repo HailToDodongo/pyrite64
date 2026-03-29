@@ -147,9 +147,12 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       fm_vec3_t colorNormal{1.0f, 1.0f, 1.0f};
       fm_vec3_lerp(&blickColor, &colorNormal, &blickColor, data->hurtTimeout / HURT_TIMEOUT);
 
-      model->material.colorPrim.r = (uint8_t)(blickColor.x * 255);
-      model->material.colorPrim.g = (uint8_t)(blickColor.y * 255);
-      model->material.colorPrim.b = (uint8_t)(blickColor.z * 255);
+      model->getMatInstance().colorPrim = {
+        (uint8_t)(blickColor.x * 255),
+        (uint8_t)(blickColor.y * 255),
+        (uint8_t)(blickColor.z * 255),
+        0xFF
+      };
 
       bcs.velocity += data->hurtVelocity;
       data->hurtVelocity *= 0.8f;

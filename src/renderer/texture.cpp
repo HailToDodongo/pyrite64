@@ -33,10 +33,12 @@ Renderer::Texture::Texture(SDL_GPUDevice* device, const std::string &imgPath, bo
       for (int x = 0; x < img->w; x++) {
         uint8_t* pixel = (uint8_t*)img->pixels + y * img->pitch + x * 4;
         // gamma correction
-        float r = pixel[2] / 255.0f;
+
+        /*float r = pixel[0] / 255.0f;
         r = std::pow(r, 1.0f/2.2f);
         uint8_t gray = (uint8_t)(SDL_clamp(r * 255.0f, 0.0f, 255.0f));
-        pixel[3] = gray;
+        pixel[3] = gray;*/
+        pixel[3] = pixel[0];
       }
     }
     SDL_UnlockSurface(img);

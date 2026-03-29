@@ -14,9 +14,11 @@
 #include "../../../renderer/scene.h"
 #include "../../../utils/meshGen.h"
 #include "../../../shader/defines.h"
-#include "../shared/material.h"
+#include "../shared/materialInstance.h"
+#include "../../../editor/pages/editorScene.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include "../../../editor/pages/parts/assets/matInstanceEditor.h"
 #include "glm/gtx/matrix_decompose.hpp"
 
 #include "../shared/meshFilter.h"
@@ -31,7 +33,7 @@ namespace Project::Component::Model
 
     Shared::MeshFilter filter{};
 
-    Shared::Material material{};
+    Shared::MaterialInstance material{};
 
     Renderer::Object obj3D{};
     Utils::AABB aabb{};
@@ -91,17 +93,21 @@ namespace Project::Component::Model
       throw std::runtime_error(error);
     }
 
-    auto &meshes = data.filter.filterT3DM(t3dm->t3dmData.models, obj, true);
+    auto &meshes = data.filter.filterT3DM(t3dm->model.t3dm.models, obj, true);
 
     ctx.fileObj.write<uint16_t>(id);
     ctx.fileObj.write<uint8_t>(data.layerIdx.resolve(obj));
     ctx.fileObj.write<uint8_t>(data.culling.resolve(obj));
-    data.material.build(ctx.fileObj, obj);
 
     ctx.fileObj.write<uint8_t>(meshes.size());
     for(auto meshIdx : meshes) {
       ctx.fileObj.write<uint8_t>(meshIdx);
     }
+
+    ctx.fileObj.align(4);
+
+    data.material.validateWithModel(t3dm->model);
+    data.material.build(ctx.fileObj, ctx, obj);
   }
 
   void draw(Object &obj, Entry &entry)
@@ -117,6 +123,14 @@ namespace Project::Component::Model
       ImTable::addAssetVecComboBox("Model", modelList, data.model.value, [&data](auto) {
         data.obj3D.removeMesh();
       });
+
+      if(ctx.experimentalFeatures)
+      {
+        ImTable::add("");
+        if(ImGui::Button(ICON_MDI_PENCIL " Open Model Editor")) {
+          ctx.editorScene->openModelEditor(data.model.value);
+        }
+      }
 
       std::vector<const char*> layerNames{};
       for (auto &layer : scene->conf.layers3D) {
@@ -140,21 +154,20 @@ namespace Project::Component::Model
 
       ImTable::end();
 
+      auto t3dm = ctx.project->getAssets().getEntryByUUID(data.model.value);
       if(ImGui::CollapsingSubHeader("Mesh Filter", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Filter", &obj))
       {
         bool changed = ImTable::addObjProp("Filter", data.filter.meshFilter);
-
-        auto t3dm = ctx.project->getAssets().getEntryByUUID(data.model.value);
         if(t3dm)
         {
           if(changed || data.filter.cache.empty()) {
-            data.filter.filterT3DM(t3dm->t3dmData.models, obj, true);
+            data.filter.filterT3DM(t3dm->model.t3dm.models, obj, true);
           }
 
           for(auto idx : data.filter.cache) {
             ImGui::Text("%s@%s",
-              t3dm->t3dmData.models[idx].name.c_str(),
-              t3dm->t3dmData.models[idx].materialName.c_str()
+              t3dm->model.t3dm.models[idx].name.c_str(),
+              t3dm->model.t3dm.models[idx].materialName.c_str()
             );
           }
         }
@@ -162,26 +175,7 @@ namespace Project::Component::Model
         ImTable::end();
       }
 
-      if(ImGui::CollapsingSubHeader("Material Sets", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Mat", &obj))
-      {
-        ImTable::addObjProp<int32_t>("Depth", data.material.depth, [](int32_t *depth)
-        {
-          std::array<const char*, 4> items = {"None", "Read", "Write", "Read+Write"};
-          return ImGui::Combo("##", depth, items.data(), items.size());
-        }, &data.material.setDepth);
-
-        ImTable::addObjProp("Prim-Color", data.material.prim, &data.material.setPrim);
-        ImTable::addObjProp("Env-Color", data.material.env, &data.material.setEnv);
-        ImTable::addObjProp("Fresnel", data.material.fresnel, &data.material.setFresnel);
-        if(data.material.fresnel.resolve(obj.propOverrides) != 0)
-        {
-          ImTable::addObjProp("Fres-Color", data.material.fresnelColor);
-        }
-        // ImTable::addObjProp("Lighting", data.material.lighting, &data.material.setLighting);
-
-        ImTable::end();
-      }
-
+      Editor::MatInstanceEditor::draw(data.material, obj, data.model.value);
       ImGui::Dummy({0,4});
 
     }
@@ -190,8 +184,9 @@ namespace Project::Component::Model
   void draw3D(Object& obj, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPURenderPass* pass)
   {
     Data &data = *static_cast<Data*>(entry.data.get());
+    auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
+
     if (!data.obj3D.isMeshLoaded()) {
-      auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
       if (asset && asset->mesh3D) {
         if (!asset->mesh3D->isLoaded()) {
           asset->mesh3D->recreate(*ctx.scene);
@@ -205,17 +200,6 @@ namespace Project::Component::Model
     {
       data.obj3D.uniform.mat.flags = 0;
       if(data.layerIdx.value == 0)data.obj3D.uniform.mat.flags |= T3D_FLAG_NO_LIGHT;
-    }
-
-
-    data.obj3D.overrides.setPrim = data.material.setPrim.resolve(obj.propOverrides);
-    data.obj3D.overrides.setEnv = data.material.setEnv.resolve(obj.propOverrides);
-
-    if(data.obj3D.overrides.setPrim) {
-      data.obj3D.overrides.colPrim = data.material.prim.resolve(obj.propOverrides);
-    }
-    if(data.obj3D.overrides.setEnv) {
-      data.obj3D.overrides.colEnv = data.material.env.resolve(obj.propOverrides);
     }
 
     data.obj3D.setObjectID(obj.uuid);
@@ -238,12 +222,13 @@ namespace Project::Component::Model
       data.obj3D.uniform.mat.blender.y = data.obj3D.uniform.mat.blender.x;
     }
 
-    auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
     if (!asset || !asset->mesh3D) {
       return;
     }
-    auto &meshes = data.filter.filterT3DM(asset->t3dmData.models, obj, true);
-    data.obj3D.draw(pass, cmdBuff, meshes);
+    auto &meshes = data.filter.filterT3DM(asset->model.t3dm.models, obj, true);
+    data.obj3D.matInstance = &data.material;
+    data.obj3D.draw(pass, cmdBuff, &asset->model, meshes);
+    data.obj3D.matInstance = nullptr;
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)

@@ -31,7 +31,7 @@ namespace Project::Graph::Node
       }
 
       void draw() override {
-        if(ImTable::start("Node", nullptr, 100.0f)) {
+        if(ImTable::start("Node", nullptr, {-1, 100.0f})) {
 
           std::vector<ImTable::ComboEntry> entries;
           entries.push_back({0, "< Self >"});
