@@ -311,9 +311,6 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
 
       subSection("Render Modes", [&]
       {
-        ImTable::add("Blending"); ImGui::Text("@TODO");
-        ImTable::add("Fog"); ImGui::Text("@TODO");
-
         toggleProp("Alpha-Clip", mat.alphaCompSet.value, [&] {
           ImGui::SliderInt("##AC", &mat.alphaComp.value, 0, 255,
             mat.alphaComp.value == 0 ? "<Off>" : "%d"
@@ -324,15 +321,34 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
           ImGui::Combo("##", &mat.zmode.value, Z_MODES);
         });
 
+        toggleProp("Anti-Alias", mat.aaSet.value, [&] {
+          ImGui::Combo("##AA", &mat.aa.value, AA_MODES);
+        });
+
+        toggleProp("Blending", mat.blenderSet.value, [&]
+        {
+          std::vector<ImTable::ComboEntry> blenders{
+            {0, "None (Opaque)"},
+            {RDPQ_BLENDER_MULTIPLY, "Multiply (Alpha)"},
+            {RDPQ_BLENDER_ADDITIVE, "Additive"},
+          };
+          ImTable::addVecComboBox("", blenders, mat.blender.value);
+        });
+
+        toggleProp("Fog", mat.fogSet.value, [&]
+        {
+          std::vector<ImTable::ComboEntry> fogs{
+            {0, "None"},
+            {RDPQ_FOG_STANDARD, "Fog (Standard)"},
+          };
+          ImTable::addVecComboBox("", fogs, mat.fog.value);
+        });
+
         toggleProp("Fixed-Z", mat.zprimSet.value, [&] {
           ImGui::SideBySide(
             [&]{ ImGui::InputInt("##0", &mat.zprim.value); },
             [&]{ ImGui::InputInt("##1", &mat.zdelta.value); }
           );
-        });
-
-        toggleProp("Anti-Alias", mat.aaSet.value, [&] {
-          ImGui::Combo("##AA", &mat.aa.value, AA_MODES);
         });
       });
 

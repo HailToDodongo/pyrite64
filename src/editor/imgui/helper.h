@@ -245,7 +245,7 @@ namespace ImTable
   template<typename T, typename OnChange>
   inline int addVecComboBox(const std::string &name, const std::vector<T> &items, auto &id, OnChange onChange)
   {
-    add(name);
+    if(!name.empty())add(name);
     bool disabled  (isPrefabLocked());
     if(disabled)ImGui::BeginDisabled();
     int idx = 0;
