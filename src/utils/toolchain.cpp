@@ -69,7 +69,16 @@ void Utils::Toolchain::scan()
   if(state.hasLibdragon && state.hasTiny3d)
   {
     auto rspqHeader = FS::loadTextFile(state.toolchainPath / "mips64-elf" / "include" / "rspq.h");
-    state.upToDateLibs = rspqHeader.contains("rspq_block_set_ph");
+
+    state.upToDateLibs = true;
+    if(!rspqHeader.contains("rspq_block_begin_reuse")) {
+      printf("Libdragon out of date, missing 'rspq_block_begin_reuse' in rspq.h\n");
+      state.upToDateLibs = false;
+    }
+    if(!rspqHeader.contains("rspq_block_set_ph")) {
+      printf("Libdragon out of date, missing 'rspq_block_set_ph' in rspq.h\n");
+      state.upToDateLibs = false;
+    }
   }
 }
 

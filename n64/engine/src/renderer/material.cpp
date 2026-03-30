@@ -181,7 +181,7 @@ void P64::Renderer::Material::begin(MaterialState &state)
       auto &tile = ptr.fetch<Tile>();
       auto params = unpackTile(tile);
 
-      debugf("Texture[%d]: assetIdx=%04X, phIndex=%d, phType=%d\n", rdpTile, tile.texAssetIdx, tile.phIndex, (int)tile.phType);
+      //debugf("Texture[%d]: assetIdx=%04X, phIndex=%d, phType=%d\n", rdpTile, tile.texAssetIdx, tile.phIndex, (int)tile.phType);
 
       if(tile.phType == Tile::PlaceholderType::FULL) {
         rspq_block_run((rspq_block_t*)(uint32_t)tile.phIndex);
