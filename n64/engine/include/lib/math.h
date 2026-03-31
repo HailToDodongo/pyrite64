@@ -123,4 +123,6 @@ namespace P64::Math
     fm_vec3_norm(&res, &res);
     return res;
   }
+
+  fm_quat_t quatFromInvRotMat(const fm_mat4_t &m);
 }

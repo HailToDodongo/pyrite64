@@ -13,8 +13,10 @@ namespace P64::Comp
     static constexpr uint32_t ID = 7;
 
     static constexpr uint8_t TYPE_COPY_OBJ = 0;
-    static constexpr uint8_t TYPE_COPY_CAM = 2;
     static constexpr uint8_t TYPE_REL_OFFSET = 1;
+    static constexpr uint8_t TYPE_COPY_CAM = 2;
+    static constexpr uint8_t TYPE_BILLBOARD_Y = 3;
+    static constexpr uint8_t TYPE_BILLBOARD_XYZ = 4;
 
     static constexpr uint8_t FLAG_USE_POS = 1 << 0;
     static constexpr uint8_t FLAG_USE_SCALE = 1 << 1;

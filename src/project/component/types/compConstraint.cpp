@@ -17,8 +17,10 @@
 namespace
 {
   constexpr uint32_t TYPE_COPY_OBJ = 0;
-  constexpr uint32_t TYPE_COPY_CAM = 2;
   constexpr uint32_t TYPE_REL_OFFSET = 1;
+  constexpr uint32_t TYPE_COPY_CAM = 2;
+  constexpr uint32_t TYPE_BILLBOARD_Y = 3;
+  constexpr uint32_t TYPE_BILLBOARD_XYZ = 4;
 }
 
 namespace Project::Component::Constraint
@@ -58,16 +60,16 @@ namespace Project::Component::Constraint
     return data;
   }
 
-  void build(Object&, Entry &entry, Build::SceneCtx &ctx)
+  void build(Object& obj, Entry &entry, Build::SceneCtx &ctx)
   {
     Data &data = *static_cast<Data*>(entry.data.get());
-    auto obj = ctx.scene->getObjectByUUID(data.objectUUID.value);
-    uint16_t objId = obj ? obj->id : 0;
+    auto objRef = ctx.scene->getObjectByUUID(data.objectUUID.value);
+    uint16_t objId = objRef ? objRef->id : 0;
 
     uint8_t flags = 0;
-    if (data.usePos.value)   flags |= 1 << 0;
-    if (data.useScale.value) flags |= 1 << 1;
-    if (data.useRot.value)   flags |= 1 << 2;
+    if (data.usePos.resolve(obj)  )flags |= 1 << 0;
+    if (data.useScale.resolve(obj))flags |= 1 << 1;
+    if (data.useRot.resolve(obj)  )flags |= 1 << 2;
 
     ctx.fileObj.write<uint16_t>(objId);
     ctx.fileObj.write<uint8_t>(data.type.value);
@@ -85,6 +87,8 @@ namespace Project::Component::Constraint
         {TYPE_COPY_OBJ, "Copy Trans. (Object)"},
         {TYPE_COPY_CAM, "Copy Trans. (Camera)"},
         {TYPE_REL_OFFSET, "Relative Offset"},
+        {TYPE_BILLBOARD_Y, "Billboard Y"},
+        {TYPE_BILLBOARD_XYZ, "Billboard Full"},
       };
 
       ImTable::addObjProp<uint32_t>("Type", data.type, [&typeList](uint32_t *val) -> bool {
@@ -109,7 +113,7 @@ namespace Project::Component::Constraint
         });
       }
 
-      if(data.type.value != TYPE_COPY_CAM)
+      if(data.type.value == TYPE_COPY_OBJ || data.type.value == TYPE_REL_OFFSET)
       {
         ImTable::addObjProp<uint32_t>("Ref. Object", data.objectUUID, [&objList](uint32_t *val) -> bool {
           uint32_t proxy = *val;
