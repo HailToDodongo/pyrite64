@@ -3,7 +3,7 @@
   "pathEmu": "ares",
   "pathN64Inst": "",
   "romName": "material_test",
-  "sceneIdLastOpened": 1,
-  "sceneIdOnBoot": 1,
-  "sceneIdOnReset": 1
+  "sceneIdLastOpened": 2,
+  "sceneIdOnBoot": 2,
+  "sceneIdOnReset": 2
 }
