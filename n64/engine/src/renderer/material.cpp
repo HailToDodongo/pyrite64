@@ -13,7 +13,6 @@ void P64::Renderer::MaterialInstance::begin(Object &obj)
   if(!doesAnything())return;
 
   if(setMask & MASK_DEPTH) {
-    rdpq_sync_pipe();
     rdpq_mode_push();
     rdpq_mode_zbuf(getDepthRead(), getDepthWrite());
   }
@@ -21,7 +20,6 @@ void P64::Renderer::MaterialInstance::begin(Object &obj)
     rdpq_set_prim_color(colorPrim);
   }
   if(setMask & MASK_ENV) {
-    rdpq_sync_pipe();
     rdpq_set_env_color(colorEnv);
   }
   if(fresnel != 0)
@@ -51,7 +49,6 @@ void P64::Renderer::MaterialInstance::end()
   }
   if(setMask & MASK_DEPTH)
   {
-    rdpq_sync_pipe();
     rdpq_mode_pop();
   }
 }

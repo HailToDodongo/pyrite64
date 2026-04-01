@@ -45,6 +45,7 @@ void P64::Renderer::BigTex::patchT3DM(T3DModel &model)
     }
 
     mat->flagsData = Material::FLAG_T3D_VERT_FX;
+    mat->t3dDrawFlags &= ~T3D_FLAG_SHADED;
     rdpq_set_prim_color({(uint8_t)(baseAddrMat + matIdx), 0, 0, 0xFF});
 
     mat->begin(state);
@@ -55,7 +56,6 @@ void P64::Renderer::BigTex::patchT3DM(T3DModel &model)
   model.userBlock = rspq_block_end();
 /*
   rspq_block_begin();
-    rdpq_sync_pipe();
     rdpq_mode_combiner(RDPQ_COMBINER1((1, SHADE, PRIM, 0), (0,0,0,1)));
     rdpq_mode_blender(0);
     rdpq_mode_alphacompare(0);

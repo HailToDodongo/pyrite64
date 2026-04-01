@@ -166,16 +166,12 @@ void P64::DrawLayer::draw(uint32_t layerIdx)
 void P64::DrawLayer::draw3D()
 {
   for(int i=1; i<layerSetup->layerCount3D; ++i) {
-    rdpq_sync_pipe();
     draw(i);
   }
 }
 
 void P64::DrawLayer::drawPtx()
 {
-  rdpq_sync_pipe();
-  rdpq_sync_load();
-  rdpq_sync_tile();
   rdpq_set_mode_standard();
 
   rdpq_mode_begin();
@@ -198,9 +194,6 @@ void P64::DrawLayer::drawPtx()
 
 void P64::DrawLayer::draw2D()
 {
-  rdpq_sync_pipe();
-  rdpq_sync_load();
-  rdpq_sync_tile();
   rdpq_set_mode_standard();
 
   int idxStart = layerSetup->layerCount3D + layerSetup->layerCountPtx;
