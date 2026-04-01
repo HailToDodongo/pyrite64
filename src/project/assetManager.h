@@ -40,6 +40,7 @@ namespace Project
     CODE_GLOBAL,
     PREFAB,
     NODE_GRAPH,
+    MUSIC_XM,
 
     _SIZE
   };

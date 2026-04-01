@@ -65,6 +65,18 @@ namespace
   wav64_t* wav64Load(const char* path) {
     return wav64_load(path, nullptr);
   }
+
+  xm64player_t *xmLoad(const char* path) {
+    auto* player = new xm64player_t;
+    xm64player_open(player, path);
+    return player;
+  }
+
+  void xmFree(xm64player_t *player) {
+    xm64player_close(player);
+    delete player;
+  }
+
   void* assetLoad(const char* path) {
     return asset_load(path, nullptr);
   }
@@ -79,6 +91,7 @@ namespace
     [AssetType::CODE_GLOBAL] = {nullptr,                  nullptr                 },
     [AssetType::PREFAB]      = {(LoadFunc)assetLoad,      (FreeFunc)free          },
     [AssetType::NODE_GRAPH]  = {P64::NodeGraph::load,     (FreeFunc)free          },
+    [AssetType::MUSIC_XM]    = {(LoadFunc)xmLoad,         (FreeFunc)xmFree        },
   };
 
   constinit AssetTable* assetTable{nullptr};

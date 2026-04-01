@@ -15,6 +15,8 @@
 #include <string>
 #include <filesystem>
 
+#include "../audio/audioManagerPrivate.h"
+
 namespace P64::SceneManager
 {
   extern const char* SCENE_NAMES[];
@@ -251,13 +253,22 @@ void Debug::Overlay::draw(P64::Scene &scene, surface_t* surf)
   posX = 24;
   posY = SCREEN_HEIGHT - 24;
 
-  posX = Debug::printf(posX, posY, "CH (TODO)");
-  /*uint32_t audioMask = scene.getAudio().getActiveChannelMask();
-  for(int i=0; i<16; ++i) {
-    bool isActive = audioMask & (1 << i);
-    posX = Debug::printf(posX, posY, isActive ? "%d" : "-", i);
+  posX = Debug::printf(posX, posY, "Audio ");
+  {
+    auto audioMetrics = P64::AudioManager::getMetrics();
+    char strMask[33] = {};
+    strMask[32] = '\0';
+    for(uint32_t i=0; i<32; ++i) {
+      bool isPlaying = audioMetrics.maskPlaying & (1 << i);
+      bool isUsed    = audioMetrics.maskAlloc & (1 << i);
+
+      if(isPlaying && isUsed)strMask[i] = '$';
+      else if(isUsed)strMask[i] = '-';
+      else if(isPlaying)strMask[i] = '?';
+      else strMask[i] = '.';
+    }
+    Debug::print(posX, posY, strMask);
   }
-*/
 
   // Matrix slots
   if(matrixDebug)

@@ -20,8 +20,14 @@ namespace P64::Comp
 
     static constexpr uint8_t FLAG_LOOP = 1 << 0;
     static constexpr uint8_t FLAG_AUTO_PLAY = 1 << 1;
+    static constexpr uint8_t FLAG_TYPE_XM = 1 << 2;
 
-    wav64_t *audio{};
+    union
+    {
+      wav64_t *audioWAV{};
+      xm64player_t *audioXM;
+    };
+
     float volume{1.0f};
     uint8_t flags{0};
     Audio::Handle handle{};
@@ -34,7 +40,10 @@ namespace P64::Comp
     static void initDelete([[maybe_unused]] Object& obj, Audio2D* data, uint16_t* initData);
 
     static void update(Object& obj, Audio2D* data, float deltaTime) {
+    }
 
+    constexpr bool isXM() const {
+      return (flags & FLAG_TYPE_XM) != 0;
     }
   };
 }

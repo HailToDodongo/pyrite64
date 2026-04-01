@@ -27,6 +27,7 @@ namespace Project::Component::Audio2D
 
   std::shared_ptr<void> init(Object &obj) {
     auto data = std::make_shared<Data>();
+    data->volume.value = 1.0f;
     return data;
   }
 
@@ -61,9 +62,12 @@ namespace Project::Component::Audio2D
       id = res->second;
     }
 
+    auto asset = ctx.project->getAssets().getEntryByUUID(data.audioUUID.value);
+
     uint8_t flags = 0;
     if(data.loop.value)flags |= 1 << 0;
     if(data.autoPlay.value)flags |= 1 << 1;
+    if(asset->type == FileType::MUSIC_XM)flags |= 1 << 2;
 
     ctx.fileObj.write<uint16_t>(id);
     ctx.fileObj.write<uint16_t>((uint16_t)(data.volume.value * 0xFFFF));
@@ -74,20 +78,15 @@ namespace Project::Component::Audio2D
   void draw(Object &obj, Entry &entry)
   {
     Data &data = *static_cast<Data*>(entry.data.get());
-
     if (ImTable::start("Comp", &obj)) {
       ImTable::add("Name", entry.name);
 
-      auto &audioList = ctx.project->getAssets().getTypeEntries(FileType::AUDIO);
-      ImTable::addObjProp<uint64_t>("Audio", data.audioUUID, [&audioList](uint64_t *val) -> bool {
-        uint64_t proxy = *val;
-        ImGui::VectorComboBox("##", audioList, proxy);
-        if (proxy == *val) {
-          return false;
-        }
-        *val = proxy;
-        return true;
-      }, nullptr);
+      // @TODO: allow multi-type select-boxes
+      auto audioList = ctx.project->getAssets().getTypeEntries(FileType::AUDIO);
+      auto &listXM = ctx.project->getAssets().getTypeEntries(FileType::MUSIC_XM);
+      audioList.insert(audioList.end(), listXM.begin(), listXM.end());
+
+      ImTable::addAssetVecComboBox("Audio", audioList, data.audioUUID.resolve(obj), [](auto){});
       ImTable::addObjProp("Volume", data.volume);
       ImTable::addObjProp("Loop", data.loop);
       ImTable::addObjProp("Auto-Play", data.autoPlay);
