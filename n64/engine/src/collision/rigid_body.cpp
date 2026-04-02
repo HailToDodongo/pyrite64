@@ -250,7 +250,22 @@ namespace P64::Coll {
   }
 
   void RigidBody::integrateVelocity(float fixedDt, const fm_vec3_t &gravity) {
-    if(isKinematic_ || isSleeping_) return;
+    if(isKinematic_) return;
+
+    // Sleeping bodies must have their velocities explicitly zeroed each frame.
+    // Although sleep() zeros them once, the warm start and velocity solver apply
+    // impulses to sleeping bodies that participate in constraints.  Without this
+    // reset the stale solver-output velocity persists into the next frame, causing
+    // the solver to compute incorrect relative velocities for awake neighbours
+    // (e.g. under-correcting gravity), which leaves residual velocity on awake
+    // bodies and prevents them from ever reaching the sleep threshold.
+    // Bullet avoids this by excluding sleeping bodies from the solver entirely;
+    // zeroing here achieves the same effect for the velocity read-back.
+    if(isSleeping_) {
+      linearVelocity_ = VEC3_ZERO;
+      acceleration_ = VEC3_ZERO;
+      return;
+    }
 
     if(hasFlag(constraints_, Constraint::FreezePosAll)) {
       linearVelocity_ = VEC3_ZERO;
@@ -283,7 +298,15 @@ namespace P64::Coll {
   }
 
   void RigidBody::integrateAngularVelocity(float fixedDt) {
-    if(isKinematic_ || isSleeping_) return;
+    if(isKinematic_) return;
+
+    // See integrateVelocity for rationale — sleeping bodies must start each step
+    // with zero angular velocity so the solver treats them as effectively static.
+    if(isSleeping_) {
+      angularVelocity_ = VEC3_ZERO;
+      torqueAccumulator_ = VEC3_ZERO;
+      return;
+    }
     if(inverseMass_ < FM_EPSILON) return;
 
     if(hasFlag(constraints_, Constraint::FreezeRotAll)) {

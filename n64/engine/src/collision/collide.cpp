@@ -143,145 +143,17 @@ namespace P64::Coll {
     result.contactB = mesh.toWorldSpace(result.contactB);
   }
 
-  static int minimumTriangleReuseContacts(const Collider &collider) {
-    switch(collider.shapeType()) {
-      case ShapeType::Sphere:
-      case ShapeType::Capsule:
-        return 1;
-      case ShapeType::Cylinder:
-      case ShapeType::Cone:
-        return 2;
-      case ShapeType::Box:
-      case ShapeType::Pyramid:
-        return 3;
-    }
-
-    return MAX_CONTACT_POINTS_PER_PAIR;
-  }
-
-  static float triangleReuseShapeScale(const Collider &collider) {
-    switch(collider.shapeType()) {
-      case ShapeType::Sphere:
-        return collider.sphereShape().radius;
-      case ShapeType::Capsule:
-        return fmaxf(collider.capsuleShape().radius, collider.capsuleShape().innerHalfHeight);
-      case ShapeType::Box:
-        return fmaxf(collider.boxShape().halfSize.x, fmaxf(collider.boxShape().halfSize.y, collider.boxShape().halfSize.z));
-      case ShapeType::Cylinder:
-        return fmaxf(collider.cylinderShape().radius, collider.cylinderShape().halfHeight);
-      case ShapeType::Cone:
-        return fmaxf(collider.coneShape().radius, collider.coneShape().halfHeight);
-      case ShapeType::Pyramid:
-        return fmaxf(collider.pyramidShape().baseHalfWidthX, fmaxf(collider.pyramidShape().baseHalfWidthZ, collider.pyramidShape().halfHeight));
-    }
-
-    return 0.0f;
-  }
-
-  static float cachedTriangleContactSpanSq(const ContactConstraint &constraint) {
-    float maxSpanSq = 0.0f;
-    for(int i = 0; i < constraint.pointCount; ++i) {
-      const ContactPoint &pointA = constraint.points[i];
-      if(!pointA.active) continue;
-
-      for(int j = i + 1; j < constraint.pointCount; ++j) {
-        const ContactPoint &pointB = constraint.points[j];
-        if(!pointB.active) continue;
-
-        const fm_vec3_t diff = pointA.contactA - pointB.contactA;
-        maxSpanSq = fmaxf(maxSpanSq, fm_vec3_len2(&diff));
-      }
-    }
-
-    return maxSpanSq;
-  }
-
-  static bool canSkipTriangleEpaWithCachedConstraint(const ContactConstraint &constraint, const Collider &collider) {
-    const int minContacts = minimumTriangleReuseContacts(collider);
-    if(constraint.pointCount < minContacts) {
-      return false;
-    }
-
-    if(minContacts <= 1) {
-      return true;
-    }
-
-    const float minSpan = fmaxf(triangleReuseShapeScale(collider) * 0.2f, 0.02f);
-    return cachedTriangleContactSpanSq(constraint) >= (minSpan * minSpan);
-  }
-
-  static bool refreshCachedTriangleConstraint(
-    ContactConstraint &constraint,
-    RigidBody *rigidBody,
-    const MeshTriangle &triangle,
-    const MeshCollider &mesh,
-    float combinedFriction,
-    float combinedBounce,
-    bool respondsA,
-    bool respondsB) {
-    if(constraint.isTrigger || constraint.pointCount <= 0 || !rigidBody || !rigidBody->positionPtr()) {
-      return false;
-    }
-
-    const fm_vec3_t localV0 = triangle.localVertex(0);
-    const fm_vec3_t localV1 = triangle.localVertex(1);
-    const fm_vec3_t localV2 = triangle.localVertex(2);
-    const Plane trianglePlaneLocal = planeFromNormalAndPoint(triangle.normal, localV0);
-    fm_vec3_t triangleNormalWorld = triangle.worldNormal();
-    triangleNormalWorld = makeSafeContactNormal(triangleNormalWorld, constraint.points[0].contactA, constraint.points[0].contactB);
-    if(fm_vec3_dot(&triangleNormalWorld, &constraint.normal) < 0.0f) {
-      triangleNormalWorld = -triangleNormalWorld;
-    }
-
-    constraint.isActive = true;
-    constraint.isTrigger = false;
-    constraint.normal = triangleNormalWorld;
-    vec3CalculateTangents(constraint.normal, constraint.tangentU, constraint.tangentV);
-    constraint.combinedFriction = combinedFriction;
-    constraint.combinedBounce = combinedBounce;
-    constraint.respondsA = respondsA;
-    constraint.respondsB = respondsB;
-
-    constexpr float BARY_TOLERANCE = 0.02f;
-    constexpr float REUSE_MAX_SEPARATION = 0.05f;
-    int writeIndex = 0;
-
-    for(int pointIndex = 0; pointIndex < constraint.pointCount; ++pointIndex) {
-      ContactPoint &point = constraint.points[pointIndex];
-      if(!point.active) continue;
-
-      fm_vec3_t localMeshPoint = planeProjectPoint(trianglePlaneLocal, point.localPointB);
-      const fm_vec3_t barycentric = calculateBarycentricCoords(localV0, localV1, localV2, localMeshPoint);
-      if(!barycentricIsInsideTriangle(barycentric, BARY_TOLERANCE)) {
-        point.active = false;
-        continue;
-      }
-
-      point.localPointB = evaluateBarycentricCoords(localV0, localV1, localV2, barycentric);
-
-      point.contactA = contactWorldPointFromLocalPoint(point.localPointA, rigidBody, nullptr, nullptr);
-      point.contactB = contactWorldPointFromLocalPoint(point.localPointB, nullptr, nullptr, &mesh);
-      point.point = (point.contactA + point.contactB) * 0.5f;
-
-      fm_vec3_t diff = point.contactA - point.contactB;
-      point.penetration = -fm_vec3_dot(&diff, &constraint.normal);
-      if(point.penetration < -REUSE_MAX_SEPARATION) {
-        point.active = false;
-        continue;
-      }
-
-      if(writeIndex != pointIndex) {
-        constraint.points[writeIndex] = point;
-      }
-      ++writeIndex;
-    }
-
-    constraint.pointCount = writeIndex;
-    return writeIndex > 0;
-  }
 
   // ── Analytical collision helpers ──────────────────────────────────
 
+  // Fast closed-form solutions for simple shape pairs. Used to avoid expensive GJK+EPA
+
+
+  /// @brief Analytical sphere-sphere collision using distance check.
+  /// @param a The first sphere collider.
+  /// @param b The second sphere collider.
+  /// @param result The result of the collision detection.
+  /// @return True if a collision is detected, false otherwise.
   static bool analyticalSphereSphere(const Collider *a, const Collider *b, EpaResult &result) {
     if(!a || !b) return false;
     if(a->shapeType() != ShapeType::Sphere || b->shapeType() != ShapeType::Sphere) return false;
@@ -311,6 +183,12 @@ namespace P64::Coll {
     return true;
   }
 
+
+  /// @brief Analytical sphere-box collision using closest-point-on-box + radius check.
+  /// @param sphere The sphere collider.
+  /// @param box The box collider.
+  /// @param result The result of the collision detection.
+  /// @return True if a collision is detected, false otherwise.
   static bool analyticalSphereBox(const Collider *sphere, const Collider *box, EpaResult &result) {
     if(!sphere || !box) return false;
     if(sphere->shapeType() != ShapeType::Sphere || box->shapeType() != ShapeType::Box) return false;
@@ -365,6 +243,12 @@ namespace P64::Coll {
     return true;
   }
 
+
+  /// @brief Analytical sphere-capsule collision using closest-point-on-segment + radius check.
+  /// @param sphere The sphere collider.
+  /// @param capsule The capsule collider.
+  /// @param result The result of the collision detection.
+  /// @return True if a collision is detected, false otherwise.
   static bool analyticalSphereCapsule(const Collider *sphere, const Collider *capsule, EpaResult &result) {
     if(!sphere || !capsule) return false;
     if(sphere->shapeType() != ShapeType::Sphere || capsule->shapeType() != ShapeType::Capsule) return false;
@@ -411,8 +295,450 @@ namespace P64::Coll {
   }
 
 
+  /// @brief Analytical capsule-capsule collision using closest-points-between-segments + radius check.
+  /// Avoids full GJK+EPA for this common collision pair.
+  /// @param capsuleA 
+  /// @param capsuleB 
+  /// @param result 
+  /// @return 
+  static bool analyticalCapsuleCapsule(const Collider *capsuleA, const Collider *capsuleB, EpaResult &result) {
+    if(!capsuleA || !capsuleB) return false;
+    if(capsuleA->shapeType() != ShapeType::Capsule || capsuleB->shapeType() != ShapeType::Capsule) return false;
+
+    float rA = capsuleA->capsuleShape().radius;
+    float rB = capsuleB->capsuleShape().radius;
+    float hhA = capsuleA->capsuleShape().innerHalfHeight;
+    float hhB = capsuleB->capsuleShape().innerHalfHeight;
+
+    // Capsule A axis endpoints in world space
+    fm_vec3_t localUpA = fm_vec3_t{{0.0f, hhA, 0.0f}};
+    fm_vec3_t rotUpA = matrix3Vec3Mul(capsuleA->rotationMatrix(), localUpA);
+    fm_vec3_t topA = capsuleA->worldCenter() + rotUpA;
+    fm_vec3_t botA = capsuleA->worldCenter() - rotUpA;
+
+    // Capsule B axis endpoints in world space
+    fm_vec3_t localUpB = fm_vec3_t{{0.0f, hhB, 0.0f}};
+    fm_vec3_t rotUpB = matrix3Vec3Mul(capsuleB->rotationMatrix(), localUpB);
+    fm_vec3_t topB = capsuleB->worldCenter() + rotUpB;
+    fm_vec3_t botB = capsuleB->worldCenter() - rotUpB;
+
+    // Closest points between two line segments
+    fm_vec3_t d1 = topA - botA; // direction of segment A
+    fm_vec3_t d2 = topB - botB; // direction of segment B
+    fm_vec3_t r = botA - botB;
+
+    float a = fm_vec3_dot(&d1, &d1); // squared length of seg A
+    float e = fm_vec3_dot(&d2, &d2); // squared length of seg B
+    float f = fm_vec3_dot(&d2, &r);
+
+    float s = 0.0f;
+    float t = 0.0f;
+
+    if(a <= FM_EPSILON && e <= FM_EPSILON) {
+      // Both degenerate to points
+      s = 0.0f;
+      t = 0.0f;
+    } else if(a <= FM_EPSILON) {
+      // Segment A degenerates to a point
+      s = 0.0f;
+      t = f / e;
+      if(t < 0.0f) t = 0.0f;
+      if(t > 1.0f) t = 1.0f;
+    } else {
+      float c = fm_vec3_dot(&d1, &r);
+      if(e <= FM_EPSILON) {
+        // Segment B degenerates to a point
+        t = 0.0f;
+        s = -c / a;
+        if(s < 0.0f) s = 0.0f;
+        if(s > 1.0f) s = 1.0f;
+      } else {
+        // General case
+        float b = fm_vec3_dot(&d1, &d2);
+        float denom = a * e - b * b;
+
+        if(denom > FM_EPSILON) {
+          s = (b * f - c * e) / denom;
+          if(s < 0.0f) s = 0.0f;
+          if(s > 1.0f) s = 1.0f;
+        } else {
+          s = 0.0f;
+        }
+
+        t = (b * s + f) / e;
+        if(t < 0.0f) {
+          t = 0.0f;
+          s = -c / a;
+          if(s < 0.0f) s = 0.0f;
+          if(s > 1.0f) s = 1.0f;
+        } else if(t > 1.0f) {
+          t = 1.0f;
+          s = (b - c) / a;
+          if(s < 0.0f) s = 0.0f;
+          if(s > 1.0f) s = 1.0f;
+        }
+      }
+    }
+
+    fm_vec3_t closestA = botA + d1 * s;
+    fm_vec3_t closestB = botB + d2 * t;
+
+    float combinedRadius = rA + rB;
+    fm_vec3_t diff = closestA - closestB;
+    float distSq = fm_vec3_len2(&diff);
+
+    if(distSq >= combinedRadius * combinedRadius) return false;
+
+    float dist = sqrtf(distSq);
+    if(dist < FM_EPSILON) {
+      result.normal = VEC3_UP;
+    } else {
+      result.normal = diff * (1.0f / dist);
+    }
+
+    result.penetration = combinedRadius - dist;
+    result.contactA = closestA - result.normal * rA;
+    result.contactB = closestB + result.normal * rB;
+    return true;
+  }
+
+
+  // ── Analytical Box-Triangle (SAT) ────────────────────────────────
+
+  // Forward declaration — used by analyticalBoxTriangle for contact point selection
+  static float contactTriangleArea2(const fm_vec3_t &p0, const fm_vec3_t &p1, const fm_vec3_t &p2);
+
+  /// @brief Clip a polygon against one side of a box slab (keep vertices with coord >= -limit).
+  /// @param inVerts  Input polygon vertices.
+  /// @param inCount  Number of input vertices.
+  /// @param outVerts Output polygon vertices (must have room for inCount+1).
+  /// @param axis     Component index to clip against (0=x, 1=y, 2=z).
+  /// @param limit    Half-extent along that axis (clip plane at -limit).
+  /// @return Number of output vertices.
+  static int clipPolygonToBoxSlab(const fm_vec3_t *inVerts, int inCount,
+                                  fm_vec3_t *outVerts, int axis, float limit) {
+    int outCount = 0;
+    for(int i = 0; i < inCount; ++i) {
+      const fm_vec3_t &cur = inVerts[i];
+      const fm_vec3_t &nxt = inVerts[(i + 1) % inCount];
+      const float cVal = (&cur.x)[axis];
+      const float nVal = (&nxt.x)[axis];
+      const bool cInside = (cVal >= -limit);
+      const bool nInside = (nVal >= -limit);
+      if(cInside) outVerts[outCount++] = cur;
+      if(cInside != nInside) {
+        float t = (-limit - cVal) / (nVal - cVal);
+        outVerts[outCount++] = cur + (nxt - cur) * t;
+      }
+    }
+    return outCount;
+  }
+
+  /// @brief SAT overlap test on a single axis. Returns false if a separating axis is found.
+  /// @param boxHalf     Box half-extents projected onto axis (always >= 0 for AABB).
+  /// @param triMin      Minimum triangle projection.
+  /// @param triMax      Maximum triangle projection.
+  /// @param axisLen2    Squared length of the test axis (skip degenerate axes).
+  /// @param bestDepth   Current best (smallest) penetration depth — updated if this axis is shallower.
+  /// @param bestAxis    Current best axis — updated together with bestDepth.
+  /// @param testAxis    The axis being tested.
+  /// @return true if intervals overlap (no separating axis), false if separated.
+  static bool satAxisTest(float boxHalf, float triMin, float triMax,
+                          float axisLen2, float &bestDepth, fm_vec3_t &bestAxis,
+                          const fm_vec3_t &testAxis) {
+    if(axisLen2 < FM_EPSILON * FM_EPSILON) return true; // degenerate — skip
+    float depth1 = boxHalf - triMin;  // overlap from the positive side
+    float depth2 = triMax + boxHalf;  // overlap from the negative side
+    if(depth1 < 0.0f || depth2 < 0.0f) return false; // separated
+    float invLen = 1.0f / sqrtf(axisLen2);
+    // choose the shallower overlap direction
+    float pen, sign;
+    if(depth1 < depth2) { pen = depth1 * invLen; sign =  1.0f; }
+    else                { pen = depth2 * invLen; sign = -1.0f; }
+    if(pen < bestDepth) {
+      bestDepth = pen;
+      bestAxis = testAxis * (sign * invLen);
+    }
+    return true;
+  }
+
+  /// @brief Analytical SAT-based Box vs Triangle collision in box local space.
+  ///
+  /// Works entirely in the box's local frame so the box is axis-aligned.
+  /// Tests the 13 standard SAT axes (3 box face normals, 1 triangle face
+  /// normal, 9 edge-pair cross products).  On overlap the minimum-penetration
+  /// axis is selected and contact points are generated by clipping the triangle
+  /// against the reference box face, matching the output format expected by
+  /// collideCacheContactConstraint().
+  ///
+  /// @param proxy      ColliderProxy with the box collider already transformed
+  ///                   into mesh local space (worldCenter = box center in mesh
+  ///                   space, rotation/rotationT = relative orientation).
+  /// @param boxShape   The box's half-extent definition.
+  /// @param v0w        Triangle vertex 0 in mesh local space.
+  /// @param v1w        Triangle vertex 1 in mesh local space.
+  /// @param v2w        Triangle vertex 2 in mesh local space.
+  /// @param triNormal  Triangle normal in mesh local space.
+  /// @param results    Array to receive contact data on success (mesh local space).
+  /// @param maxResults Maximum number of contact points to generate.
+  /// @return Number of contact points generated (0 = no collision).
+  static int analyticalBoxTriangle(
+      const ColliderProxy &proxy,
+      const BoxShape      &boxShape,
+      const fm_vec3_t &v0w, const fm_vec3_t &v1w, const fm_vec3_t &v2w,
+      const fm_vec3_t &triNormal,
+      EpaResult *results, int maxResults)
+  {
+    const fm_vec3_t &h = boxShape.halfSize;
+
+    // Transform triangle vertices into box local space (box center = origin, axes aligned)
+    const fm_vec3_t v0 = matrix3Vec3Mul(proxy.rotationT, v0w - proxy.worldCenter);
+    const fm_vec3_t v1 = matrix3Vec3Mul(proxy.rotationT, v1w - proxy.worldCenter);
+    const fm_vec3_t v2 = matrix3Vec3Mul(proxy.rotationT, v2w - proxy.worldCenter);
+
+    // Triangle edges
+    const fm_vec3_t e0 = v1 - v0;
+    const fm_vec3_t e1 = v2 - v1;
+    const fm_vec3_t e2 = v0 - v2;
+
+    float bestDepth = 1e30f;
+    fm_vec3_t bestAxis = VEC3_UP;
+
+    // --- 3 box face normals (X, Y, Z) ---
+    {
+      float triMinX = fminf(v0.x, fminf(v1.x, v2.x));
+      float triMaxX = fmaxf(v0.x, fmaxf(v1.x, v2.x));
+      if(!satAxisTest(h.x, triMinX, triMaxX, 1.0f, bestDepth, bestAxis, VEC3_RIGHT)) return 0;
+
+      float triMinY = fminf(v0.y, fminf(v1.y, v2.y));
+      float triMaxY = fmaxf(v0.y, fmaxf(v1.y, v2.y));
+      if(!satAxisTest(h.y, triMinY, triMaxY, 1.0f, bestDepth, bestAxis, VEC3_UP)) return 0;
+
+      float triMinZ = fminf(v0.z, fminf(v1.z, v2.z));
+      float triMaxZ = fmaxf(v0.z, fmaxf(v1.z, v2.z));
+      if(!satAxisTest(h.z, triMinZ, triMaxZ, 1.0f, bestDepth, bestAxis, VEC3_FORWARD)) return 0;
+    }
+
+    // --- Triangle face normal ---
+    {
+      fm_vec3_t localN = matrix3Vec3Mul(proxy.rotationT, triNormal);
+      float boxHalf = fabsf(localN.x) * h.x + fabsf(localN.y) * h.y + fabsf(localN.z) * h.z;
+      float triProj = fm_vec3_dot(&localN, &v0); // all tri verts project to same value
+      float triMin = triProj, triMax = triProj;
+      // vertices may not project identically due to non-unit normals — be safe
+      float p1 = fm_vec3_dot(&localN, &v1);
+      float p2 = fm_vec3_dot(&localN, &v2);
+      triMin = fminf(triMin, fminf(p1, p2));
+      triMax = fmaxf(triMax, fmaxf(p1, p2));
+      float l2 = fm_vec3_len2(&localN);
+      if(!satAxisTest(boxHalf, triMin, triMax, l2, bestDepth, bestAxis, localN)) return 0;
+    }
+
+    // --- 9 edge-pair cross products: box_axis × tri_edge ---
+    const fm_vec3_t boxAxes[3] = {VEC3_RIGHT, VEC3_UP, VEC3_FORWARD};
+    const fm_vec3_t triEdges[3] = {e0, e1, e2};
+    for(int i = 0; i < 3; ++i) {
+      for(int j = 0; j < 3; ++j) {
+        fm_vec3_t cross;
+        fm_vec3_cross(&cross, &boxAxes[i], &triEdges[j]);
+        float l2 = fm_vec3_len2(&cross);
+        if(l2 < FM_EPSILON * FM_EPSILON) continue; // parallel — skip
+        // Box half-extent projected onto cross axis
+        float boxHalf = fabsf(cross.x) * h.x + fabsf(cross.y) * h.y + fabsf(cross.z) * h.z;
+        float tMin, tMax;
+        projectTriangleOntoAxis(v0, v1, v2, cross, tMin, tMax);
+        if(!satAxisTest(boxHalf, tMin, tMax, l2, bestDepth, bestAxis, cross)) return 0;
+      }
+    }
+
+    // --- Overlap confirmed — bestAxis is the minimum-penetration normal (unit, in box local space) ---
+    // Ensure normal points from triangle toward box center (origin in box local space)
+    fm_vec3_t triCenter = (v0 + v1 + v2) * (1.0f / 3.0f);
+    if(fm_vec3_dot(&bestAxis, &triCenter) > 0.0f) bestAxis = -bestAxis;
+
+    // --- Contact point generation via Sutherland-Hodgman polygon clipping ---
+    // Clip triangle polygon against the 6 box slab planes along bestAxis reference face
+    fm_vec3_t clipA[10], clipB[10];
+    clipA[0] = v0; clipA[1] = v1; clipA[2] = v2;
+    int n = 3;
+
+    // Clip against each of the 6 slab boundaries (+x, -x, +y, -y, +z, -z)
+    for(int axis = 0; axis < 3; ++axis) {
+      float limit = (&h.x)[axis];
+      // Clip against -limit (keep coord >= -limit)
+      n = clipPolygonToBoxSlab(clipA, n, clipB, axis, limit);
+      if(n < 1) return 0;
+      // Clip against +limit by flipping sign: keep -coord >= -limit → coord <= limit
+      // Flip the clipped axis, clip, then flip back
+      for(int k = 0; k < n; ++k) (&clipB[k].x)[axis] = -(&clipB[k].x)[axis];
+      n = clipPolygonToBoxSlab(clipB, n, clipA, axis, limit);
+      if(n < 1) return 0;
+      for(int k = 0; k < n; ++k) (&clipA[k].x)[axis] = -(&clipA[k].x)[axis];
+    }
+
+    // --- Select up to maxResults well-distributed contact points from clipped polygon ---
+    float boxHalfAlongNormal = fabsf(bestAxis.x) * h.x + fabsf(bestAxis.y) * h.y + fabsf(bestAxis.z) * h.z;
+
+    int selected[10];
+    int selectedCount = 0;
+
+    // Step 1: Always include the deepest penetrating point
+    float deepestPen = -1e30f;
+    int deepestIdx = 0;
+    for(int i = 0; i < n; ++i) {
+      float pen = fm_vec3_dot(&clipA[i], &bestAxis) + boxHalfAlongNormal;
+      if(pen > deepestPen) { deepestPen = pen; deepestIdx = i; }
+    }
+    selected[selectedCount++] = deepestIdx;
+
+    // Step 2: Point farthest from the deepest (maximize spread)
+    if(n > 1 && maxResults > 1) {
+      float bestDist2 = -1.0f;
+      int farthestIdx = -1;
+      for(int i = 0; i < n; ++i) {
+        if(i == deepestIdx) continue;
+        fm_vec3_t d = clipA[i] - clipA[deepestIdx];
+        float dist2 = fm_vec3_len2(&d);
+        if(dist2 > bestDist2) { bestDist2 = dist2; farthestIdx = i; }
+      }
+      if(farthestIdx >= 0) selected[selectedCount++] = farthestIdx;
+    }
+
+    // Step 3: Point that maximizes triangle area with the first two (best coverage)
+    if(n > 2 && maxResults > 2 && selectedCount >= 2) {
+      float bestArea = -1.0f;
+      int bestAreaIdx = -1;
+      for(int i = 0; i < n; ++i) {
+        if(i == selected[0] || i == selected[1]) continue;
+        float area = contactTriangleArea2(clipA[selected[0]], clipA[selected[1]], clipA[i]);
+        if(area > bestArea) { bestArea = area; bestAreaIdx = i; }
+      }
+      if(bestAreaIdx >= 0) selected[selectedCount++] = bestAreaIdx;
+    }
+
+    // --- Generate results for selected points ---
+    fm_vec3_t worldNormal = matrix3Vec3Mul(proxy.rotation, bestAxis);
+    int resultCount = 0;
+
+    for(int k = 0; k < selectedCount && resultCount < maxResults; ++k) {
+      fm_vec3_t p = clipA[selected[k]];
+      float pen = fm_vec3_dot(&p, &bestAxis) + boxHalfAlongNormal;
+      if(pen < FM_EPSILON) continue;
+
+      // Contact on box surface: project triangle point onto box face along normal
+      fm_vec3_t contactOnBox = p - bestAxis * pen;
+
+      // Transform back to mesh local space
+      results[resultCount].normal = worldNormal;
+      results[resultCount].penetration = pen;
+      results[resultCount].contactA = matrix3Vec3Mul(proxy.rotation, contactOnBox) + proxy.worldCenter;
+      results[resultCount].contactB = matrix3Vec3Mul(proxy.rotation, p) + proxy.worldCenter;
+      resultCount++;
+    }
+
+    return resultCount;
+  }
+
+
+  // Area-based contact point reduction
+
+
+  /// @brief Computes the squared area of a triangle formed by three points.
+  /// @param p0 First point of the triangle.
+  /// @param p1 Second point of the triangle.
+  /// @param p2 Third point of the triangle.
+  /// @return 
+  static float contactTriangleArea2(const fm_vec3_t &p0, const fm_vec3_t &p1, const fm_vec3_t &p2) {
+    fm_vec3_t e0 = p1 - p0;
+    fm_vec3_t e1 = p2 - p0;
+    fm_vec3_t cross;
+    fm_vec3_cross(&cross, &e0, &e1);
+    return fm_vec3_len2(&cross);
+  }
+
+
+  /// @brief Selects which existing contact point to replace when the manifold is full, using an area-maximizing heuristic.
+  /// 1. Always keep the deepest penetrating point.
+  /// 2. Among the remaining candidates, pick the configuration that maximizes contact area.
+  /// @param points Array of existing contact points.
+  /// @param pointCount Number of existing contact points.
+  /// @param newContactA The new contact point on object A.
+  /// @param newPenetration The penetration depth of the new contact point.
+  /// @return Index of the contact point to replace.
+  static int selectContactPointToReplace(const ContactPoint points[MAX_CONTACT_POINTS_PER_PAIR], int pointCount, const fm_vec3_t &newContactA, float newPenetration) {
+    // Find deepest existing point — this one is always kept
+    int deepestIdx = 0;
+    float deepestPen = points[0].penetration;
+    for(int i = 1; i < pointCount; ++i) {
+      if(points[i].penetration > deepestPen) {
+        deepestPen = points[i].penetration;
+        deepestIdx = i;
+      }
+    }
+
+    // If the new point is the deepest overall, we keep it and choose among existing points to replace
+    // For each candidate removal, compute the area of the triangle formed by the remaining 3 + new point
+    // Select the removal that maximizes this area
+
+    // Gather all 4 candidate contact positions on A side (3 existing + 1 new)
+    fm_vec3_t pts[MAX_CONTACT_POINTS_PER_PAIR + 1];
+    for(int i = 0; i < pointCount; ++i) pts[i] = points[i].contactA;
+    pts[MAX_CONTACT_POINTS_PER_PAIR] = newContactA;
+
+    float bestArea = -1.0f;
+    int replaceIdx = 0;
+
+    for(int exclude = 0; exclude < pointCount; ++exclude) {
+      // Never exclude the deepest existing point (unless new point is deeper)
+      if(exclude == deepestIdx && newPenetration <= deepestPen) continue;
+
+      // Build triangle from the 3 remaining existing points + the new point
+      fm_vec3_t triPts[4];
+      int triCount = 0;
+      for(int j = 0; j < pointCount; ++j) {
+        if(j != exclude) triPts[triCount++] = pts[j];
+      }
+      triPts[triCount] = pts[MAX_CONTACT_POINTS_PER_PAIR]; // new point
+
+      float area = 0.0f;
+      // Compute area of the quad as sum of two triangles
+      if constexpr (MAX_CONTACT_POINTS_PER_PAIR >= 4) {
+            area = contactTriangleArea2(triPts[0], triPts[1], triPts[2])
+                  + contactTriangleArea2(triPts[0], triPts[2], triPts[3]);
+      } else if constexpr (MAX_CONTACT_POINTS_PER_PAIR == 3) {
+            area = contactTriangleArea2(triPts[0], triPts[1], triPts[2]);
+      }
+
+
+      if(area > bestArea) {
+        bestArea = area;
+        replaceIdx = exclude;
+      }
+    }
+
+    return replaceIdx;
+  }
+
+
   // ── Contact constraint caching ────────────────────────────────────
 
+  /// @brief Cache or update a ContactConstraint for a newly detected contact pair, using the provided EPA result and contact parameters.
+  /// @param rigidBodyA 
+  /// @param colliderA 
+  /// @param meshColliderA 
+  /// @param objectA 
+  /// @param rigidBodyB 
+  /// @param colliderB 
+  /// @param meshColliderB 
+  /// @param objectB 
+  /// @param result 
+  /// @param combinedFriction 
+  /// @param combinedBounce 
+  /// @param isTrigger 
+  /// @param respondsA 
+  /// @param respondsB 
+  /// @param triangleIndex 
+  /// @return 
   ContactConstraint *collideCacheContactConstraint(
     RigidBody *rigidBodyA, Collider *colliderA, MeshCollider *meshColliderA, Object *objectA,
     RigidBody *rigidBodyB, Collider *colliderB, MeshCollider *meshColliderB, Object *objectB, const EpaResult &result,
@@ -481,7 +807,7 @@ namespace P64::Coll {
       }
 
       // Try to match new contact to an existing point by proximity
-      constexpr float MATCH_DIST_SQ = 0.02f;
+      float MATCH_DIST_SQ = 0.02f * scene->getPhysicsScale() * scene->getPhysicsScale(); // 2cm threshold (scaled)
       int matchedIdx = -1;
       float bestDistSq = MATCH_DIST_SQ;
       for(int i = 0; i < existing->pointCount; ++i) {
@@ -508,17 +834,12 @@ namespace P64::Coll {
         target->accumulatedTangentImpulseU = 0.0f;
         target->accumulatedTangentImpulseV = 0.0f;
       } else {
-        // Full: replace the shallowest point if new one is deeper
-        int minPenIdx = 0;
-        float minPen = existing->points[0].penetration;
-        for(int i = 1; i < existing->pointCount; ++i) {
-          if(existing->points[i].penetration < minPen) {
-            minPen = existing->points[i].penetration;
-            minPenIdx = i;
-          }
-        }
-        if(orderedResult.penetration > minPen) {
-          target = &existing->points[minPenIdx];
+        // Full manifold: use Bullet-style area-maximizing heuristic to select which point to replace.
+        // This keeps the deepest point and maximizes contact polygon coverage for better torque resistance.
+        int replaceIdx = selectContactPointToReplace(existing->points, existing->pointCount, orderedResult.contactA, orderedResult.penetration);
+        // Replace if new point is deeper than the selected candidate
+        if(orderedResult.penetration > existing->points[replaceIdx].penetration) {
+          target = &existing->points[replaceIdx];
           target->accumulatedNormalImpulse = 0.0f;
           target->accumulatedTangentImpulseU = 0.0f;
           target->accumulatedTangentImpulseV = 0.0f;
@@ -583,7 +904,114 @@ namespace P64::Coll {
     cp.localPointA = contactLocalPointFromWorldPoint(cp.contactA, rigidBodyA, colliderA, meshColliderA);
     cp.localPointB = contactLocalPointFromWorldPoint(cp.contactB, rigidBodyB, colliderB, meshColliderB);
 
+    return cc;
+  }
 
+
+  /// @brief Directly fills a contact constraint with multiple SAT-derived contact points in one pass.
+  /// Avoids repeated key lookups and proximity matching that collideCacheContactConstraint would
+  /// perform when called per-point. Preserves warm-started impulses by proximity-matching against
+  /// previously cached points.
+  /// @param rigidBodyA 
+  /// @param colliderA 
+  /// @param objectA 
+  /// @param meshColliderB 
+  /// @param objectB 
+  /// @param results 
+  /// @param resultCount 
+  /// @param combinedFriction 
+  /// @param combinedBounce 
+  /// @param respondsA 
+  /// @param triangleIndex 
+  /// @return 
+  static ContactConstraint *collideCacheSatContactConstraint(
+    RigidBody *rigidBodyA, Collider *colliderA, Object *objectA,
+    MeshCollider *meshColliderB, Object *objectB,
+    const EpaResult *results, int resultCount,
+    float combinedFriction, float combinedBounce,
+    bool respondsA, int triangleIndex) {
+
+    if(resultCount <= 0 || !colliderA || !meshColliderB || triangleIndex < 0) return nullptr;
+
+    CollisionScene *scene = collisionSceneGetInstance();
+    fm_vec3_t normal = makeSafeContactNormal(results[0].normal, results[0].contactA, results[0].contactB);
+
+    ContactConstraintKey key = makeColliderMeshConstraintKey(colliderA, meshColliderB, static_cast<uint16_t>(triangleIndex));
+
+    ContactConstraint *cc = scene->findCachedConstraint(key);
+
+    // Save old points for warm-start matching before we overwrite them
+    ContactPoint oldPoints[MAX_CONTACT_POINTS_PER_PAIR]{};
+    int oldCount = 0;
+    if(cc) {
+      oldCount = cc->pointCount;
+      for(int i = 0; i < oldCount; ++i) oldPoints[i] = cc->points[i];
+    } else {
+      cc = scene->createCachedConstraint(key,
+        rigidBodyA, colliderA, nullptr, objectA,
+        nullptr, nullptr, meshColliderB, objectB);
+      if(!cc) return nullptr;
+    }
+
+    cc->rigidBodyA = rigidBodyA;
+    cc->colliderA = colliderA;
+    cc->meshColliderA = nullptr;
+    cc->objectA = objectA;
+    cc->rigidBodyB = nullptr;
+    cc->colliderB = nullptr;
+    cc->meshColliderB = meshColliderB;
+    cc->objectB = objectB;
+    cc->isActive = true;
+    cc->isTrigger = false;
+    cc->normal = normal;
+    vec3CalculateTangents(normal, cc->tangentU, cc->tangentV);
+    cc->combinedFriction = combinedFriction;
+    cc->combinedBounce = combinedBounce;
+    cc->respondsA = respondsA;
+    cc->respondsB = false;
+
+    int newCount = resultCount < MAX_CONTACT_POINTS_PER_PAIR ? resultCount : MAX_CONTACT_POINTS_PER_PAIR;
+    float MATCH_DIST_SQ = 0.02f * scene->getPhysicsScale() * scene->getPhysicsScale();
+    bool oldClaimed[MAX_CONTACT_POINTS_PER_PAIR] = {};
+
+    for(int i = 0; i < newCount; ++i) {
+      const EpaResult &r = results[i];
+      ContactPoint &cp = cc->points[i];
+
+      // Find closest unclaimed old point for warm-start impulse transfer
+      int bestOld = -1;
+      float bestDistSq = MATCH_DIST_SQ;
+      for(int j = 0; j < oldCount; ++j) {
+        if(oldClaimed[j]) continue;
+        fm_vec3_t diff = oldPoints[j].contactA - r.contactA;
+        float distSq = fm_vec3_len2(&diff);
+        if(distSq < bestDistSq) {
+          bestDistSq = distSq;
+          bestOld = j;
+        }
+      }
+
+      if(bestOld >= 0) {
+        oldClaimed[bestOld] = true;
+        cp.accumulatedNormalImpulse = oldPoints[bestOld].accumulatedNormalImpulse;
+        cp.accumulatedTangentImpulseU = oldPoints[bestOld].accumulatedTangentImpulseU;
+        cp.accumulatedTangentImpulseV = oldPoints[bestOld].accumulatedTangentImpulseV;
+      } else {
+        cp.accumulatedNormalImpulse = 0.0f;
+        cp.accumulatedTangentImpulseU = 0.0f;
+        cp.accumulatedTangentImpulseV = 0.0f;
+      }
+
+      cp.contactA = r.contactA;
+      cp.contactB = r.contactB;
+      cp.point = (r.contactA + r.contactB) * 0.5f;
+      cp.penetration = r.penetration;
+      cp.active = true;
+      cp.localPointA = contactLocalPointFromWorldPoint(cp.contactA, rigidBodyA, colliderA, nullptr);
+      cp.localPointB = contactLocalPointFromWorldPoint(cp.contactB, nullptr, nullptr, meshColliderB);
+    }
+
+    cc->pointCount = newCount;
     return cc;
   }
 
@@ -616,24 +1044,28 @@ namespace P64::Coll {
     tri.normal = mesh.triangleNormal(triangleIndex);
     tri.mesh = &mesh;
 
-    if(!isTriggerContact) {
-      CollisionScene *scene = collisionSceneGetInstance();
-      ContactConstraint *existing = scene->findCachedConstraint(
-        makeColliderMeshConstraintKey(colliderProxyMeshSpace->collider, const_cast<MeshCollider *>(&mesh), static_cast<uint16_t>(triangleIndex)));
-      if(existing && refreshCachedTriangleConstraint(*existing, rigidBody, tri, mesh, combinedFriction, combinedBounce, colliderRespondsToMesh, false) &&
-         canSkipTriangleEpaWithCachedConstraint(*existing, *colliderProxyMeshSpace->collider)) {
-        existing->rigidBodyA = rigidBody;
-        existing->colliderA = colliderProxyMeshSpace->collider;
-        existing->meshColliderA = nullptr;
-        existing->objectA = objectA;
-        existing->rigidBodyB = nullptr;
-        existing->colliderB = nullptr;
-        existing->meshColliderB = const_cast<MeshCollider *>(&mesh);
-        existing->objectB = objectB;
+    // --- Analytical Box-Triangle fast path (SAT) ---
+    if(colliderProxyMeshSpace->collider->shapeType() == ShapeType::Box && !isTriggerContact) {
+      const BoxShape &box = colliderProxyMeshSpace->collider->boxShape();
+      const fm_vec3_t v0 = tri.localVertex(0);
+      const fm_vec3_t v1 = tri.localVertex(1);
+      const fm_vec3_t v2 = tri.localVertex(2);
+
+      EpaResult satResults[MAX_CONTACT_POINTS_PER_PAIR];
+      int satCount = analyticalBoxTriangle(*colliderProxyMeshSpace, box, v0, v1, v2, tri.normal, satResults, MAX_CONTACT_POINTS_PER_PAIR);
+      if(satCount > 0) {
+        for(int i = 0; i < satCount; ++i) meshLocalResultToWorld(satResults[i], mesh);
+        collideCacheSatContactConstraint(
+            rigidBody, colliderProxyMeshSpace->collider, objectA,
+            const_cast<MeshCollider *>(&mesh), objectB,
+            satResults, satCount,
+            combinedFriction, combinedBounce, colliderRespondsToMesh, triangleIndex);
         return true;
       }
+      return false;
     }
 
+    // --- General GJK + EPA path for all other shape types ---
     Simplex simplex;
     fm_vec3_t firstDir = ((tri.localVertex(0) + tri.localVertex(1) + tri.localVertex(2)) / 3.0f) - colliderProxyMeshSpace->worldCenter;
     if(fm_vec3_len2(&firstDir) < FM_EPSILON * FM_EPSILON) firstDir = VEC3_RIGHT;
@@ -646,7 +1078,7 @@ namespace P64::Coll {
     );
     if(!gjkOverlap) return false;
 
-    // If the collider is a trigger we only need to check for overlap
+    // Triggers only need overlap confirmation
     if (isTriggerContact)
     {
       const fm_vec3_t v0 = tri.worldVertex(0);
@@ -654,7 +1086,6 @@ namespace P64::Coll {
       const fm_vec3_t v2 = tri.worldVertex(2);
       const fm_vec3_t triCenter = (v0 + v1 + v2) / 3.0f;
 
-      // Cache a dummy contact constraint to report the trigger collision.
       EpaResult dummyResult;
       dummyResult.normal = makeSafeContactNormal(tri.normal, colliderProxyMeshSpace->collider->worldCenter(), triCenter);
       dummyResult.penetration = 0.0f;
@@ -680,7 +1111,6 @@ namespace P64::Coll {
     {
       meshLocalResultToWorld(epaResult, mesh);
 
-      // Cache the contact constraint for this collision
       collideCacheContactConstraint(
           rigidBody, colliderProxyMeshSpace->collider, nullptr, objectA,
           nullptr, nullptr, const_cast<MeshCollider *>(&mesh), objectB,
@@ -693,6 +1123,10 @@ namespace P64::Coll {
 
   // ── Object-to-mesh ──────────────────────────────────────────────
 
+  /// @brief Detects collision between a collider and a mesh and caches contact constraints if needed.
+  /// @param collider The collider to test against the mesh.
+  /// @param rigidBody The rigid body associated with the collider.
+  /// @param mesh The mesh collider to test against.
   void collideDetectObjectToMesh(Collider *collider, RigidBody *rigidBody, const MeshCollider &mesh) {
 
     // Transform the collider's world AABB into the mesh's local space for tree query
@@ -701,13 +1135,13 @@ namespace P64::Coll {
       : collider->worldAabb();
 
     // Query local-space mesh AABB tree for candidate triangles
-    constexpr int MAX_CANDIDATES = 20;
+    constexpr int MAX_CANDIDATES = 20; // arbitrary limit to avoid extreme cases
     NodeProxy candidates[MAX_CANDIDATES];
     int count = mesh.queryTriangleNodes(queryAABB, candidates, MAX_CANDIDATES);
 
     if(count <= 0) return;
 
-    // Precompute collider proxy in mesh local space for reuse across candidates
+    // Precompute collider proxy in mesh local space for reuse across triangle candidates
     ColliderProxy colliderInMeshSpace;
     colliderInMeshSpace.collider = collider;
     bool meshHasTransform = mesh.hasTransform();
@@ -724,14 +1158,13 @@ namespace P64::Coll {
       int triIndex = mesh.triangleIndexForNode(candidates[i]);
       if(triIndex < 0) continue;
 
-      // If the triangle is overlapping and the collider is a Trigger
+      // If there is a collision between the collider and the current triangle and the collider is a Trigger
       // we can skip the rest of the candidates since triggers just need to report that a collision happened
+      // and don't need detailed contact information for each triangle.
       if(collideDetectObjectToTriangle(&colliderInMeshSpace, rigidBody, mesh, triIndex) && collider->isTrigger()) {
         return;
       }
     }
-
-
   }
 
   
@@ -749,28 +1182,27 @@ namespace P64::Coll {
 
     if(rbA && rbB && rbA->isSleeping() && rbB->isSleeping() && !colliderA->isTrigger() && !colliderB->isTrigger()) return;
 
-    // If both have rigidbodies, evaluate rigidbody-level filters.
     if(colliderA && colliderB) {
       if(!aReadsB && !bReadsA) return;
       if(colliderA->isTrigger() && colliderB->isTrigger()) return;
     }
 
-    // Try analytical tests first before falling back to GJK+EPA for general convex shapes.
+    // Try analytical closed-form tests first before falling back to GJK+EPA for general convex shapes.
     
     EpaResult result;
     bool analyticalHit = false;
     bool hasAnalyticalPath = false;
-
+    // Sphere-Sphere
     if(colliderA->shapeType() == ShapeType::Sphere && colliderB->shapeType() == ShapeType::Sphere) {
       hasAnalyticalPath = true;
       analyticalHit = analyticalSphereSphere(colliderA, colliderB, result);
-    } else if(colliderA->shapeType() == ShapeType::Sphere && colliderB->shapeType() == ShapeType::Box) {
+    } 
+    
+    // Sphere-Box (both directions)
+    else if(colliderA->shapeType() == ShapeType::Sphere && colliderB->shapeType() == ShapeType::Box) {
       hasAnalyticalPath = true;
       analyticalHit = analyticalSphereBox(colliderA, colliderB, result);
-    } else if(colliderA->shapeType() == ShapeType::Sphere && colliderB->shapeType() == ShapeType::Capsule) {
-      hasAnalyticalPath = true;
-      analyticalHit = analyticalSphereCapsule(colliderA, colliderB, result);
-    } else if(colliderB->shapeType() == ShapeType::Sphere && colliderA->shapeType() == ShapeType::Box) {
+    }  else if(colliderB->shapeType() == ShapeType::Sphere && colliderA->shapeType() == ShapeType::Box) {
       hasAnalyticalPath = true;
       analyticalHit = analyticalSphereBox(colliderB, colliderA, result);
       if(analyticalHit) {
@@ -779,6 +1211,11 @@ namespace P64::Coll {
         result.contactA = result.contactB;
         result.contactB = tmp;
       }
+    } 
+    // Sphere-Capsule (both directions)
+    else if(colliderA->shapeType() == ShapeType::Sphere && colliderB->shapeType() == ShapeType::Capsule) {
+      hasAnalyticalPath = true;
+      analyticalHit = analyticalSphereCapsule(colliderA, colliderB, result);
     } else if(colliderB->shapeType() == ShapeType::Sphere && colliderA->shapeType() == ShapeType::Capsule) {
       hasAnalyticalPath = true;
       analyticalHit = analyticalSphereCapsule(colliderB, colliderA, result);
@@ -788,7 +1225,16 @@ namespace P64::Coll {
         result.contactA = result.contactB;
         result.contactB = tmp;
       }
+    } 
+    // Capsule-Capsule
+    else if(colliderA->shapeType() == ShapeType::Capsule && colliderB->shapeType() == ShapeType::Capsule) {
+      hasAnalyticalPath = true;
+      analyticalHit = analyticalCapsuleCapsule(colliderA, colliderB, result);
     }
+
+    // TODO: Implement Box-Box with SAT?
+
+    // If an analytical test exists for the pair but reports no collision, we can skip GJK+EPA entirely.
     if(hasAnalyticalPath && !analyticalHit) return;
 
     bool doEpa = false;
@@ -796,9 +1242,17 @@ namespace P64::Coll {
     ColliderProxy proxyA;
     ColliderProxy proxyB;
 
+    // Fall back to GJK + EPA if no analytical algorithm for the pair exists
     if(!hasAnalyticalPath) {
-      // Fall back to GJK + EPA
-      fm_vec3_t firstDir = colliderA->worldCenter() - colliderB->worldCenter();
+      // Try to reuse cached separating axis from previous frame
+      fm_vec3_t firstDir = VEC3_ZERO;
+      ContactConstraintKey lookupKey = makeColliderPairConstraintKey(colliderA, colliderB);
+      ContactConstraint *cachedCC = scene->findCachedConstraint(lookupKey);
+      if(cachedCC && fm_vec3_len2(&cachedCC->cachedSeparatingAxis) > FM_EPSILON * FM_EPSILON) {
+        firstDir = cachedCC->cachedSeparatingAxis;
+      } else {
+        firstDir = colliderA->worldCenter() - colliderB->worldCenter();
+      }
       if(fm_vec3_len2(&firstDir) < FM_EPSILON * FM_EPSILON) firstDir = VEC3_UP;
 
       proxyA.collider = colliderA;
@@ -812,19 +1266,28 @@ namespace P64::Coll {
       proxyB.rotationT = colliderB->inverseRotationMatrix();
 
       simplex.nPoints = 0;
+      fm_vec3_t separatingAxis{};
       bool overlapping = gjkCheckForOverlap(
         simplex,
         &proxyA, colliderProxyGjkSupport,
         &proxyB, colliderProxyGjkSupport,
-        firstDir
+        firstDir,
+        &separatingAxis
       );
 
-      if(!overlapping) return;
+      if(!overlapping) {
+        // Cache the last GJK search direction as separating axis for next frame
+        if(cachedCC) {
+          cachedCC->cachedSeparatingAxis = separatingAxis;
+        }
+        return;
+      }
       doEpa = true;
 
     }
 
     // Trigger pairs only need overlap confirmation, not a full contact manifold.
+    // we can skip EPA and directly generate a fake contact that will be used for trigger events without any physics response.
     if ((colliderA && colliderA->isTrigger()) || (colliderB && colliderB->isTrigger())) {
       EpaResult dummyResult;
       dummyResult.normal = makeSafeContactNormal(VEC3_ZERO, colliderA->worldCenter(), colliderB->worldCenter());
@@ -843,6 +1306,7 @@ namespace P64::Coll {
       return;
     }
 
+    // only do EPA if there is not already an analytical result and the GJK confirms overlap
     if (doEpa)
     {
       bool epaOk = epaSolve(
@@ -855,7 +1319,7 @@ namespace P64::Coll {
         return;
     }
 
-    // Wake sleeping rigidBodies
+    // Wake sleeping rigidBodies that are involved in the collision
     if(aReadsB && rbA && rbA->isSleeping()) scene->wakeRigidBodyIsland(rbA);
     if(bReadsA && rbB && rbB->isSleeping()) scene->wakeRigidBodyIsland(rbB);
 

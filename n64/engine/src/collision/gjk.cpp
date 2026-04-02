@@ -148,7 +148,8 @@ bool P64::Coll::gjkCheckForOverlap(
   Simplex &simplex,
   const void *colliderA, GjkSupportFunction colliderASupport,
   const void *colliderB, GjkSupportFunction colliderBSupport,
-  const fm_vec3_t &firstDirection
+  const fm_vec3_t &firstDirection,
+  fm_vec3_t *outSeparatingAxis
 ) {
   fm_vec3_t aPoint{};
   fm_vec3_t bPoint{};
@@ -172,12 +173,19 @@ bool P64::Coll::gjkCheckForOverlap(
     colliderBSupport(colliderB, reverseDirection, bPoint);
 
     auto *addedPoint = simplexAddPoint(simplex, aPoint, bPoint);
-    if(!addedPoint) return false;
+    if(!addedPoint) {
+      if(outSeparatingAxis) *outSeparatingAxis = nextDirection;
+      return false;
+    }
 
-    if(fm_vec3_dot(addedPoint, &nextDirection) <= 0.0f) return false;
+    if(fm_vec3_dot(addedPoint, &nextDirection) <= 0.0f) {
+      if(outSeparatingAxis) *outSeparatingAxis = nextDirection;
+      return false;
+    }
 
     if(simplexCheck(simplex, nextDirection)) return true;
   }
 
+  if(outSeparatingAxis) *outSeparatingAxis = nextDirection;
   return false;
 }

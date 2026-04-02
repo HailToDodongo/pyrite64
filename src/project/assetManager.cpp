@@ -100,6 +100,7 @@ namespace
   {
     auto projectBase = fs::absolute(project->getPath()).string();
     auto ext = path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c){ return std::tolower(c); });
 
     std::string outPath = getAssetROMPath(path.string(), projectBase);
 
@@ -110,6 +111,9 @@ namespace
     } else if (ext == ".wav" || ext == ".mp3") {
       type = Project::FileType::AUDIO;
       outPath = changeExt(outPath, ".wav64");
+    } else if (ext == ".xm") {
+      type = Project::FileType::MUSIC_XM;
+      outPath = changeExt(outPath, ".xm64");
     } else if (ext == ".glb" || ext == ".gltf") {
       type = Project::FileType::MODEL_3D;
       outPath = changeExt(outPath, ".t3dm");

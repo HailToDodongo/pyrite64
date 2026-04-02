@@ -17,7 +17,6 @@ namespace
     uint8_t flags;
   };
 }
-
 namespace P64::Comp
 {
   void Constraint::initDelete(Object &obj, Constraint* data, uint16_t* initData_)
@@ -51,7 +50,7 @@ namespace P64::Comp
 
   void Constraint::update(Object &obj, Constraint* data, float deltaTime)
   {
-    if(data->type == TYPE_COPY_CAM)return;
+    if(data->type >= TYPE_COPY_CAM)return;
 
     auto &sc = obj.getScene();
     auto refObj = sc.getObjectById(data->refObjId);
@@ -79,10 +78,22 @@ namespace P64::Comp
 
   void Constraint::draw(Object& obj, Constraint* data, float deltaTime)
   {
-    if(data->type != TYPE_COPY_CAM)return;
-
-    auto &sc = obj.getScene();
-    auto &cam = sc.getActiveCamera();
-    if(data->flags & FLAG_USE_POS)obj.pos = cam.getPos();
+    if(data->type == TYPE_COPY_CAM)
+    {
+      auto &cam = obj.getScene().getActiveCamera();
+      if(data->flags & FLAG_USE_POS)obj.pos = cam.getPos();
+    }
+    else if(data->type == TYPE_BILLBOARD_Y)
+    {
+      auto &cam = obj.getScene().getActiveCamera();
+      auto viewDir = cam.getViewDir();
+      constexpr fm_vec3_t ROT_AXIS{0,1,0};
+      fm_quat_from_axis_angle(&obj.rot, &ROT_AXIS, fm_atan2f(viewDir.x, viewDir.z) + T3D_PI);
+    }
+    else if(data->type == TYPE_BILLBOARD_XYZ)
+    {
+      auto &cam = obj.getScene().getActiveCamera();
+      obj.rot = Math::quatFromInvRotMat(cam.getViewMatrix());
+    }
   }
 }

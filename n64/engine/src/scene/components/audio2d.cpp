@@ -31,16 +31,25 @@ namespace P64::Comp
 
     new(data) Audio2D();
 
-    data->audio = (wav64_t*)AssetManager::getByIndex(initData->assetIdx);
-    assert(data->audio);
-
     data->volume = (float)initData->volume * (1.0f / 0xFFFF);
     data->flags = initData->flags;
-    wav64_set_loop(data->audio, (data->flags & FLAG_LOOP) != 0);
+    bool autoPlay = data->flags & FLAG_AUTO_PLAY;
 
-    if(data->flags & FLAG_AUTO_PLAY) {
-      data->handle = AudioManager::play2D(data->audio);
-      data->handle.setVolume(data->volume);
+    if(data->isXM())
+    {
+      data->audioXM = (xm64player_t*)AssetManager::getByIndex(initData->assetIdx);
+      assert(data->audioXM);
+      xm64player_set_loop(data->audioXM, (data->flags & FLAG_LOOP) != 0);
+
+      if(autoPlay)data->handle = AudioManager::play2D(data->audioXM);
+    } else {
+      data->audioWAV = (wav64_t*)AssetManager::getByIndex(initData->assetIdx);
+      assert(data->audioWAV);
+      wav64_set_loop(data->audioWAV, (data->flags & FLAG_LOOP) != 0);
+
+      if(autoPlay)data->handle = AudioManager::play2D(data->audioWAV);
     }
+
+    if(autoPlay)data->handle.setVolume(data->volume);
   }
 }

@@ -51,7 +51,8 @@ namespace P64::Coll {
     Simplex &simplex,
     const void *colliderA, GjkSupportFunction colliderASupport,
     const void *colliderB, GjkSupportFunction colliderBSupport,
-    const fm_vec3_t &firstDirection
+    const fm_vec3_t &firstDirection,
+    fm_vec3_t *outSeparatingAxis = nullptr
   );
 
 } // namespace P64::Coll

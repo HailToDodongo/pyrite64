@@ -696,20 +696,48 @@ namespace P64::Coll {
       if(!shouldTrackSleepState(body) || body->isSleeping_) continue;
       if(visited.find(body) != visited.end()) continue;
 
+      // Build the island of AWAKE, connected bodies only.
+      // They are only woken explicitly when a new dynamic contact forces it.
       std::vector<RigidBody *> island;
-      collectConnectedIsland(body, island, visited);
+      {
+        std::vector<RigidBody *> stack;
+        stack.push_back(body);
+        while(!stack.empty()) {
+          RigidBody *current = stack.back();
+          stack.pop_back();
+
+          if(!shouldTrackSleepState(current)) continue;
+          if(current->isSleeping_) continue; // skip sleeping bodies
+          if(visited.find(current) != visited.end()) continue;
+          visited.insert(current);
+          island.push_back(current);
+
+          for(int i = 0; i < cachedConstraintCount_; ++i) {
+            const ContactConstraint &cc = cachedConstraints_[i];
+            if(!cc.isActive || cc.isTrigger) continue;
+
+            RigidBody *other = nullptr;
+            if(cc.rigidBodyA == current)      other = cc.rigidBodyB;
+            else if(cc.rigidBodyB == current) other = cc.rigidBodyA;
+
+            if(!other) continue;
+            if(!shouldTrackSleepState(other)) continue;
+            if(other->isSleeping_) continue; // skip sleeping neighbours
+            if(visited.find(other) == visited.end()) {
+              stack.push_back(other);
+            }
+          }
+        }
+      }
       if(island.empty()) continue;
 
       bool islandCanSleep = true;
       for(RigidBody *islandBody : island) {
-        if(islandBody->isSleeping_) {
-          islandBody->wake();
-        }
-
         const bool transformChangedTooMuch = rigidBodyTransformExceededSleepThreshold(islandBody);
         const bool velocitiesTooHigh = rigidBodyVelocitiesExceededSleepThreshold(islandBody);
         if(transformChangedTooMuch || velocitiesTooHigh) {
           islandCanSleep = false;
+          break; // early-out: one active body prevents the whole island from sleeping
         }
       }
 
@@ -1032,6 +1060,13 @@ namespace P64::Coll {
   // ── Warm start ────────────────────────────────────────────────────
 
   void CollisionScene::warmStart() {
+    // Minimum impulse threshold: below this, accumulated impulses are zeroed to
+    // prevent small residual forces from keeping bodies awake.
+    // Bullet's btSequentialImpulseConstraintSolver similarly discards negligible
+    // cached impulses. The warm starting factor (0.85) decays
+    // impulses each frame
+    constexpr float IMPULSE_ZERO_THRESHOLD = FM_EPSILON;
+
     for(ContactConstraint *constraint : solverConstraints_) {
       ContactConstraint &cc = *constraint;
 
@@ -1041,6 +1076,17 @@ namespace P64::Coll {
       for(int j = 0; j < cc.pointCount; ++j) {
         ContactPoint &cp = cc.points[j];
         if(!cp.active) continue;
+
+        // Scale accumulated impulses by warm starting factor (Bullet's m_warmstartingFactor = 0.85)
+        // This prevents overcorrection when constraint configuration changes between frames
+        cp.accumulatedNormalImpulse *= WARM_STARTING_FACTOR;
+        cp.accumulatedTangentImpulseU *= WARM_STARTING_FACTOR;
+        cp.accumulatedTangentImpulseV *= WARM_STARTING_FACTOR;
+
+        // Zero out decayed impulses to prevent persistent micro-impulses that can cause jitter and prevent sleeping
+        if(fabsf(cp.accumulatedNormalImpulse) < IMPULSE_ZERO_THRESHOLD) cp.accumulatedNormalImpulse = 0.0f;
+        if(fabsf(cp.accumulatedTangentImpulseU) < IMPULSE_ZERO_THRESHOLD) cp.accumulatedTangentImpulseU = 0.0f;
+        if(fabsf(cp.accumulatedTangentImpulseV) < IMPULSE_ZERO_THRESHOLD) cp.accumulatedTangentImpulseV = 0.0f;
 
         fm_vec3_t impulse = cc.normal * cp.accumulatedNormalImpulse;
         impulse += cc.tangentU * cp.accumulatedTangentImpulseU;
@@ -1054,8 +1100,104 @@ namespace P64::Coll {
 
   // ── Velocity constraint solver ────────────────────────────────────
 
+  /// Fast xorshift32 PRNG for constraint randomization (Bullet's SOLVER_RANDMIZE_ORDER).
+  static uint32_t s_solverRngState = 0x12345678u;
+  static uint32_t solverRand() {
+    uint32_t x = s_solverRngState;
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    s_solverRngState = x;
+    return x;
+  }
+
   void CollisionScene::solveVelocityConstraints() {
+    const auto constraintCount = solverConstraints_.size();
+    if(constraintCount == 0) return;
+
+    constexpr float VELOCITY_SOLVER_EARLY_OUT_THRESHOLD = 1e-4f;
+    constexpr float VELOCITY_SOLVER_NORMAL_ERROR_THRESHOLD_PER_SCALE = 1e-3f;
+    constexpr uint8_t MIN_NORMAL_SOLVER_ITERATIONS = 6;
+    const float velocitySolverNormalErrorThreshold = VELOCITY_SOLVER_NORMAL_ERROR_THRESHOLD_PER_SCALE * physicsScale_;
+
+    const auto solveFrictionPass = [&]() {
+      for(ContactConstraint *constraint : solverConstraints_) {
+        ContactConstraint &cc = *constraint;
+
+        if(cc.combinedFriction <= FM_EPSILON) continue;
+
+        RigidBody *a = cc.rigidBodyA;
+        RigidBody *b = cc.rigidBodyB;
+        const bool aHasMotionAngular = canApplyAngularResponse(a);
+        const bool bHasMotionAngular = canApplyAngularResponse(b);
+
+        for(int j = 0; j < cc.pointCount; ++j) {
+          ContactPoint &cp = cc.points[j];
+          if(!cp.active) continue;
+
+          fm_vec3_t contactVelA = VEC3_ZERO;
+          fm_vec3_t contactVelB = VEC3_ZERO;
+          if(a && !a->isKinematic_) {
+            contactVelA = a->linearVelocity_;
+            if(aHasMotionAngular) {
+              fm_vec3_t aCross;
+              fm_vec3_cross(&aCross, &a->angularVelocity_, &cp.aToContact);
+              contactVelA += aCross;
+            }
+          }
+          if(b && !b->isKinematic_) {
+            contactVelB = b->linearVelocity_;
+            if(bHasMotionAngular) {
+              fm_vec3_t bCross;
+              fm_vec3_cross(&bCross, &b->angularVelocity_, &cp.bToContact);
+              contactVelB += bCross;
+            }
+          }
+
+          fm_vec3_t relVel = contactVelA - contactVelB;
+          float vTangentU = fm_vec3_dot(&relVel, &cc.tangentU);
+          float vTangentV = fm_vec3_dot(&relVel, &cc.tangentV);
+
+          float lambdaU = -vTangentU * cp.tangentMassU;
+          float lambdaV = -vTangentV * cp.tangentMassV;
+
+          float newAccumU = cp.accumulatedTangentImpulseU + lambdaU;
+          float newAccumV = cp.accumulatedTangentImpulseV + lambdaV;
+
+          float maxFriction = cc.combinedFriction * cp.accumulatedNormalImpulse;
+          float tangentMagnitude = sqrtf(newAccumU * newAccumU + newAccumV * newAccumV);
+          if(tangentMagnitude > maxFriction && tangentMagnitude > FM_EPSILON) {
+            float scale = maxFriction / tangentMagnitude;
+            newAccumU *= scale;
+            newAccumV *= scale;
+          }
+
+          lambdaU = newAccumU - cp.accumulatedTangentImpulseU;
+          lambdaV = newAccumV - cp.accumulatedTangentImpulseV;
+
+          cp.accumulatedTangentImpulseU = newAccumU;
+          cp.accumulatedTangentImpulseV = newAccumV;
+
+          fm_vec3_t tangentImpulse = cc.tangentU * lambdaU + cc.tangentV * lambdaV;
+          if(fm_vec3_len2(&tangentImpulse) <= FM_EPSILON * FM_EPSILON) continue;
+
+          if(cc.respondsA) applyConstrainedImpulseAtContact(a, tangentImpulse, cp.aToContact);
+          if(cc.respondsB) applyConstrainedImpulseAtContact(b, -tangentImpulse, cp.bToContact);
+        }
+      }
+    };
+
     for(uint8_t iter = 0; iter < velocitySolverIterations_; ++iter) {
+      float maxNormalImpulseDelta = 0.0f;
+      float maxNormalError = 0.0f;
+
+      // Shuffle constraint processing order each iteration (Bullet's SOLVER_RANDMIZE_ORDER)
+      // Prevents systematic bias where one constraint always "wins" in Gauss-Seidel iteration
+      for(std::size_t i = constraintCount; i > 1; --i) {
+        std::size_t j = solverRand() % i;
+        std::swap(solverConstraints_[i - 1], solverConstraints_[j]);
+      }
+
       for(ContactConstraint *constraint : solverConstraints_) {
         ContactConstraint &cc = *constraint;
 
@@ -1063,15 +1205,12 @@ namespace P64::Coll {
         RigidBody *b = cc.rigidBodyB;
         const bool aHasMotionAngular = canApplyAngularResponse(a);
         const bool bHasMotionAngular = canApplyAngularResponse(b);
-        const bool aCanRotate = cc.respondsA && aHasMotionAngular;
-        const bool bCanRotate = cc.respondsB && bHasMotionAngular;
-        const bool hasFriction = cc.combinedFriction > FM_EPSILON;
 
         for(int j = 0; j < cc.pointCount; ++j) {
           ContactPoint &cp = cc.points[j];
           if(!cp.active) continue;
 
-          // Compute relative velocity at contact
+          // Compute relative velocity at contact.
           fm_vec3_t relVel = VEC3_ZERO;
           if(a) {
             relVel = a->linearVelocity_;
@@ -1091,77 +1230,35 @@ namespace P64::Coll {
             relVel -= velB;
           }
 
-          // Normal impulse
-          float relVelN = fm_vec3_dot(&relVel, &cc.normal);
+          const float relVelN = fm_vec3_dot(&relVel, &cc.normal);
+          maxNormalError = fmaxf(maxNormalError, fmaxf(-(relVelN + cp.velocityBias), 0.0f));
+
           float dImpulseN = cp.normalMass * (-(relVelN + cp.velocityBias));
 
-          // Clamp accumulated impulse (normal must be non-negative)
-          float oldAccum = cp.accumulatedNormalImpulse;
+          // Clamp accumulated impulse (normal must be non-negative).
+          const float oldAccum = cp.accumulatedNormalImpulse;
           cp.accumulatedNormalImpulse = fmaxf(oldAccum + dImpulseN, 0.0f);
           dImpulseN = cp.accumulatedNormalImpulse - oldAccum;
+          maxNormalImpulseDelta = fmaxf(maxNormalImpulseDelta, fabsf(dImpulseN));
 
-          fm_vec3_t impulseN = cc.normal * dImpulseN;
-
-          if(cc.respondsA) applyConstrainedImpulseAtContact(a, impulseN, cp.aToContact);
-          if(cc.respondsB) applyConstrainedImpulseAtContact(b, -impulseN, cp.bToContact);
-
-          // Friction with proper accumulation and Coulomb cone clamping.
-          if(hasFriction) {
-            // Recompute relative velocity after normal impulse.
-            fm_vec3_t contactVelA = VEC3_ZERO;
-            fm_vec3_t contactVelB = VEC3_ZERO;
-            if(a && !a->isKinematic_) {
-              contactVelA = a->linearVelocity_;
-              if(aHasMotionAngular) {
-                fm_vec3_t aCross;
-                fm_vec3_cross(&aCross, &a->angularVelocity_, &cp.aToContact);
-                contactVelA += aCross;
-              }
-            }
-            if(b && !b->isKinematic_) {
-              contactVelB = b->linearVelocity_;
-              if(bHasMotionAngular) {
-                fm_vec3_t bCross;
-                fm_vec3_cross(&bCross, &b->angularVelocity_, &cp.bToContact);
-                contactVelB += bCross;
-              }
-            }
-
-            fm_vec3_t relVelF = contactVelA - contactVelB;
-            float vTangentU = fm_vec3_dot(&relVelF, &cc.tangentU);
-            float vTangentV = fm_vec3_dot(&relVelF, &cc.tangentV);
-
-            float lambdaU = -vTangentU * cp.tangentMassU;
-            float lambdaV = -vTangentV * cp.tangentMassV;
-
-            float newAccumU = cp.accumulatedTangentImpulseU + lambdaU;
-            float newAccumV = cp.accumulatedTangentImpulseV + lambdaV;
-
-            float maxFriction = cc.combinedFriction * cp.accumulatedNormalImpulse;
-            float tangentMagnitude = sqrtf(newAccumU * newAccumU + newAccumV * newAccumV);
-            if(tangentMagnitude > maxFriction && tangentMagnitude > FM_EPSILON) {
-              float scale = maxFriction / tangentMagnitude;
-              newAccumU *= scale;
-              newAccumV *= scale;
-            }
-
-            lambdaU = newAccumU - cp.accumulatedTangentImpulseU;
-            lambdaV = newAccumV - cp.accumulatedTangentImpulseV;
-
-            cp.accumulatedTangentImpulseU = newAccumU;
-            cp.accumulatedTangentImpulseV = newAccumV;
-
-            fm_vec3_t tangentImpulse = cc.tangentU * lambdaU + cc.tangentV * lambdaV;
-
-            if(fm_vec3_len2(&tangentImpulse) > FM_EPSILON * FM_EPSILON) {
-              if(cc.respondsA) applyConstrainedImpulseAtContact(a, tangentImpulse, cp.aToContact);
-              if(cc.respondsB) applyConstrainedImpulseAtContact(b, -tangentImpulse, cp.bToContact);
-            }
+          const fm_vec3_t impulseN = cc.normal * dImpulseN;
+          if(fabsf(dImpulseN) > FM_EPSILON) {
+            if(cc.respondsA) applyConstrainedImpulseAtContact(a, impulseN, cp.aToContact);
+            if(cc.respondsB) applyConstrainedImpulseAtContact(b, -impulseN, cp.bToContact);
           }
         }
       }
+
+      if(iter + 1 >= MIN_NORMAL_SOLVER_ITERATIONS &&
+         maxNormalImpulseDelta < VELOCITY_SOLVER_EARLY_OUT_THRESHOLD &&
+        maxNormalError < velocitySolverNormalErrorThreshold) {
+        break;
+      }
     }
+
+    solveFrictionPass();
   }
+
 
   // ── Position constraint solver ────────────────────────────────────
 
@@ -1384,12 +1481,10 @@ namespace P64::Coll {
     ticksWorldUpdate = get_ticks() - stageStart;
 
     stageStart = get_ticks();
-    // Integrate velocities
+    // Integrate velocities (also resets sleeping bodies — see RigidBody::integrateVelocity)
     for(RigidBody *body : rigidBodies_) {
-      if(!body->isSleeping_) {
-        body->integrateVelocity(fixedDt_, gravity_);
-        body->integrateAngularVelocity(fixedDt_);
-      }
+      body->integrateVelocity(fixedDt_, gravity_);
+      body->integrateAngularVelocity(fixedDt_);
     }
     ticksIntegrateVel = get_ticks() - stageStart;
 
@@ -1413,21 +1508,27 @@ namespace P64::Coll {
 
     // Warm start
     stageStart = get_ticks();
+    // Reset push velocities for split impulse (Bullet-style)
+    for(RigidBody *body : rigidBodies_) {
+      if(!body->isSleeping_) body->resetPushVelocities();
+    }
     warmStart();
     ticksWarmStart = get_ticks() - stageStart;
 
     // Velocity constraint solver
     stageStart = get_ticks();
     solveVelocityConstraints();
+
     ticksVelocitySolve = get_ticks() - stageStart;
 
-    // Integrate positions and rotations
+    // Integrate positions and rotations (including split impulse push velocities)
     stageStart = get_ticks();
     for(RigidBody *body : rigidBodies_) {
       if(body->isSleeping_) continue;
 
       body->integratePosition(fixedDt_);
       body->integrateRotation(fixedDt_);
+
     }
     ticksIntegration = get_ticks() - stageStart;
 
@@ -1452,7 +1553,6 @@ namespace P64::Coll {
       const std::vector<Collider *> *ownerColliders = findCollidersForOwner(body->owner_);
       if(!ownerColliders || ownerColliders->empty()) continue;
 
-      fm_vec3_t worldCenterSum = VEC3_ZERO;
       for (Collider *collider : *ownerColliders)
       {
         if (!collider) continue;
@@ -1461,6 +1561,14 @@ namespace P64::Coll {
         body->worldAabb_.max = vec3Max(body->worldAabb_.max, collider->worldAabb_.max);
         colliderAABBTree.moveNode(collider->aabbTreeNodeId_, collider->worldAabb_, displacement);
       }
+
+      // Snapshot the fully-corrected transform for sleep evaluation.
+      // This must happen AFTER the position solver and split impulse push so that
+      // solver corrections (penetration resolution) do not register as "movement"
+      // in the sleep threshold check.
+      if(body->position_) body->previousStepPosition_ = *body->position_;
+      if(body->rotation_) body->previousStepRotation_ = *body->rotation_;
+      if(body->owner_)    body->previousStepScale_ = body->owner_->scale;
     }
 
     // Update RigidBody sleep states

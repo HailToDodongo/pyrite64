@@ -1,9 +1,20 @@
 # Changelog
 
+## v0.7.0
+
 ## v0.6.0
 
-- Object rotation can now be edited as euler angles
-- Object scaling can now be set to uniform in the editor 
+- Editor zoom (by default: Ctrl + Scroll) by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/159
+- Editor: Add anti-alias option by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/161
+- Editor: Add VSync option and custom FPS Limit by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/162
+- Rotation can be edited as euler angles, scaling can be proportionally edited
+  - Fixes value jumps when editing rotation as euler angles by @Q-Bert-Reynolds in https://github.com/HailToDodongo/pyrite64/pull/171
+  - Replaces uniform scale with proportional scale by @Q-Bert-Reynolds in https://github.com/HailToDodongo/pyrite64/pull/174
+- mingw: Add useful toolchain location log by @thekovic in https://github.com/HailToDodongo/pyrite64/pull/173
+- defer the object initialization that might use a later object reference (fixes #177) by @Byterset in https://github.com/HailToDodongo/pyrite64/pull/178
+- Create global-scripts and node-graphs from the asset-browser by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/180
+- Fix scene name not updating in the scene browser by @MessyComposer in https://github.com/HailToDodongo/pyrite64/pull/191
+- Delete scenes via right-click context menu by @MessyComposer in https://github.com/HailToDodongo/pyrite64/pull/192
 
 ## v0.5.0
 

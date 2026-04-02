@@ -221,6 +221,59 @@ void update(Object& obj, Data *data, float deltaTime)
 }
 ```
 
+#### Fixed Update
+```cpp
+void fixedUpdate(Object& obj, Data *data, float fixedDeltaTime)
+```
+
+Called once per collision scene step, before collision detection and physics response.\
+This is the place to put your logic that interacts with rigidbodies and colliders,\
+as well as code that applies forces to bodies.
+It is also the recommended place to perform raycasts into the collision scene.
+
+There is a parameter `fixedDeltaTime` provided as an argument.\
+This is the fixed Physics Step time mostly detached from the frame time.\
+This is mostly fixed but may be different between scenes depending on the scenes `Physics Tickrate` setting.\
+A lower `Physics Tickrate` may improve performance but at the same time reduces simulation accuracy.\
+Choose according to your games needs.
+
+For example, a fixed Update function that applies an acceleration at a specific point in space to a rigidbody:
+```cpp
+void fixedUpdate(Object& obj, Data *data, float fixedDeltaTime)
+{
+  constexpr float ACCELERATION = 1000.0f;
+  fm_vec3_t localForward = obj.rot * VEC3_FORWARD;
+  //choose point slightly unter rigidbodies center for more realistic effect
+  fm_vec3_t applyAtPoint = obj.pos - (fm_vec3_t){0.0f, 5.0f, 0.0f};
+  data->carRigidBody->applyForceAtPoint(localForward * data->moveInput * ACCELERATION, applyAtPoint);
+}  
+```
+
+Or another example that performs a raycast and uses the result to apply a spring force to a rigidbody:
+```cpp
+void fixedUpdate(Object &obj, Data *data, float fixedDeltaTime)
+{
+  Coll::CollisionScene *collisionScene = Coll::collisionSceneGetInstance();
+  Coll::RaycastHit hit;
+  float maxLength = data->RestLength + data->SpringTravel;
+
+  fm_vec3_t localUp = obj.rot * VEC3_UP;
+  fm_vec3_t localDown = -localUp;
+  data->wheelIsGroundedFlags[i] = 1;
+
+  Raycast ray = Coll::Raycast::create(data->ConnectionPoint, localDown, maxLength, Coll::RaycastColliderTypeFlags::MESH_COLLIDERS, false, 0xff);
+  if (collisionScene->raycast(ray, hit))
+  {
+    float currentSpringLength = hit.distance - data->WheelRadius;
+    float springCompression = (data->RestLength - currentSpringLength) / data->SpringTravel;
+    float springForce = springCompression * data->SpringStiffness;
+    data->carRigidBody->applyForceAtPoint(localUp * springForce, data->ConnectionPoint);
+  }
+}
+```
+
+
+
 #### Draw
 ```cpp
 void draw(Object& obj, Data *data, float deltaTime)
@@ -299,6 +352,8 @@ If a collider is attached to your object, you may start to receive collision eve
 The `event` argument gives you further information about the collision.\
 For example which collider object or mesh was involved.\
 Note that this function is directly called during the collision check, and not deferred like `onEvent`.
+Collision checks are performed during the collision scene step which might happen more than once or not at all per frame\
+depending on the Scenes framerate and the `Physics Tickrate` setting.
 
 As an example, here is an object that plays a sound, spawns a particle effect,\
 and then removes itself after colliding.

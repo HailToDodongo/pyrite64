@@ -15,7 +15,7 @@ namespace P64 { class Object; }
 
 namespace P64::Coll {
 
-  constexpr int MAX_CONTACT_POINTS_PER_PAIR = 4;
+  constexpr int MAX_CONTACT_POINTS_PER_PAIR = 3;
 
   struct RigidBody; // forward declare
   struct Collider;  // forward declare
@@ -135,6 +135,7 @@ namespace P64::Coll {
     fm_vec3_t normal{};
     fm_vec3_t tangentU{};
     fm_vec3_t tangentV{};
+    fm_vec3_t cachedSeparatingAxis{}; // Cached GJK separating axis for faster convergence
 
     float combinedFriction{0.0f};
     float combinedBounce{0.0f};

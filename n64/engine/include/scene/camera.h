@@ -75,6 +75,14 @@ namespace P64
         return dir;
       }
 
+      const fm_mat4_t& getViewMatrix() const {
+        return viewMatrix;
+      }
+
+      const fm_vec3_t& getUp() const {
+        return up;
+      }
+
       fm_vec3_t getScreenPos(const fm_vec3_t &worldPos);
   };
 }

@@ -52,6 +52,7 @@ namespace P64::AudioManager
   void setMasterVolume(float volume);
 
   Audio::Handle play2D(wav64_t *audio);
+  Audio::Handle play2D(xm64player_t *audio);
 
   inline Audio::Handle play2D(uint32_t assetId) {
     return play2D((wav64_t*)AssetManager::getByIndex(assetId));
