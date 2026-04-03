@@ -19,6 +19,7 @@ bool Editor::PreferenceOverlay::draw()
     ImTable::start("Navigation");
     ImTable::add("Zoom Speed", ctx.prefs.zoomSpeed);
     ImTable::add("WASD Move Speed", ctx.prefs.moveSpeed);
+    ImTable::add("Modify Move Speed with Wheel", ctx.prefs.mouseWheelModifiesSpeed);
     ImTable::add("Pan Speed", ctx.prefs.panSpeed);
     ImTable::add("Look Speed", ctx.prefs.lookSpeed);
     ImTable::add("Invert Wheel Y", ctx.prefs.invertWheelY);

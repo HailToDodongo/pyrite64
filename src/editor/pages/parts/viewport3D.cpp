@@ -374,7 +374,8 @@ void Editor::Viewport3D::draw()
   mousePos.x -= screenPos.x;
   mousePos.y -= vpOffsetY;
 
-  float moveSpeed = ctx.prefs.moveSpeed * deltaTime;
+  if (!ctx.prefs.mouseWheelModifiesSpeed) moveSpeedModifier = 1.0f;
+  float moveSpeed = (ctx.prefs.moveSpeed * moveSpeedModifier) * deltaTime;
 
   bool mouseHeldLeft = ImGui::IsMouseDown(ImGuiMouseButton_Left);
   bool mouseHeldRight = ImGui::IsMouseDown(ImGuiMouseButton_Right);
@@ -506,17 +507,24 @@ void Editor::Viewport3D::draw()
     
     if(usesWheel)
     {
-      if (std::fmod(std::abs(wheel.x), 1.0f) == 0 && std::fmod(std::abs(wheel.y), 1.0f) == 0) {
+      // We override the normal mouse wheel functionality if the preference is set + mouse is held
+      // (...a more robust handling of editor state would probably also help with controlling parts of the viewport 
+      // viewport while the mouse is moving out of the window's focus)
+      if(ctx.prefs.mouseWheelModifiesSpeed && newMouseDown) {
+        moveSpeedModifier = std::clamp(moveSpeedModifier + (wheel.y * 0.125f), 0.125f, 4.0f);
+      } else {
+        if (std::fmod(std::abs(wheel.x), 1.0f) == 0 && std::fmod(std::abs(wheel.y), 1.0f) == 0) {
         //actual wheel or pinch gesture
         float wheelSpeed = (isShiftDown ? 4.0f : 1.0f) * ctx.prefs.zoomSpeed;
         camera.zoomSpeed += wheel.y * wheelSpeed;
-      } else {
-        if (ctx.prefs.invertWheelY) wheel.y *= -1;
-        //two finger swipe on trackpad
-        if (isShiftDown) {
-          camera.moveDelta(wheel * ctx.prefs.panSpeed);
         } else {
-          camera.orbitDelta(wheel * ctx.prefs.lookSpeed);
+          if (ctx.prefs.invertWheelY) wheel.y *= -1;
+          //two finger swipe on trackpad
+          if (isShiftDown) {
+            camera.moveDelta(wheel * ctx.prefs.panSpeed);
+          } else {
+            camera.orbitDelta(wheel * ctx.prefs.lookSpeed);
+          }
         }
       }
     }
@@ -573,6 +581,11 @@ void Editor::Viewport3D::draw()
     showCollObj = !showCollObj;
   }
   ImGui::SetItemTooltip("%s Collision Bodies", showCollObj ? "Hide" : "Show");
+
+  ImGui::SameLine();
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 12_px);
+  ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 3_px);
+  ImGui::Text("Cam Speed: %.2fx", moveSpeedModifier);
 
   ImGui::SetCursorPosY(currPos.y + BAR_HEIGHT);
 

@@ -29,6 +29,7 @@ namespace Editor
       bool selectionPending{false};
       bool selectionDragging{false};
 
+      float moveSpeedModifier{1.0f};
       float vpOffsetY{};
       glm::vec2 mousePos{};
       glm::vec2 mousePosStart{};
