@@ -381,6 +381,7 @@ void Editor::Viewport3D::draw()
   bool mouseHeldRight = ImGui::IsMouseDown(ImGuiMouseButton_Right);
   bool mouseHeldMiddle = ImGui::IsMouseDown(ImGuiMouseButton_Middle);
   bool newMouseDown = mouseHeldLeft || mouseHeldMiddle || mouseHeldRight;
+  bool isCameraFlying = false;
   bool isAltDown = ImGui::GetIO().KeyAlt;
   bool isShiftDown = ImGui::GetIO().KeyShift;
   if(isShiftDown)moveSpeed *= 4.0f;
@@ -472,6 +473,8 @@ void Editor::Viewport3D::draw()
       obj = nullptr;
     }
 
+    isCameraFlying = mouseHeldRight;
+
     if (deletedSelection) {
       hasSelection = false;
     }
@@ -499,7 +502,7 @@ void Editor::Viewport3D::draw()
     }
   }
 
-  if (isMouseHover && !overRotGizmo) {
+  if ((isMouseHover || isCameraFlying) && !overRotGizmo) {
     //multitouch trackpads don't generate touch or pinch events on windows
     //instead, we have to rely on the fact that trackpads move in fractional amounts
     glm::vec2 wheel = glm::vec2(io.MouseWheelH, io.MouseWheel);
@@ -508,9 +511,9 @@ void Editor::Viewport3D::draw()
     if(usesWheel)
     {
       // We override the normal mouse wheel functionality if the preference is set + mouse is held
-      // (...a more robust handling of editor state would probably also help with controlling parts of the viewport 
+      // (...a more robust handling of editor state would probably also help with controlling parts of the 
       // viewport while the mouse is moving out of the window's focus)
-      if(ctx.prefs.mouseWheelModifiesSpeed && newMouseDown) {
+      if(ctx.prefs.mouseWheelModifiesSpeed && mouseHeldRight) {
         moveSpeedModifier = std::clamp(moveSpeedModifier + (wheel.y * 0.125f), 0.125f, 4.0f);
       } else {
         if (std::fmod(std::abs(wheel.x), 1.0f) == 0 && std::fmod(std::abs(wheel.y), 1.0f) == 0) {
