@@ -15,6 +15,9 @@ namespace P64::Script::C48BB14F061323F6
     fm_vec3_t camDir;
     fm_vec3_t camPos;
     fm_vec3_t camTarget;
+
+    fm_vec3_t camPosCur;
+    fm_vec3_t camTargetCur;
   );
 
   void init(Object& obj, Data *data)
@@ -22,6 +25,9 @@ namespace P64::Script::C48BB14F061323F6
     memset(data, 0, sizeof(*data));
     data->camRotX = 1.544792654048f;
     data->camRotY = 4.05f;
+
+    data->camPos = {140, 240, 260};
+    data->camPosCur = data->camPos;
   }
 
   void update(Object& obj, Data *data, float deltaTime)
@@ -34,10 +40,6 @@ namespace P64::Script::C48BB14F061323F6
     data->camDir.v[0] = fm_cosf(data->camRotX) * fm_cosf(data->camRotY);
     data->camDir.v[1] = fm_sinf(data->camRotY);
     data->camDir.v[2] = fm_sinf(data->camRotX) * fm_cosf(data->camRotY);
-
-    if(held.a) {
-      data->camDir = -data->camPos;
-    }
 
     t3d_vec3_norm(&data->camDir);
 
@@ -60,12 +62,15 @@ namespace P64::Script::C48BB14F061323F6
     data->camTarget.v[0] = data->camPos.v[0] + data->camDir.v[0];
     data->camTarget.v[1] = data->camPos.v[1] + data->camDir.v[1];
     data->camTarget.v[2] = data->camPos.v[2] + data->camDir.v[2];
+
+    fm_vec3_lerp(&data->camPosCur, &data->camPosCur, &data->camPos, 0.1f);
+    fm_vec3_lerp(&data->camTargetCur, &data->camTargetCur, &data->camTarget, 0.1f);
   }
 
   void draw(Object& obj, Data *data, float deltaTime)
   {
     auto &cam = obj.getScene().getActiveCamera();
-    cam.setLookAt(data->camPos, data->camTarget);
+    cam.setLookAt(data->camPosCur, data->camTargetCur);
   }
 
   void onEvent(Object& obj, Data *data, const ObjectEvent &event)
