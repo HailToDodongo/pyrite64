@@ -7,7 +7,7 @@
       0.0,
       1.0
     ],
-    "doClearColor": true,
+    "doClearColor": false,
     "doClearDepth": true,
     "fbFormat": 0,
     "fbHeight": 240,
