@@ -73,7 +73,7 @@ void P64::Renderer::MaterialInstance::Placeholder::update()
     rdpq_sprite_upload(rdpTile, tex, &params);
   } else {
     // Note: for tile placeholders, "repeats" stores the texture size
-    rdpq_set_tile_size(TILE0,
+    rdpq_set_tile_size(rdpTile,
       params.s.translate, params.t.translate,
       params.s.translate + params.s.repeats,
       params.t.translate + params.t.repeats

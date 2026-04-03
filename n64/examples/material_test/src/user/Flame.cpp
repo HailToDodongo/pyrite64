@@ -25,11 +25,4 @@ namespace P64::Script::C751DA2F182978DE
     ph->tile.setOffset(0, 256 - data->scroll);
     ph->update();
   }
-
-  void draw(Object& obj, Data *data, float deltaTime)
-  {
-    constexpr fm_vec3_t ROT_AXIS{0,1,0};
-    auto viewDir = obj.pos - obj.getScene().getActiveCamera().getPos();
-    fm_quat_from_axis_angle(&obj.rot, &ROT_AXIS, fm_atan2f(viewDir.x, viewDir.z) + M_PI_2);
-  }
 }
