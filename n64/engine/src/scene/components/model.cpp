@@ -141,7 +141,6 @@ namespace P64::Comp
       while(t3d_model_iter_next(&it)) {
         if(it.object->userBlock)return; // already recorded the model
         rspq_block_begin();
-
           Renderer::MaterialState state{};
           auto *mat = (Renderer::Material*)it.object->material;
           mat->begin(state);

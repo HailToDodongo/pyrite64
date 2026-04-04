@@ -152,16 +152,16 @@ void P64::Renderer::Material::begin(MaterialState &state)
   uint16_t t3dVertFxArg0{};
   uint16_t t3dVertFxArg1{};
 
-  /*debugf("Set flags: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
-    sets(FLAG_OVERRIDE) ? "OVERRIDE" : "",  sets(FLAG_TEX0) ? "TEX0" : "",
-    sets(FLAG_TEX1) ? "TEX1" : "",          sets(FLAG_CC) ? "CC" : "",
-    sets(FLAG_BLENDER) ? "BLENDER" : "",    sets(FLAG_FOG) ? "FOG" : "",
-    sets(FLAG_PRIM) ? "PRIM" : "",          sets(FLAG_ENV) ? "ENV" : "",
-    sets(FLAG_ZPRIM) ? "ZPRIM" : "",        sets(FLAG_T3D_VERT_FX) ? "T3D_VERT_FX" : "",
-    sets(FLAG_ALPHA_COMP) ? "A-COMP" : "",  sets(FLAG_K4K5) ? "K4K5" : "",
-    sets(FLAG_PRIMLOD) ? "PRIMLOD" : "",    sets(FLAG_AA) ? "AA" : "",
-    sets(FLAG_DITHER) ? "DITHER" : "",      sets(FLAG_FILTER) ? "FILTER" : "",
-    sets(FLAG_ZMODE) ? "ZMODE" : "",        sets(FLAG_PERSP) ? "PERSP" : ""
+  /*debugf("Mat: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+    sets(FLAG_OVERRIDE)   ? "Overrd" : "  --  ", sets(FLAG_TEX0)        ? " TEX0 " : "  --  ",
+    sets(FLAG_TEX1)       ? " TEX1 " : "  --  ", sets(FLAG_CC)          ? "  CC  " : "  --  ",
+    sets(FLAG_BLENDER)    ? "BLEND " : "  --  ", sets(FLAG_FOG)         ? " Fog  " : "  --  ",
+    sets(FLAG_PRIM)       ? " PRIM " : "  --  ", sets(FLAG_ENV)         ? " ENV  " : "  --  ",
+    sets(FLAG_ZPRIM)      ? "Z-PRIM" : "  --  ", sets(FLAG_T3D_VERT_FX) ? "VertFX" : "  --  ",
+    sets(FLAG_ALPHA_COMP) ? "A-Comp" : "  --  ", sets(FLAG_K4K5)        ? " K4K5 " : "  --  ",
+    sets(FLAG_PRIMLOD)    ? "P-LOD " : "  --  ", sets(FLAG_AA)          ? "  AA  " : "  --  ",
+    sets(FLAG_DITHER)     ? "Dither" : "  --  ", sets(FLAG_FILTER)      ? "Filter" : "  --  ",
+    sets(FLAG_ZMODE)      ? "ZMode " : "  --  ", sets(FLAG_PERSP)       ? "Persp." : "  --  "
   );*/
 
   if(sets(FLAG_OVERRIDE)) {

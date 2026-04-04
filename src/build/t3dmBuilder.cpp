@@ -54,10 +54,12 @@ namespace
     }
     if(mat.blenderSet.value) {
       flags |= P64::Renderer::Material::FLAG_BLENDER;
+      flags |= P64::Renderer::Material::FLAG_OVERRIDE;
       f->write(mat.blender.value);
     }
     if(mat.fogSet.value) {
       flags |= P64::Renderer::Material::FLAG_FOG;
+      flags |= P64::Renderer::Material::FLAG_OVERRIDE;
       f->write(mat.fog.value);
     }
     if(mat.primColorSet.value) {
@@ -78,6 +80,7 @@ namespace
     }
 
     if(mat.zprimSet.value) {
+      flags |= P64::Renderer::Material::FLAG_OVERRIDE;
       flags |= P64::Renderer::Material::FLAG_ZPRIM;
       f->write<int16_t>(mat.zprim.value);
       f->write<int16_t>(mat.zdelta.value);
@@ -93,6 +96,7 @@ namespace
 
     if(mat.alphaCompSet.value) {
       flags |= P64::Renderer::Material::FLAG_ALPHA_COMP;
+      flags |= P64::Renderer::Material::FLAG_OVERRIDE;
       f->write<uint8_t>(mat.alphaComp.value);
     }
 
@@ -109,10 +113,12 @@ namespace
 
     if(mat.aaSet.value) {
       flags |= P64::Renderer::Material::FLAG_AA;
+      flags |= P64::Renderer::Material::FLAG_OVERRIDE;
       flags |= (mat.aa.value & 0b11) << 19;
     }
     if(mat.ditherSet.value) {
       flags |= P64::Renderer::Material::FLAG_DITHER;
+      flags |= P64::Renderer::Material::FLAG_OVERRIDE;
       flags |= (mat.dither.value & 0b1111) << 26;
     }
     if(mat.filterSet.value) {
@@ -121,6 +127,7 @@ namespace
     }
     if(mat.zmodeSet.value) {
       flags |= P64::Renderer::Material::FLAG_ZMODE;
+      flags |= P64::Renderer::Material::FLAG_OVERRIDE;
       flags |= (mat.zmode.value ? 1 : 0) << 24;
     }
     if(mat.perspSet.value) {
