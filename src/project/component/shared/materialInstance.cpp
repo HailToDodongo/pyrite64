@@ -7,6 +7,45 @@
 #include "../../assets/model3d.h"
 #include "../../scene/object.h"
 
+nlohmann::json Project::Component::Shared::MaterialInstance::serialize() const
+{
+  Utils::JSON::Builder j{};
+  j.set(setDepth).set(depth)
+    .set(setPrim).set(prim)
+    .set(setEnv).set(env)
+    .set(setLighting).set(lighting)
+    .set(setFresnel).set(fresnel)
+    .set(fresnelColor);
+
+  for(uint32_t i=0; i<texSlots.size(); ++i) {
+    if(texSlots[i].set.value) {
+      j.set("tex" + std::to_string(i), texSlots[i].serialize());
+    }
+  }
+  return j.doc;
+}
+
+void Project::Component::Shared::MaterialInstance::deserialize(const nlohmann::json &doc)
+{
+  Utils::JSON::readProp(doc, setDepth, false);
+  Utils::JSON::readProp(doc, depth);
+  Utils::JSON::readProp(doc, setPrim, false);
+  Utils::JSON::readProp(doc, prim, {1, 1, 1, 1});
+  Utils::JSON::readProp(doc, setEnv, false);
+  Utils::JSON::readProp(doc, env, {1, 1, 1, 1});
+  Utils::JSON::readProp(doc, setLighting, false);
+  Utils::JSON::readProp(doc, lighting, true);
+  Utils::JSON::readProp(doc, setFresnel, false);
+  Utils::JSON::readProp(doc, fresnel, 0);
+  Utils::JSON::readProp(doc, fresnelColor, {1,1,1,1});
+
+  for(int i=0; i<8; ++i) {
+    if(doc.contains("tex" + std::to_string(i))) {
+      texSlots[i].deserialize(doc["tex" + std::to_string(i)]);
+    }
+  }
+}
+
 void Project::Component::Shared::MaterialInstance::build(Utils::BinaryFile &file, Build::SceneCtx &ctx, Object &obj)
 {
   uint16_t setMask = 0;
