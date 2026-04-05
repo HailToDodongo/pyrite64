@@ -37,6 +37,7 @@ void Editor::Preferences::load()
     useVSync = doc.value("useVSync", DEF.useVSync);
     fpsLimit = doc.value("fpsLimit", DEF.fpsLimit);
     showRotAsEuler = doc.value("showRotAsEuler", DEF.showRotAsEuler);
+    mouseWheelModifiesSpeed = doc.value("mouseWheelModifiesSpeed", DEF.mouseWheelModifiesSpeed);
   } else {
     applyKeymapPreset();
   }
@@ -56,6 +57,7 @@ void Editor::Preferences::save()
     .set("useVSync", useVSync)
     .set("fpsLimit", fpsLimit)
     .set("showRotAsEuler", showRotAsEuler)
+    .set("mouseWheelModifiesSpeed", mouseWheelModifiesSpeed)
     .toString();
   auto prefPath = getPrefsPath();
   printf("Saving prefs to %s\n", prefPath.c_str());

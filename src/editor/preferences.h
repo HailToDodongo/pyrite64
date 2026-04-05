@@ -20,6 +20,7 @@ namespace Editor
     bool useVSync = false;
     int fpsLimit = 60;
     bool showRotAsEuler = false;
+    bool mouseWheelModifiesSpeed = false;
 
     void load();
     void save();
