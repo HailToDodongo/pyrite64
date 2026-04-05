@@ -154,9 +154,12 @@ namespace Project::Component::AnimModel
       return;
     }
 
-    data.obj3D.matInstance = &data.material;
-    data.obj3D.draw(pass, cmdBuff, &asset->model);
-    data.obj3D.matInstance = nullptr;
+    data.obj3D.draw(pass, cmdBuff, {
+      .partsIndices = {},
+      .model = &asset->model,
+      .matInstance = &data.material,
+      .obj = obj
+    });
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)

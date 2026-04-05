@@ -10,8 +10,7 @@
 void Renderer::Object::draw(
   SDL_GPURenderPass* pass,
   SDL_GPUCommandBuffer* cmdBuff,
-  const Project::Assets::Model3D *model,
-  const std::vector<uint32_t> &parts
+  const N64Mesh::ObjectRef *ref
 ) {
   if (!mesh && !n64Mesh) return;
 
@@ -27,7 +26,7 @@ void Renderer::Object::draw(
     SDL_PushGPUVertexUniformData(cmdBuff, 1, &uniform, sizeof(uniform));
     mesh->draw(pass);
   }
-  if(n64Mesh && model) {
-    n64Mesh->draw(pass, cmdBuff, uniform, parts, *model, matInstance);
+  if(n64Mesh && ref && ref->model) {
+    n64Mesh->draw(pass, cmdBuff, uniform, *ref);
   }
 }

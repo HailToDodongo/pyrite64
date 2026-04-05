@@ -75,8 +75,8 @@ void Utils::Toolchain::scan()
       printf("Libdragon out of date, missing 'rspq_block_begin_reuse' in rspq.h\n");
       state.upToDateLibs = false;
     }
-    if(!rspqHeader.contains("rspq_block_set_ph")) {
-      printf("Libdragon out of date, missing 'rspq_block_set_ph' in rspq.h\n");
+    if(!rspqHeader.contains("rspq_block_set_placeholder")) {
+      printf("Libdragon out of date, missing 'rspq_block_set_placeholder' in rspq.h\n");
       state.upToDateLibs = false;
     }
   }

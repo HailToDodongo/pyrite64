@@ -189,7 +189,6 @@ namespace Project::Component::CollMesh
       obj.rot.resolve(obj.propOverrides),
       obj.pos.resolve(obj.propOverrides),
       skew, persp);
-    data.obj3D.uniform.mat.flags |= DRAW_SHADER_COLLISION;
 
     auto asset = ctx.project->getAssets().getEntryByUUID(data.modelUUID.value);
     if (!asset || !asset->mesh3D) {
@@ -197,7 +196,12 @@ namespace Project::Component::CollMesh
     }
     auto &meshes = data.filter.filterT3DM(asset->model.t3dm.models, obj, false);
 
-    data.obj3D.draw(pass, cmdBuff, &asset->model, meshes);
+    data.obj3D.draw(pass, cmdBuff, {
+      .partsIndices = meshes,
+      .model = &asset->model,
+      .obj = obj,
+      .isCollision = true
+    });
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)

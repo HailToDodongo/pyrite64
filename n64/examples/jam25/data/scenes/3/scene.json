@@ -1,5 +1,6 @@
 {
   "conf": {
+    "audioFreq": 32000,
     "clearColor": [
       0.0,
       0.0,
@@ -96,6 +97,7 @@
               "aspect": 0.0,
               "far": 1000.0,
               "fov": 75.0,
+              "mode": 0,
               "near": 10.0,
               "vpOffset": [
                 0,
@@ -135,6 +137,7 @@
           148.7613525390625
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -164,6 +167,7 @@
         "propOverrides": {
           "17807472640229936847": "9:HDR Test"
         },
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -251,6 +255,7 @@
           0.0
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -313,6 +318,7 @@
           -40.0
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -344,6 +350,7 @@
           "13911321452997764027": "1:-27.265146,0.000000,151.549210",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -375,6 +382,7 @@
           "13911321452997764027": "1:-217.826309,0.000522,32.914337",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -401,6 +409,7 @@
       0.0
     ],
     "propOverrides": {},
+    "proportionalScale": false,
     "rot": [
       0.0,
       0.0,

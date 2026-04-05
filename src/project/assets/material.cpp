@@ -204,6 +204,13 @@ void Project::Assets::Material::fromT3D(::Project::AssetManager &assets, const T
     fogToAlpha.value = 0;
   }
 
+  if((matT3D.otherModeMask & SOM_ALPHACOMPARE_THRESHOLD) &&
+    (matT3D.otherModeValue & SOM_ALPHACOMPARE_THRESHOLD))
+  {
+    alphaCompSet.value = true;
+    alphaComp.value = matT3D.blendColor[3];
+  }
+
   if(matT3D.otherModeMask & SOM_SAMPLE_MASK)
   {
     filterSet.value = true;

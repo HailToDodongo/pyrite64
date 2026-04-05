@@ -83,6 +83,12 @@ struct GenericValue
   }
 
   template<typename T>
+  constexpr T& get() const
+  {
+    return const_cast<GenericValue*>(this)->get<T>();
+  }
+
+  template<typename T>
   constexpr void set(T val) {
     get<T>() = val;
     type = typeToId<T>();
@@ -124,6 +130,16 @@ struct Property
   T& resolve(OBJ &obj) {
     return resolve(obj.propOverrides);
   }
+
+  template<typename OBJ>
+  const T& resolve(const OBJ &obj) const {
+    const auto it = obj.propOverrides.find(id);
+    if(it != obj.propOverrides.end()) {
+      return it->second.template get<T>();
+    }
+    return value;
+  }
+
 
   bool operator==(const Property<T> &other) const {
     return value == other.value;

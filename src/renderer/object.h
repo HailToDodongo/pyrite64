@@ -24,7 +24,6 @@ namespace Renderer
 
     public:
       UniformsObject uniform{};
-      const Project::Component::Shared::MaterialInstance *matInstance{};
 
       void setObjectID(uint32_t id) {
         uniform.objectID = id;
@@ -46,8 +45,11 @@ namespace Renderer
       void draw(
         SDL_GPURenderPass* pass,
         SDL_GPUCommandBuffer* cmdBuff,
-        const Project::Assets::Model3D *model = nullptr,
-        const std::vector<uint32_t> &parts = {}
+        const N64Mesh::ObjectRef *ref = nullptr
       );
+
+      void draw(SDL_GPURenderPass* pass, SDL_GPUCommandBuffer* cmdBuff, const N64Mesh::ObjectRef &ref) {
+        draw(pass, cmdBuff, &ref);
+      }
   };
 }

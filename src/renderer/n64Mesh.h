@@ -10,6 +10,8 @@
 #include "tiny3d/tools/gltf_importer/src/structs.h"
 
 namespace Project {
+  class Object;
+
   namespace Component::Shared
   {
     struct MaterialInstance;
@@ -39,6 +41,15 @@ namespace Renderer
       Scene *scene{};
 
     public:
+      struct ObjectRef
+      {
+        const std::vector<uint32_t> &partsIndices;
+        const Project::Assets::Model3D *model;
+        const Project::Component::Shared::MaterialInstance *matInstance;
+        const Project::Object &obj;
+        bool isCollision{false};
+      };
+
       void fromT3DM(
         const Project::Assets::Model3D &model3d,
         Project::AssetManager &assetManager
@@ -47,9 +58,7 @@ namespace Renderer
       void recreate(Scene &sc);
       void draw(
         SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdBuff, UniformsObject &uniforms,
-        const std::vector<uint32_t> &partsIndices,
-        const Project::Assets::Model3D &model,
-        const Project::Component::Shared::MaterialInstance *matInstance
+        const ObjectRef &ref
       );
 
       const Utils::AABB& getAABB() const { return mesh.getAABB(); }

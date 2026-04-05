@@ -67,10 +67,10 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Project::Asse
     texA.offset.value,
     texB.offset.value
   };
-  part.material.high = part.material.low + glm::vec4{
-    texA.texSize.value[0] - 1, texA.texSize.value[0] - 1,
-    texB.texSize.value[0] - 1, texB.texSize.value[0] - 1,
-  };
+
+  auto texSizeA = (glm::vec2{texA.texSize.value} * texA.repeat.value) - 1.0f;
+  auto texSizeB = (glm::vec2{texB.texSize.value} * texB.repeat.value) - 1.0f;
+  part.material.high = part.material.low + glm::vec4{texSizeA, texSizeB};
 
   part.material.shift = {
     1.0f / std::pow(2, texA.scale.value[0]),

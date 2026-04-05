@@ -223,9 +223,12 @@ namespace Project::Component::Model
       return;
     }
     auto &meshes = data.filter.filterT3DM(asset->model.t3dm.models, obj, true);
-    data.obj3D.matInstance = &data.material;
-    data.obj3D.draw(pass, cmdBuff, &asset->model, meshes);
-    data.obj3D.matInstance = nullptr;
+    data.obj3D.draw(pass, cmdBuff, {
+      .partsIndices = meshes,
+      .model = &asset->model,
+      .matInstance = &data.material,
+      .obj = obj
+    });
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)

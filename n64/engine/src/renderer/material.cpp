@@ -126,7 +126,7 @@ void P64::Renderer::MaterialInstance::begin(Object &obj)
     for(uint32_t s=0; s<MAX_SLOTS; ++s) {
       if(setsPlaceholder(s)) {
         //debugf("Set placeholder %lu -> %p\n", s, placeholders[s].block[0]);
-        rspq_block_set_ph((rspq_block_t*)s, placeholders[s].block[0]);
+        rspq_block_set_placeholder((rspq_block_t*)s, placeholders[s].block[0]);
       }
     }
   }
