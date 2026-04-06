@@ -115,18 +115,18 @@ vec4 cc_overflowValue(in vec4 value)
 }
 /**
  * The C input in the CC gets a special overflow behaviour.
- * this will wrap around at [-1, +1] instead
+ * this will wrap around at (-1, +1] instead
  */
 vec4 cc_overflowValueC(in vec4 value)
 {
-  return mod(value + 1.0, 2.0) - 1.0;
+  vec4 wrapped = mod(value + 1.0, 2.0) - 1.0;
+  return mix(wrapped, vec4(1.0), equal(wrapped, vec4(-1.0)));
 }
 
 vec4 cc_clampValue(in vec4 value)
 {
   return clamp(value, 0.0, 1.0);
 }
-
 
 vec4 blender_fetch(
   in int val, in vec4 colorBlend, in vec4 colorFog, in vec4 colorFB, in vec4 colorCC,
