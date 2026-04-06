@@ -14,6 +14,23 @@ namespace P64::Coll {
 
   // ----- Additional vector utilities -----
 
+  inline fm_vec3_t vec3ReciprocalScaleComponents(const fm_vec3_t &scale) {
+    return fm_vec3_t{{
+      fabsf(scale.x) > FM_EPSILON ? 1.0f / scale.x : 0.0f,
+      fabsf(scale.y) > FM_EPSILON ? 1.0f / scale.y : 0.0f,
+      fabsf(scale.z) > FM_EPSILON ? 1.0f / scale.z : 0.0f,
+    }};
+  }
+
+  inline fm_vec3_t vec3NormalizeOrFallback(const fm_vec3_t &vector, const fm_vec3_t &fallback) {
+    if(fm_vec3_len2(&vector) > FM_EPSILON * FM_EPSILON) {
+      fm_vec3_t normalized;
+      fm_vec3_norm(&normalized, &vector);
+      return normalized;
+    }
+    return fallback;
+  }
+
   inline fm_vec3_t vec3Perpendicular(const fm_vec3_t &a) {
     fm_vec3_t temp;
     if(fabsf(a.x) > fabsf(a.z)) {

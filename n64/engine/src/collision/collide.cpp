@@ -17,8 +17,10 @@ namespace P64::Coll {
   struct ColliderProxy {
     Collider *collider{nullptr};
     fm_vec3_t worldCenter{};
-    Matrix3x3 rotation{};
-    Matrix3x3 rotationT{};
+    Matrix3x3 shapeToSpace{Matrix3x3::identity()};
+    Matrix3x3 shapeToSpaceTranspose{Matrix3x3::identity()};
+    Matrix3x3 spaceToShape{Matrix3x3::identity()};
+    Matrix3x3 normalToSpace{Matrix3x3::identity()};
   };
 
   static fm_vec3_t makeSafeContactNormal(const fm_vec3_t &normal, const fm_vec3_t &contactA, const fm_vec3_t &contactB) {
@@ -57,9 +59,9 @@ namespace P64::Coll {
       return;
     }
 
-    fm_vec3_t localDir = matrix3Vec3Mul(proxy->rotationT, direction);
+    fm_vec3_t localDir = matrix3Vec3Mul(proxy->shapeToSpaceTranspose, direction);
     fm_vec3_t localSupport = proxy->collider->support(localDir);
-    output = matrix3Vec3Mul(proxy->rotation, localSupport) + proxy->worldCenter;
+    output = matrix3Vec3Mul(proxy->shapeToSpace, localSupport) + proxy->worldCenter;
   }
 
   static bool barycentricIsInsideTriangle(const fm_vec3_t &barycentric, float tolerance) {
@@ -136,13 +138,6 @@ namespace P64::Coll {
     outMin = fminf(outMin, p2);
     outMax = fmaxf(outMax, p2);
   }
-
-  static void meshLocalResultToWorld(EpaResult &result, const MeshCollider &mesh) {
-    result.normal = mesh.rotateToWorld(result.normal);
-    result.contactA = mesh.toWorldSpace(result.contactA);
-    result.contactB = mesh.toWorldSpace(result.contactB);
-  }
-
 
   // ── Analytical collision helpers ──────────────────────────────────
 
@@ -486,15 +481,14 @@ namespace P64::Coll {
       const ColliderProxy &proxy,
       const BoxShape      &boxShape,
       const fm_vec3_t &v0w, const fm_vec3_t &v1w, const fm_vec3_t &v2w,
-      const fm_vec3_t &triNormal,
       EpaResult *results, int maxResults)
   {
     const fm_vec3_t &h = boxShape.halfSize;
 
     // Transform triangle vertices into box local space (box center = origin, axes aligned)
-    const fm_vec3_t v0 = matrix3Vec3Mul(proxy.rotationT, v0w - proxy.worldCenter);
-    const fm_vec3_t v1 = matrix3Vec3Mul(proxy.rotationT, v1w - proxy.worldCenter);
-    const fm_vec3_t v2 = matrix3Vec3Mul(proxy.rotationT, v2w - proxy.worldCenter);
+    const fm_vec3_t v0 = matrix3Vec3Mul(proxy.spaceToShape, v0w - proxy.worldCenter);
+    const fm_vec3_t v1 = matrix3Vec3Mul(proxy.spaceToShape, v1w - proxy.worldCenter);
+    const fm_vec3_t v2 = matrix3Vec3Mul(proxy.spaceToShape, v2w - proxy.worldCenter);
 
     // Triangle edges
     const fm_vec3_t e0 = v1 - v0;
@@ -521,15 +515,10 @@ namespace P64::Coll {
 
     // --- Triangle face normal ---
     {
-      fm_vec3_t localN = matrix3Vec3Mul(proxy.rotationT, triNormal);
+      fm_vec3_t localN = Coll::MeshCollider::triangleNormalFromVertices(v0, v1, v2);
       float boxHalf = fabsf(localN.x) * h.x + fabsf(localN.y) * h.y + fabsf(localN.z) * h.z;
       float triProj = fm_vec3_dot(&localN, &v0); // all tri verts project to same value
       float triMin = triProj, triMax = triProj;
-      // vertices may not project identically due to non-unit normals — be safe
-      float p1 = fm_vec3_dot(&localN, &v1);
-      float p2 = fm_vec3_dot(&localN, &v2);
-      triMin = fminf(triMin, fminf(p1, p2));
-      triMax = fmaxf(triMax, fmaxf(p1, p2));
       float l2 = fm_vec3_len2(&localN);
       if(!satAxisTest(boxHalf, triMin, triMax, l2, bestDepth, bestAxis, localN)) return 0;
     }
@@ -617,7 +606,7 @@ namespace P64::Coll {
     }
 
     // --- Generate results for selected points ---
-    fm_vec3_t worldNormal = matrix3Vec3Mul(proxy.rotation, bestAxis);
+    fm_vec3_t worldNormal = vec3NormalizeOrFallback(matrix3Vec3Mul(proxy.normalToSpace, bestAxis), VEC3_UP);
     int resultCount = 0;
 
     for(int k = 0; k < selectedCount && resultCount < maxResults; ++k) {
@@ -631,8 +620,8 @@ namespace P64::Coll {
       // Transform back to mesh local space
       results[resultCount].normal = worldNormal;
       results[resultCount].penetration = pen;
-      results[resultCount].contactA = matrix3Vec3Mul(proxy.rotation, contactOnBox) + proxy.worldCenter;
-      results[resultCount].contactB = matrix3Vec3Mul(proxy.rotation, p) + proxy.worldCenter;
+      results[resultCount].contactA = matrix3Vec3Mul(proxy.shapeToSpace, contactOnBox) + proxy.worldCenter;
+      results[resultCount].contactB = matrix3Vec3Mul(proxy.shapeToSpace, p) + proxy.worldCenter;
       resultCount++;
     }
 
@@ -837,13 +826,10 @@ namespace P64::Coll {
         // Full manifold: use Bullet-style area-maximizing heuristic to select which point to replace.
         // This keeps the deepest point and maximizes contact polygon coverage for better torque resistance.
         int replaceIdx = selectContactPointToReplace(existing->points, existing->pointCount, orderedResult.contactA, orderedResult.penetration);
-        // Replace if new point is deeper than the selected candidate
-        if(orderedResult.penetration > existing->points[replaceIdx].penetration) {
-          target = &existing->points[replaceIdx];
-          target->accumulatedNormalImpulse = 0.0f;
-          target->accumulatedTangentImpulseU = 0.0f;
-          target->accumulatedTangentImpulseV = 0.0f;
-        }
+        target = &existing->points[replaceIdx];
+        target->accumulatedNormalImpulse = 0.0f;
+        target->accumulatedTangentImpulseU = 0.0f;
+        target->accumulatedTangentImpulseV = 0.0f;
       }
 
       if(target) {
@@ -1019,7 +1005,7 @@ namespace P64::Coll {
   /// @brief Performs a collision test between a collider and a single Mesh triangle. Used as a subroutine for object-to-mesh collision detection.
   ///
   /// Hint: This function is designed to be called with the collider already transformed into the mesh's local space.
-  /// @param colliderProxyMeshSpace Collider proxy containing the original collider and additional mesh space data (world center, rotation) for GJK support function.
+  /// @param colliderProxyMeshSpace Collider proxy containing the original collider and additional mesh-space transform data for GJK support.
   /// @param rigidBody Pointer to the rigid body associated with the collider, if any.
   /// @param mesh Reference to the mesh collider.
   /// @param triangleIndex Index of the triangle within the mesh to test against.
@@ -1052,9 +1038,9 @@ namespace P64::Coll {
       const fm_vec3_t v2 = tri.localVertex(2);
 
       EpaResult satResults[MAX_CONTACT_POINTS_PER_PAIR];
-      int satCount = analyticalBoxTriangle(*colliderProxyMeshSpace, box, v0, v1, v2, tri.normal, satResults, MAX_CONTACT_POINTS_PER_PAIR);
+      int satCount = analyticalBoxTriangle(*colliderProxyMeshSpace, box, v0, v1, v2, satResults, MAX_CONTACT_POINTS_PER_PAIR);
       if(satCount > 0) {
-        for(int i = 0; i < satCount; ++i) meshLocalResultToWorld(satResults[i], mesh);
+        for(int i = 0; i < satCount; ++i) mesh.localResultToWorld(satResults[i]);
         collideCacheSatContactConstraint(
             rigidBody, colliderProxyMeshSpace->collider, objectA,
             const_cast<MeshCollider *>(&mesh), objectB,
@@ -1087,7 +1073,7 @@ namespace P64::Coll {
       const fm_vec3_t triCenter = (v0 + v1 + v2) / 3.0f;
 
       EpaResult dummyResult;
-      dummyResult.normal = makeSafeContactNormal(tri.normal, colliderProxyMeshSpace->collider->worldCenter(), triCenter);
+      dummyResult.normal = makeSafeContactNormal(mesh.localNormalToWorld(tri.normal), colliderProxyMeshSpace->collider->worldCenter(), triCenter);
       dummyResult.penetration = 0.0f;
       dummyResult.contactA = colliderProxyMeshSpace->collider->worldCenter();
       dummyResult.contactB = triCenter;
@@ -1109,7 +1095,7 @@ namespace P64::Coll {
             epaResult);
     if (epaSuccess)
     {
-      meshLocalResultToWorld(epaResult, mesh);
+      mesh.localResultToWorld(epaResult);
 
       collideCacheContactConstraint(
           rigidBody, colliderProxyMeshSpace->collider, nullptr, objectA,
@@ -1141,16 +1127,32 @@ namespace P64::Coll {
 
     if(count <= 0) return;
 
-    // Precompute collider proxy in mesh local space for reuse across triangle candidates
+    // Precompute the collider proxy in mesh local space once and reuse it across all candidate triangles.
     ColliderProxy colliderInMeshSpace;
     colliderInMeshSpace.collider = collider;
-    bool meshHasTransform = mesh.hasTransform();
-    colliderInMeshSpace.worldCenter = meshHasTransform ? mesh.toLocalSpace(collider->worldCenter()) : collider->worldCenter();
-    // apply mesh rotation to collider's orientation so GJK can work in mesh local space
-    colliderInMeshSpace.rotation = meshHasTransform
-                       ? matrix3Mul(mesh.inverseRotationMatrix(), collider->rotationMatrix())
-                       : collider->rotationMatrix();
-    colliderInMeshSpace.rotationT = matrix3Transpose(colliderInMeshSpace.rotation);
+
+    const bool meshHasTransform = mesh.hasTransform();
+    if(meshHasTransform) {
+      colliderInMeshSpace.worldCenter = mesh.toLocalSpace(collider->worldCenter());
+
+      Matrix3x3 relativeRotation = matrix3Mul(mesh.inverseRotationMatrix(), collider->rotationMatrix());
+      if(mesh.hasScale() && mesh.ownerObject()) {
+        Matrix3x3 inverseScale = diagonalMatrix(vec3ReciprocalScaleComponents(mesh.ownerObject()->scale));
+        colliderInMeshSpace.shapeToSpace = matrix3Mul(inverseScale, relativeRotation);
+      } else {
+        colliderInMeshSpace.shapeToSpace = relativeRotation;
+      }
+
+      colliderInMeshSpace.shapeToSpaceTranspose = matrix3Transpose(colliderInMeshSpace.shapeToSpace);
+      colliderInMeshSpace.spaceToShape = matrix3Inverse(colliderInMeshSpace.shapeToSpace);
+      colliderInMeshSpace.normalToSpace = matrix3Transpose(colliderInMeshSpace.spaceToShape);
+    } else {
+      colliderInMeshSpace.worldCenter = collider->worldCenter();
+      colliderInMeshSpace.shapeToSpace = collider->rotationMatrix();
+      colliderInMeshSpace.shapeToSpaceTranspose = matrix3Transpose(colliderInMeshSpace.shapeToSpace);
+      colliderInMeshSpace.spaceToShape = collider->inverseRotationMatrix();
+      colliderInMeshSpace.normalToSpace = colliderInMeshSpace.shapeToSpace;
+    }
 
 
     // For every candidate triangle perform precise collision test
@@ -1257,13 +1259,17 @@ namespace P64::Coll {
 
       proxyA.collider = colliderA;
       proxyA.worldCenter = colliderA->worldCenter();
-      proxyA.rotation = colliderA->rotationMatrix();
-      proxyA.rotationT = colliderA->inverseRotationMatrix();
+      proxyA.shapeToSpace = colliderA->rotationMatrix();
+      proxyA.shapeToSpaceTranspose = colliderA->inverseRotationMatrix();
+      proxyA.spaceToShape = colliderA->inverseRotationMatrix();
+      proxyA.normalToSpace = colliderA->rotationMatrix();
 
       proxyB.collider = colliderB;
       proxyB.worldCenter = colliderB->worldCenter();
-      proxyB.rotation = colliderB->rotationMatrix();
-      proxyB.rotationT = colliderB->inverseRotationMatrix();
+      proxyB.shapeToSpace = colliderB->rotationMatrix();
+      proxyB.shapeToSpaceTranspose = colliderB->inverseRotationMatrix();
+      proxyB.spaceToShape = colliderB->inverseRotationMatrix();
+      proxyB.normalToSpace = colliderB->rotationMatrix();
 
       simplex.nPoints = 0;
       fm_vec3_t separatingAxis{};

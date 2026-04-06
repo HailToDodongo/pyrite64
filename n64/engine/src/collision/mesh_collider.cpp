@@ -6,6 +6,7 @@
 #include "collision/mesh_collider.h"
 #include "collision/collider_shape.h"
 #include "scene/object.h"
+#include "collision/epa.h"
 
 namespace P64::Coll {
 
@@ -77,13 +78,29 @@ namespace P64::Coll {
     tri->gjkSupport(direction, output);
   }
 
+
+  fm_vec3_t MeshCollider::localNormalToWorld(const fm_vec3_t &localNormal) const {
+    fm_vec3_t worldNormal = localNormal;
+    if(owner_) {
+      worldNormal = worldNormal * vec3ReciprocalScaleComponents(owner_->scale);
+    }
+    worldNormal = rotateToWorld(worldNormal);
+    return vec3NormalizeOrFallback(worldNormal, VEC3_UP);
+  }
+
+  void MeshCollider::localResultToWorld(EpaResult &result) const {
+    result.normal = localNormalToWorld(result.normal);
+    result.contactA = toWorldSpace(result.contactA);
+    result.contactB = toWorldSpace(result.contactB);
+  }
+
   // ── MeshCollider transform ────────────────────────────────────────
 
   fm_vec3_t MeshCollider::toWorldSpace(const fm_vec3_t &localPoint) const {
     fm_vec3_t position = owner_ ? owner_->pos : VEC3_ZERO;
     fm_quat_t rotation = owner_ ? owner_->rot : QUAT_IDENTITY;
     fm_vec3_t scale = owner_ ? owner_->scale : fm_vec3_t{{1.0f, 1.0f, 1.0f}};
-    fm_vec3_t scaled = fm_vec3_t{{localPoint.x * scale.x, localPoint.y * scale.y, localPoint.z * scale.z}};
+    fm_vec3_t scaled = localPoint * scale;
     if(!quatIsIdentical(&rotation, &QUAT_IDENTITY)) {
       scaled = rotation * scaled;
     }
@@ -111,13 +128,23 @@ namespace P64::Coll {
   }
 
   fm_vec3_t MeshCollider::rotateToWorld(const fm_vec3_t &localDir) const {
-    if(!hasRotation()) return localDir;
-    return owner_->rot * localDir;
+    fm_vec3_t worldDirection = localDir;
+    if(hasScale() && owner_) 
+      worldDirection = worldDirection * owner_->scale;
+    if(hasRotation()) 
+      worldDirection = owner_->rot * worldDirection;
+    return worldDirection;
   }
 
   fm_vec3_t MeshCollider::rotateToLocal(const fm_vec3_t &worldDir) const {
-    if(!hasRotation()) return worldDir;
-    return matrix3Vec3Mul(inverseRotationMatrix_, worldDir);
+    fm_vec3_t localDirection = worldDir;
+    if(hasRotation()) 
+      localDirection = matrix3Vec3Mul(inverseRotationMatrix_, worldDir);
+    // return matrix3Vec3Mul(inverseRotationMatrix_, worldDir);
+    if (hasScale())
+      localDirection = localDirection * vec3ReciprocalScaleComponents(owner_->scale);
+
+    return localDirection;
   }
 
   bool MeshCollider::hasTransform() const {

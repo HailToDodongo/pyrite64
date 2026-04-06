@@ -1264,7 +1264,7 @@ namespace P64::Coll {
 
   bool CollisionScene::solvePositionConstraints() {
     const float slop = 0.01f * physicsScale_;
-    const float steering = 0.3f * physicsScale_;
+    const float steering = 0.3f;
     const float maxCorrection = 0.04f * physicsScale_;
     bool appliedCorrection = false;
 
@@ -1390,6 +1390,8 @@ namespace P64::Coll {
         Raycast localRay = ray;
         localRay.origin = mesh->hasTransform() ? mesh->toLocalSpace(ray.origin) : ray.origin;
         localRay.dir = mesh->hasTransform() ? mesh->rotateToLocal(ray.dir) : ray.dir;
+        float rayScalar = mesh->hasScale() ? fm_vec3_len(&mesh->owner_->scale) : 1.0f;
+        localRay.maxDistance = ray.maxDistance / rayScalar;
         localRay.invDir = fm_vec3_t{{
           fabsf(localRay.dir.x) > FM_EPSILON ? 1.0f / localRay.dir.x : FM_EPSILON,
           fabsf(localRay.dir.y) > FM_EPSILON ? 1.0f / localRay.dir.y : FM_EPSILON,
@@ -1407,7 +1409,7 @@ namespace P64::Coll {
 
           const MeshTriangleIndices &tri = mesh->triangles_[triIdx];
 
-          // Get vertices in world space
+          // Get vertices in local space
           fm_vec3_t v0 = mesh->vertices_[tri.indices[0]];
           fm_vec3_t v1 = mesh->vertices_[tri.indices[1]];
           fm_vec3_t v2 = mesh->vertices_[tri.indices[2]];
@@ -1416,18 +1418,23 @@ namespace P64::Coll {
           currentHit.didHit = false;
           hit.didHit = hit.didHit | ray_triangle_intersection(localRay, v0, v1, v2, mesh->normals_[triIdx], currentHit);
           if(currentHit.didHit && currentHit.distance < hit.distance && currentHit.distance <= ray.maxDistance) {
-            // Transform hit point and normal back to world space
-            hit.point = mesh->hasTransform() ? mesh->toWorldSpace(currentHit.point) : currentHit.point;
-            hit.normal = mesh->hasTransform() ? mesh->rotateToWorld(currentHit.normal) : currentHit.normal;
-            hit.distance = currentHit.distance;
-            hit.hitObjectId = mesh->owner_->id;
+            hit = currentHit;
           }
+        }
+        // Transform the best local hit to world space
+        if (hit.didHit)
+        {
+          hit.point = mesh->hasTransform() ? mesh->toWorldSpace(hit.point) : hit.point;
+          hit.normal = mesh->hasTransform() ? mesh->rotateToWorld(hit.normal) : hit.normal;
+          hit.distance = hit.distance * rayScalar;
+          hit.hitObjectId = mesh->owner_->id;
         }
       }
     }
 
     // Test physics objects
     if(hasFlag(ray.collTypes, RaycastColliderTypeFlags::COLLIDER_BODIES)) {
+      debugf("Raycast vs Colliders\n");
       NodeProxy collCandidates[RAYCAST_MAX_COLLIDER_TESTS];
       int candidate_count = colliderAABBTree.queryRay(ray, collCandidates, RAYCAST_MAX_COLLIDER_TESTS);
 

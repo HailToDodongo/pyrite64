@@ -46,6 +46,11 @@ namespace P64::Coll {
                           uint8_t readMask = 0xFF);
   };
 
+    /**
+   * Represents the result of a raycast intersection test.
+   * If didHit is true, point, normal, distance, and hitObjectId will contain valid data about the intersection.
+   * If didHit is false, the ray did not intersect
+   */
   struct RaycastHit {
     fm_vec3_t point{};
     fm_vec3_t normal{};

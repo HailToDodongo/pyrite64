@@ -16,7 +16,7 @@ namespace P64::Coll {
 
   class CollisionScene;
   struct Raycast;
-
+  struct EpaResult;
   struct Collider;
 
   struct MeshCollider; // forward declare
@@ -87,6 +87,8 @@ namespace P64::Coll {
     fm_vec3_t rotateToWorld(const fm_vec3_t &localDir) const;
     /// Rotate a world-space direction/normal to local space (no translation)
     fm_vec3_t rotateToLocal(const fm_vec3_t &worldDir) const;
+    fm_vec3_t localNormalToWorld(const fm_vec3_t &localNormal) const;
+    void localResultToWorld(EpaResult &result) const;
 
     /// Recompute worldAabb from localRootAabb + current transform
     void recalculateWorldAabb();
@@ -116,6 +118,15 @@ namespace P64::Coll {
     /// The returned collider owns newly allocated arrays (vertices, triangles, normals).
     /// Call destroyData() to free them.
     static MeshCollider *createFromRawData(void *rawData, Object *obj);
+
+    static inline fm_vec3_t triangleNormalFromVertices(const fm_vec3_t &v0, const fm_vec3_t &v1, const fm_vec3_t &v2)
+    {
+      const fm_vec3_t edge0 = v1 - v0;
+      const fm_vec3_t edge1 = v2 - v0;
+      fm_vec3_t normal;
+      fm_vec3_cross(&normal, &edge0, &edge1);
+      return vec3NormalizeOrFallback(normal, VEC3_UP);
+    }
 
     /// Free owned vertex/triangle/normal arrays and destroy the AABB tree.
     void destroyData();

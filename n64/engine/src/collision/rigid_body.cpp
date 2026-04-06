@@ -38,14 +38,6 @@ namespace P64::Coll {
     }};
   }
 
-  static Matrix3x3 diagonalMatrix(const fm_vec3_t &diag) {
-    Matrix3x3 result{};
-    result.m[0][0] = diag.x;
-    result.m[1][1] = diag.y;
-    result.m[2][2] = diag.z;
-    return result;
-  }
-
   static fm_vec3_t linearConstraintScale(Constraint constraints) {
     return fm_vec3_t{{
       hasFlag(constraints, Constraint::FreezePosX) ? 0.0f : 1.0f,
@@ -70,6 +62,32 @@ namespace P64::Coll {
       mat.m[1][0] * v.x + mat.m[1][1] * v.y + mat.m[1][2] * v.z,
       mat.m[2][0] * v.x + mat.m[2][1] * v.y + mat.m[2][2] * v.z
     }};
+  }
+
+  float matrix3Determinant(const Matrix3x3 &matrix) {
+    return matrix.m[0][0] * (matrix.m[1][1] * matrix.m[2][2] - matrix.m[1][2] * matrix.m[2][1])
+         - matrix.m[0][1] * (matrix.m[1][0] * matrix.m[2][2] - matrix.m[1][2] * matrix.m[2][0])
+         + matrix.m[0][2] * (matrix.m[1][0] * matrix.m[2][1] - matrix.m[1][1] * matrix.m[2][0]);
+  }
+
+  Matrix3x3 matrix3Inverse(const Matrix3x3 &matrix) {
+    const float determinant = matrix3Determinant(matrix);
+    if(fabsf(determinant) <= FM_EPSILON) {
+      return Matrix3x3::identity();
+    }
+
+    const float invDet = 1.0f / determinant;
+    Matrix3x3 inverse{};
+    inverse.m[0][0] =  (matrix.m[1][1] * matrix.m[2][2] - matrix.m[1][2] * matrix.m[2][1]) * invDet;
+    inverse.m[0][1] = -(matrix.m[0][1] * matrix.m[2][2] - matrix.m[0][2] * matrix.m[2][1]) * invDet;
+    inverse.m[0][2] =  (matrix.m[0][1] * matrix.m[1][2] - matrix.m[0][2] * matrix.m[1][1]) * invDet;
+    inverse.m[1][0] = -(matrix.m[1][0] * matrix.m[2][2] - matrix.m[1][2] * matrix.m[2][0]) * invDet;
+    inverse.m[1][1] =  (matrix.m[0][0] * matrix.m[2][2] - matrix.m[0][2] * matrix.m[2][0]) * invDet;
+    inverse.m[1][2] = -(matrix.m[0][0] * matrix.m[1][2] - matrix.m[0][2] * matrix.m[1][0]) * invDet;
+    inverse.m[2][0] =  (matrix.m[1][0] * matrix.m[2][1] - matrix.m[1][1] * matrix.m[2][0]) * invDet;
+    inverse.m[2][1] = -(matrix.m[0][0] * matrix.m[2][1] - matrix.m[0][1] * matrix.m[2][0]) * invDet;
+    inverse.m[2][2] =  (matrix.m[0][0] * matrix.m[1][1] - matrix.m[0][1] * matrix.m[1][0]) * invDet;
+    return inverse;
   }
 
   Matrix3x3 matrix3Mul(const Matrix3x3 &a, const Matrix3x3 &b) {

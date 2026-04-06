@@ -15,8 +15,17 @@ namespace P64::Coll {
   };
 
   fm_vec3_t matrix3Vec3Mul(const Matrix3x3 &mat, const fm_vec3_t &v);
+  float matrix3Determinant(const Matrix3x3 &matrix);
+  Matrix3x3 matrix3Inverse(const Matrix3x3 &matrix);
   Matrix3x3 matrix3Mul(const Matrix3x3 &a, const Matrix3x3 &b);
   Matrix3x3 matrix3Transpose(const Matrix3x3 &m);
   Matrix3x3 quatToMatrix3(const fm_quat_t &q);
+  inline Matrix3x3 diagonalMatrix(const fm_vec3_t &diag) {
+    Matrix3x3 result{};
+    result.m[0][0] = diag.x;
+    result.m[1][1] = diag.y;
+    result.m[2][2] = diag.z;
+    return result;
+  }
 
 } // namespace P64::Coll
