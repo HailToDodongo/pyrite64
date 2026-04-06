@@ -4,21 +4,15 @@
 #include "systems/context.h"
 #include "globals.h"
 
-#include "scene/components/collBody.h"
-#include "scene/components/collMesh.h"
 #include "scene/components/rigidBody.h"
 #include "scene/components/animModel.h"
 #include "systems/dropShadows.h"
 #include "systems/sprites.h"
 #include "collision/attach.h"
-#include "systems/dialog.h"
 #include "../p64/assetTable.h"
 
 namespace
 {
-  constexpr float GRAVITY = 1300.0f;
-  constexpr float GRAVITY_JUMP = 800.0f;
-
   constexpr float MOVE_SPEED = 170.0f;
   constexpr float MOVE_SPEED_SLOWDOWN = 0.4f;
   constexpr float MOVE_YAW_LERP = 0.22f;
@@ -55,7 +49,9 @@ namespace P64::Script::C17EA8EAB6CF1DEB
 {
   P64_DATA(
     fm_vec3_t lastMoveDir;
+    fm_vec3_t moveInputWorld;
     float targetMoveYaw;
+    float moveInputStrength;
 
     fm_vec3_t hurtVelocity;
     fm_vec3_t lastFramePos;
@@ -83,6 +79,8 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     uint8_t isJumpEnd;
     uint8_t isMidJump;
     uint8_t hasHitFloor;
+    uint8_t jumpHeld;
+    uint8_t jumpRequested;
 
     uint8_t stepSFXCooldown;
     uint8_t landSFXCooldown;
@@ -103,7 +101,6 @@ namespace P64::Script::C17EA8EAB6CF1DEB
 
   void update(Object& obj, Data *data, float deltaTime)
   {
-    auto coll = obj.getComponent<Comp::CollBody>();
     auto rb_comp = obj.getComponent<Comp::RigidBody>();
     if(data->anim == nullptr) {
       data->anim = obj.getComponent<Comp::AnimModel>();
@@ -111,20 +108,9 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       data->anim->setBlendAnim(0);
     }
 
-    auto &bcs = coll->collider;
     auto &rb = rb_comp->rigid_body;
 
     User::ctx.playerPos = obj.pos;
-
-    float gravity = data->isJumpEnd ? GRAVITY : GRAVITY_JUMP;
-    // rb.setVelocity() -= gravity * deltaTime;
-
-    // @TODO: respawn nicer
-    if(rb.positionPtr()->y < -1000)
-    {
-      obj.pos = data->lastSafePos;
-      rb.setVelocity({});
-    }
 
     if(obj.id != User::ctx.controlledId) return;
 
@@ -154,11 +140,6 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       model->material.colorPrim.g = (uint8_t)(blickColor.y * 255);
       model->material.colorPrim.b = (uint8_t)(blickColor.z * 255);
 
-      fm_vec3_t currVel = rb.linearVelocity();
-      currVel += data->hurtVelocity;
-      rb.setVelocity(currVel);
-      data->hurtVelocity *= 0.8f;
-
       if (data->hurtTimeout == 0.0f) {
         model->material.colorPrim = {0xFF, 0xFF, 0xFF, 0xFF};
         data->hurtVelocity = {};
@@ -172,45 +153,11 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       held = {};
     }
 
-    // bool onFloor = bcs.hitTriTypes & Coll::TriType::FLOOR;
-    // bool canJump = onFloor || data->inAirTime < (1.0f / 60.0f * 4);
+    bool onFloor = data->floorCast.didHit && data->floorCast.distance < 26.0f && data->floorCast.normal.y > 0.4f;
 
-    Coll::Raycast ray = Coll::Raycast::create(rb.worldCenterOfMass(), {0.0f, -1.0f, 0.0f}, 200.0f, Coll::RaycastColliderTypeFlags::ALL, false, 0x08);//0x09);
-    SceneManager::getCurrent().getCollision().raycast(ray, data->floorCast);
-    bool onFloor = data->floorCast.didHit && data->floorCast.distance < 25.0f && data->floorCast.normal.y > 0.4f;
-
-    bool canJump = onFloor || data->inAirTime < (1.0f / 60.0f * 4);
-
-    if(onFloor)data->isMidJump = false;
-
-    //if(inp.btn.a)bcs.velocity.y += 15.0f;
-
-    if(!data->isJumpEnd && inp.btn.a)
-    {
-      fm_vec3_t currVel = rb.linearVelocity();
-      currVel.y += 360 * deltaTime;
-      rb.setVelocity(currVel);
-    }
-
-
-    if(canJump && pressed.a) {
-      fm_vec3_t currVel = rb.linearVelocity();
-      currVel.y += std::exp(1.0f / 60.0f * deltaTime) * 270.0f;
-      rb.setVelocity(currVel);
-      data->isJumpEnd = false;
-      data->isMidJump = true;
-
-      auto sfx = AudioManager::play2D("sfx/PlayerJump00.wav64"_asset);
-      sfx.setSpeed(1.0f - (P64::Math::rand01() * 0.1f));
-      sfx.setVolume(0.35f);
-    }
-
-    if(rb.linearVelocity().y < 0.0f) {
-      data->isJumpEnd = true;
-    }
-    if(rb.linearVelocity().y > 1.0f && !data->isJumpEnd)
-    {
-      if(!inp.btn.a)data->isJumpEnd = true;
+    data->jumpHeld = inp.btn.a;
+    if(pressed.a) {
+      data->jumpRequested = 1;
     }
 
     bool isFocus = held.z;
@@ -279,20 +226,14 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     auto &cam = SceneManager::getCurrent().getActiveCamera();
     cam.setLookAt(camPos, data->camTarget);
 
-    // collider attachment
-    //TODO: change to new Collision system
-    obj.pos -= data->meshAttach.update(obj.pos);
-
-    // player physics
-    rb.setVelocity({rb.linearVelocity().x * MOVE_SPEED_SLOWDOWN, rb.linearVelocity().y, rb.linearVelocity().z * MOVE_SPEED_SLOWDOWN});
-    //bcs.velocity = Math::clamp(bcs.velocity, -1.0f, 1.0f);
-
     fm_vec3_t moveInput{inp.stick_x/100.0f, 0.0f, inp.stick_y/100.0f};
     if (moveInput.x > 1.0f) moveInput.x = 1.0f;
     if (moveInput.x < -1.0f) moveInput.x = -1.0f;
     if (moveInput.z > 1.0f) moveInput.z = 1.0f;
     if (moveInput.z < -1.0f) moveInput.z = -1.0f;
     float stickLen = fm_vec3_len(&moveInput);
+    data->moveInputStrength = stickLen;
+    data->moveInputWorld = {};
 
     data->targetAnimBlend = 1.0f;
     if(stickLen > 0.05f)
@@ -328,14 +269,8 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       fm_vec3_t moveDir = camForward * moveInput.z + camRight * moveInput.x;
       //fm_vec3_norm(&moveDir, &moveDir);
 
-      if (data->hurtTimeout > 0.0f) {
-        moveDir.x *= 0.75f;
-        moveDir.z *= 0.75f;
-      }
-
       data->lastMoveDir = moveDir;
-
-      rb.setVelocity({rb.linearVelocity().x + moveDir.x * MOVE_SPEED, rb.linearVelocity().y, rb.linearVelocity().z + moveDir.z * MOVE_SPEED});
+      data->moveInputWorld = moveDir;
 
       /*if(data->isJumpEnd && data->floorCast.hasResult())
       {
@@ -351,12 +286,6 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     float blendSpeed = data->targetAnimBlend > 0.5f ? 0.3f : 0.09f;
     blendSpeed *= deltaTime * 60.0f;
     data->anim->blendFactor = t3d_lerp(data->anim->blendFactor, data->targetAnimBlend, blendSpeed);
-
-    // kick back from hurting
-    fm_vec3_t currVel = rb.linearVelocity();
-    currVel += data->hurtVelocity;
-    rb.setVelocity(currVel);
-    data->hurtVelocity *= 0.8f;
 
     // Rotate player to face movement direction
     float currYaw = isFocus ? data->targetMoveYaw : atan2f(data->lastMoveDir.x, data->lastMoveDir.z);
@@ -375,17 +304,8 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       data->notMovingTime = 0;
     }
 
-    if(onFloor) {
-      if (data->hasHitFloor < 2) {
-        ++data->hasHitFloor;
-      }
-      data->inAirTime = 0;
-      if(data->notMovingTime > 30.0_ms) {
-        data->lastSafePos = obj.pos;
-      }
-    } else {
-      data->hasHitFloor = 0;
-      data->inAirTime += deltaTime;
+    if(onFloor && data->notMovingTime > 30.0_ms) {
+      data->lastSafePos = obj.pos;
     }
 
     // SFX- Hit floor impact
@@ -413,7 +333,77 @@ namespace P64::Script::C17EA8EAB6CF1DEB
 
   void fixedUpdate(Object& obj, Data *data, float fixedDeltaTime)
   {
-    
+    auto rb_comp = obj.getComponent<Comp::RigidBody>();
+    auto &rb = rb_comp->rigid_body;
+
+    if(rb.positionPtr()->y < -1000)
+    {
+      obj.pos = data->lastSafePos;
+      rb.setVelocity({});
+      data->hurtVelocity = {};
+      data->meshAttach = {};
+    }
+
+    if(obj.id != User::ctx.controlledId) return;
+
+    obj.pos -= data->meshAttach.update(obj.pos);
+
+    Coll::Raycast ray = Coll::Raycast::create(rb.worldCenterOfMass(), {0.0f, -1.0f, 0.0f}, 500.0f, Coll::RaycastColliderTypeFlags::ALL, false, 0x08);
+    SceneManager::getCurrent().getCollision().raycast(ray, data->floorCast);
+    bool onFloor = data->floorCast.didHit && data->floorCast.distance < 26.0f && data->floorCast.normal.y > 0.4f;
+    bool canJump = onFloor || data->inAirTime < (1.0f / 60.0f * 4);
+
+    if(onFloor) {
+      data->isMidJump = false;
+      if (data->hasHitFloor < 2) {
+        ++data->hasHitFloor;
+      }
+      data->inAirTime = 0.0f;
+    } else {
+      data->hasHitFloor = 0;
+      data->inAirTime += fixedDeltaTime;
+    }
+
+    fm_vec3_t nextVel = rb.linearVelocity();
+    if(nextVel.y < 0.0f) {
+      data->isJumpEnd = true;
+    }
+    if(nextVel.y > 1.0f && !data->isJumpEnd && !data->jumpHeld) {
+      data->isJumpEnd = true;
+    }
+
+    nextVel.x *= MOVE_SPEED_SLOWDOWN;
+    nextVel.z *= MOVE_SPEED_SLOWDOWN;
+
+    if(!data->isJumpEnd && data->jumpHeld) {
+      nextVel.y += 360.0f * fixedDeltaTime;
+    }
+
+    if(canJump && data->jumpRequested) {
+      nextVel.y += std::exp(1.0f / 60.0f * fixedDeltaTime) * 270.0f;
+      data->isJumpEnd = false;
+      data->isMidJump = true;
+
+      auto sfx = AudioManager::play2D("sfx/PlayerJump00.wav64"_asset);
+      sfx.setSpeed(1.0f - (P64::Math::rand01() * 0.1f));
+      sfx.setVolume(0.35f);
+    }
+
+    if(data->moveInputStrength > 0.05f) {
+      fm_vec3_t moveDir = data->moveInputWorld;
+      if(data->hurtTimeout > 0.0f) {
+        moveDir.x *= 0.75f;
+        moveDir.z *= 0.75f;
+      }
+
+      nextVel.x += moveDir.x * MOVE_SPEED;
+      nextVel.z += moveDir.z * MOVE_SPEED;
+    }
+
+    nextVel += data->hurtVelocity;
+    rb.setVelocity(nextVel);
+    data->hurtVelocity *= 0.8f;
+    data->jumpRequested = 0;
   }
 
   void onEvent(Object& obj, Data *data, const ObjectEvent &event)
