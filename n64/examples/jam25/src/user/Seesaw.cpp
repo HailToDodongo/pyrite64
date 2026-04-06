@@ -45,8 +45,8 @@ namespace P64::Script::CF977D94F4DB7A71
 
   void onCollision(Object& obj, Data *data, const Coll::CollEvent& event)
   {
-    if(User::ctx.controlledId != event.otherBCS->obj->id)return;
-    data->playerPos = event.otherBCS->obj->pos;
+    if(User::ctx.controlledId != event.otherObject->id)return;
+    data->playerPos = event.otherObject->pos;
     data->lastDiffX = obj.pos.x - data->playerPos.x;
     data->state = 1;
   }

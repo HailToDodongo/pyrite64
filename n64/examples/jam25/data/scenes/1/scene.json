@@ -14,6 +14,11 @@
     "fbWidth": 320,
     "filter": 1,
     "frameLimit": 0,
+    "gravity": [
+      0.0,
+      -9.8100004196167,
+      0.0
+    ],
     "layers2D": [
       {
         "blender": 0,
@@ -101,7 +106,11 @@
       }
     ],
     "name": "Test-Player",
-    "renderPipeline": 0
+    "physicsScale": 16.0,
+    "physicsTickRate": 60,
+    "positionSolverIterations": 9,
+    "renderPipeline": 0,
+    "velocitySolverIterations": 9
   },
   "graph": {
     "children": [
@@ -358,6 +367,8 @@
           },
           {
             "data": {
+              "maskRead": 0,
+              "maskWrite": 8,
               "meshFilter": "",
               "modelUUID": 67300967874118795
             },
@@ -407,12 +418,13 @@
         "components": [
           {
             "data": {
+              "bounce": 0.0,
+              "friction": 0.800000011920929,
               "halfExtend": [
                 50.0,
                 50.0,
                 50.0
               ],
-              "isFixed": false,
               "isTrigger": true,
               "maskRead": 255,
               "maskWrite": 255,
@@ -479,7 +491,7 @@
         "propOverrides": {
           "11272843812465326562": "1:1.000000,1.000000,1.000000",
           "13460160539698755218": "2:1.000000,1.000000,1.000000,1.000000",
-          "13911321452997764027": "1:91.142403,0.000000,431.787262",
+          "13911321452997764027": "1:39.437569,49.442734,431.787262",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
         "proportionalScale": false,
@@ -513,7 +525,7 @@
             ],
             "propOverrides": {
               "11272843812465326562": "1:1.000000,1.000000,1.000000",
-              "13911321452997764027": "1:-149.298981,-0.000488,39.793598",
+              "13911321452997764027": "1:-149.298981,14.217823,39.793598",
               "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
             },
             "proportionalScale": false,
@@ -989,15 +1001,16 @@
               },
               {
                 "data": {
+                  "bounce": 0.0,
+                  "friction": 0.800000011920929,
                   "halfExtend": [
                     32.0,
                     32.0,
                     32.0
                   ],
-                  "isFixed": true,
                   "isTrigger": false,
                   "maskRead": 0,
-                  "maskWrite": 1,
+                  "maskWrite": 8,
                   "offset": [
                     0.0,
                     0.0,
@@ -1113,6 +1126,8 @@
               },
               {
                 "data": {
+                  "maskRead": 0,
+                  "maskWrite": 8,
                   "meshFilter": "",
                   "modelUUID": 14061694646240479583
                 },
@@ -1205,15 +1220,16 @@
               },
               {
                 "data": {
+                  "bounce": 0.0,
+                  "friction": 0.800000011920929,
                   "halfExtend": [
                     32.0,
                     32.0,
                     32.0
                   ],
-                  "isFixed": true,
                   "isTrigger": false,
                   "maskRead": 0,
-                  "maskWrite": 1,
+                  "maskWrite": 8,
                   "offset": [
                     0.0,
                     0.0,
@@ -1295,15 +1311,16 @@
               },
               {
                 "data": {
+                  "bounce": 0.0,
+                  "friction": 0.800000011920929,
                   "halfExtend": [
                     32.0,
                     16.0,
                     32.0
                   ],
-                  "isFixed": true,
                   "isTrigger": false,
                   "maskRead": 0,
-                  "maskWrite": 1,
+                  "maskWrite": 8,
                   "offset": [
                     0.0,
                     0.0,
@@ -1460,6 +1477,8 @@
           },
           {
             "data": {
+              "maskRead": 0,
+              "maskWrite": 8,
               "meshFilter": "",
               "modelUUID": 14061694646240479583
             },

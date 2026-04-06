@@ -1,5 +1,6 @@
 {
   "conf": {
+    "audioFreq": 32000,
     "clearColor": [
       0.0,
       0.0,
@@ -13,6 +14,11 @@
     "fbWidth": 320,
     "filter": 1,
     "frameLimit": 1,
+    "gravity": [
+      0.0,
+      -9.8100004196167,
+      0.0
+    ],
     "layers2D": [
       {
         "blender": 0,
@@ -84,7 +90,11 @@
       }
     ],
     "name": "Menu",
-    "renderPipeline": 2
+    "physicsScale": 16.0,
+    "physicsTickRate": 50,
+    "positionSolverIterations": 6,
+    "renderPipeline": 2,
+    "velocitySolverIterations": 7
   },
   "graph": {
     "children": [
@@ -96,6 +106,7 @@
               "aspect": 0.0,
               "far": 1000.0,
               "fov": 75.0,
+              "mode": 0,
               "near": 10.0,
               "vpOffset": [
                 0,
@@ -167,6 +178,7 @@
           310.0
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -262,6 +274,7 @@
           -536.9998779296875
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           -0.4877363443374634,
           -0.5450246930122375,
@@ -356,6 +369,7 @@
           -2433.409423828125
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -382,6 +396,7 @@
       0.0
     ],
     "propOverrides": {},
+    "proportionalScale": false,
     "rot": [
       0.0,
       0.0,

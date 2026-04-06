@@ -36,8 +36,8 @@ namespace P64::Script::C19072097105FC85
   void onCollision(Object& obj, Data *data, const Coll::CollEvent& event)
   {
     if (data->state != 0)return;
-    if (!event.otherBCS || !event.otherBCS->obj)return;
-    if (User::ctx.controlledId != event.otherBCS->obj->id)return;
+    if (!event.hitCollider || !event.hitCollider->ownerObject())return;
+    if (User::ctx.controlledId != event.otherObject->id)return;
 
     data->state = 1;
     obj.getComponent<Comp::NodeGraph>()->run(data->sceneId, data->noDialog);

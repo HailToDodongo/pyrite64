@@ -21,7 +21,7 @@ namespace P64::Script::CDFD59456D61CD17
   void onCollision(Object& obj, Data *data, const Coll::CollEvent& event)
   {
     if(data->sceneLoadId != 0)return;
-    if(event.otherBCS->obj->id != User::ctx.controlledId)return;
+    if(event.otherObject->id != User::ctx.controlledId)return;
 
     data->sceneLoadId = data->sceneId;
     User::ScreenFade::fadeOut(0, 1.4f);

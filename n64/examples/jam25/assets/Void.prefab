@@ -43,12 +43,13 @@
       },
       {
         "data": {
+          "bounce": 0.0,
+          "friction": 0.800000011920929,
           "halfExtend": [
             30.0,
             30.0,
             30.0
           ],
-          "isFixed": false,
           "isTrigger": true,
           "maskRead": 1,
           "maskWrite": 0,
@@ -80,12 +81,13 @@
       },
       {
         "data": {
+          "bounce": 0.0,
+          "friction": 0.800000011920929,
           "halfExtend": [
             16.0,
             16.0,
             16.0
           ],
-          "isFixed": true,
           "isTrigger": false,
           "maskRead": 0,
           "maskWrite": 2,
@@ -110,6 +112,7 @@
       130.26246643066406
     ],
     "propOverrides": {},
+    "proportionalScale": false,
     "rot": [
       0.0,
       0.0,

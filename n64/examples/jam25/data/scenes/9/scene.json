@@ -1,5 +1,6 @@
 {
   "conf": {
+    "audioFreq": 32000,
     "clearColor": [
       0.24193549156188965,
       0.6148545145988464,
@@ -13,6 +14,11 @@
     "fbWidth": 320,
     "filter": 1,
     "frameLimit": 0,
+    "gravity": [
+      0.0,
+      -9.8100004196167,
+      0.0
+    ],
     "layers2D": [
       {
         "blender": 0,
@@ -84,7 +90,11 @@
       }
     ],
     "name": "Test",
-    "renderPipeline": 2
+    "physicsScale": 16.0,
+    "physicsTickRate": 50,
+    "positionSolverIterations": 6,
+    "renderPipeline": 2,
+    "velocitySolverIterations": 7
   },
   "graph": {
     "children": [
@@ -163,6 +173,7 @@
           745.1507568359375
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           0.25430727005004883,
           0.22658279538154602,
@@ -222,6 +233,8 @@
           },
           {
             "data": {
+              "maskRead": 255,
+              "maskWrite": 255,
               "meshFilter": "",
               "modelUUID": 6985508143550202785
             },
@@ -257,6 +270,7 @@
           81.81239318847656
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           -0.5855721235275269,
           0.0,
@@ -280,6 +294,7 @@
               "aspect": 0.0,
               "far": 800.0,
               "fov": 75.0,
+              "mode": 0,
               "near": 40.0,
               "vpOffset": [
                 0,
@@ -328,6 +343,7 @@
           131.65626525878906
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           1.0,
           0.0,
@@ -387,6 +403,8 @@
           },
           {
             "data": {
+              "maskRead": 255,
+              "maskWrite": 255,
               "meshFilter": "",
               "modelUUID": 15813250936274457379
             },
@@ -422,6 +440,7 @@
           1712.8524169921875
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           -0.15848416090011597,
           0.9761050343513489,
@@ -460,6 +479,7 @@
           0.0
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           1.0,
           0.0,
@@ -486,6 +506,7 @@
       0.0
     ],
     "propOverrides": {},
+    "proportionalScale": false,
     "rot": [
       0.0,
       0.0,

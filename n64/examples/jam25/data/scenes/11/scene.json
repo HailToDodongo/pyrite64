@@ -1,5 +1,6 @@
 {
   "conf": {
+    "audioFreq": 32000,
     "clearColor": [
       0.0,
       0.0,
@@ -13,6 +14,11 @@
     "fbWidth": 320,
     "filter": 1,
     "frameLimit": 0,
+    "gravity": [
+      0.0,
+      -9.8100004196167,
+      0.0
+    ],
     "layers2D": [
       {
         "blender": 5242944,
@@ -68,7 +74,11 @@
       }
     ],
     "name": "Boot-Logos",
-    "renderPipeline": 0
+    "physicsScale": 16.0,
+    "physicsTickRate": 50,
+    "positionSolverIterations": 6,
+    "renderPipeline": 0,
+    "velocitySolverIterations": 7
   },
   "graph": {
     "children": [
@@ -80,6 +90,7 @@
               "aspect": 0.0,
               "far": 1000.0,
               "fov": 75.0,
+              "mode": 0,
               "near": 10.0,
               "vpOffset": [
                 0,
@@ -142,6 +153,7 @@
           312.8325500488281
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -168,6 +180,7 @@
       0.0
     ],
     "propOverrides": {},
+    "proportionalScale": false,
     "rot": [
       0.0,
       0.0,

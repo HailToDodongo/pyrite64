@@ -16,14 +16,15 @@
       },
       {
         "data": {
+          "bounce": 0.0,
+          "friction": 0.800000011920929,
           "halfExtend": [
             10.0,
             10.0,
             10.0
           ],
-          "isFixed": false,
           "isTrigger": true,
-          "maskRead": 0,
+          "maskRead": 1,
           "maskWrite": 1,
           "offset": [
             0.0,
@@ -46,6 +47,7 @@
       0.0
     ],
     "propOverrides": {},
+    "proportionalScale": false,
     "rot": [
       0.0,
       0.0,

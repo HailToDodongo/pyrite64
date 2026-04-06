@@ -41,15 +41,16 @@
       },
       {
         "data": {
+          "bounce": 0.0,
+          "friction": 0.0,
           "halfExtend": [
             22.0,
             22.0,
             22.0
           ],
-          "isFixed": false,
           "isTrigger": false,
           "maskRead": 31,
-          "maskWrite": 9,
+          "maskWrite": 1,
           "offset": [
             0.0,
             24.0,
@@ -85,6 +86,25 @@
         "id": 0,
         "name": "Code",
         "uuid": 10732132723724657709
+      },
+      {
+        "data": {
+          "angularDamping": 0.029999999329447746,
+          "constrainPosX": false,
+          "constrainPosY": false,
+          "constrainPosZ": false,
+          "constrainRotX": true,
+          "constrainRotY": true,
+          "constrainRotZ": true,
+          "gravityScalar": 5.0,
+          "hasGravity": true,
+          "isKinematic": false,
+          "mass": 50.0,
+          "timeScalar": 1.0
+        },
+        "id": 11,
+        "name": "Rigid-Body",
+        "uuid": 11590953662040302348
       }
     ],
     "enabled": true,
@@ -96,6 +116,7 @@
       194.30795288085938
     ],
     "propOverrides": {},
+    "proportionalScale": false,
     "rot": [
       0.0,
       0.0,

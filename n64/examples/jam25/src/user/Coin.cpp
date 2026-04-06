@@ -20,7 +20,8 @@ namespace P64::Script::CFEEDEA8CF251F94
     [[P64::Name("No Cast")]]
     uint32_t noCast;
 
-    Coll::RaycastRes floorCast;
+    Coll::RaycastHit floorCast;
+    bool didCastFloorRay;
   );
 
   void init(Object& obj, Data *data)
@@ -28,16 +29,17 @@ namespace P64::Script::CFEEDEA8CF251F94
     if (obj.getComponent<Comp::Constraint>()) {
       data->noCast = 1;
     }
-
-    if(data->noCast == 0)
+    data->didCastFloorRay = false;
+    if (data->noCast == 0)
     {
-      data->floorCast = obj.getScene().getCollision().raycast(
-        obj.pos + fm_vec3_t{0.0f, 5.0f, 0.0f},
-        {0.0f, -1.0f, 0.0f}
-      );
-      if(data->floorCast.hasResult()) {
-        obj.pos.y = data->floorCast.hitPos.y + DEF_FLOOR_DIST;
+      Coll::Raycast ray;
+      ray = Coll::Raycast::create(obj.pos + fm_vec3_t{0.0f, 5.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, 100.0f, Coll::RaycastColliderTypeFlags::ALL, false, 0x08);
+      obj.getScene().getCollision().raycast(ray, data->floorCast);
+      if (data->floorCast.didHit)
+      {
+        obj.pos.y = data->floorCast.point.y + DEF_FLOOR_DIST;
       }
+      data->didCastFloorRay = true;
     }
   }
 
@@ -59,13 +61,15 @@ namespace P64::Script::CFEEDEA8CF251F94
     {
       // only update shadow every other frame
       if((User::ctx.frame & 0b1) == (obj.id & 0b1)) {
-        data->floorCast = obj.getScene().getCollision().raycast(obj.pos, {0.0f, -1.0f, 0.0f});
+        Coll::Raycast ray;
+        ray = Coll::Raycast::create(obj.pos, {0.0f, -1.0f, 0.0f}, 100.0f, Coll::RaycastColliderTypeFlags::ALL, false, 0x08);
+        obj.getScene().getCollision().raycast(ray, data->floorCast);
       }
     }
 
-    if(!data->floorCast.hasResult())return;
+    if(!data->floorCast.didHit)return;
     User::DropShadows::addShadow(
-      data->floorCast.hitPos,
+      data->floorCast.point,
       data->floorCast.normal,
       0.275f, 0.8f
     );
@@ -73,9 +77,9 @@ namespace P64::Script::CFEEDEA8CF251F94
 
   void onCollision(Object& obj, Data *data, const Coll::CollEvent& event)
   {
-    if(!event.otherBCS)return;
+    if(!event.otherObject)return;
 
-    if(event.otherBCS->obj->id != User::ctx.controlledId)return;
+    if(event.otherObject->id != User::ctx.controlledId)return;
     ++User::ctx.coins;
 
     auto sfx = AudioManager::play2D("sfx/CoinGet.wav64"_asset);

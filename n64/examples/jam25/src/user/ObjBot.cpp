@@ -42,9 +42,10 @@ namespace P64::Script::C4F4D286D6CB0DE3
   {
     auto coll = obj.getComponent<Comp::CollBody>();
     //if(!coll)return;
-    auto &bcs = coll->bcs;
+    auto &bcs = coll->collider;
 
-    bcs.velocity.y -= 1000 * deltaTime;
+    //TODO: fix new Collision
+    // bcs.velocity.y -= 1000 * deltaTime;
 
     if(obj.id != User::ctx.controlledId)
     {
@@ -90,9 +91,11 @@ namespace P64::Script::C4F4D286D6CB0DE3
       dir = obj.rot * dir;
       //obj.pos += dir * (MOVE_SPEED * deltaTime);
 
-      bcs.velocity.x = 0;
-      bcs.velocity.z = 0;
-      bcs.velocity += dir * MOVE_SPEED;
+
+      //TODO: fix new Collision
+      // bcs.velocity.x = 0;
+      // bcs.velocity.z = 0;
+      // bcs.velocity += dir * MOVE_SPEED;
     }
 
     auto camPos = obj.pos + fm_vec3_t{0.0f, 39.0f, 0.0f};

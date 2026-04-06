@@ -70,7 +70,8 @@ namespace P64::Script::CD43F65D4883D4A8
     auto model = obj.getComponent<Comp::Model>();
 
     auto coll = obj.getComponent<Comp::CollBody>(1);
-    coll->bcs.maskWrite = canAfford(data->coinAmount) ? 0b00 : 0b10;
+    uint8_t newWriteMask = canAfford(data->coinAmount) ? 0b00 : 0b10;
+    coll->collider.setCollisionMask(coll->collider.readMask(), newWriteMask);
 
     model->material.colorPrim = User::getRainbowColor(data->colorTimer * 1.0f);
 
@@ -91,7 +92,7 @@ namespace P64::Script::CD43F65D4883D4A8
       obj.iterChildren([data](Object* child) {
         (*data->orgScale)[child->id] = child->scale;
         child->setEnabled(false);
-        child->iterChildren([](Object* subChild) { subChild->setEnabled(false); });
+        // child->iterChildren([](Object* subChild) { subChild->setEnabled(false); });
       });
       data->state = 1;
     }
@@ -133,9 +134,10 @@ namespace P64::Script::CD43F65D4883D4A8
       if(data->fadeTimer >= 0.0f)return;
 
       obj.iterChildren([](Object* child) {
+        debugf("Enabling child object %u\n", child->id);
         child->scale = {0.01f, 0.01f, 0.01f};
         child->setEnabled(true);
-        child->iterChildren([](Object* subChild) { subChild->setEnabled(true); });
+        // child->iterChildren([](Object* subChild) { subChild->setEnabled(true); });
       });
       data->fadeTimer = 0.0f;
       User::ctx.coins -= data->coinAmount;

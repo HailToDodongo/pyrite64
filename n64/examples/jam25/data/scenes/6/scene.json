@@ -1,5 +1,6 @@
 {
   "conf": {
+    "audioFreq": 32000,
     "clearColor": [
       0.6141714453697205,
       0.8145161271095276,
@@ -13,6 +14,11 @@
     "fbWidth": 320,
     "filter": 1,
     "frameLimit": 0,
+    "gravity": [
+      0.0,
+      -9.8100004196167,
+      0.0
+    ],
     "layers2D": [
       {
         "blender": 0,
@@ -84,7 +90,11 @@
       }
     ],
     "name": "Map-Retro",
-    "renderPipeline": 0
+    "physicsScale": 16.0,
+    "physicsTickRate": 50,
+    "positionSolverIterations": 6,
+    "renderPipeline": 0,
+    "velocitySolverIterations": 7
   },
   "graph": {
     "children": [
@@ -102,6 +112,7 @@
         "propOverrides": {
           "17807472640229936847": "9:Retro"
         },
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -147,6 +158,7 @@
               -187.8899688720703
             ],
             "propOverrides": {},
+            "proportionalScale": false,
             "rot": [
               0.0,
               0.0,
@@ -190,6 +202,7 @@
               -174.44361877441406
             ],
             "propOverrides": {},
+            "proportionalScale": false,
             "rot": [
               0.5244975090026855,
               -0.021569453179836273,
@@ -216,6 +229,7 @@
           0.0
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -275,6 +289,8 @@
           },
           {
             "data": {
+              "maskRead": 255,
+              "maskWrite": 255,
               "meshFilter": "",
               "modelUUID": 1397703482184716120
             },
@@ -292,6 +308,7 @@
           0.0
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -323,6 +340,7 @@
           "13911321452997764027": "1:-6.179775,79.238129,231.616257",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -350,6 +368,7 @@
           194.30795288085938
         ],
         "propOverrides": {},
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -381,6 +400,7 @@
           "13911321452997764027": "1:-60.000000,0.000000,70.000000",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -412,6 +432,7 @@
           "13911321452997764027": "1:7.212315,0.000000,70.879845",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -443,6 +464,7 @@
           "13911321452997764027": "1:70.000000,0.000000,70.000000",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
+        "proportionalScale": false,
         "rot": [
           0.0,
           0.0,
@@ -469,6 +491,7 @@
       0.0
     ],
     "propOverrides": {},
+    "proportionalScale": false,
     "rot": [
       0.0,
       0.0,
