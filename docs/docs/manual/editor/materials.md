@@ -199,4 +199,48 @@ The editors viewport will correctly preview both cases, so you see when it happe
 ##### Texture Issues
 If you want to use two textures, 2-cylce mode must be enabled.\
 Using the first texture in the second cycle also causes wrong pixels to be sampled.\
-To be totally safe, try to only use textures in the first cycle. 
+To be totally safe, try to only use textures in the first cycle.
+
+#### Texture Inputs
+
+If the CC uses a texture, you will see a UI to set settings for it.\
+The RDP allows multiple textures to be loaded. Ignoring special cases, the CC can reference two of them at once.
+
+On the RDP side, textures are handled by setting up so-called "Tiles".\
+This is similar to a modern image-sampler that defines things like dimension, offset, repeat-mode and so on.
+
+So while the triangles in a mesh contain UVs, they will go through the tiles logic to determine the final pixel to be sampled.
+Tiles are always applied when sampling a texture, so all settings made there have no effect on performance.
+
+Now for all the settings available: 
+```{image} /_static/img/model_edit_tex.png
+:align: center
+:width: 350px
+```
+`Placeholder` lets you select how dynamic the texture should be.\
+By default it is `None`, meaning the material fully sets it, and nothing can override it.\
+Using `Tile` means the texture itself is still fixed in the material,\
+but applying an offset is now possible dynamically.\
+This can be used to scroll textures (even TEX0 and TEX1 differently) in objects.\
+Setting it to `Texture + Tile` gives control to the object, and the material sets nothing.\
+The use-case for this can be e.g.: texture-animations like blinking eyes.
+
+`Size` defines the dimensions of the texture.\
+This can only be changed if a placeholder is used.
+
+`Offset` allows shifting the texture sampler aka texture-scrolling.\
+Be aware that the minimum step size is `0.25`, and it overflows at `1024`.
+
+`Scale` is factor in powers of two that can scale a texture up or down.\
+This can be especially useful when combining two textures.\
+For example, by having a grass texture, and multiplying a lower-res noise texture on top of it at a large scale.
+
+`Repeat` determines the number of repetitions, if UVs exceed 1.0.\
+The upper limit is `2048`, which can be set to repeat "infinitely."\
+A value of `1.0` is equivalent to clamping.\
+Note that any value inbetween, even fractions, are valid.
+
+If `Mirror` is enabled, the texture will flip every other repetition.\
+
+All the settings below the texture can be set per axis, the left side is for the horizontal U axis, the right one for the vertical V axis.
+(On the RDP those are also known as `ST` instead of `UV`).
