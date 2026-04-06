@@ -1479,7 +1479,13 @@ namespace P64::Coll {
     stageStart = get_ticks();
     // Refresh collider world state
     for(Collider *collider : colliders_) {
-      if(collider) collider->syncWorldState();
+      if(!collider) continue;
+
+      const fm_vec3_t previousCenter = collider->worldCenter_;
+      if(!collider->syncWorldState() || collider->aabbTreeNodeId_ == NULL_NODE) continue;
+
+      const fm_vec3_t displacement = collider->worldCenter_ - previousCenter;
+      colliderAABBTree.moveNode(collider->aabbTreeNodeId_, collider->worldAabb_, displacement);
     }
 
     // Update compound CoM/inertia on demand and refresh world inertia tensors.
