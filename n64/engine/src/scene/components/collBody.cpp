@@ -49,6 +49,9 @@ namespace P64::Comp
     data->collider.setParentOffset(initData->offset);
 
     fm_vec3_t scaledHalfExtend = initData->halfExtend * obj.scale;
+    scaledHalfExtend.x = fabsf(scaledHalfExtend.x);
+    scaledHalfExtend.y = fabsf(scaledHalfExtend.y);
+    scaledHalfExtend.z = fabsf(scaledHalfExtend.z);
 
     data->collider.setTrigger(initData->isTrigger);
     data->collider.setCollisionMask(initData->maskRead, initData->maskWrite);

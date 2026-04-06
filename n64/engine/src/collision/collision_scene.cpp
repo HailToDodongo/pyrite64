@@ -1388,10 +1388,14 @@ namespace P64::Coll {
         const MeshCollider *mesh = meshColliders_[m];
         if(!mesh || mesh->triangleCount_ == 0 || !mesh->owner_) continue;
         Raycast localRay = ray;
+        float rayScalar = 1.0f;
+        if(mesh->hasScale()) {
+          rayScalar = fm_vec3_len(&mesh->owner_->scale);
+          if(rayScalar <= FM_EPSILON || !std::isfinite(rayScalar)) continue;
+          localRay.maxDistance = ray.maxDistance / rayScalar;
+        }
         localRay.origin = mesh->hasTransform() ? mesh->toLocalSpace(ray.origin) : ray.origin;
         localRay.dir = mesh->hasTransform() ? mesh->rotateToLocal(ray.dir) : ray.dir;
-        float rayScalar = mesh->hasScale() ? fm_vec3_len(&mesh->owner_->scale) : 1.0f;
-        localRay.maxDistance = ray.maxDistance / rayScalar;
         localRay.invDir = fm_vec3_t{{
           fabsf(localRay.dir.x) > FM_EPSILON ? 1.0f / localRay.dir.x : FM_EPSILON,
           fabsf(localRay.dir.y) > FM_EPSILON ? 1.0f / localRay.dir.y : FM_EPSILON,

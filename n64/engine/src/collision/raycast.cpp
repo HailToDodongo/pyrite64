@@ -10,13 +10,19 @@
 namespace P64::Coll {
 
   static bool ray_sphere_intersection(const Raycast &ray, const fm_vec3_t &sphereCenter, float radius, uint16_t hitObjectId, RaycastHit &hit) {
+    const float safeRadius = fabsf(radius);
+    if(!std::isfinite(safeRadius)) return false;
+
     fm_vec3_t collToRay = ray.origin - sphereCenter;
 
     float a = fm_vec3_dot(&ray.dir, &ray.dir);
+    if(a <= FM_EPSILON || !std::isfinite(a)) return false;
+
     float b = 2.0f * fm_vec3_dot(&collToRay, &ray.dir);
-    float c = fm_vec3_dot(&collToRay, &collToRay) - radius * radius;
+    float c = fm_vec3_dot(&collToRay, &collToRay) - safeRadius * safeRadius;
 
     float discriminant = b * b - 4.0f * a * c;
+    if(!std::isfinite(discriminant)) return false;
     if(discriminant < 0.0f) return false;
 
     float sqrtDisc = sqrtf(discriminant);
@@ -34,7 +40,11 @@ namespace P64::Coll {
     hit.didHit = true;
     hit.point = ray.origin + ray.dir * t;
     hit.normal = hit.point - sphereCenter;
-    fm_vec3_norm(&hit.normal, &hit.normal);
+    if(fm_vec3_len2(&hit.normal) <= FM_EPSILON * FM_EPSILON) {
+      hit.normal = -ray.dir;
+    } else {
+      fm_vec3_norm(&hit.normal, &hit.normal);
+    }
     hit.distance = t;
     hit.hitObjectId = hitObjectId;
     return true;
@@ -130,7 +140,7 @@ namespace P64::Coll {
     float tCylinder = std::numeric_limits<float>::max();
     fm_vec3_t cylinderNormal = {};
 
-    if(discriminant >= 0.0f && a > FM_EPSILON) {
+    if(discriminant >= 0.0f && std::isfinite(discriminant) && a > FM_EPSILON) {
       float sqrtDisc = sqrtf(discriminant);
       float t1 = (-b - sqrtDisc) / (2.0f * a);
       float t2 = (-b + sqrtDisc) / (2.0f * a);
@@ -142,7 +152,11 @@ namespace P64::Coll {
         if(fabsf(hitPoint.y) <= coll->capsuleShape().innerHalfHeight) {
           tCylinder = t;
           cylinderNormal = {hitPoint.x, 0.0f, hitPoint.z};
-          fm_vec3_norm(&cylinderNormal, &cylinderNormal);
+          if(fm_vec3_len2(&cylinderNormal) <= FM_EPSILON * FM_EPSILON) {
+            cylinderNormal = -localRay.dir;
+          } else {
+            fm_vec3_norm(&cylinderNormal, &cylinderNormal);
+          }
         }
       }
     }
@@ -220,7 +234,7 @@ namespace P64::Coll {
     float tCylinder = std::numeric_limits<float>::max();
     fm_vec3_t cylinderNormal = {};
 
-    if(discriminant >= 0.0f && a > FM_EPSILON) {
+    if(discriminant >= 0.0f && std::isfinite(discriminant) && a > FM_EPSILON) {
       float sqrtDisc = sqrtf(discriminant);
       float t1 = (-b - sqrtDisc) / (2.0f * a);
       float t2 = (-b + sqrtDisc) / (2.0f * a);
@@ -234,7 +248,11 @@ namespace P64::Coll {
 
             tCylinder = t;
             cylinderNormal = {hitPoint.x, 0.0f, hitPoint.z};
-            fm_vec3_norm(&cylinderNormal, &cylinderNormal);
+            if(fm_vec3_len2(&cylinderNormal) <= FM_EPSILON * FM_EPSILON) {
+              cylinderNormal = -localRay.dir;
+            } else {
+              fm_vec3_norm(&cylinderNormal, &cylinderNormal);
+            }
           
         }
       }
@@ -313,7 +331,7 @@ namespace P64::Coll {
     float tSide = std::numeric_limits<float>::max();
     fm_vec3_t sideNormal = {};
 
-    if(fabsf(a) > FM_EPSILON){
+    if(discriminant >= 0.0f && std::isfinite(discriminant) && fabsf(a) > FM_EPSILON){
       float sqrtDisc = sqrtf(discriminant);
       float t1 = (-b - sqrtDisc) / (2.0f * a);
       float t2 = (-b + sqrtDisc) / (2.0f * a);
