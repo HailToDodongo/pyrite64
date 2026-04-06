@@ -1388,11 +1388,11 @@ namespace P64::Coll {
         const MeshCollider *mesh = meshColliders_[m];
         if(!mesh || mesh->triangleCount_ == 0 || !mesh->owner_) continue;
         Raycast localRay = ray;
-        float rayScalar = 1.0f;
         if(mesh->hasScale()) {
-          rayScalar = fm_vec3_len(&mesh->owner_->scale);
-          if(rayScalar <= FM_EPSILON || !std::isfinite(rayScalar)) continue;
-          localRay.maxDistance = ray.maxDistance / rayScalar;
+          const fm_vec3_t &scale = mesh->owner_->scale;
+          if(fabsf(scale.x) <= FM_EPSILON || fabsf(scale.y) <= FM_EPSILON || fabsf(scale.z) <= FM_EPSILON) {
+            continue;
+          }
         }
         localRay.origin = mesh->hasTransform() ? mesh->toLocalSpace(ray.origin) : ray.origin;
         localRay.dir = mesh->hasTransform() ? mesh->rotateToLocal(ray.dir) : ray.dir;
@@ -1420,25 +1420,24 @@ namespace P64::Coll {
 
           currentHit.distance = std::numeric_limits<float>::max();
           currentHit.didHit = false;
-          hit.didHit = hit.didHit | ray_triangle_intersection(localRay, v0, v1, v2, mesh->normals_[triIdx], currentHit);
+          if(!ray_triangle_intersection(localRay, v0, v1, v2, mesh->normals_[triIdx], currentHit)) continue;
+
+          currentHit.point = mesh->hasTransform() ? mesh->toWorldSpace(currentHit.point) : currentHit.point;
+          currentHit.normal = mesh->hasTransform() ? mesh->localNormalToWorld(currentHit.normal) : currentHit.normal;
+          const fm_vec3_t hitDelta = currentHit.point - ray.origin;
+          currentHit.distance = fm_vec3_len(&hitDelta);
+          currentHit.hitObjectId = mesh->owner_->id;
+
+          hit.didHit = true;
           if(currentHit.didHit && currentHit.distance < hit.distance && currentHit.distance <= ray.maxDistance) {
             hit = currentHit;
           }
-        }
-        // Transform the best local hit to world space
-        if (hit.didHit)
-        {
-          hit.point = mesh->hasTransform() ? mesh->toWorldSpace(hit.point) : hit.point;
-          hit.normal = mesh->hasTransform() ? mesh->rotateToWorld(hit.normal) : hit.normal;
-          hit.distance = hit.distance * rayScalar;
-          hit.hitObjectId = mesh->owner_->id;
         }
       }
     }
 
     // Test physics objects
     if(hasFlag(ray.collTypes, RaycastColliderTypeFlags::COLLIDER_BODIES)) {
-      debugf("Raycast vs Colliders\n");
       NodeProxy collCandidates[RAYCAST_MAX_COLLIDER_TESTS];
       int candidate_count = colliderAABBTree.queryRay(ray, collCandidates, RAYCAST_MAX_COLLIDER_TESTS);
 

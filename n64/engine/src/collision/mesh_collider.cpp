@@ -44,7 +44,7 @@ namespace P64::Coll {
   }
 
   fm_vec3_t MeshTriangle::worldNormal() const {
-    if(mesh) return mesh->rotateToWorld(normal);
+    if(mesh) return mesh->localNormalToWorld(normal);
     return normal;
   }
 
@@ -83,8 +83,10 @@ namespace P64::Coll {
     fm_vec3_t worldNormal = localNormal;
     if(owner_) {
       worldNormal = worldNormal * vec3ReciprocalScaleComponents(owner_->scale);
+      if(hasRotation()) {
+        worldNormal = owner_->rot * worldNormal;
+      }
     }
-    worldNormal = rotateToWorld(worldNormal);
     return vec3NormalizeOrFallback(worldNormal, VEC3_UP);
   }
 

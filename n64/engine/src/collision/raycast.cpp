@@ -152,11 +152,8 @@ namespace P64::Coll {
         if(fabsf(hitPoint.y) <= coll->capsuleShape().innerHalfHeight) {
           tCylinder = t;
           cylinderNormal = {hitPoint.x, 0.0f, hitPoint.z};
-          if(fm_vec3_len2(&cylinderNormal) <= FM_EPSILON * FM_EPSILON) {
-            cylinderNormal = -localRay.dir;
-          } else {
-            fm_vec3_norm(&cylinderNormal, &cylinderNormal);
-          }
+          vec3NormalizeOrFallback(cylinderNormal, (-localRay.dir));
+          
         }
       }
     }
@@ -248,11 +245,7 @@ namespace P64::Coll {
 
             tCylinder = t;
             cylinderNormal = {hitPoint.x, 0.0f, hitPoint.z};
-            if(fm_vec3_len2(&cylinderNormal) <= FM_EPSILON * FM_EPSILON) {
-              cylinderNormal = -localRay.dir;
-            } else {
-              fm_vec3_norm(&cylinderNormal, &cylinderNormal);
-            }
+            vec3NormalizeOrFallback(cylinderNormal, (-localRay.dir));
           
         }
       }
@@ -546,22 +539,19 @@ namespace P64::Coll {
 
     if (t > FM_EPSILON && t <= ray.maxDistance) {
       hit.distance = t;
-      // use triangle normal from mesh data, but ensure it faces against the ray direction if the triangle is backfacing
       hit.normal = tri_norm;
-      // 
       if(a < 0.0f) {
         hit.normal = -hit.normal; // Ensure normal faces against ray
       }
-      
-      
+
       float normal_len_sq = fm_vec3_len2(&hit.normal);
       if(normal_len_sq < FM_EPSILON * FM_EPSILON) {
-        fm_vec3_norm(&hit.normal, &tri_normal); // Fallback normalization in case of very small normal
+        fm_vec3_norm(&hit.normal, &tri_normal);
         if(a < 0.0f) {
           hit.normal = -hit.normal;
         }
-      } else if (fabsf(normal_len_sq - 1.0f) > FM_EPSILON) {
-        fm_vec3_norm(&hit.normal, &hit.normal); // Normalize normal if not already unit length
+      } else if(fabsf(normal_len_sq - 1.0f) > FM_EPSILON) {
+        fm_vec3_norm(&hit.normal, &hit.normal);
       }
       hit.point = ray.origin + ray.dir * t;
       hit.didHit = true;
