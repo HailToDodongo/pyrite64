@@ -73,6 +73,8 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     float inAirTime;
     float notMovingTime;
     float hurtTimeout;
+    float blinkTimer;
+    float noiseTimer;
 
     float targetAnimBlend;
 
@@ -404,6 +406,28 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     }
 
     data->lastFramePos = obj.pos;
+
+    // Dynamic Materials
+    auto &mat = data->anim->getMatInstance();
+    auto ph = mat.getPlaceholder(0);
+
+    data->noiseTimer = fmodf(data->noiseTimer + deltaTime, 1024.0f);
+    mat.colorPrim.a = (fm_sinf(data->noiseTimer) * 0.5f + 0.5f) * 0x70;
+
+    data->blinkTimer -= deltaTime;
+    if(data->hurtTimeout > 0.0f) {
+      ph->tile.setTexture("face02.i4.sprite"_asset);
+    } else {
+      ph->tile.setTexture(data->blinkTimer > 0.0f
+        ? "face00.i4.sprite"_asset
+        : "face01.i4.sprite"_asset
+      );
+    }
+    if(data->blinkTimer < -0.15f) {
+      data->blinkTimer = 2.0f + Math::rand01()*1.0f;
+    }
+
+    ph->update();
   }
 
   void onEvent(Object& obj, Data *data, const ObjectEvent &event)

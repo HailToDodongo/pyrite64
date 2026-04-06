@@ -25,13 +25,37 @@
               1.0,
               1.0,
               1.0,
-              1.0
+              0.0
             ],
             "setDepth": false,
             "setEnv": false,
             "setFresnel": false,
             "setLighting": false,
-            "setPrim": true
+            "setPrim": true,
+            "tex0": {
+              "dynPlaceholder": 0,
+              "dynType": 2,
+              "mirrorS": false,
+              "mirrorT": false,
+              "offset": [
+                0.0,
+                0.0
+              ],
+              "repeat": [
+                1.0,
+                1.0
+              ],
+              "scale": [
+                0,
+                0
+              ],
+              "set": true,
+              "texSize": [
+                64,
+                64
+              ],
+              "texUUID": 2124280526347570565
+            }
           },
           "model": 1480057396441694021
         },
