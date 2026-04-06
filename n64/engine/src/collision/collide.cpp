@@ -1040,7 +1040,9 @@ namespace P64::Coll {
       EpaResult satResults[MAX_CONTACT_POINTS_PER_PAIR];
       int satCount = analyticalBoxTriangle(*colliderProxyMeshSpace, box, v0, v1, v2, satResults, MAX_CONTACT_POINTS_PER_PAIR);
       if(satCount > 0) {
-        for(int i = 0; i < satCount; ++i) mesh.localResultToWorld(satResults[i]);
+        for(int i = 0; i < satCount; ++i) {
+          mesh.localResultToWorld(satResults[i]);
+        }
         collideCacheSatContactConstraint(
             rigidBody, colliderProxyMeshSpace->collider, objectA,
             const_cast<MeshCollider *>(&mesh), objectB,

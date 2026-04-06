@@ -1397,9 +1397,9 @@ namespace P64::Coll {
         localRay.origin = mesh->hasTransform() ? mesh->toLocalSpace(ray.origin) : ray.origin;
         localRay.dir = mesh->hasTransform() ? mesh->rotateToLocal(ray.dir) : ray.dir;
         localRay.invDir = fm_vec3_t{{
-          fabsf(localRay.dir.x) > FM_EPSILON ? 1.0f / localRay.dir.x : FM_EPSILON,
-          fabsf(localRay.dir.y) > FM_EPSILON ? 1.0f / localRay.dir.y : FM_EPSILON,
-          fabsf(localRay.dir.z) > FM_EPSILON ? 1.0f / localRay.dir.z : FM_EPSILON
+          fabsf(localRay.dir.x) > FM_EPSILON ? 1.0f / localRay.dir.x : copysignf(1.0f / FM_EPSILON, localRay.dir.x),
+          fabsf(localRay.dir.y) > FM_EPSILON ? 1.0f / localRay.dir.y : copysignf(1.0f / FM_EPSILON, localRay.dir.y),
+          fabsf(localRay.dir.z) > FM_EPSILON ? 1.0f / localRay.dir.z : copysignf(1.0f / FM_EPSILON, localRay.dir.z)
         }};
 
 
