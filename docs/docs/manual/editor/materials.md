@@ -244,3 +244,82 @@ If `Mirror` is enabled, the texture will flip every other repetition.\
 
 All the settings below the texture can be set per axis, the left side is for the horizontal U axis, the right one for the vertical V axis.
 (On the RDP those are also known as `ST` instead of `UV`).
+
+#### Sampling
+
+This section defines how textures are sampled, which in contrast to tiles, is a global setting.  
+```{image} /_static/img/model_edit_sampling.png
+:align: center
+:width: 350px
+```
+
+`Perspective` sets if persective correction should be applied to the texture.\
+This is enabled by default, and unless you want a PS1 look, there is little reason to disable it.
+
+`Dither` enables dithering, which can reduce color-banding if combined with de-dithering in the output settings.\
+(See "Framebuffer -> Filter" in the scene-settings for that).\
+The two types shown refer to color and alpha respectively, and can be set independently.
+
+`Filtering` allows to turn texture filtering on or off.
+Note that the N64 uses a very distinct 3-point filter, which gives a diamond shape.
+
+As an example you can see different filtering here in this image:  
+```{image} /_static/img/tex_filter.png
+:align: center
+:width: 400px
+```
+
+In the middle is the original texture (16x16 pixel).\
+If you use point-filtering, it will continue to look exactly the same, just bigger.\
+On the left would be a modern day bilinear filter, which gives a blurry result.\
+One the right is what the N64 produces, which is almost the same, expect that one edge stays sharper.\
+This is due to the fact only three pixels are used for interpolation.\
+This detail will most like not matter, but can be intentionally used to reduce blurring.
+
+#### Values
+
+If the CC uses a generic register, you can set the values here.\
+If defined here, they are fixed for all objects that draw it, otherwise they can be set per-object.
+
+```{image} /_static/img/model_edit_values.png
+:align: center
+:width: 400px
+```
+
+`Prim` / `Env` / `K4` / `K5` refer to the generic registers defined in the CC.\
+Please be aware that registers stay unless something changes them.\
+So if neither the material nor the instance actually sets them, but they are used in the CC,\
+they will use whatever value was set last.\
+This situation is often referred to as "Material bleed".
+
+
+#### Geometry Modes
+
+The settings here affect how geometry is processed before it hits the RDP.\
+This can influence the Transform and Lighting (T&L) stage of the tiny3d ucode.
+
+```{image} /_static/img/model_edit_geo.png
+:align: center
+:width: 400px
+```
+
+`VertexFX`, enables one of the effects available in tiny3d.\
+Most commonly you would use `Spherical UV` for a simple environment mapping effect, which uses the vertex normals to calculate UVs on the fly.\
+The rest are most specialized options that may also not be fully supported in pyrite64 yet.
+
+`Unlit`, by default vertex color is always affected by lighting.\
+Enabling this only uses the vertex color and ignored any lighting.\
+This can be useful for "glow" effects in lower lighting conditions, or for a more stylized look.
+
+`Fog to Alpha` is part of making fog work.
+@TODO
+
+
+#### Render Modes
+
+@TODO
+
+```{image} /_static/img/model_edit_render.png
+:align: center
+:width: 400px
+```    
