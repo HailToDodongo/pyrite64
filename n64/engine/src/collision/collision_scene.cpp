@@ -833,6 +833,116 @@ namespace P64::Coll {
     }
   }
 
+  // ── Swept substep detection ─────────────────────────────────
+
+  void CollisionScene::detectSweptCollisions() {
+    std::vector<NodeProxy> candidates;
+    candidates.resize(colliders_.size());
+
+    for(RigidBody *body : rigidBodies_) {
+      if(!body || body->isSleeping_ || body->isKinematic_ || !body->position_) continue;
+
+      const float dt = fixedDt_ * body->timeScale_;
+      if(dt <= 0.0f) continue;
+
+      const fm_vec3_t displacement = body->linearVelocity_ * dt;
+
+      const std::vector<Collider *> *ownerColliders = findCollidersForOwner(body->owner_);
+      if(!ownerColliders || ownerColliders->empty()) continue;
+
+      const fm_vec3_t halfExt = (body->worldAabb_.max - body->worldAabb_.min) * 0.5f;
+      const float dispAbs[3] = { fabsf(displacement.x), fabsf(displacement.y), fabsf(displacement.z) };
+      const float extArr[3] = { halfExt.x, halfExt.y, halfExt.z };
+
+      // Find maximum displacement-to-half-extent ratio across axes
+      float maxRatio = 0.0f;
+      for(int axis = 0; axis < 3; ++axis) {
+        if(extArr[axis] > FM_EPSILON) {
+          maxRatio = fmaxf(maxRatio, dispAbs[axis] / extArr[axis]);
+        } else if(dispAbs[axis] > FM_EPSILON) {
+          maxRatio = static_cast<float>(MAX_CCD_SUBSTEPS);
+          break;
+        }
+      }
+
+      constexpr float CCD_THRESHOLD = 0.5f;
+      if(maxRatio <= CCD_THRESHOLD) continue;
+
+      const int substeps = std::min(
+        static_cast<int>(ceilf(maxRatio / CCD_THRESHOLD)),
+        MAX_CCD_SUBSTEPS);
+      if(substeps <= 1) continue;
+
+      const fm_vec3_t originalPos = *body->position_;
+
+      // Test at intermediate substep positions along the predicted trajectory.
+      // k=0 is the current position (handled by normal detection afterwards).
+      for(int k = 1; k < substeps; ++k) {
+        const float fraction = static_cast<float>(k) / static_cast<float>(substeps);
+        *body->position_ = originalPos + (displacement * fraction);
+
+        // Sync this body's colliders at the substep position
+        for(Collider *collider : *ownerColliders) {
+          if(!collider) continue;
+          const fm_vec3_t prevCenter = collider->worldCenter_;
+          if(!collider->syncWorldState()) continue;
+          const fm_vec3_t disp = collider->worldCenter_ - prevCenter;
+          if(collider->aabbTreeNodeId_ != NULL_NODE) {
+            colliderAABBTree.moveNode(collider->aabbTreeNodeId_, collider->worldAabb_, disp);
+          }
+        }
+
+        // Broadphase + narrowphase against other colliders
+        for(Collider *collider : *ownerColliders) {
+          if(!collider || collider->isTrigger_) continue;
+
+          const int candidateCount = colliderAABBTree.queryBounds(
+            collider->worldAabb_, candidates.data(),
+            static_cast<int>(candidates.size()));
+
+          for(int ci = 0; ci < candidateCount; ++ci) {
+            void *data = colliderAABBTree.getNodeData(candidates[ci]);
+            if(!data) continue;
+            Collider *collB = static_cast<Collider *>(data);
+            if(!collB || collB == collider || !collB->owner_) continue;
+            if(collider->owner_ == collB->owner_) continue;
+            if(!collider->readsCollider(collB) && !collB->readsCollider(collider)) continue;
+
+            RigidBody *rbB = findRigidBodyByOwner(collB->owner_);
+            if(collideDetectObjectToObject(collider, body, collB, rbB)) {
+              debugf("CCD substep %d/%d: body %u hit body %u", k, substeps, collider->owner_->id, collB->owner_->id);
+            }
+          }
+        }
+
+        // Broadphase + narrowphase against mesh colliders
+        for(MeshCollider *mesh : meshColliders_) {
+          if(!mesh || mesh->triangleCount_ <= 0) continue;
+          for(Collider *collider : *ownerColliders) {
+            if(!collider || !collider->owner_) continue;
+            if(!collider->readsMeshCollider(mesh) && !mesh->readsCollider(collider)) continue;
+            if(!aabbOverlap(collider->worldAabb_, mesh->worldAabb_)) continue;
+            if(collideDetectObjectToMesh(collider, body, *mesh)) {
+              debugf("CCD substep %d/%d: body %u hit mesh %u", k, substeps, collider->owner_->id, mesh->owner_ ? static_cast<unsigned>(mesh->owner_->id) : 0u);
+            }
+          }
+        }
+      }
+
+      // Restore original position and sync colliders back
+      *body->position_ = originalPos;
+      for(Collider *collider : *ownerColliders) {
+        if(!collider) continue;
+        const fm_vec3_t prevCenter = collider->worldCenter_;
+        if(!collider->syncWorldState()) continue;
+        const fm_vec3_t disp = collider->worldCenter_ - prevCenter;
+        if(collider->aabbTreeNodeId_ != NULL_NODE) {
+          colliderAABBTree.moveNode(collider->aabbTreeNodeId_, collider->worldAabb_, disp);
+        }
+      }
+    }
+  }
+
   // ── Contact detection ─────────────────────────────────────────────
 
   void CollisionScene::detectAllContacts() {
@@ -841,6 +951,9 @@ namespace P64::Coll {
     for(int i = 0; i < cachedConstraintCount_; ++i) {
       cachedConstraints_[i].isActive = false;
     }
+
+    // Swept substep detection for fast-moving bodies that could tunnel through geometry
+    detectSweptCollisions();
 
     //map of unique collider pairs that have already been tested this step to avoid duplication
     std::unordered_set<int32_t> tested_pairs;

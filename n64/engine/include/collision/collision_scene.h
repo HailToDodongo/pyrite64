@@ -27,7 +27,8 @@ namespace P64::Coll {
   constexpr fm_vec3_t DEFAULT_GRAVITY = {0.0f, -9.8f, 0.0f}; //scaled with Pyrites default scale for assets
   constexpr uint8_t DEFAULT_VELOCITY_SOLVER_ITERATIONS = 8;
   constexpr uint8_t DEFAULT_POSITION_SOLVER_ITERATIONS = 7;
-  constexpr float WARM_STARTING_FACTOR = 0.85f; ///< Bullet-style warm starting scale to prevent overcorrection from stale impulses
+  constexpr float WARM_STARTING_FACTOR = 0.85f; // Bullet-style warm starting scale to prevent overcorrection from stale impulses
+  constexpr int MAX_CCD_SUBSTEPS = 4; // Maximum substep passes for swept detection of fast-moving bodies
 
   struct CollEvent
   {
@@ -145,7 +146,7 @@ namespace P64::Coll {
     void warmStart();
     void solveVelocityConstraints();
     bool solvePositionConstraints();
-    void fixSweptCollisions();
+    void detectSweptCollisions();
     void updateMeshColliderWorldStates();
   };
 

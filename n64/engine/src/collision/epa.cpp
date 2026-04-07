@@ -15,12 +15,8 @@ namespace {
   constexpr int EPA_MAX_ITERATIONS = 8;
   constexpr int EPA_MAX_SIMPLEX_POINTS = 4 + EPA_MAX_ITERATIONS;
   constexpr int EPA_MAX_SIMPLEX_TRIANGLES = 4 + EPA_MAX_ITERATIONS * 2;
-  constexpr int MAX_SWEPT_ITERATIONS = 15;
 
   constexpr float EPA_CONVERGENCE_TOLERANCE = 0.005f;
-  constexpr float SWEPT_DISTANCE_TOLERANCE = -0.01f;
-  constexpr float SWEPT_OFFSET_MARGIN = 0.1f;
-  constexpr float SWEPT_CONTACT_EPSILON = 0.001f;
 
   constexpr unsigned char NEXT_FACE_LUT[3] = {1, 2, 0};
 
@@ -358,33 +354,6 @@ namespace {
     result.contactB = result.contactA + result.normal * result.penetration;
   }
 
-  // --- Swept EPA face finder ---
-
-  void sweptFindFace(ExpandingSimplex &es, const fm_vec3_t &direction, int &triIndex, int &faceEdge) {
-    unsigned char currentFace = nextFace(static_cast<unsigned char>(faceEdge));
-    int i = 0;
-    int loopCheck = 3;
-
-    while(loopCheck > 0 && i < MAX_SWEPT_ITERATIONS) {
-      unsigned char nf = nextFace(currentFace);
-      auto &tri = es.triangles[triIndex];
-
-      fm_vec3_t normal;
-      fm_vec3_cross(&normal, &es.points[tri.indexData.indices[currentFace]], &es.points[tri.indexData.indices[nf]]);
-
-      if(fm_vec3_dot(&normal, &direction) < 0.0f) {
-        triIndex = tri.indexData.adjacentFaces[currentFace];
-        faceEdge = nextFace(tri.indexData.oppositePoints[currentFace]);
-        nf = nextFace(static_cast<unsigned char>(faceEdge));
-        loopCheck = 3;
-      }
-
-      currentFace = nf;
-      ++i;
-      --loopCheck;
-    }
-  }
-
 } // anonymous namespace
 
 
@@ -430,73 +399,4 @@ bool P64::Coll::epaSolve(
   }
 
   return false;
-}
-
-bool P64::Coll::epaSolveSwept(
-  Simplex &startingSimplex,
-  const void *rigidBodyA, GjkSupportFunction rigidBodyASupport,
-  const void *rigidBodyB, GjkSupportFunction rigidBodyBSupport,
-  fm_vec3_t &bStart, fm_vec3_t &bEnd,
-  EpaResult &result
-) {
-  ExpandingSimplex es{};
-  initExpandingSimplex(es, startingSimplex, FlagsSkipDistance);
-
-  SimplexTriangle *closest = nullptr;
-  float projection = 0.0f;
-  int currentTriangle = 0;
-  int currentEdge = 0;
-  auto raycastDir = bStart - bEnd;
-  float epaTolerance = EPA_CONVERGENCE_TOLERANCE * collisionSceneGetInstance()->getPhysicsScale();
-
-  for(int i = 0; i < EPA_MAX_ITERATIONS; ++i) {
-    sweptFindFace(es, raycastDir, currentTriangle, currentEdge);
-    closest = &es.triangles[currentTriangle];
-
-    short nextIdx = es.pointCount;
-    auto &aPoint = es.aPoints[nextIdx];
-    fm_vec3_t bPoint{};
-
-    rigidBodyASupport(rigidBodyA, closest->normal, aPoint);
-    fm_vec3_t reverseNormal = -closest->normal;
-    rigidBodyBSupport(rigidBodyB, reverseNormal, bPoint);
-
-    es.points[nextIdx] = aPoint - bPoint;
-    projection = fm_vec3_dot(&es.points[nextIdx], &closest->normal);
-    closest->distanceToOrigin = fm_vec3_dot(&es.points[closest->indexData.indices[0]], &closest->normal);
-
-    if((projection - closest->distanceToOrigin) < epaTolerance) break;
-
-    ++es.pointCount;
-    expandPolytope(es, nextIdx, currentTriangle);
-  }
-
-  if(closest) {
-    fm_vec3_norm(&raycastDir, &raycastDir);
-    fm_vec3_norm(&result.normal, &closest->normal);
-
-    auto facePlane = planeFromNormalAndPoint(result.normal, es.points[closest->indexData.indices[0]]);
-
-    float distance = 0.0f;
-    float moveOffset = fm_vec3_distance2(&bStart, &bEnd);
-    bool hasIntersection = planeRayIntersection(facePlane, VEC3_ZERO, raycastDir, distance);
-
-    if(!hasIntersection || distance < SWEPT_DISTANCE_TOLERANCE || distance * distance >= moveOffset + SWEPT_OFFSET_MARGIN) {
-      result.penetration = 0.0f;
-      bEnd = bStart;
-
-      fm_vec3_t planePos = closest->normal * closest->distanceToOrigin;
-      calculateContact(es, *closest, planePos, result);
-      return true;
-    }
-
-    distance += SWEPT_CONTACT_EPSILON;
-    result.penetration = 0.0f;
-
-    auto planePos = raycastDir * distance;
-    bEnd = bEnd + planePos;
-    calculateContact(es, *closest, planePos, result);
-  }
-
-  return true;
 }

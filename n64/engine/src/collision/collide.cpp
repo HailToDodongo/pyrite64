@@ -1115,7 +1115,7 @@ namespace P64::Coll {
   /// @param collider The collider to test against the mesh.
   /// @param rigidBody The rigid body associated with the collider.
   /// @param mesh The mesh collider to test against.
-  void collideDetectObjectToMesh(Collider *collider, RigidBody *rigidBody, const MeshCollider &mesh) {
+  bool collideDetectObjectToMesh(Collider *collider, RigidBody *rigidBody, const MeshCollider &mesh) {
 
     // Transform the collider's world AABB into the mesh's local space for tree query
     AABB queryAABB = mesh.hasTransform()
@@ -1127,7 +1127,9 @@ namespace P64::Coll {
     NodeProxy candidates[MAX_CANDIDATES];
     int count = mesh.queryTriangleNodes(queryAABB, candidates, MAX_CANDIDATES);
 
-    if(count <= 0) return;
+    if(count <= 0) return false;
+
+    bool detected = false;
 
     // Precompute the collider proxy in mesh local space once and reuse it across all candidate triangles.
     ColliderProxy colliderInMeshSpace;
@@ -1165,10 +1167,12 @@ namespace P64::Coll {
       // If there is a collision between the collider and the current triangle and the collider is a Trigger
       // we can skip the rest of the candidates since triggers just need to report that a collision happened
       // and don't need detailed contact information for each triangle.
-      if(collideDetectObjectToTriangle(&colliderInMeshSpace, rigidBody, mesh, triIndex) && collider->isTrigger()) {
-        return;
+      if(collideDetectObjectToTriangle(&colliderInMeshSpace, rigidBody, mesh, triIndex)) {
+        detected = true;
+        if(collider->isTrigger()) return true;
       }
     }
+    return detected;
   }
 
   
@@ -1177,18 +1181,18 @@ namespace P64::Coll {
   /// @param rbA The rigid body associated with the first collider.
   /// @param colliderB The second collider.
   /// @param rbB The rigid body associated with the second collider.
-  void collideDetectObjectToObject(Collider *colliderA, RigidBody *rbA, Collider *colliderB, RigidBody *rbB) {
-    if(!colliderA || !colliderB) return;
+  bool collideDetectObjectToObject(Collider *colliderA, RigidBody *rbA, Collider *colliderB, RigidBody *rbB) {
+    if(!colliderA || !colliderB) return false;
 
     CollisionScene *scene = collisionSceneGetInstance();
     const bool aReadsB = colliderA->readsCollider(colliderB);
     const bool bReadsA = colliderB->readsCollider(colliderA);
 
-    if(rbA && rbB && rbA->isSleeping() && rbB->isSleeping() && !colliderA->isTrigger() && !colliderB->isTrigger()) return;
+    if(rbA && rbB && rbA->isSleeping() && rbB->isSleeping() && !colliderA->isTrigger() && !colliderB->isTrigger()) return false;
 
     if(colliderA && colliderB) {
-      if(!aReadsB && !bReadsA) return;
-      if(colliderA->isTrigger() && colliderB->isTrigger()) return;
+      if(!aReadsB && !bReadsA) return false;
+      if(colliderA->isTrigger() && colliderB->isTrigger()) return false;
     }
 
     // Try analytical closed-form tests first before falling back to GJK+EPA for general convex shapes.
@@ -1239,7 +1243,7 @@ namespace P64::Coll {
     // TODO: Implement Box-Box with SAT?
 
     // If an analytical test exists for the pair but reports no collision, we can skip GJK+EPA entirely.
-    if(hasAnalyticalPath && !analyticalHit) return;
+    if(hasAnalyticalPath && !analyticalHit) return false;
 
     bool doEpa = false;
     Simplex simplex;
@@ -1288,7 +1292,7 @@ namespace P64::Coll {
         if(cachedCC) {
           cachedCC->cachedSeparatingAxis = separatingAxis;
         }
-        return;
+        return false;
       }
       doEpa = true;
 
@@ -1311,7 +1315,7 @@ namespace P64::Coll {
         true,
         false, false
       );
-      return;
+      return true;
     }
 
     // only do EPA if there is not already an analytical result and the GJK confirms overlap
@@ -1324,7 +1328,7 @@ namespace P64::Coll {
           result);
 
       if (!epaOk || result.penetration < FM_EPSILON)
-        return;
+        return false;
     }
 
     // Wake sleeping rigidBodies that are involved in the collision
@@ -1339,6 +1343,7 @@ namespace P64::Coll {
       rbA, colliderA, nullptr, colliderA->ownerObject(),
       rbB, colliderB, nullptr, colliderB->ownerObject(),
       result, combinedFriction, combinedBounce, false, aReadsB, bReadsA);
+    return true;
   }
 
 } // namespace P64::Coll

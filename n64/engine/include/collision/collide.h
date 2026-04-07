@@ -14,8 +14,8 @@ namespace P64::Coll {
   struct CollisionScene; // forward declare
   struct ColliderProxy; // forward declare
 
-  void collideDetectObjectToObject(Collider *colliderA, RigidBody *rigidBodyA, Collider *colliderB, RigidBody *rigidBodyB);
-  void collideDetectObjectToMesh(Collider *collider, RigidBody *rigidBody, const MeshCollider &mesh);
+  bool collideDetectObjectToObject(Collider *colliderA, RigidBody *rigidBodyA, Collider *colliderB, RigidBody *rigidBodyB);
+  bool collideDetectObjectToMesh(Collider *collider, RigidBody *rigidBody, const MeshCollider &mesh);
   bool collideDetectObjectToTriangle(ColliderProxy *colliderProxy, RigidBody *rigidBody, const MeshCollider &mesh, int triangleIndex);
 
   ContactConstraint *collideCacheContactConstraint(

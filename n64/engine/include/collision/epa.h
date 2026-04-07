@@ -36,13 +36,4 @@ namespace P64::Coll {
     EpaResult &result
   );
 
-  /// Swept EPA for continuous collision detection (time-of-impact calculation)
-  bool epaSolveSwept(
-    Simplex &startingSimplex,
-    const void *rigidBodyA, GjkSupportFunction rigidBodyASupport,
-    const void *rigidBodyB, GjkSupportFunction rigidBodyBSupport,
-    fm_vec3_t &bStart, fm_vec3_t &bEnd,
-    EpaResult &result
-  );
-
 } // namespace P64::Coll
