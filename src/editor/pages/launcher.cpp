@@ -143,7 +143,7 @@ void Editor::Launcher::draw()
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.f, 0.f, 0.f, 0.f));
 
   bool validToolchain = toolState.hasToolchain && toolState.hasLibdragon && toolState.hasTiny3d;
-  int buttonCount = validToolchain ? 3 : 1;
+  int buttonCount = (validToolchain && toolState.upToDateLibs) ? 3 : 1;
 
   // screen center
   int posX = (int)centerPos.x - 6_px;
@@ -179,15 +179,20 @@ void Editor::Launcher::draw()
     }
   }
 
-  const char* toolchainText = validToolchain ? "Toolchain" : "Install Toolchain";
+  const char* toolchainText = validToolchain ?
+    (toolState.upToDateLibs ? "Toolchain" : "Update Toolchain")
+    : "Install Toolchain";
   if(renderButton(texBtnTool, toolchainText, isHoverTool, posX))
   {
     ToolchainOverlay::open();
   }
 
-  if(!validToolchain) {
+  if(!validToolchain || !toolState.upToDateLibs) {
     ImGui::PushFont(nullptr, 32_px);
-    const char* warnText = ICON_MDI_ALERT " Toolchain not found";
+    const char* warnText = validToolchain
+      ? (ICON_MDI_ALERT " Toolchain not up to date")
+      : (ICON_MDI_ALERT " Toolchain not found");
+
     float textWidth = ImGui::CalcTextSize(warnText).x;
     ImGui::SetCursorPos({
       centerPos.x - (textWidth / 2),

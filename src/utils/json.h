@@ -60,6 +60,9 @@ namespace Utils::JSON
     } else if constexpr (std::is_same_v<PROP, glm::ivec2>) {
       val = !el.contains(prop.name) ? defValue
         : glm::ivec2{el[prop.name][0], el[prop.name][1]};
+    } else if constexpr (std::is_same_v<PROP, glm::vec2>) {
+      val = !el.contains(prop.name) ? defValue
+        : glm::vec2{el[prop.name][0], el[prop.name][1]};
     } else if constexpr (std::is_same_v<PROP, glm::vec3>) {
       val = !el.contains(prop.name) ? defValue
         : glm::vec3{el[prop.name][0], el[prop.name][1], el[prop.name][2]};

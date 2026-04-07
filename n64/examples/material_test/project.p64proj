@@ -1,0 +1,9 @@
+{
+  "name": "material_test",
+  "pathEmu": "ares",
+  "pathN64Inst": "",
+  "romName": "material_test",
+  "sceneIdLastOpened": 2,
+  "sceneIdOnBoot": 2,
+  "sceneIdOnReset": 2
+}

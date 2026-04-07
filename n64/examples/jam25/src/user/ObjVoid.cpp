@@ -73,7 +73,7 @@ namespace P64::Script::CD43F65D4883D4A8
     uint8_t newWriteMask = canAfford(data->coinAmount) ? 0b00 : 0b10;
     coll->collider.setCollisionMask(coll->collider.readMask(), newWriteMask);
 
-    model->material.colorPrim = User::getRainbowColor(data->colorTimer * 1.0f);
+    model->getMatInstance().colorPrim = User::getRainbowColor(data->colorTimer * 1.0f);
 
     // rotate the object
     constexpr fm_vec3_t rotAxis = {0.0f, 0.5f, 0.2f};

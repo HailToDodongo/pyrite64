@@ -1,0 +1,2558 @@
+{
+  "conf": {
+    "audioFreq": 32000,
+    "clearColor": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "doClearColor": false,
+    "doClearDepth": true,
+    "fbFormat": 0,
+    "fbHeight": 240,
+    "fbWidth": 320,
+    "filter": 1,
+    "frameLimit": 0,
+    "layers2D": [
+      {
+        "blender": 0,
+        "depthCompare": false,
+        "depthWrite": false,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "2D"
+      }
+    ],
+    "layers3D": [
+      {
+        "blender": 0,
+        "depthCompare": true,
+        "depthWrite": true,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "3D Opaque"
+      },
+      {
+        "blender": 5242944,
+        "depthCompare": true,
+        "depthWrite": false,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "3D Transp."
+      }
+    ],
+    "layersPtx": [
+      {
+        "blender": 0,
+        "depthCompare": true,
+        "depthWrite": true,
+        "fog": false,
+        "fogColor": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "fogColorMode": 0,
+        "fogMax": 0.0,
+        "fogMin": 0.0,
+        "name": "PTX Opaque"
+      }
+    ],
+    "name": "Dungeon",
+    "renderPipeline": 0
+  },
+  "graph": {
+    "children": [
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "color": [
+                0.9274193644523621,
+                0.8263899683952332,
+                0.7404396533966064,
+                0.9803921580314636
+              ],
+              "index": 0,
+              "type": 0
+            },
+            "id": 2,
+            "name": "Light",
+            "uuid": 10134688399478915226
+          }
+        ],
+        "enabled": true,
+        "id": 3,
+        "name": "Light Ambient",
+        "pos": [
+          292.5,
+          0.0,
+          -157.5
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 3721677788,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "aspect": 0.0,
+              "far": 1000.0,
+              "fov": 65.0,
+              "mode": 0,
+              "near": 30.0,
+              "vpOffset": [
+                0,
+                0
+              ],
+              "vpSize": [
+                320,
+                240
+              ]
+            },
+            "id": 3,
+            "name": "Camera",
+            "uuid": 15864457416725386699
+          },
+          {
+            "data": {
+              "args": {},
+              "script": 14162608406159107062
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 5516131534070135412
+          }
+        ],
+        "enabled": true,
+        "id": 1,
+        "name": "Camera",
+        "pos": [
+          140.0,
+          210.0,
+          260.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          -0.19399437308311462,
+          0.21739916503429413,
+          0.04413415864109993,
+          0.9555919766426086
+        ],
+        "scale": [
+          0.9999990463256836,
+          0.9999992847442627,
+          0.9999982714653015
+        ],
+        "selectable": true,
+        "uuid": 1356565326,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false,
+                "tex0": {
+                  "dynPlaceholder": 0,
+                  "dynType": 1,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    64.0,
+                    64.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": true,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex1": {
+                  "dynPlaceholder": 1,
+                  "dynType": 1,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    64.0,
+                    64.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": true,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex2": {
+                  "dynPlaceholder": 0,
+                  "dynType": 1,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    64.0,
+                    64.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": true,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex3": {
+                  "dynPlaceholder": 1,
+                  "dynType": 1,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    64.0,
+                    64.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": true,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                }
+              },
+              "meshFilter": "map",
+              "model": 11930039737713098429
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 5287002582898818146
+          },
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 1,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false,
+                "tex0": {
+                  "dynPlaceholder": 0,
+                  "dynType": 1,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    64.0,
+                    64.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": true,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex1": {
+                  "dynPlaceholder": 1,
+                  "dynType": 1,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    64.0,
+                    64.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": true,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex2": {
+                  "dynPlaceholder": 0,
+                  "dynType": 1,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    64.0,
+                    64.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": true,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                },
+                "tex3": {
+                  "dynPlaceholder": 1,
+                  "dynType": 1,
+                  "mirrorS": false,
+                  "mirrorT": false,
+                  "offset": [
+                    0.0,
+                    0.0
+                  ],
+                  "repeat": [
+                    64.0,
+                    64.0
+                  ],
+                  "scale": [
+                    0,
+                    0
+                  ],
+                  "set": true,
+                  "texSize": [
+                    0,
+                    0
+                  ],
+                  "texUUID": 0
+                }
+              },
+              "meshFilter": "water",
+              "model": 11930039737713098429
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 11588041963690636271
+          },
+          {
+            "data": {
+              "args": {},
+              "script": 14879584888410934081
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 14343896972005975160
+          }
+        ],
+        "enabled": true,
+        "id": 8,
+        "name": "Map",
+        "pos": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 2366727899,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "culling": false,
+                      "layerIdx": 1,
+                      "material": {
+                        "depth": 0,
+                        "env": [
+                          0.0,
+                          0.10483884811401367,
+                          1.0,
+                          0.0
+                        ],
+                        "fresnel": 0,
+                        "fresnelColor": [
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0
+                        ],
+                        "lighting": false,
+                        "prim": [
+                          0.0,
+                          1.0,
+                          0.9516129493713379,
+                          0.0
+                        ],
+                        "setDepth": false,
+                        "setEnv": true,
+                        "setFresnel": false,
+                        "setLighting": false,
+                        "setPrim": true,
+                        "tex0": {
+                          "dynPlaceholder": 0,
+                          "dynType": 1,
+                          "mirrorS": false,
+                          "mirrorT": false,
+                          "offset": [
+                            0.0,
+                            0.0
+                          ],
+                          "repeat": [
+                            32.0,
+                            64.0
+                          ],
+                          "scale": [
+                            0,
+                            0
+                          ],
+                          "set": true,
+                          "texSize": [
+                            0,
+                            0
+                          ],
+                          "texUUID": 0
+                        }
+                      },
+                      "meshFilter": "",
+                      "model": 13158347792289066104
+                    },
+                    "id": 1,
+                    "name": "Model (Static)",
+                    "uuid": 7969905121091012640
+                  },
+                  {
+                    "data": {
+                      "args": {},
+                      "script": 14362500582464911582
+                    },
+                    "id": 0,
+                    "name": "Code",
+                    "uuid": 3964465403154490205
+                  },
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 3,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 4559030683467367008
+                  }
+                ],
+                "enabled": true,
+                "id": 4,
+                "name": "Flame",
+                "pos": [
+                  -299.90936279296875,
+                  56.98328399658203,
+                  -300.154052734375
+                ],
+                "propOverrides": {},
+                "proportionalScale": false,
+                "rot": [
+                  0.0,
+                  -0.8428543210029602,
+                  0.0,
+                  0.5381418466567993
+                ],
+                "scale": [
+                  0.9999978542327881,
+                  1.0,
+                  0.999997079372406
+                ],
+                "selectable": true,
+                "uuid": 1197310309,
+                "uuidPrefab": 0
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "lighting": false,
+                    "prim": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": false,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": false
+                  },
+                  "meshFilter": "",
+                  "model": 10926887260276532569
+                },
+                "id": 1,
+                "name": "Model (Static)",
+                "uuid": 8570013630626551600
+              }
+            ],
+            "enabled": true,
+            "id": 13,
+            "name": "Torch",
+            "pos": [
+              -300.0,
+              -16.65659523010254,
+              -300.0
+            ],
+            "propOverrides": {},
+            "proportionalScale": false,
+            "rot": [
+              0.0,
+              -0.38531970977783203,
+              0.0,
+              0.9227831363677979
+            ],
+            "scale": [
+              0.9999986290931702,
+              1.0,
+              0.9999986290931702
+            ],
+            "selectable": true,
+            "uuid": 1368202386,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "culling": false,
+                      "layerIdx": 1,
+                      "material": {
+                        "depth": 0,
+                        "env": [
+                          1.0,
+                          0.0,
+                          0.0,
+                          0.0
+                        ],
+                        "fresnel": 0,
+                        "fresnelColor": [
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0
+                        ],
+                        "lighting": false,
+                        "prim": [
+                          1.0,
+                          1.0,
+                          0.0,
+                          0.0
+                        ],
+                        "setDepth": false,
+                        "setEnv": true,
+                        "setFresnel": false,
+                        "setLighting": false,
+                        "setPrim": true,
+                        "tex0": {
+                          "dynPlaceholder": 0,
+                          "dynType": 1,
+                          "mirrorS": false,
+                          "mirrorT": false,
+                          "offset": [
+                            0.0,
+                            0.0
+                          ],
+                          "repeat": [
+                            32.0,
+                            64.0
+                          ],
+                          "scale": [
+                            0,
+                            0
+                          ],
+                          "set": true,
+                          "texSize": [
+                            0,
+                            0
+                          ],
+                          "texUUID": 0
+                        }
+                      },
+                      "meshFilter": "",
+                      "model": 13158347792289066104
+                    },
+                    "id": 1,
+                    "name": "Model (Static)",
+                    "uuid": 7969905121091012640
+                  },
+                  {
+                    "data": {
+                      "args": {},
+                      "script": 14362500582464911582
+                    },
+                    "id": 0,
+                    "name": "Code",
+                    "uuid": 3964465403154490205
+                  },
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 3,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 6806456509659852750
+                  }
+                ],
+                "enabled": true,
+                "id": 12,
+                "name": "Flame",
+                "pos": [
+                  -324.261962890625,
+                  51.35850524902344,
+                  285.8564453125
+                ],
+                "propOverrides": {},
+                "proportionalScale": false,
+                "rot": [
+                  0.0,
+                  -0.5082608461380005,
+                  0.0,
+                  0.8612031936645508
+                ],
+                "scale": [
+                  0.9999997019767761,
+                  1.0,
+                  0.9999997019767761
+                ],
+                "selectable": true,
+                "uuid": 3418829785,
+                "uuidPrefab": 0
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "lighting": false,
+                    "prim": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": false,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": false
+                  },
+                  "meshFilter": "",
+                  "model": 10926887260276532569
+                },
+                "id": 1,
+                "name": "Model (Static)",
+                "uuid": 8570013630626551600
+              }
+            ],
+            "enabled": true,
+            "id": 10,
+            "name": "Torch",
+            "pos": [
+              -325.0755615234375,
+              -15.5,
+              285.9159240722656
+            ],
+            "propOverrides": {},
+            "proportionalScale": false,
+            "rot": [
+              0.0,
+              0.2198149859905243,
+              0.0,
+              0.9755415916442871
+            ],
+            "scale": [
+              0.9999992847442627,
+              1.0,
+              0.9999992847442627
+            ],
+            "selectable": true,
+            "uuid": 1682720834,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "culling": false,
+                      "layerIdx": 1,
+                      "material": {
+                        "depth": 0,
+                        "env": [
+                          1.0,
+                          0.0,
+                          0.0,
+                          0.0
+                        ],
+                        "fresnel": 0,
+                        "fresnelColor": [
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0
+                        ],
+                        "lighting": false,
+                        "prim": [
+                          1.0,
+                          1.0,
+                          0.0,
+                          0.0
+                        ],
+                        "setDepth": false,
+                        "setEnv": true,
+                        "setFresnel": false,
+                        "setLighting": false,
+                        "setPrim": true,
+                        "tex0": {
+                          "dynPlaceholder": 0,
+                          "dynType": 1,
+                          "mirrorS": false,
+                          "mirrorT": false,
+                          "offset": [
+                            0.0,
+                            0.0
+                          ],
+                          "repeat": [
+                            32.0,
+                            64.0
+                          ],
+                          "scale": [
+                            0,
+                            0
+                          ],
+                          "set": true,
+                          "texSize": [
+                            0,
+                            0
+                          ],
+                          "texUUID": 0
+                        }
+                      },
+                      "meshFilter": "",
+                      "model": 13158347792289066104
+                    },
+                    "id": 1,
+                    "name": "Model (Static)",
+                    "uuid": 7969905121091012640
+                  },
+                  {
+                    "data": {
+                      "args": {},
+                      "script": 14362500582464911582
+                    },
+                    "id": 0,
+                    "name": "Code",
+                    "uuid": 3964465403154490205
+                  },
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 3,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 6806456509659852750
+                  }
+                ],
+                "enabled": true,
+                "id": 5,
+                "name": "Flame",
+                "pos": [
+                  -426.85247802734375,
+                  53.42457580566406,
+                  29.891605377197266
+                ],
+                "propOverrides": {},
+                "proportionalScale": false,
+                "rot": [
+                  0.0,
+                  -0.5082608461380005,
+                  0.0,
+                  0.8612031936645508
+                ],
+                "scale": [
+                  0.9999997019767761,
+                  1.0,
+                  0.9999997019767761
+                ],
+                "selectable": true,
+                "uuid": 2148458353,
+                "uuidPrefab": 0
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "lighting": false,
+                    "prim": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": false,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": false
+                  },
+                  "meshFilter": "",
+                  "model": 10926887260276532569
+                },
+                "id": 1,
+                "name": "Model (Static)",
+                "uuid": 8570013630626551600
+              }
+            ],
+            "enabled": true,
+            "id": 9,
+            "name": "Torch",
+            "pos": [
+              -426.85223388671875,
+              -16.575424194335938,
+              29.891719818115234
+            ],
+            "propOverrides": {},
+            "proportionalScale": false,
+            "rot": [
+              0.0,
+              0.2198149859905243,
+              0.0,
+              0.9755415916442871
+            ],
+            "scale": [
+              0.9999992847442627,
+              1.0,
+              0.9999992847442627
+            ],
+            "selectable": true,
+            "uuid": 3342941146,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "culling": false,
+                      "layerIdx": 1,
+                      "material": {
+                        "depth": 0,
+                        "env": [
+                          0.13709676265716553,
+                          1.0,
+                          0.0,
+                          0.0
+                        ],
+                        "fresnel": 0,
+                        "fresnelColor": [
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0
+                        ],
+                        "lighting": false,
+                        "prim": [
+                          0.8478147983551025,
+                          1.0,
+                          0.056451618671417236,
+                          0.0
+                        ],
+                        "setDepth": false,
+                        "setEnv": true,
+                        "setFresnel": false,
+                        "setLighting": false,
+                        "setPrim": true,
+                        "tex0": {
+                          "dynPlaceholder": 0,
+                          "dynType": 1,
+                          "mirrorS": false,
+                          "mirrorT": false,
+                          "offset": [
+                            0.0,
+                            0.0
+                          ],
+                          "repeat": [
+                            32.0,
+                            64.0
+                          ],
+                          "scale": [
+                            0,
+                            0
+                          ],
+                          "set": true,
+                          "texSize": [
+                            0,
+                            0
+                          ],
+                          "texUUID": 0
+                        }
+                      },
+                      "meshFilter": "",
+                      "model": 13158347792289066104
+                    },
+                    "id": 1,
+                    "name": "Model (Static)",
+                    "uuid": 7969905121091012640
+                  },
+                  {
+                    "data": {
+                      "args": {},
+                      "script": 14362500582464911582
+                    },
+                    "id": 0,
+                    "name": "Code",
+                    "uuid": 3964465403154490205
+                  },
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 3,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 4559030683467367008
+                  }
+                ],
+                "enabled": true,
+                "id": 16,
+                "name": "Flame",
+                "pos": [
+                  0.12936291098594666,
+                  56.09965133666992,
+                  -422.3445739746094
+                ],
+                "propOverrides": {},
+                "proportionalScale": false,
+                "rot": [
+                  0.0,
+                  -0.8428543210029602,
+                  0.0,
+                  0.5381418466567993
+                ],
+                "scale": [
+                  0.9999979138374329,
+                  1.0,
+                  0.9999971389770508
+                ],
+                "selectable": true,
+                "uuid": 1665057943,
+                "uuidPrefab": 0
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "lighting": false,
+                    "prim": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": false,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": false
+                  },
+                  "meshFilter": "",
+                  "model": 10926887260276532569
+                },
+                "id": 1,
+                "name": "Model (Static)",
+                "uuid": 8570013630626551600
+              }
+            ],
+            "enabled": true,
+            "id": 15,
+            "name": "Torch",
+            "pos": [
+              -0.0711965560913086,
+              -17.540225982666016,
+              -423.5381164550781
+            ],
+            "propOverrides": {},
+            "proportionalScale": false,
+            "rot": [
+              0.0,
+              -0.7006672024726868,
+              0.0,
+              0.7134882807731628
+            ],
+            "scale": [
+              0.9999982118606567,
+              1.0,
+              0.9999982118606567
+            ],
+            "selectable": true,
+            "uuid": 1798295470,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "culling": false,
+                      "layerIdx": 1,
+                      "material": {
+                        "depth": 0,
+                        "env": [
+                          0.8870964050292969,
+                          0.0,
+                          1.0,
+                          0.0
+                        ],
+                        "fresnel": 0,
+                        "fresnelColor": [
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0
+                        ],
+                        "lighting": false,
+                        "prim": [
+                          1.0,
+                          1.0,
+                          1.0,
+                          0.0
+                        ],
+                        "setDepth": false,
+                        "setEnv": true,
+                        "setFresnel": false,
+                        "setLighting": false,
+                        "setPrim": true,
+                        "tex0": {
+                          "dynPlaceholder": 0,
+                          "dynType": 1,
+                          "mirrorS": false,
+                          "mirrorT": false,
+                          "offset": [
+                            0.0,
+                            0.0
+                          ],
+                          "repeat": [
+                            32.0,
+                            64.0
+                          ],
+                          "scale": [
+                            0,
+                            0
+                          ],
+                          "set": true,
+                          "texSize": [
+                            0,
+                            0
+                          ],
+                          "texUUID": 0
+                        }
+                      },
+                      "meshFilter": "",
+                      "model": 13158347792289066104
+                    },
+                    "id": 1,
+                    "name": "Model (Static)",
+                    "uuid": 7969905121091012640
+                  },
+                  {
+                    "data": {
+                      "args": {},
+                      "script": 14362500582464911582
+                    },
+                    "id": 0,
+                    "name": "Code",
+                    "uuid": 3964465403154490205
+                  },
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 3,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 4559030683467367008
+                  }
+                ],
+                "enabled": true,
+                "id": 17,
+                "name": "Flame",
+                "pos": [
+                  292.6384582519531,
+                  56.26122283935547,
+                  -290.8797302246094
+                ],
+                "propOverrides": {},
+                "proportionalScale": false,
+                "rot": [
+                  0.0,
+                  -0.8428543210029602,
+                  0.0,
+                  0.5381418466567993
+                ],
+                "scale": [
+                  0.9999978542327881,
+                  1.0,
+                  0.999997079372406
+                ],
+                "selectable": true,
+                "uuid": 2541860378,
+                "uuidPrefab": 0
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "lighting": false,
+                    "prim": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": false,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": false
+                  },
+                  "meshFilter": "",
+                  "model": 10926887260276532569
+                },
+                "id": 1,
+                "name": "Model (Static)",
+                "uuid": 8570013630626551600
+              }
+            ],
+            "enabled": true,
+            "id": 4,
+            "name": "Torch",
+            "pos": [
+              292.5,
+              -16.23877716064453,
+              -292.5
+            ],
+            "propOverrides": {},
+            "proportionalScale": false,
+            "rot": [
+              0.0,
+              0.9219793081283569,
+              0.0,
+              -0.3872391879558563
+            ],
+            "scale": [
+              1.0000035762786865,
+              1.0,
+              1.0000035762786865
+            ],
+            "selectable": true,
+            "uuid": 1394372358,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "culling": false,
+                      "layerIdx": 1,
+                      "material": {
+                        "depth": 0,
+                        "env": [
+                          0.016129016876220703,
+                          0.0,
+                          1.0,
+                          0.0
+                        ],
+                        "fresnel": 0,
+                        "fresnelColor": [
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0
+                        ],
+                        "lighting": false,
+                        "prim": [
+                          0.0,
+                          1.0,
+                          0.975806474685669,
+                          0.0
+                        ],
+                        "setDepth": false,
+                        "setEnv": true,
+                        "setFresnel": false,
+                        "setLighting": false,
+                        "setPrim": true,
+                        "tex0": {
+                          "dynPlaceholder": 0,
+                          "dynType": 1,
+                          "mirrorS": false,
+                          "mirrorT": false,
+                          "offset": [
+                            0.0,
+                            0.0
+                          ],
+                          "repeat": [
+                            32.0,
+                            64.0
+                          ],
+                          "scale": [
+                            0,
+                            0
+                          ],
+                          "set": true,
+                          "texSize": [
+                            0,
+                            0
+                          ],
+                          "texUUID": 0
+                        }
+                      },
+                      "meshFilter": "",
+                      "model": 13158347792289066104
+                    },
+                    "id": 1,
+                    "name": "Model (Static)",
+                    "uuid": 7969905121091012640
+                  },
+                  {
+                    "data": {
+                      "args": {},
+                      "script": 14362500582464911582
+                    },
+                    "id": 0,
+                    "name": "Code",
+                    "uuid": 3964465403154490205
+                  },
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 3,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 6806456509659852750
+                  }
+                ],
+                "enabled": true,
+                "id": 19,
+                "name": "Flame",
+                "pos": [
+                  0.0,
+                  50.0,
+                  421.7588806152344
+                ],
+                "propOverrides": {},
+                "proportionalScale": false,
+                "rot": [
+                  0.0,
+                  -0.5082608461380005,
+                  0.0,
+                  0.8612031936645508
+                ],
+                "scale": [
+                  0.9999997019767761,
+                  1.0,
+                  0.9999997019767761
+                ],
+                "selectable": true,
+                "uuid": 869388457,
+                "uuidPrefab": 0
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "lighting": false,
+                    "prim": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": false,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": false
+                  },
+                  "meshFilter": "",
+                  "model": 10926887260276532569
+                },
+                "id": 1,
+                "name": "Model (Static)",
+                "uuid": 8570013630626551600
+              }
+            ],
+            "enabled": true,
+            "id": 18,
+            "name": "Torch",
+            "pos": [
+              0.9622516632080078,
+              -15.50048828125,
+              420.7428894042969
+            ],
+            "propOverrides": {},
+            "proportionalScale": false,
+            "rot": [
+              0.0,
+              0.0043726228177547455,
+              0.0,
+              0.9999904632568359
+            ],
+            "scale": [
+              0.9999950528144836,
+              1.0,
+              0.9999950528144836
+            ],
+            "selectable": true,
+            "uuid": 2849678891,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "culling": false,
+                      "layerIdx": 1,
+                      "material": {
+                        "depth": 0,
+                        "env": [
+                          0.13725490868091583,
+                          1.0,
+                          0.0,
+                          0.0
+                        ],
+                        "fresnel": 0,
+                        "fresnelColor": [
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0
+                        ],
+                        "lighting": false,
+                        "prim": [
+                          0.8470588326454163,
+                          1.0,
+                          0.054901961237192154,
+                          0.0
+                        ],
+                        "setDepth": false,
+                        "setEnv": true,
+                        "setFresnel": false,
+                        "setLighting": false,
+                        "setPrim": true,
+                        "tex0": {
+                          "dynPlaceholder": 0,
+                          "dynType": 1,
+                          "mirrorS": false,
+                          "mirrorT": false,
+                          "offset": [
+                            0.0,
+                            0.0
+                          ],
+                          "repeat": [
+                            32.0,
+                            64.0
+                          ],
+                          "scale": [
+                            0,
+                            0
+                          ],
+                          "set": true,
+                          "texSize": [
+                            0,
+                            0
+                          ],
+                          "texUUID": 0
+                        }
+                      },
+                      "meshFilter": "",
+                      "model": 13158347792289066104
+                    },
+                    "id": 1,
+                    "name": "Model (Static)",
+                    "uuid": 7969905121091012640
+                  },
+                  {
+                    "data": {
+                      "args": {},
+                      "script": 14362500582464911582
+                    },
+                    "id": 0,
+                    "name": "Code",
+                    "uuid": 3964465403154490205
+                  },
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 3,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 6806456509659852750
+                  }
+                ],
+                "enabled": true,
+                "id": 20,
+                "name": "Flame",
+                "pos": [
+                  300.0,
+                  50.0,
+                  300.87939453125
+                ],
+                "propOverrides": {},
+                "proportionalScale": false,
+                "rot": [
+                  0.0,
+                  -0.5082608461380005,
+                  0.0,
+                  0.8612031936645508
+                ],
+                "scale": [
+                  0.9999997019767761,
+                  1.0,
+                  0.9999997019767761
+                ],
+                "selectable": true,
+                "uuid": 2867141639,
+                "uuidPrefab": 0
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "lighting": false,
+                    "prim": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": false,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": false
+                  },
+                  "meshFilter": "",
+                  "model": 10926887260276532569
+                },
+                "id": 1,
+                "name": "Model (Static)",
+                "uuid": 8570013630626551600
+              }
+            ],
+            "enabled": true,
+            "id": 12,
+            "name": "Torch",
+            "pos": [
+              300.0,
+              -20.0,
+              300.0
+            ],
+            "propOverrides": {},
+            "proportionalScale": false,
+            "rot": [
+              0.0,
+              0.379567414522171,
+              0.0,
+              0.9251641035079956
+            ],
+            "scale": [
+              0.9999929666519165,
+              1.0,
+              0.9999927878379822
+            ],
+            "selectable": true,
+            "uuid": 1276488886,
+            "uuidPrefab": 0
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "components": [
+                  {
+                    "data": {
+                      "culling": false,
+                      "layerIdx": 1,
+                      "material": {
+                        "depth": 0,
+                        "env": [
+                          0.7903223037719727,
+                          0.0,
+                          1.0,
+                          0.0
+                        ],
+                        "fresnel": 0,
+                        "fresnelColor": [
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0
+                        ],
+                        "lighting": false,
+                        "prim": [
+                          1.0,
+                          1.0,
+                          1.0,
+                          0.0
+                        ],
+                        "setDepth": false,
+                        "setEnv": true,
+                        "setFresnel": false,
+                        "setLighting": false,
+                        "setPrim": true,
+                        "tex0": {
+                          "dynPlaceholder": 0,
+                          "dynType": 1,
+                          "mirrorS": false,
+                          "mirrorT": false,
+                          "offset": [
+                            0.0,
+                            0.0
+                          ],
+                          "repeat": [
+                            32.0,
+                            64.0
+                          ],
+                          "scale": [
+                            0,
+                            0
+                          ],
+                          "set": true,
+                          "texSize": [
+                            0,
+                            0
+                          ],
+                          "texUUID": 0
+                        }
+                      },
+                      "meshFilter": "",
+                      "model": 13158347792289066104
+                    },
+                    "id": 1,
+                    "name": "Model (Static)",
+                    "uuid": 7969905121091012640
+                  },
+                  {
+                    "data": {
+                      "args": {},
+                      "script": 14362500582464911582
+                    },
+                    "id": 0,
+                    "name": "Code",
+                    "uuid": 3964465403154490205
+                  },
+                  {
+                    "data": {
+                      "objectUUID": 0,
+                      "type": 3,
+                      "usePos": false,
+                      "useRot": false,
+                      "useScale": false
+                    },
+                    "id": 7,
+                    "name": "Constraint",
+                    "uuid": 6806456509659852750
+                  }
+                ],
+                "enabled": true,
+                "id": 22,
+                "name": "Flame",
+                "pos": [
+                  425.59771728515625,
+                  51.35948181152344,
+                  1.430307388305664
+                ],
+                "propOverrides": {},
+                "proportionalScale": false,
+                "rot": [
+                  0.0,
+                  -0.5082608461380005,
+                  0.0,
+                  0.8612031936645508
+                ],
+                "scale": [
+                  0.9999997019767761,
+                  1.0,
+                  0.9999997019767761
+                ],
+                "selectable": true,
+                "uuid": 3683420954,
+                "uuidPrefab": 0
+              }
+            ],
+            "components": [
+              {
+                "data": {
+                  "culling": false,
+                  "layerIdx": 0,
+                  "material": {
+                    "depth": 0,
+                    "env": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "fresnel": 0,
+                    "fresnelColor": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "lighting": false,
+                    "prim": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "setDepth": false,
+                    "setEnv": false,
+                    "setFresnel": false,
+                    "setLighting": false,
+                    "setPrim": false
+                  },
+                  "meshFilter": "",
+                  "model": 10926887260276532569
+                },
+                "id": 1,
+                "name": "Model (Static)",
+                "uuid": 8570013630626551600
+              }
+            ],
+            "enabled": true,
+            "id": 21,
+            "name": "Torch",
+            "pos": [
+              425.3018798828125,
+              -15.5,
+              0.1282501220703125
+            ],
+            "propOverrides": {},
+            "proportionalScale": false,
+            "rot": [
+              0.0,
+              0.7095946669578552,
+              0.0,
+              0.7046101093292236
+            ],
+            "scale": [
+              0.9999927282333374,
+              1.0,
+              0.9999927282333374
+            ],
+            "selectable": true,
+            "uuid": 279896752,
+            "uuidPrefab": 0
+          }
+        ],
+        "components": [],
+        "enabled": true,
+        "id": 5,
+        "name": "Torches",
+        "pos": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 735678681,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  1.0,
+                  0.9466701149940491,
+                  0.8346773982048035,
+                  0.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "",
+              "model": 11962311182334554432
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 6768313611337323746
+          }
+        ],
+        "enabled": true,
+        "id": 2,
+        "name": "Boulder",
+        "pos": [
+          390.0,
+          10.0,
+          -120.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.13353566825389862,
+          -0.7504457235336304,
+          0.016085771843791008,
+          0.6471017599105835
+        ],
+        "scale": [
+          0.9999984502792358,
+          0.9999991655349731,
+          0.9999968409538269
+        ],
+        "selectable": true,
+        "uuid": 4262994049,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.8826742768287659,
+                  0.9420756101608276,
+                  0.9435483813285828,
+                  0.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "",
+              "model": 11962311182334554432
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 6768313611337323746
+          }
+        ],
+        "enabled": true,
+        "id": 6,
+        "name": "Boulder",
+        "pos": [
+          353.2622985839844,
+          6.081700801849365,
+          -216.74659729003906
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          -0.14543281495571136,
+          0.9165255427360535,
+          -0.150309756398201,
+          -0.3409358263015747
+        ],
+        "scale": [
+          0.9999985098838806,
+          0.9999986886978149,
+          0.9999969601631165
+        ],
+        "selectable": true,
+        "uuid": 1811439333,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.4150466024875641,
+                  0.7379032373428345,
+                  0.1219920814037323,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "",
+              "model": 1931867297459818881
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 6768313611337323746
+          }
+        ],
+        "enabled": true,
+        "id": 7,
+        "name": "Grass",
+        "pos": [
+          370.0,
+          -20.0,
+          170.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.13353566825389862,
+          -0.7504457235336304,
+          0.016085771843791008,
+          0.6471017599105835
+        ],
+        "scale": [
+          0.9999984502792358,
+          0.9999991655349731,
+          0.9999968409538269
+        ],
+        "selectable": true,
+        "uuid": 3280889382,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.7379032373428345,
+                  0.718035101890564,
+                  0.12199212610721588,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "",
+              "model": 1931867297459818881
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 6768313611337323746
+          }
+        ],
+        "enabled": true,
+        "id": 11,
+        "name": "Grass",
+        "pos": [
+          173.14569091796875,
+          -20.0,
+          350.49072265625
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          -0.11950945109128952,
+          0.9291867613792419,
+          -0.06170900538563728,
+          -0.34426942467689514
+        ],
+        "scale": [
+          0.9999985694885254,
+          0.9999991655349731,
+          0.9999963641166687
+        ],
+        "selectable": true,
+        "uuid": 1664887028,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.7379032373428345,
+                  0.569024384021759,
+                  0.12199212610721588,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "",
+              "model": 1931867297459818881
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 6768313611337323746
+          }
+        ],
+        "enabled": true,
+        "id": 14,
+        "name": "Grass",
+        "pos": [
+          90.0,
+          -20.0,
+          390.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          -0.08952388912439346,
+          0.9908532500267029,
+          -0.10037897527217865,
+          0.01092727854847908
+        ],
+        "scale": [
+          1.0899994373321533,
+          1.0899990797042847,
+          1.089996576309204
+        ],
+        "selectable": true,
+        "uuid": 3300691093,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.5882502198219299,
+                  0.7419354915618896,
+                  0.4487513303756714,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "",
+              "model": 1931867297459818881
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 6768313611337323746
+          }
+        ],
+        "enabled": true,
+        "id": 23,
+        "name": "Grass",
+        "pos": [
+          -230.0,
+          -20.0,
+          -340.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.13294421136379242,
+          -0.5488558411598206,
+          -0.02040543593466282,
+          0.8250253200531006
+        ],
+        "scale": [
+          0.9999991059303284,
+          0.9999992251396179,
+          0.9999969601631165
+        ],
+        "selectable": true,
+        "uuid": 315184093,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.9193548560142517,
+                  0.7957059144973755,
+                  0.22242456674575806,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "",
+              "model": 1931867297459818881
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 6768313611337323746
+          }
+        ],
+        "enabled": true,
+        "id": 24,
+        "name": "Grass",
+        "pos": [
+          -408.0715637207031,
+          -20.0,
+          -56.50449752807617
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.13353566825389862,
+          -0.7504457235336304,
+          0.016085771843791008,
+          0.6471017599105835
+        ],
+        "scale": [
+          0.9999984502792358,
+          0.9999991655349731,
+          0.9999968409538269
+        ],
+        "selectable": true,
+        "uuid": 3904428440,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.7013236880302429,
+                  0.8911290168762207,
+                  0.42041170597076416,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "",
+              "model": 1931867297459818881
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 6768313611337323746
+          }
+        ],
+        "enabled": true,
+        "id": 25,
+        "name": "Grass",
+        "pos": [
+          -412.5964050292969,
+          -20.0,
+          85.48981475830078
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          -0.1270330548286438,
+          0.871186375617981,
+          -0.04419446736574173,
+          -0.4721692204475403
+        ],
+        "scale": [
+          0.989998996257782,
+          0.9899992346763611,
+          0.9899981617927551
+        ],
+        "selectable": true,
+        "uuid": 2572107626,
+        "uuidPrefab": 0
+      }
+    ],
+    "components": [],
+    "enabled": true,
+    "id": 0,
+    "name": "Scene",
+    "pos": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "propOverrides": {},
+    "proportionalScale": false,
+    "rot": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "selectable": true,
+    "uuid": 4252910706,
+    "uuidPrefab": 0
+  }
+}

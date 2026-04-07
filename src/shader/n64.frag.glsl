@@ -113,11 +113,20 @@ vec4 cc_overflowValue(in vec4 value)
 {
   return mod(value + 0.5, 2.0) - 0.5;
 }
+/**
+ * The C input in the CC gets a special overflow behaviour.
+ * this will wrap around at (-1, +1] instead
+ */
+vec4 cc_overflowValueC(in vec4 value)
+{
+  vec4 wrapped = mod(value + 1.0, 2.0) - 1.0;
+  return mix(wrapped, vec4(1.0), equal(wrapped, vec4(-1.0)));
+}
+
 vec4 cc_clampValue(in vec4 value)
 {
   return clamp(value, 0.0, 1.0);
 }
-
 
 vec4 blender_fetch(
   in int val, in vec4 colorBlend, in vec4 colorFog, in vec4 colorFB, in vec4 colorCC,
@@ -219,6 +228,9 @@ void main()
   if((DRAW_FLAGS & T3D_FLAG_CULL_BACK) != 0 && !gl_FrontFacing) {
     discard;
   }
+  if((DRAW_FLAGS & T3D_FLAG_CULL_FRONT) != 0 && gl_FrontFacing) {
+    discard;
+  }
 
   // @TODO: handle flat shading
   //vec4 ccShade = geoModeSelect(G_SHADE_SMOOTH, cc_shade_flat, cc_shade);
@@ -260,23 +272,26 @@ void main()
   cc0[3].a = cc_fetchAlpha(material.cc0Alpha.w, ccShade, ccValue, texData0, texData1);
 
   ccValue = cc_overflowValue((cc0[0] - cc0[1]) * cc0[2] + cc0[3]);
+  vec4 ccValueC  = cc_overflowValueC(ccValue);
+
+  float alphaClip = ccValue.a;
 
   if((OTHER_MODE_H & G_CYC_2CYCLE) != 0) {
     cc1[0].rgb = cc_fetchColor(material.cc1Color.x, ccShade, ccValue, texData0, texData1);
     cc1[1].rgb = cc_fetchColor(material.cc1Color.y, ccShade, ccValue, texData0, texData1);
-    cc1[2].rgb = cc_fetchColor(material.cc1Color.z, ccShade, ccValue, texData0, texData1);
+    cc1[2].rgb = cc_fetchColor(material.cc1Color.z, ccShade, ccValueC, texData0, texData1);
     cc1[3].rgb = cc_fetchColor(material.cc1Color.w, ccShade, ccValue, texData0, texData1);
 
     cc1[0].a = cc_fetchAlpha(material.cc1Alpha.x, ccShade, ccValue, texData0, texData1);
     cc1[1].a = cc_fetchAlpha(material.cc1Alpha.y, ccShade, ccValue, texData0, texData1);
-    cc1[2].a = cc_fetchAlpha(material.cc1Alpha.z, ccShade, ccValue, texData0, texData1);
+    cc1[2].a = cc_fetchAlpha(material.cc1Alpha.z, ccShade, ccValueC, texData0, texData1);
     cc1[3].a = cc_fetchAlpha(material.cc1Alpha.w, ccShade, ccValue, texData0, texData1);
 
     ccValue = (cc1[0] - cc1[1]) * cc1[2] + cc1[3];
   }
 
   ccValue = cc_clampValue(cc_overflowValue(ccValue));
-  //ccValue.rgb = gammaToLinear(ccValue.rgb);
+
 
   // Depth / Decal handling:
   // We manually write & check depth values in an image in addition to the actual depth buffer.
@@ -296,7 +311,7 @@ void main()
     writeDepth = -0xFFFFFF;
   }*/
 
-  bool alphaTestFailed = ccValue.a < ALPHA_CLIP;
+  bool alphaTestFailed = ALPHA_CLIP > 0.0 && alphaClip < ALPHA_CLIP;
   if(alphaTestFailed)writeDepth = -0xFFFFFF;
 
   #ifdef USE_SHADER_INTERLOCK

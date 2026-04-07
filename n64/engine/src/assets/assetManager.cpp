@@ -150,6 +150,16 @@ void* P64::AssetManager::getByIndex(uint32_t idx) {
   return res;
 }
 
+const char* P64::AssetManager::getPathByIndex(uint32_t idx)
+{
+  if (idx >= assetTable->count) {
+    return nullptr;
+  }
+
+  auto &entry = assetTable->entries[idx];
+  return entry.path;
+}
+
 /*void* P64::AssetManager::getByFilePath(const std::string &path)
 {
   for (uint32_t i = 0; i < assetTable->count; ++i) {

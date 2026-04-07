@@ -70,6 +70,8 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     float inAirTime;
     float notMovingTime;
     float hurtTimeout;
+    float blinkTimer;
+    float noiseTimer;
 
     float targetAnimBlend;
 
@@ -136,9 +138,12 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       fm_vec3_t colorNormal{1.0f, 1.0f, 1.0f};
       fm_vec3_lerp(&blickColor, &colorNormal, &blickColor, data->hurtTimeout / HURT_TIMEOUT);
 
-      model->material.colorPrim.r = (uint8_t)(blickColor.x * 255);
-      model->material.colorPrim.g = (uint8_t)(blickColor.y * 255);
-      model->material.colorPrim.b = (uint8_t)(blickColor.z * 255);
+      model->getMatInstance().colorPrim = {
+        (uint8_t)(blickColor.x * 255),
+        (uint8_t)(blickColor.y * 255),
+        (uint8_t)(blickColor.z * 255),
+        0xFF
+      };
 
       if (data->hurtTimeout == 0.0f) {
         model->material.colorPrim = {0xFF, 0xFF, 0xFF, 0xFF};
@@ -329,6 +334,28 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     }
 
     data->lastFramePos = obj.pos;
+
+    // Dynamic Materials
+    auto &mat = data->anim->getMatInstance();
+    auto ph = mat.getPlaceholder(0);
+
+    data->noiseTimer = fmodf(data->noiseTimer + deltaTime, 1024.0f);
+    mat.colorPrim.a = (fm_sinf(data->noiseTimer) * 0.5f + 0.5f) * 0x70;
+
+    data->blinkTimer -= deltaTime;
+    if(data->hurtTimeout > 0.0f) {
+      ph->tile.setTexture("face02.i4.sprite"_asset);
+    } else {
+      ph->tile.setTexture(data->blinkTimer > 0.0f
+        ? "face00.i4.sprite"_asset
+        : "face01.i4.sprite"_asset
+      );
+    }
+    if(data->blinkTimer < -0.15f) {
+      data->blinkTimer = 2.0f + Math::rand01()*1.0f;
+    }
+
+    ph->update();
   }
 
   void fixedUpdate(Object& obj, Data *data, float fixedDeltaTime)

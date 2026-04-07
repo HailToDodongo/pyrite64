@@ -19,6 +19,8 @@ namespace Utils
         bool hasToolchain{};
         bool hasLibdragon{};
         bool hasTiny3d{};
+
+        bool upToDateLibs{}; // false if libdragon / tiny3d are outdated
       };
 
     private:

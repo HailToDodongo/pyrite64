@@ -9,6 +9,8 @@
 #include <atomic>
 #include <thread>
 
+#include "fs.h"
+
 namespace
 {
   std::atomic_bool installing{false};
@@ -63,6 +65,21 @@ void Utils::Toolchain::scan()
                     && fs::exists(state.toolchainPath / "include" / "t3d.mk")
                     && fs::exists(state.toolchainPath / "mips64-elf" / "include" / "t3d");
   #endif
+
+  if(state.hasLibdragon && state.hasTiny3d)
+  {
+    auto rspqHeader = FS::loadTextFile(state.toolchainPath / "mips64-elf" / "include" / "rspq.h");
+
+    state.upToDateLibs = true;
+    if(!rspqHeader.contains("rspq_block_begin_reuse")) {
+      printf("Libdragon out of date, missing 'rspq_block_begin_reuse' in rspq.h\n");
+      state.upToDateLibs = false;
+    }
+    if(!rspqHeader.contains("rspq_block_set_placeholder")) {
+      printf("Libdragon out of date, missing 'rspq_block_set_placeholder' in rspq.h\n");
+      state.upToDateLibs = false;
+    }
+  }
 }
 
 namespace

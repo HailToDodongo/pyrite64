@@ -2,12 +2,14 @@
 * @copyright 2025 - Max Bebök
 * @license MIT
 */
+#include "../project/scene/object.h"
 #include "n64Mesh.h"
 #include "../context.h"
 #include "../project/assetManager.h"
 #include <filesystem>
 
 #include "scene.h"
+#include "../shader/defines.h"
 #include "n64/n64Material.h"
 
 namespace fs = std::filesystem;
@@ -19,51 +21,27 @@ namespace
   constinit glm::vec4 lastEnv{};
 }
 
-void Renderer::N64Mesh::fromT3DM(const T3DM::T3DMData &t3dmData, Project::AssetManager &assetManager)
+void Renderer::N64Mesh::fromT3DM(const Project::Assets::Model3D &model3d, Project::AssetManager &assetManager)
 {
   loaded = false;
   mesh.vertices.clear();
   mesh.indices.clear();
   parts.clear();
 
+  auto &t3dmData = model3d.t3dm;
   parts.resize(t3dmData.models.size());
   auto part = parts.begin();
 
   uint16_t idx = 0;
   for (auto &model : t3dmData.models)
   {
-    part->refTex0 = assetManager.getFallbackTexture();
-    part->refTex1 = part->refTex0;
-
     part->indicesOffset = mesh.indices.size();
     part->indicesCount = model.triangles.size() * 3;
 
-    T3DM::Material matDummy{};
-    auto mat = t3dmData.materials.find(model.materialName);
-    if(mat != t3dmData.materials.end()) {
-      N64Material::convert(*part, mat->second);
-    }
-    const T3DM::Material &material = (mat != t3dmData.materials.end()) ? mat->second : matDummy;
-
-    part->texBindings[0].texture = part->refTex0.lock()->getGPUTex();
+    part->materialName = model.materialName;
+    part->texBindings[0].texture = assetManager.getFallbackTexture()->getGPUTex();
     part->texBindings[0].sampler = texSamplerRepeat;
     part->texBindings[1] = part->texBindings[0];
-
-    if (!material.texA.texPath.empty()) {
-      auto texEntry = assetManager.getByPath(material.texA.texPath);
-      if (texEntry && texEntry->texture) {
-        part->texBindings[0].texture = texEntry->texture->getGPUTex();
-        part->refTex0 = texEntry->texture;
-      }
-    }
-
-    if (!material.texB.texPath.empty()) {
-      auto texEntry = assetManager.getByPath(material.texB.texPath);
-      if (texEntry && texEntry->texture) {
-        part->texBindings[1].texture = texEntry->texture->getGPUTex();
-        part->refTex1 = texEntry->texture;
-      }
-    }
 
     //model.material.colorCombiner
     for (auto &tri : model.triangles) {
@@ -106,40 +84,69 @@ void Renderer::N64Mesh::recreate(Renderer::Scene &sc) {
 
 void Renderer::N64Mesh::draw(
   SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdBuff, UniformsObject &uniforms,
-  const std::vector<uint32_t> &partsIndices,
-  const UniformsOverrides& overrides
-)
-{
+  const ObjectRef &ref
+) {
   if (!scene)return;
 
   auto drawPart = [&](MeshPart &part)
   {
-    if(part.refTex1.expired() || part.refTex0.expired()) {
-      loaded = false;
-      return;
-    }
-
-    uint32_t flags = uniforms.mat.flags;
     uint32_t blender = uniforms.mat.blender.x;
 
-    if(part.material.flags & UniformN64Material::FLAG_SET_PRIM_COL) {
-      lastPrim = part.material.colPrim;
-    } else {
-      if(overrides.setPrim)lastPrim = overrides.colPrim;
+    uint32_t slotIdx = 0;
+    auto matEntry = ref.model->materials.find(part.materialName);
+    if(matEntry != ref.model->materials.end()) {
+      auto mat = matEntry->second;
+
+      auto resolveTex = [&](Project::Assets::MaterialTex &tex, int texBinding)
+      {
+        if (tex.set.value) {
+          if(tex.dynType.value == tex.DYN_TYPE_FULL && slotIdx < 8) {
+            tex = ref.matInstance->texSlots[slotIdx];
+            ++slotIdx;
+          }
+          else if(tex.dynType.value == tex.DYN_TYPE_TILE && slotIdx < 8) {
+            tex.offset = ref.matInstance->texSlots[slotIdx].offset;
+            ++slotIdx;
+          }
+          auto texEntry = ctx.project->getAssets().getEntryByUUID(tex.texUUID.value);
+          if (texEntry && texEntry->texture) {
+            part.texBindings[texBinding].texture = texEntry->texture->getGPUTex();
+          }
+        }
+      };
+
+      if(ref.matInstance)
+      {
+        resolveTex(mat.tex0, 0);
+        resolveTex(mat.tex1, 1);
+        N64Material::convert(part, mat);
+      }
     }
 
-    if(part.material.flags & UniformN64Material::FLAG_SET_ENV_COL) {
-      lastEnv = part.material.colEnv;
-    } else {
-      if(overrides.setEnv)lastEnv = overrides.colEnv;
+
+    if(ref.matInstance)
+    {
+      if(part.material.flags & UniformN64Material::FLAG_SET_PRIM_COL) {
+        lastPrim = part.material.colPrim;
+      } else {
+        if(ref.matInstance->setPrim.resolve(ref.obj)) {
+          lastPrim = ref.matInstance->prim.resolve(ref.obj);
+        }
+      }
+
+      if(part.material.flags & UniformN64Material::FLAG_SET_ENV_COL) {
+        lastEnv = part.material.colEnv;
+      } else {
+        if(ref.matInstance->setEnv.resolve(ref.obj)) {
+          lastEnv = ref.matInstance->env.resolve(ref.obj);
+        }
+      }
     }
 
     uniforms.mat = part.material;
     uniforms.mat.colPrim = lastPrim;
     uniforms.mat.colEnv = lastEnv;
     uniforms.mat.blender.x = blender;
-
-    uniforms.mat.flags |= flags;
 
     // @TODO: move out
     float clip = uniforms.mat.lightDir[0].w;
@@ -159,6 +166,12 @@ void Renderer::N64Mesh::draw(
     }
     uniforms.mat.lightDir[0].w = clip;
 
+    if(ref.isCollision) {
+      uniforms.mat.flags |= DRAW_SHADER_COLLISION;
+    } else {
+      uniforms.mat.flags &= ~DRAW_SHADER_COLLISION;
+    }
+
     SDL_BindGPUFragmentSamplers(pass, 0, part.texBindings, 2);
     SDL_BindGPUVertexSamplers(pass, 0, part.texBindings, 2); // needed?
 
@@ -168,13 +181,13 @@ void Renderer::N64Mesh::draw(
     mesh.draw(pass, part.indicesOffset, part.indicesCount);
   };
 
-  if(partsIndices.empty())
+  if(ref.partsIndices.empty())
   {
     for (auto &part : parts) {
       drawPart(part);
     }
   } else {
-    for (auto idx : partsIndices) {
+    for (auto idx : ref.partsIndices) {
       if (idx < parts.size()) {
         drawPart(parts[idx]);
       }

@@ -34,3 +34,13 @@ uint64_t Utils::FS::getFileAge(const fs::path &filePath)
   auto ftime = fs::last_write_time(filePath);
   return ftime.time_since_epoch().count();
 }
+
+void Utils::FS::delTypeRecursive(const fs::path &basePath, const std::string &fileExt)
+{
+  for (const auto &entry : fs::recursive_directory_iterator(basePath))
+  {
+    if (entry.is_regular_file() && entry.path().extension() == fileExt) {
+      fs::remove(entry.path());
+    }
+  }
+}

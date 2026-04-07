@@ -93,14 +93,10 @@ void P64::RenderPipelineHDRBloom::draw()
   assert(fb != nullptr);
   auto surfBlur = postProc[frameIdxLast].applyEffects(*fb);
 
-  rdpq_sync_pipe();
   rdpq_set_color_image(fb);
 
   if(DEBUG_BLOOM)
   {
-    rdpq_sync_tile();
-    rdpq_sync_load();
-
     rdpq_set_mode_standard();
     rdpq_mode_combiner(RDPQ_COMBINER_TEX);
     rdpq_mode_blender(0);

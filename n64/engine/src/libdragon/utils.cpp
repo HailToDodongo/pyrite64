@@ -4,6 +4,8 @@
 */
 #include "utils.h"
 #include "lib/mips.h"
+#include "scene/components/animModel.h"
+#include "scene/components/model.h"
 #include "vi/swapChain.h"
 
 extern "C" {
@@ -64,6 +66,12 @@ void P64::LD::init()
   DISABLE_FN(display_get_num_buffers);
   DISABLE_FN(display_get_current_framebuffer);
   DISABLE_FN(display_get_zbuf);
+
+  DISABLE_FN(t3d_model_get_material);
+  DISABLE_FN(t3d_model_draw_material);
+  DISABLE_FN(t3d_model_draw);
+  DISABLE_FN(t3d_model_draw_custom);
+  DISABLE_FN(t3d_model_draw_skinned);
 }
 
 void* P64::LD::sbrkSetTop(void* newTop)

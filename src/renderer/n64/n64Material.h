@@ -4,9 +4,8 @@
 */
 #pragma once
 #include "../n64Mesh.h"
-#include "tiny3d/tools/gltf_importer/src/structs.h"
 
 namespace Renderer::N64Material
 {
-  void convert(N64Mesh::MeshPart &part, const T3DM::Material &t3dMat);
+  void convert(N64Mesh::MeshPart &part, const Project::Assets::Material &t3dMat);
 }

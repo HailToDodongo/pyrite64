@@ -45,7 +45,7 @@ namespace Project::Graph::Node
       }
 
       void draw() override {
-        if(ImTable::start("Node", nullptr, 80.0f)) {
+        if(ImTable::start("Node", nullptr, {-1, 80.0f})) {
           if(ImTable::addComboBox("Oper.", compType, COMP_TYPES.data(), COMP_TYPES.size())) {
             updateTitle();
           }

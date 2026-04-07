@@ -14,9 +14,11 @@
 #include "../../../renderer/scene.h"
 #include "../../../utils/meshGen.h"
 #include "../../../shader/defines.h"
-#include "../shared/material.h"
+#include "../shared/materialInstance.h"
+#include "../../../editor/pages/editorScene.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include "../../../editor/pages/parts/assets/matInstanceEditor.h"
 #include "glm/gtx/matrix_decompose.hpp"
 
 #include "../shared/meshFilter.h"
@@ -28,7 +30,7 @@ namespace Project::Component::AnimModel
     PROP_U64(model);
     PROP_S32(layerIdx);
 
-    Shared::Material material{};
+    Shared::MaterialInstance material{};
 
     Renderer::Object obj3D{};
     Utils::AABB aabb{};
@@ -74,7 +76,11 @@ namespace Project::Component::AnimModel
     ctx.fileObj.write<uint16_t>(id);
     ctx.fileObj.write<uint8_t>(data.layerIdx.resolve(obj));
     ctx.fileObj.write<uint8_t>(0); // flags, unused
-    data.material.build(ctx.fileObj, obj);
+
+    data.material.validateWithModel(
+      ctx.project->getAssets().getEntryByUUID(data.model.value)->model
+    );
+    data.material.build(ctx.fileObj, ctx, obj);
   }
 
   void draw(Object &obj, Entry &entry)
@@ -89,6 +95,11 @@ namespace Project::Component::AnimModel
       ImTable::add("Name", entry.name);
       ImTable::addAssetVecComboBox("Model", modelList, data.model.value, [&data](auto) { data.obj3D.removeMesh(); });
 
+      ImTable::add("");
+      if(ImGui::Button(ICON_MDI_PENCIL " Open Model Editor")) {
+        ctx.editorScene->openModelEditor(data.model.value);
+      }
+
       std::vector<const char*> layerNames{};
       for (auto &layer : scene->conf.layers3D) {
         layerNames.push_back(layer.name.value.c_str());
@@ -102,28 +113,8 @@ namespace Project::Component::AnimModel
 
       ImTable::end();
 
-      if(ImGui::CollapsingSubHeader("Material Sets", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Mat", &obj))
-      {
-        ImTable::addObjProp<int32_t>("Depth", data.material.depth, [](int32_t *depth)
-        {
-          std::array<const char*, 4> items = {"None", "Read", "Write", "Read+Write"};
-          return ImGui::Combo("##", depth, items.data(), items.size());
-        }, &data.material.setDepth);
-
-        ImTable::addObjProp("Prim-Color", data.material.prim, &data.material.setPrim);
-        ImTable::addObjProp("Env-Color", data.material.env, &data.material.setEnv);
-        ImTable::addObjProp("Fresnel", data.material.fresnel, &data.material.setFresnel);
-        if(data.material.fresnel.resolve(obj.propOverrides) != 0)
-        {
-          ImTable::addObjProp("Fres-Color", data.material.fresnelColor);
-        }
-        // ImTable::addObjProp("Lighting", data.material.lighting, &data.material.setLighting);
-
-        ImTable::end();
-      }
-
+      Editor::MatInstanceEditor::draw(data.material, obj, data.model.value);
       ImGui::Dummy({0,4});
-
     }
   }
 
@@ -147,17 +138,6 @@ namespace Project::Component::AnimModel
       if(data.layerIdx.value == 0)data.obj3D.uniform.mat.flags |= T3D_FLAG_NO_LIGHT;
     }
 
-
-    data.obj3D.overrides.setPrim = data.material.setPrim.resolve(obj.propOverrides);
-    data.obj3D.overrides.setEnv = data.material.setEnv.resolve(obj.propOverrides);
-
-    if(data.obj3D.overrides.setPrim) {
-      data.obj3D.overrides.colPrim = data.material.prim.resolve(obj.propOverrides);
-    }
-    if(data.obj3D.overrides.setEnv) {
-      data.obj3D.overrides.colEnv = data.material.env.resolve(obj.propOverrides);
-    }
-
     data.obj3D.setObjectID(obj.uuid);
 
     // @TODO: tidy-up
@@ -174,7 +154,12 @@ namespace Project::Component::AnimModel
       return;
     }
 
-    data.obj3D.draw(pass, cmdBuff);
+    data.obj3D.draw(pass, cmdBuff, {
+      .partsIndices = {},
+      .model = &asset->model,
+      .matInstance = &data.material,
+      .obj = obj
+    });
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)
