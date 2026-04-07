@@ -494,9 +494,6 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       1.0f
     );
 
-    fm_vec3_t rayDir = {0.0f, -40.0f, 0.0f};
-    Debug::drawLine(obj.pos, obj.pos + rayDir, Debug::paletteColor(2));
-
     DrawLayer::use2D();
 
     //rdpq_text_printf(nullptr, User::FONT_SMALL, 10, 200, "P: %.2f %.2f %.2f",obj.pos.x, obj.pos.y, obj.pos.z);
