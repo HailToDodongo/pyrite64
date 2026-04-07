@@ -271,6 +271,9 @@ bool Build::cleanProject(const Project::Project &project, const CleanArgs &args)
   if(args.engine) {
     fs::remove_all(projPath / "engine" / "build");
   }
+  if(args.engineSrc) {
+    fs::remove_all(projPath / "engine");
+  }
 
   return true;
 }

@@ -83,6 +83,7 @@ CLI::Result CLI::run(int argc, char** argv)
       .code = true,
       .assets = true,
       .engine = true,
+      .engineSrc = true
     });
   }
 

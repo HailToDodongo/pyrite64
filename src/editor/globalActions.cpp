@@ -54,6 +54,7 @@ namespace Editor::Actions
         .code = true,
         .assets = true,
         .engine = true,
+        .engineSrc = true
       });
     });
 

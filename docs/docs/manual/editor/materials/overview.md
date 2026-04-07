@@ -11,7 +11,7 @@ which are two processors distinct from the CPU.\
 It doesn't matter too much what exactly they are doing,\
 but the important part is that they carry their own state.
 
-This state contains things like the currently loaded textures(s),\
+This state contains things like the currently loaded texture(s),\
 color registers, blending, if Anti-Alias is enabled or not and so on.
 
 The CPU can then send commands to change this state over time.\
@@ -31,7 +31,7 @@ This will lead to some settings only being set once per frame, where nothing els
 Whereas others may set it on a per draw-layer, per 3D-model, or even per object basis.
 
 You can visualize it as a hierarchy of settings, where each stage has to preserve what was set before.\
-As an example this is a small section of settings different stages may set in a frame:
+As an example, this is a small section of settings different stages may set in a frame:
 
 ```{image} /_static/img/mat_state_overview.png
 :align: center

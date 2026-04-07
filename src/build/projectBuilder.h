@@ -33,6 +33,7 @@ namespace Build
     bool code{true};
     bool assets{true};
     bool engine{true};
+    bool engineSrc{false};
   };
   bool cleanProject(const Project::Project &project, const CleanArgs &args = {});
 
