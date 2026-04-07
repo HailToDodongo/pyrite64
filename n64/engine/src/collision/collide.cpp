@@ -629,6 +629,77 @@ namespace P64::Coll {
   }
 
 
+  // ── Analytical Sphere-Triangle ───────────────────────────────────
+
+  /// @brief Analytical sphere-triangle collision using closest-point distance test.
+  ///
+  /// Finds the closest point on the triangle to the sphere center. If the
+  /// distance is less than the sphere radius the shapes overlap and a contact point is generated. 
+  /// This is a closed-form solution that replaces the iterative GJK+EPA path for sphere-vs-triangle pairs.
+  ///
+  /// All inputs and outputs are in mesh local space
+  ///
+  /// @param proxy      ColliderProxy with the sphere collider transformed into
+  ///                   mesh local space (worldCenter = sphere center in mesh
+  ///                   space, rotation matrices = relative orientation).
+  /// @param sphere     The sphere shape definition.
+  /// @param v0         Triangle vertex 0 in mesh local space.
+  /// @param v1         Triangle vertex 1 in mesh local space.
+  /// @param v2         Triangle vertex 2 in mesh local space.
+  /// @param result     Single EpaResult to receive contact data (mesh local space).
+  /// @return True if a collision is detected, false otherwise.
+  static bool analyticalSphereTriangle(
+      const ColliderProxy &proxy,
+      const SphereShape   &sphere,
+      const fm_vec3_t &v0, const fm_vec3_t &v1, const fm_vec3_t &v2,
+      EpaResult &result)
+  {
+    const float radius = sphere.radius;
+    const fm_vec3_t &center = proxy.worldCenter;
+
+    // Conservative early-out
+    fm_vec3_t closest = closestPointOnTriangle(center, v0, v1, v2);
+    fm_vec3_t diff = center - closest;
+    float distSq = fm_vec3_len2(&diff);
+
+    if(distSq >= radius * radius) return false;
+
+    float dist = sqrtf(distSq);
+    fm_vec3_t normal;
+    if(dist < FM_EPSILON) {
+      // Sphere center lies on the triangle — use triangle face normal
+      normal = Coll::MeshCollider::triangleNormalFromVertices(v0, v1, v2);
+      normal = vec3NormalizeOrFallback(normal, VEC3_UP);
+    } else {
+      normal = diff * (1.0f / dist);
+    }
+
+    // Compute contactA via the sphere support function
+    // This should also handle mesh scale which distorts the sphere into an
+    // ellipsoid in mesh-local space.
+    fm_vec3_t negNormal = -normal;
+    fm_vec3_t localDir = matrix3Vec3Mul(proxy.shapeToSpaceTranspose, negNormal);
+    fm_vec3_t localSupport = sphere.support(localDir);
+    fm_vec3_t contactA = matrix3Vec3Mul(proxy.shapeToSpace, localSupport) + center;
+
+    //penetration
+    fm_vec3_t contactToClosest = closest - contactA;
+    float penetration = fm_vec3_dot(&contactToClosest, &normal);
+
+    // Reject non-overlapping and extremely shallow contacts that would be below EPA's convergence
+    // tolerance, these could cause jitter
+    float minPenetration = 0.005f * collisionSceneGetInstance()->getPhysicsScale();
+    if(penetration < minPenetration) return false;
+
+    // Derive contactB from contactA + normal * penetration to match EPA output convention
+    result.normal = normal;
+    result.penetration = penetration;
+    result.contactA = contactA;
+    result.contactB = contactA + normal * penetration;
+    return true;
+  }
+
+
   // Area-based contact point reduction
 
 
@@ -1048,6 +1119,26 @@ namespace P64::Coll {
             const_cast<MeshCollider *>(&mesh), objectB,
             satResults, satCount,
             combinedFriction, combinedBounce, colliderRespondsToMesh, triangleIndex);
+        return true;
+      }
+      return false;
+    }
+
+    // --- Analytical Sphere-Triangle fast path (closest-point distance test) ---
+    if(colliderProxyMeshSpace->collider->shapeType() == ShapeType::Sphere && !isTriggerContact) {
+      const SphereShape &sphere = colliderProxyMeshSpace->collider->sphereShape();
+      const fm_vec3_t v0 = tri.localVertex(0);
+      const fm_vec3_t v1 = tri.localVertex(1);
+      const fm_vec3_t v2 = tri.localVertex(2);
+
+      EpaResult sphereResult;
+      if(analyticalSphereTriangle(*colliderProxyMeshSpace, sphere, v0, v1, v2, sphereResult)) {
+        mesh.localResultToWorld(sphereResult);
+
+        collideCacheContactConstraint(
+            rigidBody, colliderProxyMeshSpace->collider, nullptr, objectA,
+            nullptr, nullptr, const_cast<MeshCollider *>(&mesh), objectB,
+            sphereResult, combinedFriction, combinedBounce, isTriggerContact, colliderRespondsToMesh, false, triangleIndex);
         return true;
       }
       return false;
