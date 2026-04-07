@@ -14,12 +14,14 @@ fm_vec3_t P64::Coll::Attach::update(const fm_vec3_t &ownPos)
   fm_vec3_t diff{};
   if(trackedColl && trackedColl->meshCollider)
   {
+    auto nextRefPos = ownPos;
     if(lastRefId == refId) {
-      diff = refPos - trackedColl->meshCollider->toWorldSpace(refPosLocal);
+      nextRefPos = trackedColl->meshCollider->toWorldSpace(refPosLocal);
+      diff = refPos - nextRefPos;
     }
 
     lastRefId = refId;
-    refPos = ownPos;
+    refPos = ownPos - diff;
     refPosLocal = trackedColl->meshCollider->toLocalSpace(refPos);
   } else {
     lastRefId = 0;

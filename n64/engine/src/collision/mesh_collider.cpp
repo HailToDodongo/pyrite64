@@ -119,7 +119,7 @@ namespace P64::Coll {
       p = p - owner_->pos;
     }
     if(hasRotation()) {
-      p = matrix3Vec3Mul(inverseRotationMatrix_, p);
+      p = quatConjugate(owner_->rot) * p;
     }
     if(hasScale()) {
       if(fabsf(scale.x) > FM_EPSILON) p.x /= scale.x;
@@ -141,8 +141,7 @@ namespace P64::Coll {
   fm_vec3_t MeshCollider::rotateToLocal(const fm_vec3_t &worldDir) const {
     fm_vec3_t localDirection = worldDir;
     if(hasRotation()) 
-      localDirection = matrix3Vec3Mul(inverseRotationMatrix_, worldDir);
-    // return matrix3Vec3Mul(inverseRotationMatrix_, worldDir);
+      localDirection = quatConjugate(owner_->rot) * worldDir;
     if (hasScale())
       localDirection = localDirection * vec3ReciprocalScaleComponents(owner_->scale);
 
