@@ -1,66 +1,6 @@
 # Materials
 
-This page explains how materials in Pyrite64 work and how to use them in your projects.\
-Materials here refer to any draw settings (e.g.: colors, textures) used by 3D models. 
-
-By default, 3D models will already contain some material information from fast64,\
-which pyrite64 uses as a default.
-The editor, and to some extent the runtime C++ API,\
-allows you to further edit the materials.
-
-For authoring 3D models itself, please check out the [Assets](../assets.rst) documentation.
-
-## Material System
-
-Before we go into any settings, let's first explain how the material system works in Pyrite64.
-
-Materials come in two forms: a "Material" and a "Material Instance".\
-The former is attached to a model, is immutable at runtime, and only exists once.\
-A "Material Instance" is something that exists per component/object, is mutable at runtime,\
-and allows for individual overrides of the material settings.
-
-As an example, let's say you have a model of a box where you can control the color by changing the "Primitive Color" register.\
-And in your scene you have three objects that draw said mesh.\
-This may look like this in the editor and in-game:
-
-```{image} /_static/img/mat_editor_intro.png
-:align: center
-```
-On the left we can see three objects, all using the same model.\
-The object settings on the right show an option to override, in this case "Prim Color".
-
-At runtime the data looks something like this:
-
-```{image} /_static/img/mat_example_data.png
-:align: center
-:width: 340px
-```
-The actual 3D-mesh and material definition only exists once, and is referenced by the object.\
-Whereas the instance data is stored per object and sets additional data.
-
-When it comes to rendering, the sequence of draw calls may look like this (simplified): 
-
-```{image} /_static/img/mat_draw_flow.png
-:align: center
-:width: 340px
-```
-
-Each object is drawn one after another, first performing the object-specific calls,\
-followed by the data from the model itself.
-
-In the simplest case, this means first setting the matrix of the object, then the material instance.\
-Afterward, the models material is applied and then the actual mesh data is drawn.
-
-As a consequence, anything directly set in the material will be the same across all objects using it.
-For example, if the material here would be setting prim-color, the object would never get a chance to override it.\
-Note that a model can have multiple materials, so even doing it afterward would not always work.
-
-This leaves two options to allow dynamic setting: not setting it, or embedding placeholders.
-Depending on the setting, one or the other is used to do so.
-
-Note that you have the choice between allowing an override or not, since either option is valid depending on the use-case.
-
-## Materials
+## Editor
 
 While materials are immutable at runtime, you can of course edit them in the editor.\
 By default, a subset of settings from fast64 are used for all 3D models during import.\
@@ -99,11 +39,9 @@ Any values changed will also update in real-time in the viewport.
 The number of settings you see may vary, since some settings depend on others.\
 For example, if you never use a texture in the color-combiner, the UI for it does not show up.
 
-### Material Settings
-
 Now for a list of all available settings in the material.
 
-#### Color Combiner
+## Color Combiner
 
 ```{image} /_static/img/mat_cc.png
 :align: center
@@ -151,7 +89,7 @@ Here is a list of all the available sources across variables:
 
 As usual on the RDP, there are some hardware-issues you have to consider.
 
-##### Fixed-Point issues
+### Fixed-Point issues
 The first is that values are handled as fixed point internally.\
 So a full white color would not be `1.0` as a float, but a 8bit integer at `255`.\
 At a first glance this may seem fine, but it causes issues during multiplication.\
@@ -167,7 +105,7 @@ So multiplying ever so slightly darkens the color.\
 The only expection is the fixed `1` input in the CC which does in fact use `0x100`.\
 Normally this does not matter at all (given the usual RGBA16 output), but if you need very exact colors be aware of this.
 
-##### Overflow / Underflow & Clamping
+### Overflow / Underflow & Clamping
 Related to the fact integers are used, over- or underflow can occur very easily.\
 Internally the colors can temporarily go up to `+1.5` / `-0.5` before they are clamped in the end.\
 If you exceed this value, they will roll over giving you weird color artifacts.\
@@ -196,12 +134,12 @@ and then using that result via `Combined` in the `C` slot of the second cycle.
 
 The editors viewport will correctly preview both cases, so you see when it happens directly.
 
-##### Texture Issues
+### Texture Issues
 If you want to use two textures, 2-cylce mode must be enabled.\
 Using the first texture in the second cycle also causes wrong pixels to be sampled.\
-To be totally safe, try to only use textures in the first cycle.
+To be safe, only use TEX0/TEX1 in the first cycle, and only TEX1 in the second.
 
-#### Texture Inputs
+## Texture Inputs
 
 If the CC uses a texture, you will see a UI to set settings for it.\
 The RDP allows multiple textures to be loaded. Ignoring special cases, the CC can reference two of them at once.
@@ -240,12 +178,12 @@ The upper limit is `2048`, which can be set to repeat "infinitely."\
 A value of `1.0` is equivalent to clamping.\
 Note that any value inbetween, even fractions, are valid.
 
-If `Mirror` is enabled, the texture will flip every other repetition.\
+If `Mirror` is enabled, the texture will flip every other repetition.
 
 All the settings below the texture can be set per axis, the left side is for the horizontal U axis, the right one for the vertical V axis.
 (On the RDP those are also known as `ST` instead of `UV`).
 
-#### Sampling
+## Sampling
 
 This section defines how textures are sampled, which in contrast to tiles, is a global setting.  
 ```{image} /_static/img/model_edit_sampling.png
@@ -276,7 +214,7 @@ One the right is what the N64 produces, which is almost the same, expect that on
 This is due to the fact only three pixels are used for interpolation.\
 This detail will most like not matter, but can be intentionally used to reduce blurring.
 
-#### Values
+## Values
 
 If the CC uses a generic register, you can set the values here.\
 If defined here, they are fixed for all objects that draw it, otherwise they can be set per-object.
@@ -293,7 +231,7 @@ they will use whatever value was set last.\
 This situation is often referred to as "Material bleed".
 
 
-#### Geometry Modes
+## Geometry Modes
 
 The settings here affect how geometry is processed before it hits the RDP.\
 This can influence the Transform and Lighting (T&L) stage of the tiny3d ucode.
@@ -308,18 +246,58 @@ Most commonly you would use `Spherical UV` for a simple environment mapping effe
 The rest are most specialized options that may also not be fully supported in pyrite64 yet.
 
 `Unlit`, by default vertex color is always affected by lighting.\
-Enabling this only uses the vertex color and ignored any lighting.\
+Enabling this only uses the vertex color and ignores any lighting.\
 This can be useful for "glow" effects in lower lighting conditions, or for a more stylized look.
 
-`Fog to Alpha` is part of making fog work.
-@TODO
+`Fog to Alpha` is required if you want to use fog in a scene.\
+The N64 hardware has no fixed builtin fog support, instead it uses a blending setup.\
+This will cause the color output to be interpolated towards a fog color based on the shading-alpha.\
+Meaning that by default, translucent vertices in a mesh would now fade towards that color instead of being transparent.\
+To actually get fog, something need to calulate and store the fog strength in the alpha channel.\
+Enabling this setting does so, and uses the fog values defined in the draw-layer.
+ 
+`Cull-Front` / `Cull-Back` enables face culling.\
+By default `Cull-Back` is always active, only disable this if you need a double-sided material.
 
+## Render Modes
 
-#### Render Modes
-
-@TODO
+Render-modes are global settings in the RDP affecting rendering and blending.
 
 ```{image} /_static/img/model_edit_render.png
 :align: center
 :width: 400px
 ```    
+
+`Alpha-Clip`, defines a threshold for alpha values.\
+If enabled, all pixels with alpha smaller than the defined value will get rejected.\
+This can be useful to get cutout-materials without paying the cost for actual transparency and blending.\
+Even with translucent materials, it can improve performance since (almost) fully transparent pixels are no longer drawn.
+
+`Depth`, set if a depth compare and write to the depth buffer should be done.\
+By default, this is never set, and whatever is defined in the draw-layer is used.\
+However, in some cases it can be useful to temporarily override this here for specific materials.
+For example, if you have a translucent shell around another mesh and want to avoid a depth-write.
+This setting is correctly reverted after the material is done drawing.
+
+`Anti-Alias`, allows setting AA to reduce aliasing / jagged edges.\
+If enabled, please make sure to also enable AA in the framebuffer settings.\
+(See "Framebuffer -> Filter" in the scene-settings for that).\
+Enabling AA has a big impact on performance, so only use it when necessary.
+
+`Blending`, allows overriding the blending mode.\
+By default, the blending mode is set in the draw-layer, but you can override it here.\
+This setting is correctly reverted after the material is done drawing.\
+Using anything other than "None" will have an impact on performance, so only use it when necessary.
+
+`Fog`, overrides fog.
+Once again, this is defined in the draw-layer by default.\
+Since just enabling fog on its own does not give any meaningful results, the draw-layer should always be used to enable it instead.\
+However it can be useful to temporarily disable fog here for certain effects.\
+Note that this only changes blending, you most likely also need to change "Fog to Alpha".\
+This setting is correctly reverted after the material is done drawing.
+
+`Fixed-Z`, allows using a fixed depth value.\
+By default, depth values are taken and interpolated across the triangle that is drawn.\
+You can however force a single fixed value to be used intead.\
+Enabling this lets you specify that value, as well as the delta (change per pixel).\
+This is a rather specific feature and you most likely never have to use it.
