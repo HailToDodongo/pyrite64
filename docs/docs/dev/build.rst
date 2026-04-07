@@ -26,6 +26,7 @@ Linux users should follow the conventions of their distribution and package mana
   pacman -S mingw-w64-ucrt-x86_64-gcc
   pacman -S mingw-w64-ucrt-x86_64-cmake
   pacman -S mingw-w64-ucrt-x86_64-ninja
+  pacman -S mingw-w64-ucrt-x86_64-python
 
 
 ====================
