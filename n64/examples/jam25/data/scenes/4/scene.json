@@ -522,8 +522,8 @@
               },
               {
                 "data": {
-                  "maskRead": 255,
-                  "maskWrite": 255,
+                  "maskRead": 0,
+                  "maskWrite": 8,
                   "meshFilter": "",
                   "modelUUID": 6985508143550202785
                 },
@@ -748,8 +748,8 @@
               },
               {
                 "data": {
-                  "maskRead": 255,
-                  "maskWrite": 255,
+                  "maskRead": 0,
+                  "maskWrite": 8,
                   "meshFilter": "",
                   "modelUUID": 15813250936274457379
                 },
@@ -916,8 +916,8 @@
           },
           {
             "data": {
-              "maskRead": 255,
-              "maskWrite": 255,
+              "maskRead": 0,
+              "maskWrite": 8,
               "meshFilter": "",
               "modelUUID": 18042696417486669443
             },
@@ -1127,8 +1127,8 @@
           },
           {
             "data": {
-              "maskRead": 255,
-              "maskWrite": 255,
+              "maskRead": 0,
+              "maskWrite": 8,
               "meshFilter": "",
               "modelUUID": 18042696417486669443
             },
@@ -1159,9 +1159,9 @@
         "id": 20,
         "name": "platform",
         "pos": [
-          102.04335021972656,
-          623.9027099609375,
-          1239.462890625
+          100.0,
+          620.0,
+          1240.0
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -1224,8 +1224,8 @@
           },
           {
             "data": {
-              "maskRead": 255,
-              "maskWrite": 255,
+              "maskRead": 0,
+              "maskWrite": 8,
               "meshFilter": "",
               "modelUUID": 18042696417486669443
             },

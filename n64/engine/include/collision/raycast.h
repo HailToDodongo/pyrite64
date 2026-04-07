@@ -15,7 +15,7 @@ namespace P64::Coll {
   struct Collider;
 
   constexpr int RAYCAST_MAX_COLLIDER_TESTS = 50;
-  constexpr int RAYCAST_MAX_TRIANGLE_TESTS = 100;
+  constexpr int RAYCAST_MAX_TRIANGLE_TESTS = 30;
 
   enum class RaycastColliderTypeFlags : uint8_t {
     MESH_COLLIDERS = (1 << 0),
