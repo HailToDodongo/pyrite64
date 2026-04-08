@@ -391,7 +391,8 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       data->inAirTime += fixedDeltaTime;
     }
 
-    fm_vec3_t nextVel = rb.linearVelocity();
+    fm_vec3_t currVel = rb.linearVelocity();
+    fm_vec3_t nextVel = currVel;
     if(nextVel.y < 0.0f) {
       data->isJumpEnd = true;
     }
@@ -428,9 +429,10 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     }
 
     nextVel += data->hurtVelocity;
-    rb.setVelocity(nextVel);
     data->hurtVelocity *= 0.8f;
     data->jumpRequested = 0;
+    if(nextVel.x == currVel.x && nextVel.y == currVel.y && nextVel.z == currVel.z) return;
+      rb.setVelocity(nextVel);
   }
 
   void onEvent(Object& obj, Data *data, const ObjectEvent &event)
