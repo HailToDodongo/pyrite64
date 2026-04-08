@@ -141,7 +141,6 @@ namespace P64::Coll {
     owner_ = object;
     position_ = &object->pos;
     rotation_ = &object->rot;
-    collisionGroup_ = 0;
     aabbTreeNodeId_ = NULL_NODE;
     constraints_ = Constraint::None;
     sleepCounter_ = 0;
@@ -339,7 +338,7 @@ namespace P64::Coll {
     // Apply torque accumulator
     if(hadExternalTorque) {
       fm_vec3_t angAccel = applyWorldInertia(torqueAccumulator_);
-      angularVelocity_ = angularVelocity_ + (angAccel * dt * timeScale_);
+      angularVelocity_ = angularVelocity_ + (angAccel * dt);
       torqueAccumulator_ = VEC3_ZERO;
     }
 

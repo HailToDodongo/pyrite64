@@ -178,8 +178,6 @@ namespace P64::Coll {
     uint32_t transformVersion_{0};
     NodeProxy aabbTreeNodeId_{NULL_NODE};
     uint16_t sleepCounter_{0};
-    uint16_t collisionLayers_{0};
-    uint16_t collisionGroup_{0};
     bool hasGravity_{true};
     bool isKinematic_{false};
     bool isSleeping_{false};

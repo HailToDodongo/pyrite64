@@ -64,11 +64,6 @@ namespace P64::Coll {
     output = matrix3Vec3Mul(proxy->shapeToSpace, localSupport) + proxy->worldCenter;
   }
 
-  static bool barycentricIsInsideTriangle(const fm_vec3_t &barycentric, float tolerance) {
-    return barycentric.x >= -tolerance && barycentric.y >= -tolerance && barycentric.z >= -tolerance &&
-           barycentric.x <= 1.0f + tolerance && barycentric.y <= 1.0f + tolerance && barycentric.z <= 1.0f + tolerance;
-  }
-
 
   /// @brief Find the closest point on a triangle to a given point, using barycentric coordinates and clamping to the triangle edges.
   /// @param point      Query point.

@@ -28,18 +28,6 @@ namespace P64::Coll {
     return static_cast<double>(TICKS_TO_US(ticks)) / 1000.0;
   }
 
-  static bool aabbChanged(const AABB &lhs, const AABB &rhs) {
-    return fm_vec3_distance2(&lhs.min, &rhs.min) > FM_EPSILON * FM_EPSILON ||
-           fm_vec3_distance2(&lhs.max, &rhs.max) > FM_EPSILON * FM_EPSILON;
-  }
-
-  static AABB mergeAABBs(const AABB &lhs, const AABB &rhs) {
-    return AABB{
-      vec3Min(lhs.min, rhs.min),
-      vec3Max(lhs.max, rhs.max)
-    };
-  }
-
   static bool canApplyAngularResponse(const RigidBody *body) {
     return body && body->canApplyAngularResponse();
   }
@@ -1682,12 +1670,12 @@ namespace P64::Coll {
       const std::vector<Collider *> *ownerColliders = findCollidersForOwner(body->owner_);
       if(!ownerColliders || ownerColliders->empty()) continue;
 
+      body->worldAabb_ = AABB {.min = body->worldCenterOfMass_, .max = body->worldCenterOfMass_};
+      fm_vec3_t displacement = *body->position_ - body->previousStepPosition_;
       for (Collider *collider : *ownerColliders)
       {
         if (!collider) continue;
-        fm_vec3_t displacement = *body->position_ - body->previousStepPosition_;
-        body->worldAabb_.min = vec3Min(body->worldAabb_.min, collider->worldAabb_.min);
-        body->worldAabb_.max = vec3Max(body->worldAabb_.max, collider->worldAabb_.max);
+        body->worldAabb_ = aabbUnion(body->worldAabb_, collider->worldAabb_);
         colliderAABBTree.moveNode(collider->aabbTreeNodeId_, collider->worldAabb_, displacement);
       }
 
