@@ -70,55 +70,50 @@ namespace P64::Coll {
   }
 
 
-
-  static fm_vec3_t closestPointOnTriangle(const fm_vec3_t &point, const fm_vec3_t &a, const fm_vec3_t &b, const fm_vec3_t &c) {
+  /// @brief Find the closest point on a triangle to a given point, using barycentric coordinates and clamping to the triangle edges.
+  /// @param point      Query point.
+  /// @param a          Triangle vertex 0.
+  /// @param b          Triangle vertex 1.
+  /// @param c          Triangle vertex 2.
+  /// @param triNormal  Pre-computed triangle normal
+  /// @return Closest point on the triangle to `point`.
+  static fm_vec3_t closestPointOnTriangle(const fm_vec3_t &point,
+                                            const fm_vec3_t &a, const fm_vec3_t &b, const fm_vec3_t &c)
+  {
+    const fm_vec3_t ap = point - a;
     const fm_vec3_t ab = b - a;
     const fm_vec3_t ac = c - a;
-    const fm_vec3_t ap = point - a;
-    const float d1 = fm_vec3_dot(&ab, &ap);
-    const float d2 = fm_vec3_dot(&ac, &ap);
-    if(d1 <= 0.0f && d2 <= 0.0f) {
-      return a;
+
+    // Barycentric coordinates — triNormal component of ap is orthogonal to
+    // ab and ac, so the plane projection is implicit (no need to subtract it).
+    const float d00 = fm_vec3_dot(&ab, &ab);
+    const float d01 = fm_vec3_dot(&ab, &ac);
+    const float d11 = fm_vec3_dot(&ac, &ac);
+    const float d20 = fm_vec3_dot(&ap, &ab);
+    const float d21 = fm_vec3_dot(&ap, &ac);
+
+    const float invDenom = 1.0f / (d00 * d11 - d01 * d01);
+    float v = (d11 * d20 - d01 * d21) * invDenom;
+    float w = (d00 * d21 - d01 * d20) * invDenom;
+    float u = 1.0f - v - w;
+
+    // Clamp to triangle if outside
+    if (u < 0.0f) {
+        w = clamp(w / (v + w), 0.0f, 1.0f);
+        v = 1.0f - w;
+        u = 0.0f;
+    } else if (v < 0.0f) {
+        w = clamp(w / (u + w), 0.0f, 1.0f);
+        u = 1.0f - w;
+        v = 0.0f;
+    } else if (w < 0.0f) {
+        v = clamp(v / (u + v), 0.0f, 1.0f);
+        u = 1.0f - v;
+        w = 0.0f;
     }
 
-    const fm_vec3_t bp = point - b;
-    const float d3 = fm_vec3_dot(&ab, &bp);
-    const float d4 = fm_vec3_dot(&ac, &bp);
-    if(d3 >= 0.0f && d4 <= d3) {
-      return b;
-    }
-
-    const float vc = d1 * d4 - d3 * d2;
-    if(vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f) {
-      const float v = d1 / (d1 - d3);
-      return a + (ab * v);
-    }
-
-    const fm_vec3_t cp = point - c;
-    const float d5 = fm_vec3_dot(&ab, &cp);
-    const float d6 = fm_vec3_dot(&ac, &cp);
-    if(d6 >= 0.0f && d5 <= d6) {
-      return c;
-    }
-
-    const float vb = d5 * d2 - d1 * d6;
-    if(vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f) {
-      const float w = d2 / (d2 - d6);
-      return a + (ac * w);
-    }
-
-    const float va = d3 * d6 - d5 * d4;
-    if(va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f) {
-      const fm_vec3_t bc = c - b;
-      const float w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
-      return b + (bc * w);
-    }
-
-    const float denom = 1.0f / (va + vb + vc);
-    const float v = vb * denom;
-    const float w = vc * denom;
-    return a + (ab * v) + (ac * w);
-  }
+    return a + ab * v + ac * w;
+}
 
   static void projectTriangleOntoAxis(
     const fm_vec3_t &v0,
@@ -646,12 +641,14 @@ namespace P64::Coll {
   /// @param v0         Triangle vertex 0 in mesh local space.
   /// @param v1         Triangle vertex 1 in mesh local space.
   /// @param v2         Triangle vertex 2 in mesh local space.
+  /// @param triNormal  Triangle normal in mesh local space.
   /// @param result     Single EpaResult to receive contact data (mesh local space).
   /// @return True if a collision is detected, false otherwise.
   static bool analyticalSphereTriangle(
       const ColliderProxy &proxy,
       const SphereShape   &sphere,
       const fm_vec3_t &v0, const fm_vec3_t &v1, const fm_vec3_t &v2,
+      const fm_vec3_t &triNormal,
       EpaResult &result)
   {
     const float radius = sphere.radius;
@@ -665,12 +662,8 @@ namespace P64::Coll {
     if(distSq >= radius * radius) return false;
 
     float dist = sqrtf(distSq);
-    fm_vec3_t normal;
-    if(dist < FM_EPSILON) {
-      // Sphere center lies on the triangle — use triangle face normal
-      normal = Coll::MeshCollider::triangleNormalFromVertices(v0, v1, v2);
-      normal = vec3NormalizeOrFallback(normal, VEC3_UP);
-    } else {
+    fm_vec3_t normal = triNormal;
+    if(dist > FM_EPSILON) {
       normal = diff * (1.0f / dist);
     }
 
@@ -686,10 +679,8 @@ namespace P64::Coll {
     fm_vec3_t contactToClosest = closest - contactA;
     float penetration = fm_vec3_dot(&contactToClosest, &normal);
 
-    // Reject non-overlapping and extremely shallow contacts that would be below EPA's convergence
-    // tolerance, these could cause jitter
-    float minPenetration = 0.005f * collisionSceneGetInstance()->getPhysicsScale();
-    if(penetration < minPenetration) return false;
+    // Only reject non-overlapping contacts — match EPA which reports all positive penetrations
+    if(penetration < FM_EPSILON) return false;
 
     // Derive contactB from contactA + normal * penetration to match EPA output convention
     result.normal = normal;
@@ -1132,7 +1123,8 @@ namespace P64::Coll {
       const fm_vec3_t v2 = tri.localVertex(2);
 
       EpaResult sphereResult;
-      if(analyticalSphereTriangle(*colliderProxyMeshSpace, sphere, v0, v1, v2, sphereResult)) {
+
+      if(analyticalSphereTriangle(*colliderProxyMeshSpace, sphere, v0, v1, v2, tri.normal, sphereResult)) {
         mesh.localResultToWorld(sphereResult);
 
         collideCacheContactConstraint(
