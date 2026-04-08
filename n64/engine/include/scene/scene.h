@@ -125,7 +125,7 @@ namespace P64
       };
       std::vector<SavedTransform> savedTransforms_{};
 
-      void applyRenderInterpolation(float alpha);
+      void applyRenderInterpolation(float dt);
       void restoreInterpolatedTransforms();
 
       void loadSceneConfig();

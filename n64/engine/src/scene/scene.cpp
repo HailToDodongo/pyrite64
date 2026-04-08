@@ -224,6 +224,12 @@ void P64::Scene::update(float deltaTime)
     accumulator_ticks -= fixedDeltaTimeTicks;
   }
 
+  // Extrapolate rigid body transforms for visual smoothness
+  if(conf.interpolatePhysicsTransforms){
+    float remainderSec = static_cast<float>(accumulator_ticks) / static_cast<float>(TICKS_FROM_US(SEC_TO_USEC));
+    applyRenderInterpolation(remainderSec);
+  }
+
   ticksGlobalUpdate = get_user_ticks();
   GlobalScript::callHooks(GlobalScript::HookType::SCENE_UPDATE);
   ticksGlobalUpdate = get_user_ticks() - ticksGlobalUpdate;
@@ -253,6 +259,7 @@ void P64::Scene::update(float deltaTime)
     if(obj->id < idLookup.size()) {
       idLookup[obj->id] = nullptr;
     }
+    std::erase_if(savedTransforms_, [&](const SavedTransform &st) { return st.obj == obj; });
     std::erase(objects, obj);
     obj->~Object();
     free(obj);
@@ -282,15 +289,6 @@ void P64::Scene::update(float deltaTime)
   evQueue.clear();
 
   AudioManager::update();
-
-  if(conf.interpolatePhysicsTransforms){
-    // Apply render interpolation: lerp rigid body transforms between previous and current physics state
-    // using the accumulator remainder as the blend factor
-    uint16_t tickRate = conf.physicsTickRate > 0 ? conf.physicsTickRate : 50;
-    uint32_t fixedDtTicks = TICKS_FROM_US((uint32_t)((1.0f / static_cast<float>(tickRate)) * SEC_TO_USEC));
-    float alpha = fixedDtTicks > 0 ? static_cast<float>(accumulator_ticks) / static_cast<float>(fixedDtTicks) : 0.0f;
-    applyRenderInterpolation(alpha);
-  }
 
 
   VI::SwapChain::nextFrame();
@@ -379,7 +377,7 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
 #endif
 }
 
-void P64::Scene::applyRenderInterpolation(float alpha)
+void P64::Scene::applyRenderInterpolation(float dt)
 {
   auto &rigidBodies = Coll::collisionSceneGetInstance()->getRigidBodies();
   savedTransforms_.clear();
@@ -390,19 +388,17 @@ void P64::Scene::applyRenderInterpolation(float alpha)
     Object *obj = body->ownerObject();
     if(!obj) continue;
 
-    // Save real physics state
     savedTransforms_.push_back({obj, obj->pos, obj->rot});
 
-    // Lerp position
-    const fm_vec3_t &prev = body->previousStepPosition();
-    obj->pos = fm_vec3_t{{
-      prev.x + (obj->pos.x - prev.x) * alpha,
-      prev.y + (obj->pos.y - prev.y) * alpha,
-      prev.z + (obj->pos.z - prev.z) * alpha
-    }};
+    // Extrapolate position forward by remaining time
+    const fm_vec3_t &vel = body->linearVelocity();
+    obj->pos = obj->pos + vel * dt;
 
-    // Nlerp rotation (fast, nearly identical to slerp for small steps)
-    fm_quat_nlerp(&obj->rot, &body->previousStepRotation(), &savedTransforms_.back().rot, alpha);
+    // Extrapolate rotation forward by remaining time
+    const fm_vec3_t &angVel = body->angularVelocity();
+    if(!Coll::vec3IsZero(angVel)) {
+      obj->rot = Coll::quatApplyAngularVelocity(obj->rot, angVel, dt);
+    }
   }
 }
 

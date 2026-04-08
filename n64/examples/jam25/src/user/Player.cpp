@@ -488,13 +488,12 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     shadowHeight *= 0.001f;
     shadowHeight = Math::clamp(shadowHeight, 0.0f, 1.0f);
     shadowHeight = 1.0f - shadowHeight;
-
-    User::DropShadows::addShadow(
-      {obj.pos.x, data->floorCast.point.y, obj.pos.z},
-      data->floorCast.normal,
-      0.55f * shadowHeight,
-      1.0f
-    );
+    if(data->floorCast.didHit)
+      User::DropShadows::addShadow(
+          {obj.pos.x, data->floorCast.point.y, obj.pos.z},
+          data->floorCast.normal,
+          0.55f * shadowHeight,
+          1.0f);
 
     DrawLayer::use2D();
 
