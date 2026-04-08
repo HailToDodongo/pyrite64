@@ -518,12 +518,14 @@ namespace P64::Coll {
 
 
     // Triangle face normal
-    fm_vec3_t localN = Coll::MeshCollider::triangleNormalFromVertices(v0, v1, v2);
-    float boxHalf = fabsf(localN.x) * h.x + fabsf(localN.y) * h.y + fabsf(localN.z) * h.z;
-    float triProj = fm_vec3_dot(&localN, &v0); // all tri verts project to same value
-    float triMin = triProj, triMax = triProj;
-    float l2 = fm_vec3_len2(&localN);
-    if(!satAxisTest(boxHalf, triMin, triMax, l2, bestFound, bestDepthUnnorm, bestAxisLen2, bestAxis, bestSign, localN)) return 0;
+    {
+      fm_vec3_t localN = Coll::MeshCollider::triangleNormalFromVertices(v0, v1, v2);
+      float boxHalf = fabsf(localN.x) * h.x + fabsf(localN.y) * h.y + fabsf(localN.z) * h.z;
+      float triProj = fm_vec3_dot(&localN, &v0); // all tri verts project to same value
+      float triMin = triProj, triMax = triProj;
+      float l2 = fm_vec3_len2(&localN);
+      if(!satAxisTest(boxHalf, triMin, triMax, l2, bestFound, bestDepthUnnorm, bestAxisLen2, bestAxis, bestSign, localN)) return 0;
+    }
 
 
     // 9 edge-pair cross products: box_axis × tri_edge (Akenine-Möller specialization)
@@ -535,43 +537,54 @@ namespace P64::Coll {
         const fm_vec3_t &ej = *edges[j];
 
         // (1,0,0) × edge = (0, -edge.z, edge.y)
-        float l2 = ej.z * ej.z + ej.y * ej.y;
-        if(l2 >= FM_EPSILON * FM_EPSILON) {
-          float boxHalf = fabsf(ej.z) * h.y + fabsf(ej.y) * h.z;
-          float p0 = -v0.y * ej.z + v0.z * ej.y;
-          float p1 = -v1.y * ej.z + v1.z * ej.y;
-          float p2 = -v2.y * ej.z + v2.z * ej.y;
-          float tMin = fminf(p0, fminf(p1, p2));
-          float tMax = fmaxf(p0, fmaxf(p1, p2));
-          fm_vec3_t axis = fm_vec3_t{{0.0f, -ej.z, ej.y}};
-          if(!satAxisTest(boxHalf, tMin, tMax, l2, bestFound, bestDepthUnnorm, bestAxisLen2, bestAxis, bestSign, axis)) return 0;
+        {
+          float l2 = ej.z * ej.z + ej.y * ej.y;
+          if (l2 >= FM_EPSILON * FM_EPSILON)
+          {
+            float boxHalf = fabsf(ej.z) * h.y + fabsf(ej.y) * h.z;
+            float p0 = -v0.y * ej.z + v0.z * ej.y;
+            float p1 = -v1.y * ej.z + v1.z * ej.y;
+            float p2 = -v2.y * ej.z + v2.z * ej.y;
+            float tMin = fminf(p0, fminf(p1, p2));
+            float tMax = fmaxf(p0, fmaxf(p1, p2));
+            fm_vec3_t axis = fm_vec3_t{{0.0f, -ej.z, ej.y}};
+            if (!satAxisTest(boxHalf, tMin, tMax, l2, bestFound, bestDepthUnnorm, bestAxisLen2, bestAxis, bestSign, axis))
+              return 0;
+          }
         }
-        
-        // (0,1,0) × edge = (edge.z, 0, -edge.x)  
-        float l2 = ej.z * ej.z + ej.x * ej.x;
-        if(l2 >= FM_EPSILON * FM_EPSILON) {
-          float boxHalf = fabsf(ej.z) * h.x + fabsf(ej.x) * h.z;
-          float p0 = v0.x * ej.z - v0.z * ej.x;
-          float p1 = v1.x * ej.z - v1.z * ej.x;
-          float p2 = v2.x * ej.z - v2.z * ej.x;
-          float tMin = fminf(p0, fminf(p1, p2));
-          float tMax = fmaxf(p0, fmaxf(p1, p2));
-          fm_vec3_t axis = fm_vec3_t{{ej.z, 0.0f, -ej.x}};
-          if(!satAxisTest(boxHalf, tMin, tMax, l2, bestFound, bestDepthUnnorm, bestAxisLen2, bestAxis, bestSign, axis)) return 0;
+
+        // (0,1,0) × edge = (edge.z, 0, -edge.x)
+        {
+          float l2 = ej.z * ej.z + ej.x * ej.x;
+          if (l2 >= FM_EPSILON * FM_EPSILON)
+          {
+            float boxHalf = fabsf(ej.z) * h.x + fabsf(ej.x) * h.z;
+            float p0 = v0.x * ej.z - v0.z * ej.x;
+            float p1 = v1.x * ej.z - v1.z * ej.x;
+            float p2 = v2.x * ej.z - v2.z * ej.x;
+            float tMin = fminf(p0, fminf(p1, p2));
+            float tMax = fmaxf(p0, fmaxf(p1, p2));
+            fm_vec3_t axis = fm_vec3_t{{ej.z, 0.0f, -ej.x}};
+            if (!satAxisTest(boxHalf, tMin, tMax, l2, bestFound, bestDepthUnnorm, bestAxisLen2, bestAxis, bestSign, axis))
+              return 0;
+          }
         }
 
         // (0,0,1) × edge = (-edge.y, edge.x, 0)
-        float l2 = ej.y * ej.y + ej.x * ej.x;
-        if (l2 >= FM_EPSILON * FM_EPSILON) {
-          float boxHalf = fabsf(ej.y) * h.x + fabsf(ej.x) * h.y;
-          float p0 = -v0.x * ej.y + v0.y * ej.x;
-          float p1 = -v1.x * ej.y + v1.y * ej.x;
-          float p2 = -v2.x * ej.y + v2.y * ej.x;
-          float tMin = fminf(p0, fminf(p1, p2));
-          float tMax = fmaxf(p0, fmaxf(p1, p2));
-          fm_vec3_t axis = fm_vec3_t{{-ej.y, ej.x, 0.0f}};
-          if (!satAxisTest(boxHalf, tMin, tMax, l2, bestFound, bestDepthUnnorm, bestAxisLen2, bestAxis, bestSign, axis))
-            return 0;
+        {
+          float l2 = ej.y * ej.y + ej.x * ej.x;
+          if (l2 >= FM_EPSILON * FM_EPSILON)
+          {
+            float boxHalf = fabsf(ej.y) * h.x + fabsf(ej.x) * h.y;
+            float p0 = -v0.x * ej.y + v0.y * ej.x;
+            float p1 = -v1.x * ej.y + v1.y * ej.x;
+            float p2 = -v2.x * ej.y + v2.y * ej.x;
+            float tMin = fminf(p0, fminf(p1, p2));
+            float tMax = fmaxf(p0, fmaxf(p1, p2));
+            fm_vec3_t axis = fm_vec3_t{{-ej.y, ej.x, 0.0f}};
+            if (!satAxisTest(boxHalf, tMin, tMax, l2, bestFound, bestDepthUnnorm, bestAxisLen2, bestAxis, bestSign, axis))
+              return 0;
+          }
         }
       }
     }
