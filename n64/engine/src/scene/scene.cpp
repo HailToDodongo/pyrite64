@@ -289,7 +289,6 @@ void P64::Scene::update(float deltaTime)
     uint16_t tickRate = conf.physicsTickRate > 0 ? conf.physicsTickRate : 50;
     uint32_t fixedDtTicks = TICKS_FROM_US((uint32_t)((1.0f / static_cast<float>(tickRate)) * SEC_TO_USEC));
     float alpha = fixedDtTicks > 0 ? static_cast<float>(accumulator_ticks) / static_cast<float>(fixedDtTicks) : 0.0f;
-    debugf("Applying render interpolation with alpha: %f\n", (double)alpha);
     applyRenderInterpolation(alpha);
   }
 
