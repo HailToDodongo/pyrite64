@@ -928,12 +928,15 @@ namespace P64::Coll {
       }
 
       ContactPoint *target = nullptr;
+      int targetIdx = -1;
       if(matchedIdx >= 0) {
         // Reuse existing point (preserves accumulated impulses for warm starting)
         target = &existing->points[matchedIdx];
+        targetIdx = matchedIdx;
       } else if(existing->pointCount < MAX_CONTACT_POINTS_PER_PAIR) {
         // Add new point
-        target = &existing->points[existing->pointCount];
+        targetIdx = existing->pointCount;
+        target = &existing->points[targetIdx];
         existing->pointCount++;
         target->accumulatedNormalImpulse = 0.0f;
         target->accumulatedTangentImpulseU = 0.0f;
@@ -942,6 +945,7 @@ namespace P64::Coll {
         // Full manifold: use Bullet-style area-maximizing heuristic to select which point to replace.
         // This keeps the deepest point and maximizes contact polygon coverage for better torque resistance.
         int replaceIdx = selectContactPointToReplace(existing->points, existing->pointCount, orderedResult.contactA, orderedResult.penetration);
+        targetIdx = replaceIdx;
         target = &existing->points[replaceIdx];
         target->accumulatedNormalImpulse = 0.0f;
         target->accumulatedTangentImpulseU = 0.0f;
@@ -959,10 +963,12 @@ namespace P64::Coll {
         target->localPointB = contactLocalPointFromWorldPoint(target->contactB, rigidBodyB, colliderB, meshColliderB);
       }
 
-      // Validate other points against the updated normal
+      // Force all non-target points through current-frame revalidation.
       for(int i = 0; i < existing->pointCount; ++i) {
         ContactPoint &cp = existing->points[i];
-        if(cp.active) continue; // already processed
+        if(i == targetIdx) continue;
+
+        cp.active = false;
 
         fm_vec3_t diff = cp.contactA - cp.contactB;
         float pen = -fm_vec3_dot(&diff, &existing->normal);
@@ -971,6 +977,16 @@ namespace P64::Coll {
           cp.active = true;
         }
       }
+
+      int writeIdx = 0;
+      for(int i = 0; i < existing->pointCount; ++i) {
+        if(!existing->points[i].active) continue;
+        if(writeIdx != i) {
+          existing->points[writeIdx] = existing->points[i];
+        }
+        ++writeIdx;
+      }
+      existing->pointCount = writeIdx;
 
       return existing;
     }
