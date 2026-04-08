@@ -24,10 +24,6 @@ namespace P64::Coll {
 
   static CollisionScene g_scene;
 
-  static double ticksToMs(uint64_t ticks) {
-    return static_cast<double>(TICKS_TO_US(ticks)) / 1000.0;
-  }
-
   static bool canApplyAngularResponse(const RigidBody *body) {
     return body && body->canApplyAngularResponse();
   }

@@ -964,6 +964,7 @@ namespace P64::Coll {
       }
 
       // Force all non-target points through current-frame revalidation.
+      const float revalidationSeparationLimit = -0.05f * scene->getPhysicsScale();
       for(int i = 0; i < existing->pointCount; ++i) {
         ContactPoint &cp = existing->points[i];
         if(i == targetIdx) continue;
@@ -972,7 +973,7 @@ namespace P64::Coll {
 
         fm_vec3_t diff = cp.contactA - cp.contactB;
         float pen = -fm_vec3_dot(&diff, &existing->normal);
-        if(pen > -0.05f) {
+        if(pen > revalidationSeparationLimit) {
           cp.penetration = pen;
           cp.active = true;
         }
