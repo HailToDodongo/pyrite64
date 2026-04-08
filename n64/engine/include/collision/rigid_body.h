@@ -79,6 +79,9 @@ namespace P64::Coll {
     bool hasGravity() const { return hasGravity_; }
     void setHasGravity(bool newHasGravity) { hasGravity_ = newHasGravity; }
 
+    const fm_vec3_t &previousStepPosition() const { return previousStepPosition_; }
+    const fm_quat_t &previousStepRotation() const { return previousStepRotation_; }
+
     const AABB &worldAabb() const { return worldAabb_; }
     const Matrix3x3 &inverseWorldInertiaTensor() const { return invWorldInertiaTensor_; }
     const Matrix3x3 &rotationMatrix() const { return rotationMatrix_; }

@@ -158,7 +158,7 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
 
   ctx.fileScene.write<uint8_t>(std::clamp(sc->conf.velocitySolverIterations.value, 1, 32));
   ctx.fileScene.write<uint8_t>(std::clamp(sc->conf.positionSolverIterations.value, 1, 32));
-  ctx.fileScene.write<uint8_t>(0); // padding
+  ctx.fileScene.write<uint8_t>(sc->conf.interpolatePhysicsTransforms.value ? 1 : 0);
   ctx.fileScene.write<uint8_t>(0); // padding
 
   // Layer::Setup

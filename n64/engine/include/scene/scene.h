@@ -65,7 +65,8 @@ namespace P64
 
     uint8_t velocitySolverIterations{};
     uint8_t positionSolverIterations{};
-    uint8_t padding2[2]{};
+    bool interpolatePhysicsTransforms{};
+    uint8_t padding2[1]{};
 
     DrawLayer::Setup layerSetup{};
   };
@@ -115,6 +116,17 @@ namespace P64
 
       SceneConf conf{};
       uint16_t id;
+
+      /// Saved physics transforms for render interpolation restore
+      struct SavedTransform {
+        Object *obj;
+        fm_vec3_t pos;
+        fm_quat_t rot;
+      };
+      std::vector<SavedTransform> savedTransforms_{};
+
+      void applyRenderInterpolation(float alpha);
+      void restoreInterpolatedTransforms();
 
       void loadSceneConfig();
       Object* loadObject(uint8_t* &objFile, std::function<void(Object&)> callback = {}, bool deferComponentInit = false);

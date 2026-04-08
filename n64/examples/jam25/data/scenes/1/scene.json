@@ -19,6 +19,7 @@
       -9.8100004196167,
       0.0
     ],
+    "interpolatePhysicsTransforms": true,
     "layers2D": [
       {
         "blender": 0,
@@ -107,7 +108,7 @@
     ],
     "name": "Test-Player",
     "physicsScale": 16.0,
-    "physicsTickRate": 60,
+    "physicsTickRate": 50,
     "positionSolverIterations": 9,
     "renderPipeline": 0,
     "velocitySolverIterations": 9

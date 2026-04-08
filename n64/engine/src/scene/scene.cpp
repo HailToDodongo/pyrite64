@@ -283,6 +283,17 @@ void P64::Scene::update(float deltaTime)
 
   AudioManager::update();
 
+  if(conf.interpolatePhysicsTransforms){
+    // Apply render interpolation: lerp rigid body transforms between previous and current physics state
+    // using the accumulator remainder as the blend factor
+    uint16_t tickRate = conf.physicsTickRate > 0 ? conf.physicsTickRate : 50;
+    uint32_t fixedDtTicks = TICKS_FROM_US((uint32_t)((1.0f / static_cast<float>(tickRate)) * SEC_TO_USEC));
+    float alpha = fixedDtTicks > 0 ? static_cast<float>(accumulator_ticks) / static_cast<float>(fixedDtTicks) : 0.0f;
+    debugf("Applying render interpolation with alpha: %f\n", (double)alpha);
+    applyRenderInterpolation(alpha);
+  }
+
+
   VI::SwapChain::nextFrame();
 }
 
@@ -354,6 +365,9 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
   ticksGlobalDraw += get_user_ticks() - t;
 
   renderPipeline->draw();
+
+  restoreInterpolatedTransforms();
+
   ticksDraw = get_ticks() - ticksDraw;
 
 #if RSPQ_PROFILE
@@ -364,6 +378,42 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
     frameCount = 0;
   }
 #endif
+}
+
+void P64::Scene::applyRenderInterpolation(float alpha)
+{
+  auto &rigidBodies = Coll::collisionSceneGetInstance()->getRigidBodies();
+  savedTransforms_.clear();
+
+  for(auto *body : rigidBodies) {
+    if(!body || body->isSleeping() || body->isKinematic()) continue;
+
+    Object *obj = body->ownerObject();
+    if(!obj) continue;
+
+    // Save real physics state
+    savedTransforms_.push_back({obj, obj->pos, obj->rot});
+
+    // Lerp position
+    const fm_vec3_t &prev = body->previousStepPosition();
+    obj->pos = fm_vec3_t{{
+      prev.x + (obj->pos.x - prev.x) * alpha,
+      prev.y + (obj->pos.y - prev.y) * alpha,
+      prev.z + (obj->pos.z - prev.z) * alpha
+    }};
+
+    // Nlerp rotation (fast, nearly identical to slerp for small steps)
+    fm_quat_nlerp(&obj->rot, &body->previousStepRotation(), &savedTransforms_.back().rot, alpha);
+  }
+}
+
+void P64::Scene::restoreInterpolatedTransforms()
+{
+  for(auto &saved : savedTransforms_) {
+    saved.obj->pos = saved.pos;
+    saved.obj->rot = saved.rot;
+  }
+  savedTransforms_.clear();
 }
 
 void P64::Scene::onObjectCollision(const Coll::CollEvent &event)

@@ -43,6 +43,7 @@ namespace Project
     PROP_FLOAT(physicsScale);
     PROP_S32(velocitySolverIterations);
     PROP_S32(positionSolverIterations);
+    PROP_BOOL(interpolatePhysicsTransforms);
 
     std::vector<LayerConf> layers3D{};
     std::vector<LayerConf> layersPtx{};
