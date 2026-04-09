@@ -69,8 +69,8 @@ namespace Project::Component::CollBody
     Utils::JSON::readProp(doc, data->offset);
     Utils::JSON::readProp(doc, data->type);
     Utils::JSON::readProp(doc, data->isTrigger, false);
-    Utils::JSON::readProp(doc, data->maskRead, 0xFFu);
-    Utils::JSON::readProp(doc, data->maskWrite, 0xFFu);
+    Utils::JSON::readProp(doc, data->maskRead, 0x00u);
+    Utils::JSON::readProp(doc, data->maskWrite, 0x00u);
     Utils::JSON::readProp(doc, data->friction, 0.8f);
     Utils::JSON::readProp(doc, data->bounce, 0.0f);
     return data;

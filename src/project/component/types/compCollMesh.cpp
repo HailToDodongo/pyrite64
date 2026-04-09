@@ -51,8 +51,8 @@ namespace Project::Component::CollMesh
     auto data = std::make_shared<Data>();
     Utils::JSON::readProp(doc, data->modelUUID);
     Utils::JSON::readProp(doc, data->filter.meshFilter);
-    Utils::JSON::readProp(doc, data->maskRead, 0xFFu);
-    Utils::JSON::readProp(doc, data->maskWrite, 0xFFu);
+    Utils::JSON::readProp(doc, data->maskRead, 0x00u);
+    Utils::JSON::readProp(doc, data->maskWrite, 0x00u);
     return data;
   }
 

@@ -19,6 +19,7 @@
       -9.8100004196167,
       0.0
     ],
+    "interpolatePhysicsTransforms": true,
     "layers2D": [
       {
         "blender": 0,
@@ -429,8 +430,8 @@
               },
               {
                 "data": {
-                  "maskRead": 255,
-                  "maskWrite": 255,
+                  "maskRead": 0,
+                  "maskWrite": 8,
                   "meshFilter": "block00",
                   "modelUUID": 13215419027432979116
                 },
@@ -673,8 +674,8 @@
               },
               {
                 "data": {
-                  "maskRead": 255,
-                  "maskWrite": 255,
+                  "maskRead": 0,
+                  "maskWrite": 8,
                   "meshFilter": "block02",
                   "modelUUID": 13215419027432979116
                 },
@@ -770,8 +771,8 @@
               },
               {
                 "data": {
-                  "maskRead": 255,
-                  "maskWrite": 255,
+                  "maskRead": 0,
+                  "maskWrite": 8,
                   "meshFilter": "block00",
                   "modelUUID": 13215419027432979116
                 },
