@@ -94,6 +94,10 @@ namespace P64::Coll {
     result.normal = localNormalToWorld(result.normal);
     result.contactA = toWorldSpace(result.contactA);
     result.contactB = toWorldSpace(result.contactB);
+    // Recompute penetration from world-space contacts.
+    // The raw penetration is in mesh-local space where distances are distorted by the mesh scale
+    fm_vec3_t ab = result.contactB - result.contactA;
+    result.penetration = fm_vec3_dot(&ab, &result.normal);
   }
 
   // ── MeshCollider transform ────────────────────────────────────────

@@ -21,6 +21,7 @@ namespace P64::Coll {
     Matrix3x3 shapeToSpaceTranspose{Matrix3x3::identity()};
     Matrix3x3 spaceToShape{Matrix3x3::identity()};
     Matrix3x3 normalToSpace{Matrix3x3::identity()};
+    float effectiveRadius{std::numeric_limits<float>::max()};
   };
 
   static fm_vec3_t makeSafeContactNormal(const fm_vec3_t &normal, const fm_vec3_t &contactA, const fm_vec3_t &contactB) {
@@ -711,11 +712,13 @@ namespace P64::Coll {
     // Conservative early-out
     fm_vec3_t closest = closestPointOnTriangle(center, v0, v1, v2);
     fm_vec3_t diff = center - closest;
-    float distSq = fm_vec3_len2(&diff);
+    float dist = fm_vec3_len(&diff);
 
-    if(distSq >= radius * radius) return false;
-
-    float dist = sqrtf(distSq);
+    //conservative early-out if closest point is outside the sphere radius
+    //scaled by the maximum inverse meshscale component
+    if(dist >= proxy.effectiveRadius) {
+      return false;
+    }
     fm_vec3_t normal = triNormal;
     if(dist > FM_EPSILON) {
       normal = diff * (1.0f / dist);
@@ -1294,10 +1297,13 @@ namespace P64::Coll {
       colliderInMeshSpace.worldCenter = mesh.toLocalSpace(collider->worldCenter());
 
       Matrix3x3 relativeRotation = matrix3Mul(mesh.inverseRotationMatrix(), collider->rotationMatrix());
-      if(mesh.hasScale() && mesh.ownerObject()) {
-        Matrix3x3 inverseScale = diagonalMatrix(vec3ReciprocalScaleComponents(mesh.ownerObject()->scale));
+      if(mesh.hasScale()) {
+        fm_vec3_t inverseScaleVec = vec3ReciprocalScaleComponents(mesh.ownerObject()->scale);
+        Matrix3x3 inverseScale = diagonalMatrix(inverseScaleVec);
+        colliderInMeshSpace.effectiveRadius = max(inverseScaleVec.x, max(inverseScaleVec.y, inverseScaleVec.z)) * collider->sphereShape().radius;
         colliderInMeshSpace.shapeToSpace = matrix3Mul(inverseScale, relativeRotation);
       } else {
+        colliderInMeshSpace.effectiveRadius = collider->sphereShape().radius;
         colliderInMeshSpace.shapeToSpace = relativeRotation;
       }
 
