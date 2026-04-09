@@ -377,7 +377,7 @@ namespace P64::Script::C17EA8EAB6CF1DEB
 
     Coll::Raycast ray = Coll::Raycast::create(rb.worldCenterOfMass(), {0.0f, -1.0f, 0.0f}, 500.0f, Coll::RaycastColliderTypeFlags::ALL, false, 0x08);
     SceneManager::getCurrent().getCollision().raycast(ray, data->floorCast);
-    bool onFloor = data->floorCast.didHit && data->floorCast.distance < 26.0f && data->floorCast.normal.y > 0.4f;
+    bool onFloor = data->floorCast.didHit && data->floorCast.distance < 30.0f && data->floorCast.normal.y > 0.4f;
     bool canJump = onFloor || data->inAirTime < (1.0f / 60.0f * 4);
 
     if(onFloor) {
