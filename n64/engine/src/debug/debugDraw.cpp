@@ -39,8 +39,6 @@ namespace
 
   std::vector<Line> lines{};
 
-  sprite_t *font{};
-
   void debugDrawLine(surface_t *fb, int px0, int py0, int px1, int py1, uint16_t color)
   {
     int width = fb->width;
@@ -86,13 +84,11 @@ namespace
 }
 
 void Debug::init() {
-  font = sprite_load("rom:/p64/font.ia4.sprite");
   lines = {};
 }
 
 void Debug::destroy() {
   lines = {};
-  sprite_free(font);
 }
 
 void Debug::drawLine(const fm_vec3_t &a, const fm_vec3_t &b, color_t color) {
@@ -176,45 +172,6 @@ void Debug::draw(surface_t *fb) {
   lines.shrink_to_fit();
   //rects.clear();
   //rects.shrink_to_fit();
-}
-
-void Debug::printStart() {
-  rdpq_set_mode_standard();
-  rdpq_mode_antialias(AA_NONE);
-  rdpq_mode_combiner(RDPQ_COMBINER1((TEX0,0,PRIM,0), (TEX0,0,PRIM,0)));
-  rdpq_mode_alphacompare(1);
-  rdpq_set_prim_color(RGBA32(0xFF, 0xFF, 0xFF, 0xFF));
-
-  rdpq_sprite_upload(TILE0, font, NULL);
-}
-
-float Debug::print(float x, float y, const char *str) {
-  int width = 8;
-  int height = 8;
-  int s = 0;
-
-  while(*str) {
-    uint8_t c = *str;
-    if(c != ' ' && c != '\n')
-    {
-      if(c >= 'a' && c <= 'z')c &= ~0x20;
-      s = (c - 33) * width;
-      rdpq_texture_rectangle_raw(TILE0, x, y, x+width, y+height, s, 0, 1, 1);
-    }
-    ++str;
-    x += 7;
-  }
-  return x;
-}
-
-float Debug::printf(float x, float y, const char *fmt, ...) {
-  if(x > 320-8)return x;
-  char buffer[128];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(buffer, 128, fmt, args);
-  va_end(args);
-  return Debug::print(x, y, buffer);
 }
 
 void Debug::drawAABB(const fm_vec3_t &p, const fm_vec3_t &halfExtend, color_t color) {

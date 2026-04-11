@@ -97,4 +97,5 @@ add_executable(n64_engine
         engine/src/scene/components/animModel.cpp
         engine/src/lib/matrixManager.cpp
         engine/src/renderer/hdr/postProcess.cpp
+        engine/src/debug/debugText.cpp
 )
