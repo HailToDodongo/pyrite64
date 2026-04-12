@@ -15,19 +15,15 @@ constinit bool P64::Debug::isMonospace = false;
 void P64::Debug::printStart() {
   rdpq_mode_begin();
     rdpq_set_mode_standard();
-    rdpq_mode_antialias(AA_NONE);
-    rdpq_mode_combiner(RDPQ_COMBINER1((PRIM,ENV,TEX0,ENV), (TEX0,0,PRIM,0)));
+    rdpq_mode_combiner(RDPQ_COMBINER1((PRIM,ENV,TEX0,ENV), (0,0,0,TEX0)));
     rdpq_mode_alphacompare(1);
   rdpq_mode_end();
 
   setColor();
   setBgColor();
 
-  rdpq_texparms_t p{};
-  p.s.repeats = 1;
-  p.t = p.s;
   auto surf = surface_make((void*)FONT8x8::DATA, FMT_IA4, FONT8x8::IMG_WIDTH, FONT8x8::IMG_HEIGHT, FONT8x8::IMG_WIDTH/2);
-  rdpq_tex_load(TILE0, &surf, nullptr);
+  rdpq_tex_upload(TILE0, &surf, nullptr);
 }
 
 extern "C" {

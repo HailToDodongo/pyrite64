@@ -7,6 +7,8 @@
 
 namespace P64::Debug::Overlay
 {
+  extern uint64_t ticksSelf;
+
   void toggle();
   void init();
   void draw(surface_t* surf);

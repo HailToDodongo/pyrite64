@@ -22,18 +22,14 @@ namespace P64::SceneManager
   extern const char* SCENE_NAMES[];
 }
 
+constinit uint64_t P64::Debug::Overlay::ticksSelf = 0;
+
 namespace {
+  #include "overlay/ovlColors.h"
+
   constexpr float barWidth = 280.0f;
   constexpr float barHeight = 3.0f;
   constexpr float barRefTimeMs = 1000.0f / 30.0f; // FPS
-
-  constexpr color_t COLOR_COLL_DETECT{ 0x00, 0xAA, 0x22, 0xFF};
-  constexpr color_t COLOR_COLL{0x22,0xFF,0x00, 0xFF};
-  constexpr color_t COLOR_ACTOR_UPDATE{0xAA,0,0, 0xFF};
-  constexpr color_t COLOR_GLOBAL_UPDATE{0x33,0x33,0x33, 0xFF};
-  constexpr color_t COLOR_SCENE_DRAW{0xFF,0x80,0x10, 0xFF};
-  constexpr color_t COLOR_GLOBAL_DRAW{0x33,0x33,0x33, 0xFF};
-  constexpr color_t COLOR_AUDIO{0x43, 0x52, 0xFF, 0xFF};
 
   constinit P64::Debug::Menu menu{};
   constinit P64::Debug::Menu menuScenes{};
@@ -41,8 +37,6 @@ namespace {
   constinit P64::Debug::Menu menuAudio{};
   constinit P64::Debug::Menu menuMemory{};
   constinit P64::Debug::Menu menuCPU{};
-
-  uint64_t ticksSelf = 0;
 
   constexpr float usToWidth(long timeUs) {
     double timeMs = (double)timeUs / 1000.0;
@@ -181,5 +175,5 @@ void P64::Debug::Overlay::draw(surface_t* surf)
   rdpq_fill_rectangle(24 + barWidth - timeSelf, posY, 24 + barWidth, posY + barHeight);
   ticksSelf = get_user_ticks() - newTicksSelf;
 
-  debugf("Self: %fms\n", (double)TICKS_TO_US(ticksSelf) / 1000.0);
+  //debugf("Self: %fms\n", (double)TICKS_TO_US(ticksSelf) / 1000.0);
 }
