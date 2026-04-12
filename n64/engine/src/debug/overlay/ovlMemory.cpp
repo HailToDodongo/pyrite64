@@ -5,12 +5,17 @@
 #include "../overlay.h"
 #include "debug/debugDraw.h"
 #include "lib/matrixManager.h"
+#include "lib/memory.h"
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
 #include "vi/swapChain.h"
 
-constexpr uint32_t SCREEN_HEIGHT = 240;
-constexpr uint32_t SCREEN_WIDTH = 320;
+namespace
+{
+  #include "ovlColors.h"
+  constexpr uint32_t SCREEN_HEIGHT = 240;
+  constexpr uint32_t SCREEN_WIDTH = 320;
+}
 
 void P64::Debug::Overlay::ovlMemory()
 {
@@ -21,18 +26,15 @@ void P64::Debug::Overlay::ovlMemory()
 
   uint16_t posX = 220;
   uint16_t posY = 44;
+  uint16_t px{};
 
-  Debug::setBgColor({0xEE, 0xAA, 0x99, 0xFF});
-  Debug::setColor({0x00, 0x00, 0x00, 0xFF});
-    Debug::print(posX, posY, "= Framebuf. =");
-    posY += 8;
-  Debug::setColor();
-  Debug::setBgColor();
+  Debug::print(posX, posY, DEBUG_CHAR_SQUARE " Framebuf.");
+  posY += 9;
 
   isMonospace = true;
   for(uint32_t f=0; f<3; ++f) {
     Debug::printf(posX, posY, "FB%ld %08X", f, (uint32_t)P64::VI::SwapChain::getFrameBuffer(f)->buffer);
-    posY += 8;
+    posY += 9;
   }
   auto pipeline = scene.getRenderPipeline<RenderPipeline>();
   auto zSurf = pipeline->getCurrDepthSurf();
@@ -46,24 +48,65 @@ void P64::Debug::Overlay::ovlMemory()
   sys_get_heap_stats(&heapStats);
   auto heapFree = heapStats.total - heapStats.used;
 
-  Debug::setBgColor({0xEE, 0xAA, 0x99, 0xFF});
-  Debug::setColor({0x00, 0x00, 0x00, 0xFF});
-    Debug::print(posX, posY, "= Heap =");
-  Debug::setColor();
-  Debug::setBgColor();
+  isMonospace = true;
 
-  posY += 8;
-  Debug::printf(posX, posY, "Free: %.2fkb", heapFree / 1024.0);
-  posY += 8;
-  Debug::printf(posX, posY, "Used: %.2fkb (%.1f%%)", heapStats.used / 1024.0, (heapStats.used * 100.0) / heapStats.total);
-  posY += 8;
-  Debug::printf(posX, posY, "-Objects: %.2fkb (%.1f%%)", scene.memObjects / 1024.0, (scene.memObjects * 100.0) / heapStats.used);
+  Debug::print(posX, posY, DEBUG_CHAR_SQUARE " Heap");
+
+  posY += 9;
+  Debug::printf(posX, posY, "Free: %7.2fkb", heapFree / 1024.0);
+  posY += 9;
+
+  Debug::setColor(COLOR_MEM_HEAP);
+  px = Debug::print(posX, posY, "Used: ");
+  Debug::setColor();
+  Debug::printf(px, posY, "%7.2fkb (%.1f%%)", heapStats.used / 1024.0, (heapStats.used * 100.0) / heapStats.total);
+  posY += 9;
+
+  Debug::setColor(COLOR_MEM_OBJ);
+  px = Debug::print(posX, posY, "-Obj: ");
+  Debug::setColor();
+  Debug::printf(px, posY, "%7.2fkb (%.1f%%)", scene.memObjects / 1024.0, (scene.memObjects * 100.0) / heapStats.used);
+
+  {
+    posY += 16;
+    auto statMem = P64::Mem::getStaticMemInfo();
+
+
+    Debug::print(posX, posY, DEBUG_CHAR_SQUARE " Static");
+    posY += 9;
+
+    Debug::setColor(COLOR_MEM_TEXT);
+    px = Debug::print(posX, posY, " Code: ");
+    Debug::setColor();
+    Debug::printf(px, posY, "%7.2fkb", statMem.text / 1024.0);
+    posY += 9;
+    Debug::setColor(COLOR_MEM_DATA);
+    px = Debug::print(posX, posY, " Data: ");
+    Debug::setColor();
+    Debug::printf(px, posY, "%7.2fkb", statMem.data / 1024.0);
+    posY += 9;
+    Debug::setColor(COLOR_MEM_BSS);
+    px = Debug::print(posX, posY, "  BSS: ");
+    Debug::setColor();
+    Debug::printf(px, posY, "%7.2fkb", statMem.bss / 1024.0);
+    posY += 9;
+    Debug::setColor(COLOR_MEM_BSS);
+    px = Debug::print(posX, posY, " Misc: ");
+    Debug::setColor();
+    Debug::printf(px, posY, "%7.2fkb", statMem.misc / 1024.0);
+    posY += 9;
+    Debug::setColor({0xAA, 0xAA, 0xAA, 0xFF});
+    Debug::printf(posX, posY, "Total: %7.2fkb", statMem.total / 1024.0);
+    Debug::setColor();
+
+    isMonospace = false;
+  }
 
   //==== Matrix Manager ====//
 
   uint16_t posXStart = 176;
   posX = posXStart;
-  posY = 140;
+  posY = 130;
 
   Debug::print(posX, posY, "Matrices");
   posY += 8;

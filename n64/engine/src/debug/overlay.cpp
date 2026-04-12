@@ -16,6 +16,7 @@
 
 #include "menu.h"
 #include "../audio/audioManagerPrivate.h"
+#include "lib/memory.h"
 
 namespace P64::SceneManager
 {
@@ -30,6 +31,7 @@ namespace {
   constexpr float barWidth = 280.0f;
   constexpr float barHeight = 3.0f;
   constexpr float barRefTimeMs = 1000.0f / 30.0f; // FPS
+  constexpr float barRefBytes = 1024 * 1024 * 8; // 8mb
 
   constinit P64::Debug::Menu menu{};
   constinit P64::Debug::Menu menuScenes{};
@@ -40,7 +42,12 @@ namespace {
 
   constexpr float usToWidth(long timeUs) {
     double timeMs = (double)timeUs / 1000.0;
-    return (float)(timeMs / (double)barRefTimeMs) * barWidth;
+    return (float)(timeMs * (1.0 / (double)barRefTimeMs)) * barWidth;
+  }
+
+  constexpr float bytesToWidth(size_t bytes) {
+    double ratio = (double)bytes * (1.0 / (double)barRefBytes);
+    return (float)ratio * barWidth;
   }
 
   bool showCollMesh = false;
@@ -132,48 +139,84 @@ void P64::Debug::Overlay::draw(surface_t* surf)
 
   Debug::printStart();
 
-  heap_stats_t heap_stats;
-  sys_get_heap_stats(&heap_stats);
+  heap_stats_t heapStats;
+  sys_get_heap_stats(&heapStats);
 
   rdpq_set_prim_color({0xFF,0xFF,0xFF, 0xFF});
 
   //posX = Debug::printf(posX, posY, "A:%d/%d", scene.activeActorCount, scene.drawActorCount) + 8;
-  // posX = Debug::printf(posX, posY, "T:%d", triCount) + 8;
+  //posX = Debug::printf(posX, posY, "T:%d", triCount) + 8;
   //Debug::printf(posX-32, posY, "H:%dkb", heap_stats.used);
   //Debug::printf(posX, posY+8, "O:%d\n", scene.getObjectCount());
 
   menu.draw();
 
   // Top bar for CPU time
-  uint16_t posX = 24;
-  uint16_t posY = 16;
+  {
+    uint16_t posX = 24;
+    uint16_t posY = 16;
 
-  rdpq_set_mode_fill({0,0,0, 0xFF});
-  rdpq_fill_rectangle(posX-1, posY-1, posX + (barWidth/2), posY + barHeight+1);
-  rdpq_set_fill_color({0x33,0x33,0x33, 0xFF});
-  rdpq_fill_rectangle(posX-1 + (barWidth/2), posY-1, posX + barWidth+1, posY + barHeight+1);
+    rdpq_set_mode_fill({0,0,0, 0xFF});
+    rdpq_fill_rectangle(posX-1, posY-1, posX + (barWidth/2), posY + barHeight+1);
+    rdpq_set_fill_color({0x33,0x33,0x33, 0xFF});
+    rdpq_fill_rectangle(posX-1 + (barWidth/2), posY-1, posX + barWidth+1, posY + barHeight+1);
 
-  auto addBarSection = [&](uint64_t ticks, color_t color) {
-    float time = usToWidth(TICKS_TO_US(ticks));
-    if(time > 0.0f) {
-      rdpq_set_fill_color(color);
-      rdpq_fill_rectangle(posX, posY, posX + time, posY + barHeight);
-      posX += time;
+    auto addBarSection = [&](uint64_t ticks, color_t color) {
+      float time = usToWidth(TICKS_TO_US(ticks));
+      if(time > 0.0f) {
+        rdpq_set_fill_color(color);
+        rdpq_fill_rectangle(posX, posY, posX + time, posY + barHeight);
+        posX += time;
+      }
+    };
+
+    addBarSection(collScene.ticksDetect, COLOR_COLL_DETECT);
+    addBarSection(collScene.ticksTotal - collScene.ticksDetect, COLOR_COLL);
+    addBarSection(scene.ticksActorUpdate, COLOR_ACTOR_UPDATE);
+    addBarSection(scene.ticksGlobalUpdate, COLOR_GLOBAL_UPDATE);
+    addBarSection(scene.ticksDraw - scene.ticksGlobalDraw, COLOR_SCENE_DRAW);
+    addBarSection(scene.ticksGlobalDraw, COLOR_GLOBAL_DRAW);
+    addBarSection(P64::AudioManager::ticksUpdate, COLOR_AUDIO);
+
+    // Measure self-time
+    float timeSelf = usToWidth(TICKS_TO_US(ticksSelf));
+    rdpq_set_fill_color({0xFF,0xFF,0xFF, 0xFF});
+    rdpq_fill_rectangle(24 + barWidth - timeSelf, posY, 24 + barWidth, posY + barHeight);
+  }
+
+  // RAM graph
+  {
+    auto memInfo = P64::Mem::getStaticMemInfo();
+    float memUsed = (float)(memInfo.text + memInfo.data + memInfo.bss) / (float)memInfo.total;
+
+    uint16_t posX = 24;
+    uint16_t posY = 240-24;
+
+    rdpq_set_mode_fill({0,0,0, 0xFF});
+    // make in alternating color at 1Mb marks
+    posX -= 1;
+    for(int i = 0; i < 8; i++) {
+      rdpq_set_fill_color((i % 2 == 0) ? color_t{0x33,0x33,0x33, 0xFF} : color_t{0,0,0, 0xFF});
+      rdpq_fill_rectangle(posX + (barWidth * ((float)i / 8.0f)), posY-1, posX + (barWidth * ((float)(i+1) / 8.0f)), posY + barHeight+1);
     }
-  };
+    posX += 1;
 
-  addBarSection(collScene.ticksDetect, COLOR_COLL_DETECT);
-  addBarSection(collScene.ticksTotal - collScene.ticksDetect, COLOR_COLL);
-  addBarSection(scene.ticksActorUpdate, COLOR_ACTOR_UPDATE);
-  addBarSection(scene.ticksGlobalUpdate, COLOR_GLOBAL_UPDATE);
-  addBarSection(scene.ticksDraw - scene.ticksGlobalDraw, COLOR_SCENE_DRAW);
-  addBarSection(scene.ticksGlobalDraw, COLOR_GLOBAL_DRAW);
-  addBarSection(P64::AudioManager::ticksUpdate, COLOR_AUDIO);
+    auto addBarSection = [&](uint64_t bytes, color_t color) {
+      float time = bytesToWidth(bytes);
+      if(time > 0.0f) {
+        rdpq_set_fill_color(color);
+        rdpq_fill_rectangle(posX, posY, posX + time, posY + barHeight);
+        posX += time;
+      }
+    };
 
-  float timeSelf = usToWidth(TICKS_TO_US(ticksSelf));
-  rdpq_set_fill_color({0xFF,0xFF,0xFF, 0xFF});
-  rdpq_fill_rectangle(24 + barWidth - timeSelf, posY, 24 + barWidth, posY + barHeight);
+    addBarSection(memInfo.text, COLOR_MEM_TEXT);
+    addBarSection(memInfo.data, COLOR_MEM_DATA);
+    addBarSection(memInfo.bss + memInfo.misc, COLOR_MEM_BSS);
+    addBarSection(scene.memObjects, COLOR_MEM_OBJ);
+    addBarSection(heapStats.used - scene.memObjects, COLOR_MEM_HEAP);
+  }
+
   ticksSelf = get_user_ticks() - newTicksSelf;
-
   //debugf("Self: %fms\n", (double)TICKS_TO_US(ticksSelf) / 1000.0);
 }

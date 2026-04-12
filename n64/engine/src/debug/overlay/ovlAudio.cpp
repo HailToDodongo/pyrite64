@@ -13,7 +13,7 @@ constexpr uint32_t SCREEN_WIDTH = 320;
 void P64::Debug::Overlay::ovlAudio()
 {
   uint16_t posX = 24;
-  uint16_t posY = SCREEN_HEIGHT - 32;
+  uint16_t posY = SCREEN_HEIGHT - 38;
 
   P64::Debug::isMonospace = true;
   posX = P64::Debug::printf(posX, posY, "Channel ");

@@ -5,6 +5,14 @@
 #pragma once
 #include <libdragon.h>
 
+extern "C" {
+  extern uint32_t __text_start[];
+  extern uint32_t __text_end[];
+  extern uint32_t __data_start[];
+  extern uint32_t __data_end[];
+  extern uint32_t __bss_start[];
+}
+
 namespace P64::Mem
 {
   /**
@@ -35,5 +43,26 @@ namespace P64::Mem
 
   inline void clearSurface(surface_t &surf) {
     sys_hw_memset64(surf.buffer, 0, surf.height * surf.stride);
+  }
+
+  struct StaticMem
+  {
+    uint32_t total{};
+    uint32_t text{};
+    uint32_t data{};
+    uint32_t bss{};
+    uint32_t misc{};
+  };
+
+  inline StaticMem getStaticMemInfo()
+  {
+    StaticMem res{
+      .total = ((uint32_t)__bss_end) & 0x00FF'FFFF,
+      .text = ((uint32_t)__text_end) - ((uint32_t)__text_start),
+      .data = ((uint32_t)__data_end) - ((uint32_t)__data_start),
+      .bss = ((uint32_t)__bss_end) - ((uint32_t)__bss_start),
+    };
+    res.misc = res.total - res.text - res.data - res.bss;
+    return res;
   }
 }
