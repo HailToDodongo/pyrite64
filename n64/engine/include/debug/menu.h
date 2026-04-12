@@ -10,6 +10,8 @@
 
 namespace P64::Debug
 {
+  struct Menu;
+
   enum class MenuItemType : uint8_t {
     BOOL,
     U32,
@@ -36,6 +38,7 @@ namespace P64::Debug
     uint16_t &getU16() const { return *static_cast<uint16_t*>(value); }
     uint8_t &getU8() const { return *static_cast<uint8_t*>(value); }
     float &getF32() const { return *static_cast<float*>(value); }
+    Menu* getMenu() const { return static_cast<Menu*>(value); }
   };
 
   struct Menu

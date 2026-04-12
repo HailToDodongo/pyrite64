@@ -2,7 +2,7 @@
 * @copyright 2024 - Max Bebök
 * @license MIT
 */
-#include "menu.h"
+#include "../../include/debug/menu.h"
 #include "debug/debugDraw.h"
 
 namespace

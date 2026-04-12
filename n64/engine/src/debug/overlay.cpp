@@ -4,17 +4,19 @@
 */
 #include "overlay.h"
 
+#include <cstring>
+
 #include "debug/debugDraw.h"
+#include "debug/debugMenu.h"
 #include "scene/scene.h"
 #include "vi/swapChain.h"
 #include "audio/audioManager.h"
-#include "lib/matrixManager.h"
 
 #include <vector>
 #include <string>
 #include <filesystem>
 
-#include "menu.h"
+#include "../../include/debug/menu.h"
 #include "../audio/audioManagerPrivate.h"
 #include "lib/memory.h"
 
@@ -71,6 +73,17 @@ void P64::Debug::Overlay::init()
 {
   auto &scene = P64::SceneManager::getCurrent();
 
+  for(auto &item : menu.items) {
+    if(item.type == MenuItemType::SUBMENU) {
+      if(item.getMenu()) {
+        if(menu.activSubMenu == item.getMenu()) {
+          menu.activSubMenu = nullptr;
+        }
+        delete item.getMenu();
+      }
+    }
+  }
+
   menu.items.clear();
   menuColl.items.clear();
   menuScenes.items.clear();
@@ -118,6 +131,25 @@ void P64::Debug::Overlay::init()
       });
     }
     res = dir_findnext(BASE_DIR, &dir);
+  }
+}
+
+P64::Debug::Menu& P64::Debug::Overlay::addCustomMenu(const char* name)
+{
+  auto m = new Menu();
+  menu.add(name, *m);
+  menu.items.back().value = m;
+  return *m;
+}
+
+void P64::Debug::Overlay::removeCustomMenu(const char* name)
+{
+  for(auto it = menu.items.begin(); it != menu.items.end(); ++it) {
+    if(it->type == MenuItemType::SUBMENU && std::strcmp(it->text, name) == 0) {
+      if(it->getMenu())delete it->getMenu();
+      menu.items.erase(it);
+      break;
+    }
   }
 }
 

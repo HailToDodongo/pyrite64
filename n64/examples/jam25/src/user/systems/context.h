@@ -16,8 +16,8 @@ namespace P64::User
 
     uint32_t coins{0};
 
-    uint8_t isCutscene{false};
-    uint8_t forceBars{false};
+    bool isCutscene{false};
+    bool forceBars{false};
     uint32_t frame{0};
 
     fm_vec3_t playerPos{};

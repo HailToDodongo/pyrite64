@@ -22,6 +22,7 @@
 #include "audio/audioManager.h"
 #include "../audio/audioManagerPrivate.h"
 #include "../debug/overlay.h"
+#include "debug/debugMenu.h"
 
 #include "renderer/pipeline.h"
 #include "renderer/pipelineHDRBloom.h"
