@@ -16,7 +16,7 @@ void P64::Debug::printStart() {
   rdpq_mode_begin();
     rdpq_set_mode_standard();
     rdpq_mode_combiner(RDPQ_COMBINER1((PRIM,ENV,TEX0,ENV), (0,0,0,TEX0)));
-    rdpq_mode_alphacompare(1);
+    rdpq_mode_alphacompare(128);
   rdpq_mode_end();
 
   setColor();

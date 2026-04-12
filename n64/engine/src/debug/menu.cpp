@@ -21,7 +21,11 @@ void P64::Debug::Menu::update()
   auto btn = joypad_get_buttons_pressed(JOYPAD_PORT_1);
   auto held = joypad_get_buttons_held(JOYPAD_PORT_1);
 
-  if(btn.d_up)--currIndex;
+  if(btn.d_up && !held.l)
+  {
+    if(currIndex == 0)currIndex = items.size() - 1;
+    else --currIndex;
+  }
   if(btn.d_down)++currIndex;
   if(currIndex > items.size() - 1)currIndex = 0;
 

@@ -54,6 +54,8 @@ namespace {
   bool showCollMesh = false;
   bool showColliders = false;
   bool showFrameTime = false;
+  bool showBarCPU = true;
+  bool showBarRAM = true;
 
   bool isVisible = false;
 }
@@ -81,6 +83,8 @@ void P64::Debug::Overlay::init()
       .add("Collision", menuColl)
       .add("Audio", menuAudio)
       .add("Memory", menuMemory)
+      .add("Bar CPU", showBarCPU)
+      .add("Bar RAM", showBarRAM)
       .add("FPS", showFrameTime)
     ;
 
@@ -149,6 +153,7 @@ void P64::Debug::Overlay::draw(surface_t* surf)
   menu.draw();
 
   // Top bar for CPU time
+  if(showBarCPU)
   {
     uint16_t posX = 24;
     uint16_t posY = 16;
@@ -182,6 +187,7 @@ void P64::Debug::Overlay::draw(surface_t* surf)
   }
 
   // RAM graph
+  if(showBarRAM)
   {
     auto memInfo = P64::Mem::getStaticMemInfo();
     float memUsed = (float)(memInfo.text + memInfo.data + memInfo.bss) / (float)memInfo.total;
