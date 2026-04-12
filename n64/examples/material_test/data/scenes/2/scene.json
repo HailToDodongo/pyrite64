@@ -14,6 +14,12 @@
     "fbWidth": 320,
     "filter": 1,
     "frameLimit": 0,
+    "gravity": [
+      0.0,
+      -9.8100004196167,
+      0.0
+    ],
+    "interpolatePhysicsTransforms": true,
     "layers2D": [
       {
         "blender": 0,
@@ -85,7 +91,11 @@
       }
     ],
     "name": "Dungeon",
-    "renderPipeline": 0
+    "physicsScale": 16.0,
+    "physicsTickRate": 50,
+    "positionSolverIterations": 6,
+    "renderPipeline": 0,
+    "velocitySolverIterations": 7
   },
   "graph": {
     "children": [
@@ -956,7 +966,7 @@
                   }
                 ],
                 "enabled": true,
-                "id": 5,
+                "id": 54,
                 "name": "Flame",
                 "pos": [
                   -426.85247802734375,
