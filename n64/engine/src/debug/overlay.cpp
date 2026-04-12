@@ -55,7 +55,7 @@ namespace {
   bool showColliders = false;
   bool showFrameTime = false;
 
-  bool isVisible = true;
+  bool isVisible = false;
 }
 
 void P64::Debug::Overlay::toggle()
@@ -146,12 +146,6 @@ void P64::Debug::Overlay::draw(surface_t* surf)
   sys_get_heap_stats(&heapStats);
 
   rdpq_set_prim_color({0xFF,0xFF,0xFF, 0xFF});
-
-  //posX = Debug::printf(posX, posY, "A:%d/%d", scene.activeActorCount, scene.drawActorCount) + 8;
-  //posX = Debug::printf(posX, posY, "T:%d", triCount) + 8;
-  //Debug::printf(posX-32, posY, "H:%dkb", heap_stats.used);
-  //Debug::printf(posX, posY+8, "O:%d\n", scene.getObjectCount());
-
   menu.draw();
 
   // Top bar for CPU time
