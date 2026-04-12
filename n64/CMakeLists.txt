@@ -98,4 +98,9 @@ add_executable(n64_engine
         engine/src/lib/matrixManager.cpp
         engine/src/renderer/hdr/postProcess.cpp
         engine/src/debug/debugText.cpp
+        engine/src/debug/menu.h
+        engine/src/debug/menu.cpp
+        engine/src/debug/overlay/ovlAudio.cpp
+        engine/src/debug/overlay/ovlMemory.cpp
+        engine/src/debug/overlay/ovlCPU.cpp
 )

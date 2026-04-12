@@ -51,7 +51,7 @@ void P64::RenderPipelineHDRBloom::init()
     rdpq_attach(surf, surfDepth);
     fb = surf;
     scene.draw(VI::SwapChain::getDeltaTime());
-    Debug::Overlay::draw(scene, surf);
+    Debug::Overlay::draw(surf);
     rdpq_detach_cb((void(*)(void*))((void*)done), (void*)fbIndex);
   });
 }

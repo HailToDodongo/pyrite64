@@ -3,15 +3,16 @@
 * @license MIT
 */
 #pragma once
-#include <t3d/t3dmath.h>
-#include <vector>
-#include <functional>
+#include <libdragon.h>
 
-#include "scene/scene.h"
-
-namespace Debug::Overlay
+namespace P64::Debug::Overlay
 {
   void toggle();
   void init();
-  void draw(P64::Scene &scene, surface_t* surf);
+  void draw(surface_t* surf);
+
+  // sub overlays:
+  void ovlAudio();
+  void ovlMemory();
+  void ovlCPU();
 }

@@ -25,7 +25,7 @@ namespace
     for(int i = 1; i <= steps; ++i) {
       float angle = i * step;
       fm_vec3_t next{radius * fm_cosf(angle), y, radius * fm_sinf(angle)};
-      Debug::drawLine(toWorldPoint(position, rotation, last), toWorldPoint(position, rotation, next), color);
+      P64::Debug::drawLine(toWorldPoint(position, rotation, last), toWorldPoint(position, rotation, next), color);
       last = next;
     }
   }
@@ -83,20 +83,20 @@ namespace
   }
 }
 
-void Debug::init() {
+void P64::Debug::init() {
   lines = {};
 }
 
-void Debug::destroy() {
+void P64::Debug::destroy() {
   lines = {};
 }
 
-void Debug::drawLine(const fm_vec3_t &a, const fm_vec3_t &b, color_t color) {
+void P64::Debug::drawLine(const fm_vec3_t &a, const fm_vec3_t &b, color_t color) {
   if(lines.size() > MAX_LINE_COUNT)return;
   lines.push_back({a, b, color_to_packed16(color), 0});
 }
 
-color_t Debug::paletteColor(uint32_t index) {
+color_t P64::Debug::paletteColor(uint32_t index) {
   static constexpr color_t PALETTE[] = {
     {0xFF, 0x66, 0x66, 0xFF},
     {0x66, 0xFF, 0x99, 0xFF},
@@ -109,7 +109,7 @@ color_t Debug::paletteColor(uint32_t index) {
   return PALETTE[index % COUNT];
 }
 
-void Debug::drawSphere(const fm_vec3_t &center, float radius, color_t color) {
+void P64::Debug::drawSphere(const fm_vec3_t &center, float radius, color_t color) {
 
   int steps = 12;
   float step = 2.0f * (float)M_PI / steps;
@@ -136,7 +136,7 @@ void Debug::drawSphere(const fm_vec3_t &center, float radius, color_t color) {
   }
 }
 
-void Debug::draw(surface_t *fb) {
+void P64::Debug::draw(surface_t *fb) {
   if(lines.empty())return;
 
   // debugf("Drawing %u lines\n", lines.size());
@@ -174,7 +174,7 @@ void Debug::draw(surface_t *fb) {
   //rects.shrink_to_fit();
 }
 
-void Debug::drawAABB(const fm_vec3_t &p, const fm_vec3_t &halfExtend, color_t color) {
+void P64::Debug::drawAABB(const fm_vec3_t &p, const fm_vec3_t &halfExtend, color_t color) {
   fm_vec3_t a = p - halfExtend;
   fm_vec3_t b = p + halfExtend;
   // draw all 12 edges
@@ -192,7 +192,7 @@ void Debug::drawAABB(const fm_vec3_t &p, const fm_vec3_t &halfExtend, color_t co
   drawLine(fm_vec3_t{b.x, b.y, b.z}, fm_vec3_t{a.x, b.y, b.z}, color);
 }
 
-void Debug::drawOBB(const fm_vec3_t &p, const fm_vec3_t &halfExtend, const fm_quat_t &rot, color_t color) {
+void P64::Debug::drawOBB(const fm_vec3_t &p, const fm_vec3_t &halfExtend, const fm_quat_t &rot, color_t color) {
   fm_vec3_t a = toWorldPoint(p, rot, -halfExtend); // left bottom front
   fm_vec3_t b = toWorldPoint(p, rot, {halfExtend.x, -halfExtend.y, -halfExtend.z}); // right bottom front
   fm_vec3_t c = toWorldPoint(p, rot, {halfExtend.x, -halfExtend.y, halfExtend.z}); // right bottom back
@@ -217,7 +217,7 @@ void Debug::drawOBB(const fm_vec3_t &p, const fm_vec3_t &halfExtend, const fm_qu
   drawLine(d, h, color);
 }
 
-void Debug::drawCapsule(const fm_vec3_t &p, float radius, float innerHalfHeight, const fm_quat_t &rot, color_t color) {
+void P64::Debug::drawCapsule(const fm_vec3_t &p, float radius, float innerHalfHeight, const fm_quat_t &rot, color_t color) {
   constexpr int ARC_STEPS = 6;
 
   auto drawHemisphereArcs = [&](float centerY, float signY) {
@@ -256,7 +256,7 @@ void Debug::drawCapsule(const fm_vec3_t &p, float radius, float innerHalfHeight,
   drawLine(toWorldPoint(p, rot, {0.0f, topY, -radius}), toWorldPoint(p, rot, {0.0f, bottomY, -radius}), color);
 }
 
-void Debug::drawCylinder(const fm_vec3_t &p, float radius, float halfHeight, const fm_quat_t &rot, color_t color) {
+void P64::Debug::drawCylinder(const fm_vec3_t &p, float radius, float halfHeight, const fm_quat_t &rot, color_t color) {
   drawRingXZ(p, rot, radius, halfHeight, SIMPLE_RING_STEPS, color);
   drawRingXZ(p, rot, radius, -halfHeight, SIMPLE_RING_STEPS, color);
 
@@ -266,7 +266,7 @@ void Debug::drawCylinder(const fm_vec3_t &p, float radius, float halfHeight, con
   drawLine(toWorldPoint(p, rot, {0.0f, halfHeight, -radius}), toWorldPoint(p, rot, {0.0f, -halfHeight, -radius}), color);
 }
 
-void Debug::drawCone(const fm_vec3_t &p, float radius, float halfHeight, const fm_quat_t &rot, color_t color) {
+void P64::Debug::drawCone(const fm_vec3_t &p, float radius, float halfHeight, const fm_quat_t &rot, color_t color) {
   drawRingXZ(p, rot, radius, -halfHeight, SIMPLE_RING_STEPS, color);
 
   fm_vec3_t apex = toWorldPoint(p, rot, {0.0f, halfHeight, 0.0f});
@@ -276,7 +276,7 @@ void Debug::drawCone(const fm_vec3_t &p, float radius, float halfHeight, const f
   drawLine(apex, toWorldPoint(p, rot, {0.0f, -halfHeight, -radius}), color);
 }
 
-void Debug::drawPyramid(const fm_vec3_t &p, float baseHalfWidthX, float baseHalfWidthZ, float halfHeight, const fm_quat_t &rot, color_t color) {
+void P64::Debug::drawPyramid(const fm_vec3_t &p, float baseHalfWidthX, float baseHalfWidthZ, float halfHeight, const fm_quat_t &rot, color_t color) {
   fm_vec3_t a = toWorldPoint(p, rot, {-baseHalfWidthX, -halfHeight, -baseHalfWidthZ});
   fm_vec3_t b = toWorldPoint(p, rot, { baseHalfWidthX, -halfHeight, -baseHalfWidthZ});
   fm_vec3_t c = toWorldPoint(p, rot, { baseHalfWidthX, -halfHeight,  baseHalfWidthZ});

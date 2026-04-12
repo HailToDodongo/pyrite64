@@ -9,7 +9,7 @@
  * Various helpers to draw either text or lines for debugging purposes.
  * This is not intended for in-game use but rather for internal or user-defined debugging overlays.
  */
-namespace Debug
+namespace P64::Debug
 {
   void init();
 
@@ -75,3 +75,4 @@ namespace Debug
 #define DEBUG_CHAR_TREE      "\x86"
 #define DEBUG_CHAR_TREE_END  "\x87"
 #define DEBUG_CHAR_FUNC      "\x88"
+#define DEBUG_CHAR_VALUE     "\x89"

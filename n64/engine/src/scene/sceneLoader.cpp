@@ -106,6 +106,8 @@ P64::Object* P64::Scene::loadObject(uint8_t* &objFile, std::function<void(Object
   //debugf("Allocating object %d | comps: %d | size: %lu bytes\n", objEntry->id, compCount, allocSize);
 
   void* objMem = memalign(DATA_ALIGN, allocSize); // @TODO: custom allocator
+  memObjects += malloc_usable_size(objMem);
+
   if(allocSize < 16) {
     memset(objMem, 0, allocSize);
   } else {

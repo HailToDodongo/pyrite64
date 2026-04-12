@@ -13,7 +13,6 @@ namespace
 {
   constexpr uint32_t CHANNEL_COUNT = 32;
   constinit uint16_t nextUUID{1};
-  constinit float masterVol{1.0f};
 
   struct Slot
   {
@@ -36,9 +35,12 @@ namespace
   void updateVolume(uint32_t i) {
     auto& slot = slots[i];
     if(slot.isXM) {
-      xm64player_set_vol(slot.audioXM, slot.volume * masterVol);
+      xm64player_set_vol(slot.audioXM, slot.volume * P64::AudioManager::masterVol);
     } else {
-      mixer_ch_set_vol(i, slot.volume * masterVol, slot.volume * masterVol);
+      mixer_ch_set_vol(i,
+        slot.volume * P64::AudioManager::masterVol,
+        slot.volume * P64::AudioManager::masterVol
+      );
     }
   }
 
@@ -59,6 +61,7 @@ namespace
 
 namespace P64::AudioManager
 {
+  constinit float masterVol{1.0f};
   constinit uint64_t ticksUpdate{0};
   constinit int lastFreq{0};
 

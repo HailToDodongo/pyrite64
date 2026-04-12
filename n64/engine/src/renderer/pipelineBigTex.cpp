@@ -57,7 +57,7 @@ void P64::RenderPipelineBigTex::init()
     surfDepth = BigTex::getZBuffer();
     rdpq_attach(surfColor, surfDepth);
     scene.draw(VI::SwapChain::getDeltaTime());
-    Debug::Overlay::draw(scene, surfColor);
+    Debug::Overlay::draw(surfColor);
     rdpq_detach_cb((void(*)(void*))((void*)done), (void*)fbIndex);
   });
 }
