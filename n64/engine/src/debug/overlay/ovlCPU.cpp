@@ -9,10 +9,34 @@
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
 #include "vi/swapChain.h"
+#include <array>
 
 namespace
 {
   #include "ovlColors.h"
+
+  template<typename T, uint32_t N>
+  struct SlidingWindowAvg
+  {
+    void push(T v) {
+      values[idx] = v;
+      idx = (idx + 1) % N;
+      if (count < N) ++count;
+    }
+    T avg() const {
+      if (count == 0) return 0;
+      uint64_t sum = 0;
+      for (size_t i = 0; i < count; ++i) sum += values[i];
+      return sum / count;
+    }
+    T latest() const {
+      return values[(idx + N - 1) % N];
+    }
+
+    std::array<T, N> values{};
+    uint16_t idx{};
+    uint16_t count{};
+  };
 
   struct TimeEntry {
     const char *label{};
@@ -72,8 +96,12 @@ namespace
     P64::Debug::print(posX, posY, DEBUG_CHAR_US);
     P64::Debug::setColor();
   }
-}
 
+  constexpr uint32_t AVG_FRAMES = 32;
+
+  constinit SlidingWindowAvg<uint32_t, AVG_FRAMES> sw_collDet, sw_collRes, sw_updObj, sw_updMisc, sw_drawObj, sw_drawMisc, sw_audio, sw_debug;
+  constinit SlidingWindowAvg<uint32_t, AVG_FRAMES> sw_wake, sw_world, sw_intVel, sw_detBody, sw_detMesh, sw_refresh, sw_preSolve, sw_warmStart, sw_velSolve, sw_integrate, sw_posSolve, sw_finalize;
+}
 
 void P64::Debug::Overlay::ovlCPU()
 {
@@ -81,36 +109,60 @@ void P64::Debug::Overlay::ovlCPU()
   auto &collScene = scene.getCollision();
 
   setColor();
-  uint16_t posY = 42;
+  uint16_t posY = 54;
+
+  // Push new values each frame
+  sw_collDet.push(collScene.ticksTotal);
+  sw_collRes.push(collScene.ticksTotal - collScene.ticksDetect);
+  sw_updObj.push(scene.ticksActorUpdate);
+  sw_updMisc.push(scene.ticksGlobalUpdate);
+  sw_drawObj.push(scene.ticksDraw - scene.ticksGlobalDraw);
+  sw_drawMisc.push(scene.ticksGlobalDraw);
+  sw_audio.push(P64::AudioManager::ticksUpdate);
+  sw_debug.push(ticksSelf);
+
+  sw_wake.push(collScene.ticksWakePrep);
+  sw_world.push(collScene.ticksWorldUpdate);
+  sw_intVel.push(collScene.ticksIntegrateVel);
+  sw_detBody.push(collScene.ticksDetectBodyPairs);
+  sw_detMesh.push(collScene.ticksDetectMeshPairs);
+  sw_refresh.push(collScene.ticksRefreshCallbacks);
+  sw_preSolve.push(collScene.ticksPreSolve);
+  sw_warmStart.push(collScene.ticksWarmStart);
+  sw_velSolve.push(collScene.ticksVelocitySolve);
+  sw_integrate.push(collScene.ticksIntegration);
+  sw_posSolve.push(collScene.ticksPositionSolve);
+  sw_finalize.push(collScene.ticksFinalize);
+
+  // Use average or latest depending on doAvg
+  auto get = [](auto &sw) -> uint64_t { return useCpuAvg ? sw.avg() : sw.latest(); };
 
   const TimeEntry generalTiming[] = {
-    {"Coll Det.", collScene.ticksTotal, COLOR_COLL_DETECT},
-    {"Coll Res.", collScene.ticksTotal - collScene.ticksDetect, COLOR_COLL},
-    {"Upd. Obj", scene.ticksActorUpdate, COLOR_ACTOR_UPDATE},
-    {"Upd. Misc", scene.ticksGlobalUpdate, COLOR_GLOBAL_UPDATE},
-    {"Draw Obj", scene.ticksDraw - scene.ticksGlobalDraw, COLOR_SCENE_DRAW},
-    {"Draw Misc", scene.ticksGlobalDraw, COLOR_GLOBAL_DRAW},
-    {"Audio", P64::AudioManager::ticksUpdate, COLOR_AUDIO},
-    {"Debug", ticksSelf},
+    {"Coll Det.", get(sw_collDet), COLOR_COLL_DETECT},
+    {"Coll Res.", get(sw_collRes), COLOR_COLL},
+    {"Upd. Obj", get(sw_updObj), COLOR_ACTOR_UPDATE},
+    {"Upd. Misc", get(sw_updMisc), COLOR_GLOBAL_UPDATE},
+    {"Draw Obj", get(sw_drawObj), COLOR_SCENE_DRAW},
+    {"Draw Misc", get(sw_drawMisc), COLOR_GLOBAL_DRAW},
+    {"Audio", get(sw_audio), COLOR_AUDIO},
+    {"Debug", get(sw_debug)},
   };
   printTable(DEBUG_CHAR_SQUARE " General ", 16, posY, 66, generalTiming, sizeof(generalTiming) / sizeof(TimeEntry));
 
   const TimeEntry collTimingEntries[] = {
-    {"Wake", collScene.ticksWakePrep},
-    {"World", collScene.ticksWorldUpdate},
-    {"Int.Vel", collScene.ticksIntegrateVel},
-    {"Det.Body", collScene.ticksDetectBodyPairs},
-    {"Det.Mesh", collScene.ticksDetectMeshPairs},
-    {"Refresh", collScene.ticksRefreshCallbacks},
-    {"PreSolve", collScene.ticksPreSolve},
-    {"WarmStart", collScene.ticksWarmStart},
-    {"Vel.Solve", collScene.ticksVelocitySolve},
-    {"Integrate", collScene.ticksIntegration},
-    {"Pos.Solve", collScene.ticksPositionSolve},
-    {"Finalize", collScene.ticksFinalize},
+    {"Wake", get(sw_wake)},
+    {"World", get(sw_world)},
+    {"Int.Vel", get(sw_intVel)},
+    {"Det.Body", get(sw_detBody)},
+    {"Det.Mesh", get(sw_detMesh)},
+    {"Refresh", get(sw_refresh)},
+    {"PreSolve", get(sw_preSolve)},
+    {"WarmStart", get(sw_warmStart)},
+    {"Vel.Solve", get(sw_velSolve)},
+    {"Integrate", get(sw_integrate)},
+    {"Pos.Solve", get(sw_posSolve)},
+    {"Finalize", get(sw_finalize)},
   };
 
   printTable(DEBUG_CHAR_SQUARE " Collision ", 164, posY, 66, collTimingEntries, sizeof(collTimingEntries) / sizeof(TimeEntry));
-
-
 }

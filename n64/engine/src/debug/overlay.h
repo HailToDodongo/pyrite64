@@ -8,6 +8,7 @@
 namespace P64::Debug::Overlay
 {
   extern uint64_t ticksSelf;
+  extern bool useCpuAvg;
 
   void toggle();
   void init();

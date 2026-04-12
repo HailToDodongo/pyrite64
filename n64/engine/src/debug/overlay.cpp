@@ -24,6 +24,7 @@ namespace P64::SceneManager
 }
 
 constinit uint64_t P64::Debug::Overlay::ticksSelf = 0;
+constinit bool P64::Debug::Overlay::useCpuAvg = true;
 
 namespace {
   #include "overlay/ovlColors.h"
@@ -52,7 +53,8 @@ namespace {
 
   bool showCollMesh = false;
   bool showColliders = false;
-  bool showFrameTime = true;
+  bool showFrameTime = false;
+
   bool isVisible = true;
 }
 
@@ -97,6 +99,7 @@ void P64::Debug::Overlay::init()
 
   menuMemory.onDraw = ovlMemory;
   menuCPU.onDraw = ovlCPU;
+  menuCPU.add("Average", useCpuAvg);
 
   dir_t dir{};
   const char* const BASE_DIR = "rom:/p64";
