@@ -157,6 +157,9 @@ P64::Object* P64::Scene::loadObject(uint8_t* &objFile, std::function<void(Object
 
     objCompDataPtr += Math::alignUp(compDef.getAllocSize(ptrIn + 4), 8);
     ptrIn += argSize;
+
+    // send ready event. this is deferred, so it will always happen after 'initDel'
+    sendEvent(obj->id, 0, EVENT_TYPE_READY, 0);
   }
 
   /*debugf("Object: id=%d | group=%d | flags=0x%04X | pos=(%f,%f,%f) | comp: %d\n",

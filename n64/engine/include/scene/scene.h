@@ -131,6 +131,7 @@ namespace P64
       void loadSceneConfig();
       Object* loadObject(uint8_t* &objFile, std::function<void(Object&)> callback = {}, bool deferComponentInit = false);
       void runPendingComponentInit();
+      void runPendingEvents();
       void loadScene();
 
     public:

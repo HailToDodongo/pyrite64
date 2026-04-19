@@ -200,6 +200,8 @@ void P64::Scene::update(float deltaTime)
 
   objectsToAdd.clear();
 
+  runPendingEvents();
+
   // ======== Run the Physics and fixed Update Callbacks in a fixed Deltatime Loop ======== //
   uint16_t physicsTickRate = conf.physicsTickRate > 0 ? conf.physicsTickRate : 50;
   float fixedDeltaTime = 1.0f / static_cast<float>(physicsTickRate);
@@ -273,31 +275,7 @@ void P64::Scene::update(float deltaTime)
   }
   pendingObjDelete.clear();
 
-  // events, switch now to prevent infinite loops for objects that push events in response to events
-  auto &evQueue = eventQueue[eventQueueIdx];
-  eventQueueIdx = (eventQueueIdx + 1) % 2;
-  for(uint32_t e=0; e<evQueue.eventCount; ++e)
-  {
-    auto &entry = evQueue.events[e];
-    auto obj = getObjectById(entry.targetId);
-    if(obj)
-    {
-      auto compRefs = obj->getCompRefs();
-      for (uint32_t i=0; i<obj->compCount; ++i) {
-        const auto &compDef = COMP_TABLE[compRefs[i].type];
-        if(compDef.onEvent)
-        {
-          char* dataPtr = (char*)obj + compRefs[i].offset;
-          compDef.onEvent(*obj, dataPtr, entry.event);
-        }
-      }
-    }
-  }
-  evQueue.clear();
-
   AudioManager::update();
-
-
   VI::SwapChain::nextFrame();
 }
 
@@ -382,6 +360,30 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
     frameCount = 0;
   }
 #endif
+}
+
+void P64::Scene::runPendingEvents()
+{
+  // events, switch now to prevent infinite loops for objects that push events in response to events
+  auto &evQueue = eventQueue[eventQueueIdx];
+  eventQueueIdx = (eventQueueIdx + 1) % 2;
+  for(const auto &entry : evQueue.events)
+  {
+    auto obj = getObjectById(entry.targetId);
+    if(obj)
+    {
+      auto compRefs = obj->getCompRefs();
+      for (uint32_t i=0; i<obj->compCount; ++i) {
+        const auto &compDef = COMP_TABLE[compRefs[i].type];
+        if(compDef.onEvent)
+        {
+          char* dataPtr = (char*)obj + compRefs[i].offset;
+          compDef.onEvent(*obj, dataPtr, entry.event);
+        }
+      }
+    }
+  }
+  evQueue.clear();
 }
 
 void P64::Scene::applyRenderInterpolation(float dt)

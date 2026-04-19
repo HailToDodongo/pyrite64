@@ -7,4 +7,5 @@ Editor & Engine
 .. toctree::
   :maxdepth: 2
 
+  editor/objLifecycle
   editor/materials

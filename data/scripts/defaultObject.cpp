@@ -50,6 +50,8 @@ namespace P64::Script::__UUID__
     // generic events an object can receive
     switch(event.type)
     {
+      case EVENT_TYPE_READY: // object is fully initialized, no update call has happened yet
+      break;
       case EVENT_TYPE_ENABLE: // object got enabled
       break;
       case EVENT_TYPE_DISABLE: // object got disabled
