@@ -10,6 +10,7 @@
 #include "../../../renderer/framebuffer.h"
 #include "../../../renderer/mesh.h"
 #include "../../../renderer/object.h"
+#include "../../../project/component/components.h"
 #include "../../../utils/container.h"
 
 namespace Editor
@@ -19,6 +20,8 @@ namespace Editor
     private:
       Renderer::UniformGlobal uniGlobal{};
       Renderer::Framebuffer fb{};
+      Renderer::UniformGlobal previewUniGlobal{};
+      Renderer::Framebuffer fbPreview{};
       Renderer::Camera camera{};
       uint32_t passId{};
 
@@ -49,9 +52,37 @@ namespace Editor
       bool showGrid{true};
       bool showCollMesh{false};
       bool showCollObj{true};
+      bool showCameraPreview{false};
+      uint32_t previewCameraUUID{0};
+      glm::vec2 previewScreenSize{};
 
       int gizmoOp{0};
       bool gizmoTransformActive{false};
+
+      /**
+       * Renders the scene into the provided framebuffer using either editor or in-game style overlays.
+       * @param cmdBuff GPU command buffer used for the render pass.
+       * @param renderScene Renderer scene that owns the active pipelines.
+       * @param targetFb Framebuffer that receives the rendered image.
+       * @param targetUni Global uniforms used for this pass.
+       * @param drawEditorHelpers True to draw editor-only helpers and overlays.
+       */
+      void renderScenePass(SDL_GPUCommandBuffer* cmdBuff, Renderer::Scene& renderScene, Renderer::Framebuffer &targetFb, Renderer::UniformGlobal &targetUni, bool drawEditorHelpers);
+
+      /**
+       * Updates the cached camera preview state for the currently focused object.
+       * @param obj Currently focused object in the viewport.
+       * @param currSize Visible size of the viewport image.
+       * @param scene Loaded scene used to configure the preview framebuffer.
+       */
+      void updateCameraPreviewState(const std::shared_ptr<Project::Object> &obj, const ImVec2 &currSize, Project::Scene *scene);
+
+      /**
+       * Draws the camera preview overlay on top of the viewport when a preview framebuffer is available.
+       * @param currPos Screen position of the viewport image.
+       * @param currSize Visible size of the viewport image.
+       */
+      void drawCameraPreviewOverlay(const ImVec2 &currPos, const ImVec2 &currSize);
 
       void onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::Scene& renderScene);
       void onCopyPass(SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass *copyPass);

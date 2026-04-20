@@ -21,6 +21,7 @@ struct SDL_GPUGraphicsPipeline;
 struct SDL_GPURenderPass;
 
 namespace Project { class Object; }
+namespace Renderer { struct UniformGlobal; }
 
 namespace Project::Component
 {
@@ -82,6 +83,28 @@ namespace Project::Component
   MAKE_COMP(Culling)
   MAKE_COMP(NodeGraph)
   MAKE_COMP(AnimModel)
+
+  namespace Camera
+  {
+    /**
+     * Applies the component camera settings to a global uniform block for editor preview rendering.
+     * @param obj Object that owns the camera component.
+     * @param entry Camera component entry to read from.
+     * @param uniGlobal Uniform block to populate.
+     * @param screenWidth Target render width in pixels.
+     * @param screenHeight Target render height in pixels.
+     */
+    void applyToGlobalUniforms(Object& obj, Entry &entry, Renderer::UniformGlobal &uniGlobal, float screenWidth, float screenHeight);
+
+    /**
+     * Resolves the effective aspect ratio for the camera component using viewport data as fallback.
+     * @param obj Object that owns the camera component.
+     * @param entry Camera component entry to read from.
+     * @param fallbackAspect Aspect ratio used when the component does not define one.
+     * @return Effective aspect ratio used for rendering from this camera.
+     */
+    float getAspectRatio(Object& obj, Entry &entry, float fallbackAspect);
+  }
 
   constexpr std::array TABLE{
     CompInfo{

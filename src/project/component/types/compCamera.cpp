@@ -3,6 +3,7 @@
 * @license MIT
 */
 #include "../components.h"
+#include <algorithm>
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"
 #include "../../../utils/json.h"
@@ -13,10 +14,14 @@
 #include "../../assetManager.h"
 #include "../../../editor/pages/parts/viewport3D.h"
 #include "../../../renderer/scene.h"
+#include "../../../renderer/uniforms.h"
 #include "../../../utils/meshGen.h"
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_transform.hpp"
 
 namespace
 {
+  constexpr float PREVIEW_SPRITE_SIZE = 7000.0f; // Sprite size used by the preview pass so editor billboard helpers keep their expected scale
 }
 
 namespace Project::Component::Camera
@@ -87,6 +92,62 @@ namespace Project::Component::Camera
   void update(Object &obj, Entry &entry)
   {
     Data &data = *static_cast<Data*>(entry.data.get());
+  }
+
+  /**
+   * Resolves the camera aspect ratio while still supporting cameras that inherit it from their viewport size.
+   * @param obj Object that owns the camera component.
+   * @param entry Camera component entry to read from.
+   * @param fallbackAspect Aspect ratio used when the component does not define one.
+   * @return Effective aspect ratio used for rendering from this camera.
+   */
+  float getAspectRatio(Object& obj, Entry &entry, float fallbackAspect)
+  {
+    Data &data = *static_cast<Data*>(entry.data.get());
+    float aspect = data.aspect.resolve(obj);
+    if (aspect > 0.0f) {
+      return aspect;
+    }
+
+    auto vpSize = data.vpSize.resolve(obj);
+    if (vpSize.y > 0) {
+      return (float)vpSize.x / (float)vpSize.y;
+    }
+
+    return fallbackAspect > 0.0f ? fallbackAspect : 1.0f;
+  }
+
+  /**
+   * Builds the matrices used by the editor preview from the selected camera component.
+   * @param obj Object that owns the camera component.
+   * @param entry Camera component entry to read from.
+   * @param uniGlobal Uniform block to populate.
+   * @param screenWidth Target render width in pixels.
+   * @param screenHeight Target render height in pixels.
+   */
+  void applyToGlobalUniforms(Object& obj, Entry &entry, Renderer::UniformGlobal &uniGlobal, float screenWidth, float screenHeight)
+  {
+    Data &data = *static_cast<Data*>(entry.data.get());
+
+    float safeWidth = std::max(screenWidth, 1.0f);
+    float safeHeight = std::max(screenHeight, 1.0f);
+    float aspect = getAspectRatio(obj, entry, safeWidth / safeHeight);
+
+    uniGlobal.screenSize = {safeWidth, safeHeight};
+    uniGlobal.spriteSize = {PREVIEW_SPRITE_SIZE, PREVIEW_SPRITE_SIZE};
+    uniGlobal.spriteSize *= ctx.prefs.renderFactorAA;
+    uniGlobal.projMat = glm::perspective(
+      glm::radians(data.fov.resolve(obj)),
+      aspect,
+      data.near.resolve(obj),
+      data.far.resolve(obj)
+    );
+
+    const glm::vec3 pos = obj.pos.resolve(obj.propOverrides);
+    const glm::quat rot = glm::normalize(obj.rot.resolve(obj.propOverrides));
+    const glm::vec3 direction = glm::normalize(rot * glm::vec3{0,0,-1});
+    const glm::vec3 dynamicUp = glm::normalize(rot * glm::vec3{0,1,0});
+    uniGlobal.cameraMat = glm::lookAt(pos, pos + direction, dynamicUp);
   }
 
   void draw(Object &obj, Entry &entry) {

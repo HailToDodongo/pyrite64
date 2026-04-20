@@ -3,6 +3,7 @@
 * @license MIT
 */
 #include "viewport3D.h"
+#include <algorithm>
 
 #include "imgui.h"
 #include "../../imgui/theme.h"
@@ -26,6 +27,17 @@
 namespace
 {
   constinit uint32_t nextPassId{0};
+  // COMPONENT_ID constants declared to avoid magic numbers, just in case someone declares them in components.h, so they can be easily found and replaced here
+  constexpr int COMPONENT_ID_CAMERA = 3; // Component id of Camera
+  constexpr int COMPONENT_ID_MODEL_STATIC = 1; // Component id of camera Static model
+  constexpr int COMPONENT_ID_MODEL_ANIMATED = 10; // Component id of Animated model
+  constexpr float PREVIEW_SIZE_FACTOR = 0.3f; // Fraction of the viewport reserved for camera preview when space allows it
+  constexpr float PREVIEW_MIN_WIDTH = 160.0f; // Minimum preview width before overlay becomes too small to be useful
+  constexpr float PREVIEW_MIN_HEIGHT = 120.0f; // Minimum preview height before overlay becomes too small to be useful
+  constexpr float PREVIEW_MIN_SIZE = 64.0f; // Minimum width and height required to render the preview at all
+  constexpr float PREVIEW_VIEWPORT_PADDING = 24.0f; // Padding kept between the preview and the viewport edges while sizing it
+  constexpr float PREVIEW_MIN_ASPECT = 0.25f; // Lowest allowed aspect ratio so very narrow cameras do not produce unusable previews
+  constexpr float PREVIEW_DEFAULT_ASPECT = 16.0f / 9.0f; // Fallback aspect ratio used when the camera component does not define one
 
   constexpr ImGuizmo::OPERATION GIZMO_OPS[3] {
     ImGuizmo::OPERATION::TRANSLATE,
@@ -150,6 +162,21 @@ namespace
       child->pos.resolve(child->propOverrides) = mat * glm::vec4(it->second, 1.0f);
     }
   }
+
+  /**
+   * Returns the camera component attached to the given object or nullptr if it has none.
+   * @param obj Object to inspect.
+   * @return Pointer to the first camera component found in the object or nullptr if none exists.
+   */
+  Project::Component::Entry* getCameraComponent(Project::Object &obj)
+  {
+    // We stop at the first camera because the preview only supports one source camera per focused object
+    for (auto &comp : obj.components) {
+      if (comp.id == COMPONENT_ID_CAMERA)
+        return &comp;
+    }
+    return nullptr;
+  }
 }
 
 Editor::Viewport3D::Viewport3D()
@@ -193,35 +220,35 @@ Editor::Viewport3D::~Viewport3D() {
   }
 }
 
-void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::Scene& renderScene)
+void Editor::Viewport3D::renderScenePass(SDL_GPUCommandBuffer* cmdBuff, Renderer::Scene& renderScene, Renderer::Framebuffer &targetFb, Renderer::UniformGlobal &targetUni, bool drawEditorHelpers)
 {
-  if(fb.getTexture() == nullptr)return;
-  meshLines->vertLines.clear();
-  meshLines->indices.clear();
-
-  meshSprites->vertLines.clear();
-  meshSprites->indices.clear();
-
   auto scene = ctx.project->getScenes().getLoadedScene();
+  // No scene loaded --> Abort
   if (!scene)return;
 
-  ctx.sanitizeObjectSelection(scene);
+  // Is an editor-facing pass --> Rebuild helper meshes
+  if (drawEditorHelpers) {
+    meshLines->vertLines.clear();
+    meshLines->indices.clear();
+
+    meshSprites->vertLines.clear();
+    meshSprites->indices.clear();
+    ctx.sanitizeObjectSelection(scene);
+  }
 
   SDL_GPURenderPass* renderPass3D = SDL_BeginGPURenderPass(
-    cmdBuff, fb.getTargetInfo(), fb.getTargetInfoCount(), &fb.getDepthTargetInfo()
+    cmdBuff, targetFb.getTargetInfo(), targetFb.getTargetInfoCount(), &targetFb.getDepthTargetInfo()
   );
   renderScene.getPipeline("n64").bind(renderPass3D);
-
-  camera.apply(uniGlobal);
-  uniGlobal.screenSize = glm::vec2{(float)fb.getWidth(), (float)fb.getHeight()};
-  SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
+  SDL_PushGPUVertexUniformData(cmdBuff, 0, &targetUni, sizeof(targetUni));
   auto &rootObj = scene->getRootObject();
 
   bool hadDraw = false;
   iterateObjects(rootObj, [&](Project::Object &obj, Project::Component::Entry *comp) {
     if(!comp)
     {
-      if(!hadDraw) {
+      // No component provided custom visual --> Draw generic object sprite
+      if(drawEditorHelpers && !hadDraw) {
         glm::u8vec4 spriteCol{0xFF, 0xFF, 0xFF, 0xFF};
         if (ctx.isObjectSelected(obj.uuid)) {
           spriteCol = Utils::Colors::kSelectionTint;
@@ -234,8 +261,11 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
     auto &def = Project::Component::TABLE[comp->id];
 
     // @TODO: use flag in component
+    // Collision debug helpers stay hidden when the corresponding viewport toggles are disabled
     if(!showCollMesh && comp->id == 4)return;
     if(!showCollObj && comp->id == 5)return;
+    // Camera preview renders only gameplay-visible geometry
+    if(!drawEditorHelpers && comp->id != COMPONENT_ID_MODEL_STATIC && comp->id != COMPONENT_ID_MODEL_ANIMATED)return;
 
     if(def.funcDraw3D) {
       def.funcDraw3D(obj, *comp, *this, cmdBuff, renderPass3D);
@@ -248,42 +278,176 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
     auto &def = Project::Component::TABLE[comp->id];
 
     // @TODO: use flag in component
+    // Post-draw helpers are editor-only overlays, so we skip them for the camera preview
     if(!showCollMesh && comp->id == 4)return;
     if(!showCollObj && comp->id == 5)return;
+    if(!drawEditorHelpers)return;
 
     if(def.funcDrawPost3D) {
       def.funcDrawPost3D(obj, *comp, *this, cmdBuff, renderPass3D);
     }
   });
 
-  meshLines->recreate(renderScene);
-  meshSprites->recreate(renderScene);
+  // Must draw grids, helper lines and sprites
+  if (drawEditorHelpers) {
+    meshLines->recreate(renderScene);
+    meshSprites->recreate(renderScene);
 
-  renderScene.getPipeline("lines").bind(renderPass3D);
+    renderScene.getPipeline("lines").bind(renderPass3D);
 
-  if(showGrid)objGrid.draw(renderPass3D, cmdBuff);
-  objLines.draw(renderPass3D, cmdBuff);
-
-  // hack to get thicker lines with AA, just draw again with a 1px offset in screen-space
-  if(ctx.prefs.renderFactorAA > 1.0f) {
-    auto oldMat = uniGlobal.projMat[2];
-    uniGlobal.projMat[2][0] += 1.0f / uniGlobal.screenSize.x;
-    uniGlobal.projMat[2][1] -= 1.0f / uniGlobal.screenSize.y;
-    SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
-
-    if(showGrid)objGrid.draw(renderPass3D, cmdBuff);
+    if (showGrid)
+      objGrid.draw(renderPass3D, cmdBuff);
     objLines.draw(renderPass3D, cmdBuff);
 
-    uniGlobal.projMat[2] = oldMat;
-    SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
+    // hack to get thicker lines with AA, just draw again with a 1px offset in screen-space
+    if (ctx.prefs.renderFactorAA > 1.0f) {
+      auto oldMat = uniGlobal.projMat[2];
+      uniGlobal.projMat[2][0] += 1.0f / uniGlobal.screenSize.x;
+      uniGlobal.projMat[2][1] -= 1.0f / uniGlobal.screenSize.y;
+      SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
+
+      if (showGrid)
+        objGrid.draw(renderPass3D, cmdBuff);
+      objLines.draw(renderPass3D, cmdBuff);
+
+      uniGlobal.projMat[2] = oldMat;
+      SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
+    }
+
+    renderScene.getPipeline("sprites").bind(renderPass3D);
+
+    sprites->bind(renderPass3D);
+    objSprites.draw(renderPass3D, cmdBuff);
   }
 
-  renderScene.getPipeline("sprites").bind(renderPass3D);
-
-  sprites->bind(renderPass3D);
-  objSprites.draw(renderPass3D, cmdBuff);
-
   SDL_EndGPURenderPass(renderPass3D);
+}
+
+void Editor::Viewport3D::drawCameraPreviewOverlay(const ImVec2 &currPos, const ImVec2 &currSize)
+{
+  // Must not preview or preview framebuffer wasn't rendered --> Abort
+  if (!showCameraPreview || !fbPreview.getTexture())return;
+
+  // Draw camera preview as overlay after main viewport image
+  ImVec2 previewFramePadding = ImGui::GetStyle().WindowPadding;
+  ImVec2 previewMargin = previewFramePadding;
+  // Position outer frame at bottom-right corner so margin and frame padding are respected
+  ImVec2 framePos{
+    currPos.x + currSize.x - previewScreenSize.x - previewMargin.x - (previewFramePadding.x * 2.0f),
+    currPos.y + currSize.y - previewScreenSize.y - previewMargin.y - (previewFramePadding.y * 2.0f)
+  };
+  // Expand frame around preview image by the configured padding on all sides
+  ImVec2 frameEnd{
+    framePos.x + previewScreenSize.x + (previewFramePadding.x * 2.0f),
+    framePos.y + previewScreenSize.y + (previewFramePadding.y * 2.0f)
+  };
+  // Place the image inside the frame so it stays centered within the border
+  ImVec2 previewPos{
+    framePos.x + previewFramePadding.x,
+    framePos.y + previewFramePadding.y
+  };
+  // Use the preview render size directly for the image bounds inside the frame
+  ImVec2 previewEnd{
+    previewPos.x + previewScreenSize.x,
+    previewPos.y + previewScreenSize.y
+  };
+
+  auto drawList = ImGui::GetWindowDrawList();
+  // Draw frame first so the image appears on top of it
+  drawList->AddRectFilled(
+    framePos,
+    frameEnd,
+    ImGui::GetColorU32(ImGuiCol_WindowBg),
+    ImGui::GetStyle().WindowRounding
+  );
+  // Draw camera render inside the padded frame area
+  drawList->AddImage(ImTextureID(fbPreview.getTexture()), previewPos, previewEnd);
+}
+
+void Editor::Viewport3D::updateCameraPreviewState(
+  const std::shared_ptr<Project::Object> &obj,
+  const ImVec2 &currSize,
+  Project::Scene *scene
+)
+{
+  // Reset preview state each frame so it only appears while a camera object is focused
+  showCameraPreview = false;
+  previewCameraUUID = 0;
+  previewScreenSize = {};
+
+  if (!obj)return;
+
+  auto *cameraComp = getCameraComponent(*obj);
+  if (!cameraComp)return;
+
+  // Fit preview into viewport while preserving camera aspect ratio
+  float previewMaxWidth = std::max(currSize.x * PREVIEW_SIZE_FACTOR, PREVIEW_MIN_WIDTH);
+  previewMaxWidth = std::min(previewMaxWidth, std::max(currSize.x - PREVIEW_VIEWPORT_PADDING, PREVIEW_MIN_SIZE));
+
+  float aspect = Project::Component::Camera::getAspectRatio(*obj, *cameraComp, PREVIEW_DEFAULT_ASPECT);
+  aspect = std::max(aspect, PREVIEW_MIN_ASPECT);
+
+  glm::vec2 previewSize{
+    previewMaxWidth,
+    previewMaxWidth / aspect
+  };
+
+  float previewMaxHeight = std::max(currSize.y * PREVIEW_SIZE_FACTOR, PREVIEW_MIN_HEIGHT);
+  previewMaxHeight = std::min(previewMaxHeight, std::max(currSize.y - PREVIEW_VIEWPORT_PADDING, PREVIEW_MIN_SIZE));
+  // Clamp by height as well so preview never spills outside the viewport
+  if (previewSize.y > previewMaxHeight) {
+    previewSize.y = previewMaxHeight;
+    previewSize.x = previewSize.y * aspect;
+  }
+
+  // Size of preview is not useful --> Abort
+  if (previewSize.x < PREVIEW_MIN_SIZE || previewSize.y < PREVIEW_MIN_SIZE)
+    return;
+
+  showCameraPreview = true;
+  previewCameraUUID = obj->uuid;
+  previewScreenSize = previewSize;
+
+  // Render preview at same AA scale as main viewport
+  glm::vec2 previewRenderSize = previewSize * ctx.prefs.renderFactorAA;
+  fbPreview.setClearColor(scene->conf.clearColor.value);
+  fbPreview.resize((int)previewRenderSize.x, (int)previewRenderSize.y);
+}
+
+void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::Scene& renderScene)
+{
+  // The main framebuffer can be missing while the viewport is still being sized for the first frames
+  if(fb.getTexture() == nullptr)return;
+
+  // Render main editor view first
+  camera.apply(uniGlobal);
+  uniGlobal.screenSize = glm::vec2{(float)fb.getWidth(), (float)fb.getHeight()};
+  renderScenePass(cmdBuff, renderScene, fb, uniGlobal, true);
+
+  // No valid preview target this frame --> abort
+  if(!showCameraPreview || fbPreview.getTexture() == nullptr)return;
+
+  auto scene = ctx.project->getScenes().getLoadedScene();
+  // Scene changed after UI state --> Abort
+  if (!scene)return;
+
+  auto previewObj = scene->getObjectByUUID(previewCameraUUID);
+  // Previously focused camera object no longer available --> Abort
+  if (!previewObj)return;
+
+  auto *cameraComp = getCameraComponent(*previewObj);
+  // Focused object has no camera component --> Abort
+  if (!cameraComp)return;
+
+  // Re-render the scene from the focused camera into the preview framebuffer
+  Project::Component::Camera::applyToGlobalUniforms(
+    *previewObj,
+    *cameraComp,
+    previewUniGlobal,
+    (float)fbPreview.getWidth(),
+    (float)fbPreview.getHeight()
+  );
+  renderScenePass(cmdBuff, renderScene, fbPreview, previewUniGlobal, false);
 }
 
 void Editor::Viewport3D::onCopyPass(SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass *copyPass) {
@@ -625,6 +789,8 @@ void Editor::Viewport3D::draw()
     (float)fb.getHeight() / ctx.prefs.renderFactorAA
   });
 
+  updateCameraPreviewState(obj, currSize, scene);
+
   if (ImGui::BeginDragDropTarget())
   {
     if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET"))
@@ -648,6 +814,8 @@ void Editor::Viewport3D::draw()
   }
 
   isMouseHover = ImGui::IsItemHovered();
+
+  drawCameraPreviewOverlay(currPos, currSize);
 
   if (selectionDragging) {
     glm::vec2 rectMin = glm::min(selectionStart, selectionEnd);
