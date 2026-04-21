@@ -556,14 +556,15 @@ namespace P64::GlobalScript::C98127B5B02279B8
     for(uint32_t t=0; t<testResult.size(); ++t) 
     {
       auto res = testResult[t];
-      auto posX = Debug::printf(22, posY, "%02d | %s : ", t, TESTS[t].name);
+      Debug::printf(22, posY, "%02d | %s : ", t, TESTS[t].name);
+      uint16_t posX = 268;
 
       if(res < 0) {
         Debug::printf(posX, posY, "Pending...");
       }
       if(res == 0) {
         Debug::setColor({0xFF, 0x22, 0x22, 0xFF});
-        Debug::printf(posX, posY, "FAILED!");
+        Debug::printf(posX, posY, "FAIL!");
         Debug::setColor();
       }
       if(res == 1) {

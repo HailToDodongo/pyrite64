@@ -462,7 +462,6 @@ P64::Object* P64::Scene::getObjectById(uint16_t objId) const
 
 void P64::Scene::updateChildObjectStates(const Object* parent, Object& obj)
 {
-  // @TODO: optimize
   if(!parent && obj.group) {
     parent = getObjectById(obj.group);
   }
