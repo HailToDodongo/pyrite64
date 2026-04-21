@@ -188,11 +188,15 @@ void P64::Scene::update(float deltaTime)
   objectsToAdd.clear();
 
   // transition active/inactive state of objects
-  auto t = get_ticks();
-  for(const auto obj : objects) {
-    updateChildObjectStates(nullptr, *obj);
+  //auto t = get_ticks();
+  if(needsObjStateUpdate)
+  {
+    for(const auto obj : objects) {
+      updateChildObjectStates(nullptr, *obj);
+    }
+    needsObjStateUpdate = false;
   }
-  t = get_ticks() - t;
+  //t = get_ticks() - t;
   //debugf("State Change Time: %llu us\n", TICKS_TO_US(t));
 
   runPendingEvents();

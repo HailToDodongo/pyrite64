@@ -22,6 +22,7 @@ void P64::Object::setEnabled(bool isEnabled)
 {
   if(isEnabled != this->isSelfEnabled()) {
     flags |= ObjectFlags::PENDING_ACTIVE_CHG;
+    SceneManager::getCurrent().needsObjStateUpdate = true;
   } else {
     flags &= ~ObjectFlags::PENDING_ACTIVE_CHG;
   }

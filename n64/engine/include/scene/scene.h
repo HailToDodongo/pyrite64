@@ -142,6 +142,7 @@ namespace P64
       uint64_t ticksGlobalDraw{0};
       uint64_t ticksDraw{0};
       uint32_t memObjects{0};
+      bool needsObjStateUpdate{false};
 
       explicit Scene(uint16_t sceneId, Scene** ref);
       ~Scene();

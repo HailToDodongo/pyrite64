@@ -118,7 +118,7 @@ namespace P64::Script::CD43F65D4883D4A8
       }
 
       if(data->fadeTimer >= FADE_TIME_MAX) {
-        obj.remove();
+        obj.remove(true);
       }
       return;
     }
