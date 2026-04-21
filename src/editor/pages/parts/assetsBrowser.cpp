@@ -533,6 +533,11 @@ void Editor::AssetsBrowser::draw() {
 
     if(ImGui::BeginPopup("SceneCtxMenu")) {
       bool canDelete = scenes.size() > 1;
+
+      if(ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Duplicate")) {
+        ctx.project->getScenes().duplicate(ctxSceneId);
+      }
+
       if(!canDelete) ImGui::BeginDisabled();
       if(ImGui::MenuItem(ICON_MDI_TRASH_CAN_OUTLINE " Delete")) {
         ctx.project->getScenes().remove(ctxSceneId);
@@ -540,6 +545,7 @@ void Editor::AssetsBrowser::draw() {
           ? 0 : ctx.project->getScenes().getEntries().front().id;
         ctx.project->saveConfig();
       }
+
       if(!canDelete) {
         if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
           ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);

@@ -110,6 +110,24 @@ void Project::SceneManager::remove(int id) {
   }
 }
 
+void Project::SceneManager::duplicate(int id)
+{
+  auto scenesPath = getScenePath(project);
+  auto scenePath = fs::path{scenesPath} / std::to_string(id);
+
+  int newId = 1;
+  for (const auto &entry : entries) {
+    if (entry.id >= newId) {
+      newId = entry.id + 1;
+    }
+  }
+  auto newPath = fs::path{scenesPath} / std::to_string(newId);
+  printf("Duplicate-Scene: %s -> %s\n", scenePath.c_str(), newPath.c_str());
+  fs::copy(scenePath, newPath, fs::copy_options::recursive);
+
+  reload();
+}
+
 void Project::SceneManager::loadScene(int id) {
   if (loadedScene) {
     loadedScene->save();

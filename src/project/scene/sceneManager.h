@@ -42,6 +42,7 @@ namespace Project
 
       void add();
       void remove(int id);
+      void duplicate(int id);
 
       void loadScene(int id);
       [[nodiscard]] Scene* getLoadedScene() const { return loadedScene; }
