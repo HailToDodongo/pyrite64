@@ -20,42 +20,18 @@ P64::Object::~Object()
 
 void P64::Object::setEnabled(bool isEnabled)
 {
-  auto oldFlags = flags;
-  const bool wasEnabled = this->isEnabled();
-  if(isEnabled) {
-    flags |= ObjectFlags::SELF_ACTIVE;
+  if(isEnabled != this->isSelfEnabled()) {
+    flags |= ObjectFlags::PENDING_ACTIVE_CHG;
   } else {
-    flags &= ~ObjectFlags::SELF_ACTIVE;
+    flags &= ~ObjectFlags::PENDING_ACTIVE_CHG;
   }
-
-  if(oldFlags == flags)return;
-
-  const bool isEnabledNow = this->isEnabled();
-
-  if(wasEnabled != isEnabledNow) {
-    auto compRefs = getCompRefs();
-    for (uint32_t i=0; i<compCount; ++i) {
-      const auto &compDef = COMP_TABLE[compRefs[i].type];
-      if(compDef.onEvent)
-      {
-        char* dataPtr = (char*)this + compRefs[i].offset;
-        compDef.onEvent(*this, dataPtr, {
-          .senderId = 0,
-          .type = isEnabledNow ? EVENT_TYPE_ENABLE : EVENT_TYPE_DISABLE,
-          .value = 0
-        });
-      }
-    }
-  }
-
-  SceneManager::getCurrent().setGroupEnabled(id, isEnabledNow);
 }
 
 void P64::Object::remove(bool keepChildren)
 {
   if(flags & ObjectFlags::PENDING_REMOVE)return;
   flags |= ObjectFlags::PENDING_REMOVE;
-  flags &= ~ObjectFlags::ACTIVE;
+  flags &= ~(ObjectFlags::ACTIVE | ObjectFlags::PENDING_ACTIVE_CHG);
   SceneManager::getCurrent().removeObject(*this);
 
   if(!keepChildren)

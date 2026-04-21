@@ -21,7 +21,7 @@ namespace P64
    */
   class Object
   {
-    private:
+    friend class Scene;
 
     public:
       struct CompRef
@@ -201,6 +201,18 @@ namespace P64
        * @return point in world space
        */
       [[nodiscard]] fm_vec3_t outOfLocalSpace(const fm_vec3_t &p) const;
+
+    private:
+      inline bool performStateChange()
+      {
+        if((flags & P64::ObjectFlags::PENDING_ACTIVE_CHG))
+        {
+          flags &= ~P64::ObjectFlags::PENDING_ACTIVE_CHG;
+          flags ^= P64::ObjectFlags::SELF_ACTIVE;
+          return true;
+        }
+        return false;
+      }
   };
 
   struct ObjectRef

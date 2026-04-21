@@ -1,0 +1,17 @@
+{
+  "collLayer0": "Layer 0",
+  "collLayer1": "Layer 1",
+  "collLayer2": "Layer 2",
+  "collLayer3": "Layer 3",
+  "collLayer4": "Layer 4",
+  "collLayer5": "Layer 5",
+  "collLayer6": "Layer 6",
+  "collLayer7": "Layer 7",
+  "name": "test_obj_states",
+  "pathEmu": "ares",
+  "pathN64Inst": "",
+  "romName": "test_obj_states",
+  "sceneIdLastOpened": 4,
+  "sceneIdOnBoot": 1,
+  "sceneIdOnReset": 1
+}

@@ -134,6 +134,8 @@ namespace P64
       void runPendingEvents();
       void loadScene();
 
+      void updateChildObjectStates(const Object* parent, Object& obj);
+
     public:
       uint64_t ticksActorUpdate{0};
       uint64_t ticksGlobalUpdate{0};
@@ -235,8 +237,6 @@ namespace P64
           f(o);
         }
       }
-
-      void setGroupEnabled(uint16_t groupId, bool enabled) const;
 
       [[nodiscard]] Lighting& getLighting() { return lighting; }
 

@@ -159,8 +159,8 @@ P64::Object* P64::Scene::loadObject(uint8_t* &objFile, std::function<void(Object
     ptrIn += argSize;
 
     // send ready event. this is deferred, so it will always happen after 'initDel'
-    sendEvent(obj->id, 0, EVENT_TYPE_READY, 0);
   }
+  sendEvent(obj->id, 0, EVENT_TYPE_READY, 0);
 
   /*debugf("Object: id=%d | group=%d | flags=0x%04X | pos=(%f,%f,%f) | comp: %d\n",
     obj->id, obj->group, obj->flags,
@@ -205,19 +205,21 @@ void P64::Scene::loadScene() {
       loadObject(objFile, {}, true);
     }
 
-    // Resolve effective active state for the full hierarchy before deferred
-    // component init so disabled parents/groups do not register physics data.
-    std::function<void(uint16_t, bool)> applyHierarchyActiveState = [&](uint16_t parentId, bool parentsActive) {
-      for(auto obj : objects)
-      {
-        if(obj->group != parentId) continue;
-
-        obj->setFlag(ObjectFlags::PARENTS_ACTIVE, parentsActive);
-        applyHierarchyActiveState(obj->id, obj->isEnabled());
-      }
+    std::function<void(const Object* parent, Object& obj)> updateStates = [&](const Object* parent, Object& obj)
+    {
+      obj.setFlag(ObjectFlags::PARENTS_ACTIVE, parent ? parent->isEnabled() : true);
+      iterObjectChildren(obj.id, [&](Object* child) {
+        updateStates(&obj, *child);
+      });
     };
 
-    applyHierarchyActiveState(0, true);
+    // Resolve effective active state for the full hierarchy before deferred
+    // component init so disabled parents/groups do not register physics data.
+    for(auto obj : objects)
+    {
+      if(obj->group != 0)continue;
+      updateStates(nullptr, *obj);
+    }
 
     // run component init only after all objects are registered in the scene
     runPendingComponentInit();

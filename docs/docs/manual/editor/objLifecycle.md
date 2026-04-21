@@ -193,3 +193,15 @@ In other words, all objects spawn exactly the same no matter if the state was ch
 It's only at the start of the first frame (before any `update`) that the transition happens.
 
 This is equivalent the last 4 graphics, where `Frame 0` is replaced with the scene load.
+
+### Child-Objects
+
+Each object carries both its own state, and the combined one including its parents.\
+This means while you can toggle an object to be active,\
+it may not become active if its parent is disabled.\
+This has no implications on the previous cases,\
+since the combined state is considered for any checks.
+
+Events are also only emitted if the combined state changes.\
+So with a disabled parent, toggling a children state will do effectively nothing.\
+Conversely, if the parent gets enabled, all the children may now become active too and receive the enable event.
