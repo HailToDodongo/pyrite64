@@ -69,6 +69,11 @@ namespace Editor
         return meshSprites;
       }
 
+      /**
+       * Moves the focused object to the position of the 3D viewport camera and with the same rotation.
+       */
+      bool alignFocusedObjectToCamera();
+
       void draw();
   };
 }

@@ -150,6 +150,20 @@ namespace
       child->pos.resolve(child->propOverrides) = mat * glm::vec4(it->second, 1.0f);
     }
   }
+
+  /**
+   * Ensures a property has an override entry before writing to it on an object instance.
+   * @tparam T Value type stored by the property.
+   * @param obj Object whose override map will be updated.
+   * @param prop Property that may need an override entry.
+   */
+  template<typename T>
+  void ensurePropertyOverride(Project::Object *obj, Property<T> &prop)
+  {
+    if (obj->propOverrides.find(prop.id) == obj->propOverrides.end()) {
+      obj->addPropOverride(prop);
+    }
+  }
 }
 
 Editor::Viewport3D::Viewport3D()
@@ -191,6 +205,63 @@ Editor::Viewport3D::~Viewport3D() {
   if(--spritesRefCount == 0) {
     sprites = nullptr;
   }
+}
+
+bool Editor::Viewport3D::alignFocusedObjectToCamera()
+{
+  auto scene = ctx.project ? ctx.project->getScenes().getLoadedScene() : nullptr;
+  // No scene loaded or no object selected --> Abort
+  if (!scene || ctx.selObjectUUID == 0)return false;
+
+  auto obj = scene->getObjectByUUID(ctx.selObjectUUID);
+  // Cannot get selected object --> Abort
+  if (!obj)return false;
+
+  // Prefab instances store transform edits in overrides, so create them before writing position or rotation
+  if (obj->isPrefabInstance() && !obj->isPrefabEdit) {
+    ensurePropertyOverride(obj.get(), obj->pos);
+    ensurePropertyOverride(obj.get(), obj->rot);
+  }
+
+  // Read current transform to preserve child offsets after moving the parent to the editor camera
+  glm::vec3 skew{0.0f};
+  glm::vec4 persp{0.0f, 0.0f, 0.0f, 1.0f};
+  glm::vec3 objScale = obj->scale.resolve(obj->propOverrides);
+  glm::quat objRot = obj->rot.resolve(obj->propOverrides);
+  glm::vec3 objPos = obj->pos.resolve(obj->propOverrides);
+
+  // Rebuild current object matrix so child transforms can be converted into the old local space
+  auto oldObjMatrix = glm::recompose(objScale, objRot, objPos, skew, persp);
+
+  // Cache each child in the local space of the old transform so they can be rebuilt relative to the new one
+  std::unordered_map<uint64_t, glm::vec3> relPosMap{};
+  for (auto& child : obj->children)
+  {
+    relPosMap[child->uuid] = glm::inverse(oldObjMatrix) * glm::vec4(
+      child->pos.resolve(child->propOverrides), 1.0f
+    );
+  }
+
+  // Copy editor camera transform to focused object
+  obj->pos.resolve(obj->propOverrides) = camera.pos;
+  obj->rot.resolve(obj->propOverrides) = glm::normalize(camera.rot);
+
+  // Recompose new object matrix so child world positions can be updated consistently
+  auto newObjMatrix = glm::recompose(
+    obj->scale.resolve(obj->propOverrides),
+    obj->rot.resolve(obj->propOverrides),
+    obj->pos.resolve(obj->propOverrides),
+    skew,
+    persp
+  );
+
+  // Re-apply cached child offsets relative to new parent transform
+  applyDeltaToChildren(*obj, relPosMap, newObjMatrix);
+
+  // Add to history
+  UndoRedo::getHistory().markChanged("Align object to camera");
+  
+  return true;
 }
 
 void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::Scene& renderScene)
@@ -738,12 +809,6 @@ void Editor::Viewport3D::draw()
       )) {
         gizmoTransformActive = true;
 
-        auto ensureOverride = [](Project::Object *selObj, auto &prop) {
-          if (selObj->propOverrides.find(prop.id) == selObj->propOverrides.end()) {
-            selObj->addPropOverride(prop);
-          }
-        };
-
         if (!isMultiSelect) {
           if(!obj->uuidPrefab.value || isOverride)
           {
@@ -804,9 +869,9 @@ void Editor::Viewport3D::draw()
 
             for (auto *selObj : selectedObjects) {
               if (selObj->isPrefabInstance() && !selObj->isPrefabEdit) {
-                ensureOverride(selObj, selObj->pos);
-                ensureOverride(selObj, selObj->rot);
-                ensureOverride(selObj, selObj->scale);
+                ensurePropertyOverride(selObj, selObj->pos);
+                ensurePropertyOverride(selObj, selObj->rot);
+                ensurePropertyOverride(selObj, selObj->scale);
               }
 
               auto &objPos = selObj->pos.resolve(selObj->propOverrides);
@@ -842,9 +907,9 @@ void Editor::Viewport3D::draw()
           } else {
             for (auto *selObj : selectedObjects) {
               if (selObj->isPrefabInstance() && !selObj->isPrefabEdit) {
-                ensureOverride(selObj, selObj->pos);
-                ensureOverride(selObj, selObj->rot);
-                ensureOverride(selObj, selObj->scale);
+                ensurePropertyOverride(selObj, selObj->pos);
+                ensurePropertyOverride(selObj, selObj->rot);
+                ensurePropertyOverride(selObj, selObj->scale);
               }
 
               std::unordered_map<uint64_t, glm::vec3> relPosMap{};

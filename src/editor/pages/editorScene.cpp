@@ -459,6 +459,7 @@ void Editor::Scene::draw()
   // Global keyboard shortcuts
   if (!ImGui::GetIO().WantTextInput) {
     bool isCtrl = ImGui::GetIO().KeyCtrl;
+    bool isShift = ImGui::GetIO().KeyShift;
     
     // Undo: Ctrl+Z
     if (isCtrl && ImGui::IsKeyPressed(ImGuiKey_Z)) {
@@ -468,6 +469,11 @@ void Editor::Scene::draw()
     // Redo: Ctrl+Y
     if (isCtrl && ImGui::IsKeyPressed(ImGuiKey_Y)) {
       UndoRedo::getHistory().redo();
+    }
+
+    // Align focused object to the editor camera: Ctrl+Shift+F
+    if (isCtrl && isShift && ImGui::IsKeyPressed(ImGuiKey_F)) {
+      viewport3d.alignFocusedObjectToCamera();
     }
 
     // Preferences
