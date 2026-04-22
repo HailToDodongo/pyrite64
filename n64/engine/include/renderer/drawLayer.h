@@ -29,8 +29,8 @@ namespace P64::DrawLayer
     float fogMin{};
     float fogMax{};
     FogMode fogMode{};
+    uint8_t lightMode{};
 
-    uint8_t padding0{};
     uint8_t padding1{};
     uint8_t padding2{};
 

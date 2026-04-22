@@ -217,6 +217,10 @@ namespace Project::Component::Model
       auto &layer = layers[layerIdx];
       data.obj3D.uniform.mat.blender.x = layer.blender.resolve(obj);
       data.obj3D.uniform.mat.blender.y = data.obj3D.uniform.mat.blender.x;
+      data.obj3D.uniform.mat.flags &= ~LIGHT_MODE_ADD;
+      if(layer.lightMode.value != 0) {
+        data.obj3D.uniform.mat.flags |= LIGHT_MODE_ADD;
+      }
     }
 
     if (!asset || !asset->mesh3D) {

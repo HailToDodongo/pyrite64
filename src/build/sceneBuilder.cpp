@@ -180,8 +180,7 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
     ctx.fileScene.write<float>(layer.fogMin.value);
     ctx.fileScene.write<float>(layer.fogMax.value);
     ctx.fileScene.write<uint8_t>(fogMode);
-
-    ctx.fileScene.write<uint8_t>(0); // padding
+    ctx.fileScene.write<uint8_t>(layer.lightMode.value);
     ctx.fileScene.write<uint8_t>(0); // padding
     ctx.fileScene.write<uint8_t>(0); // padding
   };

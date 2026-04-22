@@ -24,6 +24,7 @@ namespace Renderer
     glm::vec4 color{};
     glm::vec4 pos{};
     glm::vec3 dir{};
+    float size{};
     int type{};
   };
 

@@ -15,8 +15,8 @@ struct UBO_Material {
 
   ivec4 modes; // vertexFX, other-low, other-high, flags
 
-  vec4 lightColor[2];
-  vec4 lightDir[2]; // [0].w is alpha clip
+  vec4 lightColor[6];
+  vec4 lightDir[6]; // [0].w is alpha clip
   vec4 colPrim;
   vec4 colEnv;
   vec4 ambientColor;
@@ -27,6 +27,7 @@ struct UBO_Material {
   vec2 k_45;
 
   ivec2 blender;
+  float alphaClip;
 
   uint objectID;
 };

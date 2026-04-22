@@ -56,6 +56,7 @@ nlohmann::json Project::SceneConf::serialize() const {
     b.set(layer.fogColor);
     b.set(layer.fogMin);
     b.set(layer.fogMax);
+    b.set(layer.lightMode);
   };
 
   Utils::JSON::Builder builder{};
@@ -343,7 +344,7 @@ void Project::Scene::deserialize(const std::string &data)
       Utils::JSON::readProp(dom, layer.fogColor);
       Utils::JSON::readProp(dom, layer.fogMin, 0.0f);
       Utils::JSON::readProp(dom, layer.fogMax, 0.0f);
-
+      Utils::JSON::readProp(dom, layer.lightMode, 0);
 
       return layer;
     };

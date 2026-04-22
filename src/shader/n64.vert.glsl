@@ -69,6 +69,7 @@ void main()
   vec3 normWorld = matNormLight * norm;
   vec3 normScreen = matNormScreen * norm;
 
+  vec4 posWorld = material.modelMat * vec4(vec3(inPosition), 1.0);
   gl_Position = matMVP * vec4(vec3(inPosition), 1.0);
   posScreen = gl_Position.xy / gl_Position.w;
 
@@ -76,9 +77,24 @@ void main()
 
   //vec4 lightTotal = vec4(linearToGamma(material.ambientColor.rgb), 0.0);
   vec4 lightTotal = material.ambientColor;
-  for(int i=0; i<2; ++i) {
-    float lightStren = max(dot(normWorld, material.lightDir[i].xyz), 0.0);
-    //vec4 colorNorm = vec4(linearToGamma(material.lightColor[i].rgb), 1.0);
+  for(int i=0; i<6; ++i) {
+    float pointLightSize = material.lightDir[i].w;
+    float lightStren = 0;
+
+    if(pointLightSize > 0.0) {
+      vec3 ptPos = material.lightDir[i].xyz;
+      vec3 toLight = ptPos - posWorld.xyz;
+      float dist = length(toLight);
+      toLight /= dist;
+
+      lightStren = (pointLightSize / dist) * 0.5;
+      lightStren *= lightStren;
+      lightStren = clamp(lightStren, 0.0, 1.0);
+      lightStren *= max(dot(normWorld, toLight), 0.0);
+    } else {
+      lightStren = max(dot(normWorld, material.lightDir[i].xyz), 0.0);
+    }
+
     vec4 colorNorm = material.lightColor[i];
     lightTotal += colorNorm * lightStren;
   }
@@ -86,10 +102,13 @@ void main()
   lightTotal = clamp(lightTotal, 0.0, 1.0);
 //  lightTotal.a = 1.0;
 
-  vec4 shadeWithLight = cc_shade * lightTotal;
+  vec4 addLight = clamp(cc_shade + lightTotal, 0.0, 1.0);
+  vec4 mulLight = cc_shade * lightTotal;
+
+  vec4 shadeWithLight = flagSelect(LIGHT_MODE_ADD, mulLight, addLight);
 
   cc_shade = flagSelect(T3D_FLAG_NO_LIGHT, shadeWithLight, cc_shade);
-  //cc_shade.rgb = shadeWithLight;
+  //cc_shade.rgb = lightTotal.rgb;
 
   cc_shade = clamp(cc_shade, 0.0, 1.0);
   // cc_shade.rgb = norm * 0.5 + 0.5; // TEST

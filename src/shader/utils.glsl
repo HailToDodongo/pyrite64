@@ -91,4 +91,4 @@ mat3 quantizeMat3(mat3 inMat)
 #define OTHER_MODE_L material.modes.y
 #define OTHER_MODE_H material.modes.z
 #define DRAW_FLAGS   material.modes.w
-#define ALPHA_CLIP   material.lightDir[0].w
+#define ALPHA_CLIP   material.alphaClip

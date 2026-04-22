@@ -23,6 +23,7 @@ namespace Project
     PROP_VEC4(fogColor);
     PROP_FLOAT(fogMin);
     PROP_FLOAT(fogMax);
+    PROP_S32(lightMode);
   };
 
   struct SceneConf

@@ -88,6 +88,8 @@ void Renderer::N64Mesh::draw(
 ) {
   if (!scene)return;
 
+  uint32_t flagsGlobal = uniforms.mat.flags & LIGHT_MODE_ADD;
+
   auto drawPart = [&](MeshPart &part)
   {
     uint32_t blender = uniforms.mat.blender.x;
@@ -147,24 +149,32 @@ void Renderer::N64Mesh::draw(
     uniforms.mat.colPrim = lastPrim;
     uniforms.mat.colEnv = lastEnv;
     uniforms.mat.blender.x = blender;
+    uniforms.mat.flags |= flagsGlobal;
 
     // @TODO: move out
-    float clip = uniforms.mat.lightDir[0].w;
+
+    uint32_t MAX_LIGHTS = uniforms.mat.lightColor.size();
+
     const auto &lights = scene->getLights();
     int lightIdx = 0;
     for (auto &light : lights) {
       if (light.type == 0) {
         uniforms.mat.ambientColor = light.color;
       } else {
-        if (lightIdx < 2)
+        if (lightIdx < MAX_LIGHTS)
         {
-          uniforms.mat.lightDir[lightIdx] = glm::vec4(light.dir, 0.0f);
+          if(light.type == 2) {// point light
+            uniforms.mat.lightDir[lightIdx] = light.pos;
+            uniforms.mat.lightDir[lightIdx].w = light.size;
+          } else {
+            uniforms.mat.lightDir[lightIdx] = glm::vec4(light.dir, 0);
+          }
+
           uniforms.mat.lightColor[lightIdx] = light.color;
           ++lightIdx;
         }
       }
     }
-    uniforms.mat.lightDir[0].w = clip;
 
     if(ref.isCollision) {
       uniforms.mat.flags |= DRAW_SHADER_COLLISION;

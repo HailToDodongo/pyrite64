@@ -24,6 +24,7 @@ namespace
   constinit P64::DrawLayer::Setup *layerSetup{};
   constinit uint8_t frameIdx{0};
   constinit uint8_t currLayerIdx{0};
+  constinit uint8_t lastLightMode{T3D_LIGHTING_MODE_MUL};
 }
 
 void P64::DrawLayer::init(Setup &setup)
@@ -76,6 +77,11 @@ void P64::DrawLayer::draw(uint32_t layerIdx)
     rdpq_mode_fog((setup.fogMode != Conf::FogMode::NONE) ? RDPQ_FOG_STANDARD : 0);
   rdpq_mode_end();
 
+  if(setup.lightMode != lastLightMode) {
+    t3d_state_set_lighting_mode((T3DLightingMode)setup.lightMode);
+    lastLightMode = setup.lightMode;
+  }
+
   if(setup.fogMode != Conf::FogMode::NONE)
   {
     t3d_fog_set_enabled(true);
@@ -89,7 +95,6 @@ void P64::DrawLayer::draw(uint32_t layerIdx)
   } else {
     t3d_fog_set_enabled(false);
   }
-
 
   if(layerIdx == 0)return;
   assertf(layerIdx-1 < layers.size(), "Invalid layer index %lu", layerIdx);

@@ -91,6 +91,7 @@
 #define T3D_VERTEX_FX_UV_OFFSET      5
 
 #define DRAW_SHADER_COLLISION  (1 << 8)
+#define LIGHT_MODE_ADD         (1 << 9)
 
 /*
 struct TileConf {
