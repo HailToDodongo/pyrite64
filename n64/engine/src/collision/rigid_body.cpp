@@ -443,11 +443,11 @@ namespace P64::Coll {
 
   void RigidBody::applyForceAtPoint(const fm_vec3_t &force, const fm_vec3_t &worldPoint) {
     if(isKinematic_) return;
-    applyLinearImpulse(force);
+    accelerate(force * inverseMass_);
     fm_vec3_t r = worldPoint - worldCenterOfMass_;
     fm_vec3_t torque;
     fm_vec3_cross(&torque, &r, &force);
-    applyAngularImpulse(torque);
+    applyTorque(torque);
   }
 
   void RigidBody::updateWorldInertia() {
