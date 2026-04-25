@@ -69,6 +69,7 @@ void Utils::Toolchain::scan()
   if(state.hasLibdragon && state.hasTiny3d)
   {
     auto rspqHeader = FS::loadTextFile(state.toolchainPath / "mips64-elf" / "include" / "rspq.h");
+    auto t3dHeader = FS::loadTextFile(state.toolchainPath / "mips64-elf" / "include" / "t3d" / "t3d.h");
 
     state.upToDateLibs = true;
     if(!rspqHeader.contains("rspq_block_begin_reuse")) {
@@ -77,6 +78,10 @@ void Utils::Toolchain::scan()
     }
     if(!rspqHeader.contains("rspq_block_set_placeholder")) {
       printf("Libdragon out of date, missing 'rspq_block_set_placeholder' in rspq.h\n");
+      state.upToDateLibs = false;
+    }
+    if(!t3dHeader.contains("t3d_state_set_lighting_mode")) {
+      printf("tiny3d out of date, missing 't3d_state_set_lighting_mode' in t3d.h\n");
       state.upToDateLibs = false;
     }
   }
