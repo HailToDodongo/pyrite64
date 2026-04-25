@@ -7,13 +7,13 @@
       0.0,
       1.0
     ],
-    "doClearColor": false,
-    "doClearDepth": false,
+    "doClearColor": true,
+    "doClearDepth": true,
     "fbFormat": 0,
     "fbHeight": 240,
     "fbWidth": 320,
-    "filter": 1,
-    "frameLimit": 1,
+    "filter": 4,
+    "frameLimit": 0,
     "gravity": [
       0.0,
       -9.8100004196167,
@@ -54,13 +54,13 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
-        "lightMode": 0,
-        "name": "3D Opaque"
+        "lightMode": 1,
+        "name": "3D Baked Light"
       },
       {
-        "blender": 5242944,
+        "blender": 0,
         "depthCompare": true,
-        "depthWrite": false,
+        "depthWrite": true,
         "fog": false,
         "fogColor": [
           0.0,
@@ -72,7 +72,7 @@
         "fogMax": 0.0,
         "fogMin": 0.0,
         "lightMode": 0,
-        "name": "3D Transp."
+        "name": "3D  Opaque"
       }
     ],
     "layersPtx": [
@@ -94,11 +94,11 @@
         "name": "PTX Opaque"
       }
     ],
-    "name": "Menu",
+    "name": "Light+AO Glossy",
     "physicsScale": 16.0,
     "physicsTickRate": 50,
     "positionSolverIterations": 6,
-    "renderPipeline": 2,
+    "renderPipeline": 0,
     "velocitySolverIterations": 7
   },
   "graph": {
@@ -109,10 +109,10 @@
           {
             "data": {
               "aspect": 0.0,
-              "far": 1000.0,
-              "fov": 75.0,
+              "far": 800.0,
+              "fov": 65.0,
               "mode": 0,
-              "near": 10.0,
+              "near": 50.0,
               "vpOffset": [
                 0,
                 0
@@ -124,15 +124,53 @@
             },
             "id": 3,
             "name": "Camera",
-            "uuid": 16427684098203612843
+            "uuid": 591397515709753079
           },
           {
             "data": {
+              "args": {},
+              "script": 14162608406159107062
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 16549120563115437213
+          }
+        ],
+        "enabled": true,
+        "id": 1,
+        "name": "Camera",
+        "pos": [
+          0.0,
+          363.2380065917969,
+          420.00921630859375
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          -0.17464156448841095,
+          0.0,
+          0.0,
+          0.9846320748329163
+        ],
+        "scale": [
+          0.9999967217445374,
+          0.9999939799308777,
+          0.9999803304672241
+        ],
+        "selectable": true,
+        "uuid": 2593312191,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
               "color": [
-                1.0,
-                1.0,
-                1.0,
-                1.0
+                0.0,
+                0.0,
+                0.0,
+                0.0
               ],
               "index": 0,
               "size": 50.0,
@@ -140,48 +178,16 @@
             },
             "id": 2,
             "name": "Light",
-            "uuid": 9788230890520147479
-          },
-          {
-            "data": {
-              "audioUUID": 12762515812550342741,
-              "autoPlay": true,
-              "loop": true,
-              "volume": 0.6000000238418579
-            },
-            "id": 6,
-            "name": "Audio (2D)",
-            "uuid": 5073560434412074309
-          },
-          {
-            "data": {
-              "args": {
-                "texTitle": "2964391784926037551"
-              },
-              "script": 13892553063188281069
-            },
-            "id": 0,
-            "name": "Code",
-            "uuid": 7449883661690250439
-          },
-          {
-            "data": {
-              "asset": 632490924792972403,
-              "autoRun": false,
-              "repeatable": true
-            },
-            "id": 9,
-            "name": "Node Graph",
-            "uuid": 4032697254049382714
+            "uuid": 17810945128247966012
           }
         ],
         "enabled": true,
-        "id": 1,
-        "name": "Cam",
+        "id": 3,
+        "name": "Ambient Light",
         "pos": [
-          10.0,
-          10.0,
-          310.0
+          -0.0,
+          380.0,
+          250.0
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -197,7 +203,7 @@
           1.0
         ],
         "selectable": true,
-        "uuid": 2825094749,
+        "uuid": 2808468358,
         "uuidPrefab": 0
       },
       {
@@ -210,169 +216,46 @@
               "material": {
                 "depth": 0,
                 "env": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
                 ],
                 "fresnel": 0,
                 "fresnelColor": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
                 ],
-                "lighting": true,
+                "lighting": false,
                 "prim": [
                   1.0,
                   1.0,
                   1.0,
-                  1.0
-                ],
-                "setDepth": true,
-                "setEnv": false,
-                "setFresnel": false,
-                "setLighting": false,
-                "setPrim": false
-              },
-              "meshFilter": "",
-              "model": 3490146552000525650
-            },
-            "id": 1,
-            "name": "Model",
-            "uuid": 7977984767214092972
-          },
-          {
-            "data": {
-              "objectUUID": 2825094749,
-              "type": 2,
-              "usePos": true,
-              "useRot": false,
-              "useScale": false
-            },
-            "id": 7,
-            "name": "Constraint",
-            "uuid": 17193749350125483216
-          },
-          {
-            "data": {
-              "args": {
-                "axisX": "0",
-                "axisY": "1",
-                "axisZ": "0",
-                "radius": "",
-                "speed": "0.1",
-                "type": "1"
-              },
-              "script": 14292327376580313433
-            },
-            "id": 0,
-            "name": "Code",
-            "uuid": 16452073701336549970
-          }
-        ],
-        "enabled": true,
-        "id": 2,
-        "name": "Skybox",
-        "pos": [
-          -110.0,
-          0.0,
-          -540.0
-        ],
-        "propOverrides": {},
-        "proportionalScale": false,
-        "rot": [
-          -0.4877363443374634,
-          -0.5450246930122375,
-          0.6223080158233643,
-          -0.27891606092453003
-        ],
-        "scale": [
-          2.0,
-          2.0322649478912354,
-          2.0000007152557373
-        ],
-        "selectable": true,
-        "uuid": 1803225908,
-        "uuidPrefab": 0
-      },
-      {
-        "children": [],
-        "components": [
-          {
-            "data": {
-              "culling": false,
-              "layerIdx": 0,
-              "material": {
-                "depth": 0,
-                "env": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "fresnel": 0,
-                "fresnelColor": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "lighting": true,
-                "prim": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
+                  0.3490196168422699
                 ],
                 "setDepth": false,
                 "setEnv": false,
                 "setFresnel": false,
                 "setLighting": false,
-                "setPrim": false
+                "setPrim": true
               },
               "meshFilter": "",
-              "model": 6985508143550202785
+              "model": 5571486329968408081
             },
             "id": 1,
-            "name": "Model",
-            "uuid": 6458194440525757285
-          },
-          {
-            "data": {
-              "halfExtend": [
-                160.0,
-                160.0,
-                160.0
-              ],
-              "offset": [
-                0.0,
-                0.0,
-                0.0
-              ],
-              "type": 1
-            },
-            "id": 8,
-            "name": "Culling",
-            "uuid": 6993190722672049404
-          },
-          {
-            "data": {
-              "args": {},
-              "script": 14119746617858063621
-            },
-            "id": 0,
-            "name": "Code",
-            "uuid": 8319212738518817560
+            "name": "Model (Static)",
+            "uuid": 6779675580221722013
           }
         ],
         "enabled": true,
-        "id": 3,
-        "name": "Head",
+        "id": 2,
+        "name": "Model",
         "pos": [
-          0.0,
-          -35.95965576171875,
-          -2433.409423828125
+          122.05777740478516,
+          -91.54431915283203,
+          -2.396625518798828
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -383,12 +266,105 @@
           1.0
         ],
         "scale": [
-          1.1844000816345215,
-          1.1844000816345215,
-          1.1844000816345215
+          1.0,
+          1.0,
+          1.0
         ],
         "selectable": true,
-        "uuid": 2325492290,
+        "uuid": 4006332953,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "color": [
+                0.8290033936500549,
+                0.9843137264251709,
+                0.10422144830226898,
+                0.0
+              ],
+              "index": 0,
+              "size": 500.0,
+              "type": 2
+            },
+            "id": 2,
+            "name": "Light",
+            "uuid": 4897907279583773594
+          },
+          {
+            "data": {
+              "args": {},
+              "script": 14900018265967802195
+            },
+            "id": 0,
+            "name": "Code",
+            "uuid": 15373841209691404796
+          },
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  0.7585849165916443,
+                  1.0,
+                  0.06451612710952759,
+                  0.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": true
+              },
+              "meshFilter": "",
+              "model": 5641860867990737482
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 2196556218757424071
+          }
+        ],
+        "enabled": true,
+        "id": 5,
+        "name": "Light",
+        "pos": [
+          -90.0,
+          200.0,
+          0.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.6422954201698303,
+          -0.14408139884471893,
+          0.6425555348396301,
+          0.3921983540058136
+        ],
+        "scale": [
+          0.9999968409538269,
+          0.9999999403953552,
+          0.999999463558197
+        ],
+        "selectable": true,
+        "uuid": 3600547349,
         "uuidPrefab": 0
       }
     ],

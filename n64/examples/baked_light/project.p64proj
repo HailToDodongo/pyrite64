@@ -7,11 +7,11 @@
   "collLayer5": "Layer 5",
   "collLayer6": "Layer 6",
   "collLayer7": "Layer 7",
-  "name": "material_test",
+  "name": "baked_light",
   "pathEmu": "ares",
   "pathN64Inst": "",
-  "romName": "material_test",
+  "romName": "baked_light",
   "sceneIdLastOpened": 2,
-  "sceneIdOnBoot": 2,
-  "sceneIdOnReset": 2
+  "sceneIdOnBoot": 1,
+  "sceneIdOnReset": 1
 }
