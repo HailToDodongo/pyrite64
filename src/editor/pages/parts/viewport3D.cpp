@@ -472,9 +472,20 @@ void Editor::Viewport3D::draw()
 
   // mouse pos
   ImVec2 screenPos = ImGui::GetCursorScreenPos();
-  mousePos = {ImGui::GetMousePos().x, ImGui::GetMousePos().y};
-  mousePos.x -= screenPos.x;
-  mousePos.y -= vpOffsetY;
+  if (cameraDragActive) {
+    float dx = 0, dy = 0;
+    SDL_GetRelativeMouseState(&dx, &dy);
+    mousePos.x += dx;
+    mousePos.y += dy;
+    // Pin ImGui's cursor to the press position so other widgets don't see it move
+    // and the SDL3 backend warps the OS cursor back here for us.
+    io.WantSetMousePos = true;
+    io.MousePos = ImVec2(cursorLockPos.x, cursorLockPos.y);
+  } else {
+    mousePos = {ImGui::GetMousePos().x, ImGui::GetMousePos().y};
+    mousePos.x -= screenPos.x;
+    mousePos.y -= vpOffsetY;
+  }
 
   if (!ctx.prefs.mouseWheelModifiesSpeed) moveSpeedModifier = 1.0f;
   float moveSpeed = (ctx.prefs.moveSpeed * moveSpeedModifier) * deltaTime;
@@ -554,7 +565,7 @@ void Editor::Viewport3D::draw()
   if(isMouseHover)
   {
     ImGui::SetMouseCursor(
-      mouseHeldRight ? ImGuiMouseCursor_None : ImGuiMouseCursor_Arrow
+      cameraDragActive ? ImGuiMouseCursor_None : ImGuiMouseCursor_Arrow
     );
   }
 
@@ -636,6 +647,15 @@ void Editor::Viewport3D::draw()
 
     if(!isMouseDown && newMouseDown) {
       mousePosStart = mousePos;
+      bool wantCapture = (isAltDown && mouseHeldLeft) || mouseHeldMiddle || mouseHeldRight;
+      if (wantCapture && !cameraDragActive) {
+        ImVec2 absPos = ImGui::GetMousePos();
+        cursorLockPos = {absPos.x, absPos.y};
+        // Drain SDL's accumulated relative motion so the first per-frame read
+        // doesn't include any cursor movement from before the drag started.
+        SDL_GetRelativeMouseState(nullptr, nullptr);
+        cameraDragActive = true;
+      }
     }
     isMouseDown = newMouseDown;
   }
@@ -710,6 +730,7 @@ void Editor::Viewport3D::draw()
   } else {
     camera.stopRotateDelta();
     camera.stopMoveDelta();
+    cameraDragActive = false;
     mousePosStart = mousePos = {0,0};
   }
   if (!newMouseDown)isMouseDown = false;
