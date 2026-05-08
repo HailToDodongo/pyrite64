@@ -200,7 +200,7 @@ namespace
   )
   {
     ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow
-      | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DrawLinesFull
+      | ImGuiTreeNodeFlags_OpenOnDoubleClick
       | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_SpanAllColumns;
 
     if (obj.children.empty()) {
@@ -222,6 +222,22 @@ namespace
     std::string nameID{};
     if(obj.uuidPrefab.value) {
       nameID += ICON_MDI_PACKAGE_VARIANT_CLOSED " ";
+    }
+    bool gotComponentIcon = false;
+    if (!obj.components.empty()) {
+      const auto &compEntry = obj.components.front();
+      if (compEntry.id >= 0 && (size_t)compEntry.id < Project::Component::TABLE.size()) {
+        const auto &def = Project::Component::TABLE[compEntry.id];
+        if (def.icon) {
+          nameID += def.icon;
+          gotComponentIcon = true;
+        }
+      }
+    }
+    if (!gotComponentIcon) {
+      nameID += (obj.parent == nullptr)
+        ? ICON_MDI_MOVIE_OPEN_OUTLINE " "
+        : ICON_MDI_CUBE_OUTLINE " ";
     }
     nameID += obj.name + "##" + std::to_string(obj.uuid);
 
