@@ -382,7 +382,7 @@ void Editor::Launcher::showProjectContextMenu(const std::string& path) {
     SDL_SetClipboardText(path.c_str());
   }
   
-  if(ImGui::MenuItem(ICON_MDI_DELETE " Remove from List")) {
+  if(ImGui::MenuItem(ICON_MDI_CLOSE_CIRCLE " Remove from List")) {
     Editor::RecentProjects::removePath(path);
     updateProjectEntries();
   }
