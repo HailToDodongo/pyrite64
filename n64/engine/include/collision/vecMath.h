@@ -9,8 +9,8 @@
 #include <t3d/t3dmath.h>
 #include "lib/math.h"
 
-using namespace P64::Math;
 namespace P64::Coll {
+  using namespace P64::Math;
 
   // ----- Additional vector utilities -----
 
