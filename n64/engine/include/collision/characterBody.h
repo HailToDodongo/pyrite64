@@ -26,7 +26,6 @@ namespace P64::Coll
       float maxFallSpeed{55.0f};       // Terminal speed along -up
       float floorMaxAngle{45.0_deg};   // Max walkable slope (radians from up)
       float floorSnapDistance{0.25f};  // Snap reach when leaving the floor
-      float skinWidth{0.02f};          // Distance kept off surfaces to avoid jitter
       float radius{0.5f};              // Capsule radius in meters.
       /// Capsule total height in meters (including both hemispherical caps).
       /// Must be >= 2 * radius, values below that clamp to a sphere.

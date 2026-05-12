@@ -95,7 +95,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
     const float reach = extentAlong(dir);
 
     Raycast ray = Raycast::create(
-      capsuleCenter(), dir, dispLen + reach + settings.skinWidth,
+      capsuleCenter(), dir, dispLen + reach,
       settings.collTypes, false, settings.readMask
     );
     RaycastHit hit;
@@ -106,7 +106,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
       break;
     }
 
-    float allowed = fmaxf(hit.distance - reach - settings.skinWidth, 0.0f);
+    float allowed = fmaxf(hit.distance - reach, 0.0f);
     owner->pos = owner->pos + dir * (allowed * gfxScale);
 
     fm_vec3_t normal = vec3NormalizeOrFallback(hit.normal, up);
@@ -161,7 +161,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
     // using the full radius low in the hemisphere would false-stop on geometry the capsule never actually touches.
     const float halfHeight = fmaxf(settings.height * 0.5f, settings.radius);
     const float r = settings.radius;
-    const float lowerH = settings.floorSnapDistance + settings.skinWidth;
+    const float lowerH = settings.floorSnapDistance;
     const float lowerExtent = (lowerH >= r)
       ? r
       : sqrtf(fmaxf(r*r - (r - lowerH)*(r - lowerH), 0.0f));
@@ -174,7 +174,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
 
     for(const Probe& probe : probes)
     {
-      const float castLen = probe.reach + settings.skinWidth;
+      const float castLen = probe.reach;
       for(int i = 0; i < 4; ++i)
       {
         const fm_vec3_t& dir = cardinalDirs[i];
@@ -211,7 +211,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
   }
   {
     const float halfHeight = fmaxf(settings.height * 0.5f, settings.radius);
-    const float maxSnap = settings.floorSnapDistance + settings.skinWidth;
+    const float maxSnap = settings.floorSnapDistance;
     const float effectiveReach = halfHeight;
     const fm_vec3_t origin = capsuleCenter();
     const float probeDist = effectiveReach + maxSnap;
@@ -231,10 +231,10 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
       bool inSnapRange = clearance <= maxSnap && clearance >= -maxSnap;
 
       float effectiveClearance = clearance;
-      if(inSnapRange && supportSurface && clearance < -settings.skinWidth) {
-        const float lift = -clearance + settings.skinWidth;
+      if(inSnapRange && supportSurface && clearance < -0) {
+        const float lift = -clearance;
         owner->pos = owner->pos + up * (lift * gfxScale);
-        effectiveClearance = settings.skinWidth;
+        effectiveClearance = 0;
         const float velUp = fm_vec3_dot(&velocity, &up);
         if(velUp < 0.0f) velocity = velocity - up * velUp;
       }
@@ -244,11 +244,10 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
 
         const bool stick = wasOnFloor && velUp <= 0.0f;
         const bool landed = !wasOnFloor && velUp <= 0.0f &&
-                            effectiveClearance <= settings.skinWidth * 1.5f &&
-                            effectiveClearance >= -settings.skinWidth;
+                            effectiveClearance == 0;
 
         if(stick) {
-          const float delta = effectiveClearance - settings.skinWidth;
+          const float delta = effectiveClearance;
           if(fabsf(delta) > 1e-5f) {
             owner->pos = owner->pos - up * (delta * gfxScale);
           }
