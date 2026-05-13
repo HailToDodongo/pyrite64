@@ -3,6 +3,7 @@
 * @license MIT
 */
 #include "collision/characterBody.h"
+#include "collision/capsuleSweep.h"
 #include "collision/gfxScale.h"
 #include "scene/object.h"
 
@@ -27,9 +28,6 @@ fm_vec3_t CharacterBody::capsuleCenter() const
 
 float CharacterBody::extentAlong(const fm_vec3_t& dir) const
 {
-  // Capsule = cylinder of length L along `up` capped with hemispheres of
-  // radius r. The segment endpoints sit at center +/- (halfHeight - r) * up.
-  // Support along a unit `dir`: abs(dir dot up) * (halfHeight - r) + r.
   const fm_vec3_t up = vec3NormalizeOrFallback(settings.up, VEC3_UP);
   const float r = settings.radius;
   const float halfHeight = fmaxf(settings.height * 0.5f, r);
@@ -47,17 +45,15 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
   onSteepSurface = 0;
   snappedFloor = 0;
 
-  // Build the per-frame velocity.
-  // Persistent state is only the gravity accumulator (along `up`) plus the
-  // latest input (orthogonal to `up`). Slope-following is realized by
-  // reshaping this frame's displacement, never by writing to velocity_,
-  // so leaving the ground doesn't carry slope-induced +up into the next
-  // frame.
+  // Capsule geometry in physics units
+  const float r   = settings.radius;
+  const float hh  = fmaxf(settings.height * 0.5f, r); // total half-height
+  const float ih  = hh - r;                            // inner (cylindrical) half-height
+
+  // Build per-frame velocity (same logic as before)
   auto horiz = inputVelocity - up * fm_vec3_dot(&inputVelocity, &up);
   float vAlongUp = fm_vec3_dot(&velocity, &up);
   if(wasOnFloor && !wasOnSteepSurface) {
-    // Drop accumulated downward (gravity) drift while planted on walkable
-    // floor, but keep any upward impulse the caller supplied via setVelocity.
     vAlongUp = fmaxf(vAlongUp, 0.0f);
   } else {
     vAlongUp -= settings.gravity * deltaTime;
@@ -65,11 +61,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
   if(vAlongUp < -settings.maxFallSpeed) vAlongUp = -settings.maxFallSpeed;
   velocity = horiz + up * vAlongUp;
 
-  // This frame's displacement vector. When grounded on a walkable floor we
-  // redirect horizontal input along the floor plane (slope following) and add
-  // back any up-axis component from velocity_, so a jump impulse on the same
-  // frame as walking still launches. Steep floors intentionally skip this so
-  // stale walkable floor normals don't pin movement to the wrong plane.
+  // Reshape displacement for slope-following when grounded
   fm_vec3_t stepVel = velocity;
   if(wasOnFloor && !wasOnSteepSurface) {
     fm_vec3_t along = horiz - vec3Project(horiz, contactNormal);
@@ -81,128 +73,100 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
     stepVel = along + up * vAlongUp;
   }
 
-  // Swept slide loop.
+  // Swept slide loop:
   bool sweptWalkableFloor = false;
   fm_vec3_t sweptFloorNormal = up;
   fm_vec3_t displacement = stepVel * deltaTime;
+
   for(uint8_t iter = 0; iter < settings.maxSlides; ++iter) {
     float dispLen2 = fm_vec3_len2(&displacement);
     if(dispLen2 < FM_EPSILON * FM_EPSILON) break;
 
-    float dispLen = sqrtf(dispLen2);
-    fm_vec3_t dir = displacement / dispLen;
-    // Capsule support along the sweep direction so the long axis can't tunnel.
-    const float reach = extentAlong(dir);
-
-    Raycast ray = Raycast::create(
-      capsuleCenter(), dir, dispLen + reach,
-      settings.collTypes, false, settings.readMask
+    CapsuleSweepHit hit;
+    bool didHit = scene.capsuleSweep(
+      capsuleCenter(), up, r, ih,
+      displacement,
+      settings.collTypes, settings.readMask,
+      hit
     );
-    RaycastHit hit;
-    bool didHit = scene.raycast(ray, hit) && hit.didHit;
 
-    if(!didHit || hit.distance >= dispLen + reach) {
+    if(!didHit) {
       owner->pos = owner->pos + displacement * gfxScale;
       break;
     }
 
-    float allowed = fmaxf(hit.distance - reach, 0.0f);
-    owner->pos = owner->pos + dir * (allowed * gfxScale);
+    float dispLen = sqrtf(dispLen2);
+
+    // If the capsule is already overlapping at t==0, push out first, then re-try the full step.
+    if(hit.t <= 0.0f) {
+      constexpr float MAX_DEPEN = 0.05f; // metres per iteration
+      float pushOut = fminf(hit.depth + FM_EPSILON, MAX_DEPEN);
+      owner->pos = owner->pos + hit.normal * (pushOut * gfxScale);
+      // don't consume displacement, next iteration handles it.
+      continue;
+    }
+
+    // Advance to the contact point
+    float allowed = hit.t * dispLen;
+    owner->pos = owner->pos + displacement / dispLen * (allowed * gfxScale);
 
     fm_vec3_t normal = vec3NormalizeOrFallback(hit.normal, up);
-    fm_vec3_t remaining = dir * (dispLen - allowed);
+    fm_vec3_t remaining = displacement / dispLen * (dispLen - allowed);
     fm_vec3_t slide = remaining - vec3Project(remaining, normal);
 
-    // When grounded, don't let a wall / steep-slope reprojection push the body downward
-    // the tangent of a non-walkable surface generally has a -up component,
-    // so each iteration converts a slice of horizontal input into a tiny descent,
-    // which manifests as the body slowly sinking into the floor (the snap pass pops it back when input stops).
-    // Clip the -up part so the slide stays in the floor plane.
     const float normalUp = fm_vec3_dot(&normal, &up);
-    const float dirUp = fm_vec3_dot(&dir, &up);
+    const float dirUp = fm_vec3_dot(&displacement, &up) / dispLen;
     if(normalUp >= walkCos && dirUp <= FM_EPSILON) {
       sweptWalkableFloor = true;
       sweptFloorNormal = normal;
     }
 
+    // Prevent sliding downward along a steep wall while grounded
     if(wasOnFloor && !wasOnSteepSurface && normalUp < walkCos) {
       const float slideUp = fm_vec3_dot(&slide, &up);
       if(slideUp < 0.0f) slide = slide - up * slideUp;
     }
     displacement = slide;
 
-    // Only zero the gravity accumulator when the obstacle would push us
-    // along -up (a ceiling while jumping). Wall and floor hits don't write
-    // to velocity_; wall slides reshape displacement, floor contact is
-    // resolved by the snap pass below.
+    // Cancel upward velocity on ceiling hit
     const float velUp = fm_vec3_dot(&velocity, &up);
     if(normalUp < -0.1f && velUp > 0.0f) {
       velocity = velocity - up * velUp;
     }
   }
 
-  // Wall separation
-  constexpr float DEPEN_SLIDE_RATE = 160.0f; // physics units / second
-  const float maxPushPerFrame = DEPEN_SLIDE_RATE * deltaTime;
+  // Fire a zero-length capsule sweep to find any remaining lateral overlaps,
+  // then push out along the contact normal. This resolves initial penetrations
+  // that the swept loop could not observe (e.g. the capsule side already inside
+  // a wall while moving parallel to it).
   {
-    constexpr fm_vec3_t cardinalDirs[4]{
-      { 1.0f, 0.0f,  0.0f},
-      {-1.0f, 0.0f,  0.0f},
-      { 0.0f, 0.0f,  1.0f},
-      { 0.0f, 0.0f, -1.0f}
-    };
+    constexpr float DEPEN_RATE = 160.0f; // physics units / second
+    const float maxPush = DEPEN_RATE * deltaTime;
 
-    // Two probe origins along the capsule's central axis.
-    // The center origin catches walls that overlap the body around shoulder height
-    // the lower origin catches walls that sit entirely below the capsule center.
-    // The lower probe sits one snap-distance above the body's bottom so anything shorter than `floorSnapDistance` stays invisible to de-penetrate and
-    // remains auto-steppable, while anything taller registers and stops the body.
-    // Each probe's cast length is the capsule's actual horizontal extent at that height
-    // using the full radius low in the hemisphere would false-stop on geometry the capsule never actually touches.
-    const float halfHeight = fmaxf(settings.height * 0.5f, settings.radius);
-    const float r = settings.radius;
-    const float lowerH = settings.floorSnapDistance;
-    const float lowerExtent = (lowerH >= r)
-      ? r
-      : sqrtf(fmaxf(r*r - (r - lowerH)*(r - lowerH), 0.0f));
+    constexpr fm_vec3_t depProbe = VEC3_ZERO; // zero displacement → overlap query
 
-    struct Probe { fm_vec3_t origin; float reach; };
-    const Probe probes[2] = {
-      { capsuleCenter(), r },
-      { capsuleCenter() + up * (-(halfHeight - lowerH)), lowerExtent },
-    };
+    // Run a few iterations to clear compound overlaps
+    for(int di = 0; di < 3; ++di) {
+      CapsuleSweepHit depHit;
+      bool hasOverlap = scene.capsuleSweep(
+        capsuleCenter(), up, r, ih,
+        depProbe,
+        settings.collTypes, settings.readMask,
+        depHit
+      );
+      if(!hasOverlap || depHit.depth <= FM_EPSILON) break;
 
-    for(const Probe& probe : probes)
-    {
-      const float castLen = probe.reach;
-      for(int i = 0; i < 4; ++i)
-      {
-        const fm_vec3_t& dir = cardinalDirs[i];
-        Raycast probeRay = Raycast::create(
-          probe.origin, dir, castLen,
-          settings.collTypes, false, settings.readMask
-        );
-        RaycastHit hit;
-        if(!scene.raycast(probeRay, hit) || !hit.didHit) continue;
-        if(hit.distance >= castLen) continue;
+      const fm_vec3_t normal = vec3NormalizeOrFallback(depHit.normal, up);
+      const float normalUp = fm_vec3_dot(&normal, &up);
+      // Skip floors — handled by floor snap below
+      if(normalUp > FM_EPSILON) break;
 
-        const fm_vec3_t normal = vec3NormalizeOrFallback(hit.normal, dir * -1.0f);
-        const float normalUp = fm_vec3_dot(&normal, &up);
-        // Skip floors, those are handled by the floor snap below.
-        if(normalUp > FM_EPSILON) continue;
-
-        const float overlap = castLen - hit.distance;
-        const float pushOut = fminf(overlap, maxPushPerFrame);
-        owner->pos = owner->pos - dir * (pushOut * gfxScale);
-      }
+      float pushOut = depHit.depth;
+      owner->pos = owner->pos + normal * (pushOut * gfxScale);
     }
   }
 
-  // Floor probe + un-sink + snap.
-  // Probe runs from the capsule center downward. Starting at the top made
-  // sloped ceilings win as the nearest downward hit, which then looked like
-  // a floor correction. The center origin keeps the probe focused on the
-  // lower half of the body while still detecting normal floor penetration.
+  // ── Floor probe + un-sink + snap ──────────────────────────────────────────
   onFloor = sweptWalkableFloor;
   if(sweptWalkableFloor) {
     contactNormal = sweptFloorNormal;
@@ -227,7 +191,6 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
       const float hitNormalUp = fm_vec3_dot(&hit.normal, &up);
       const bool supportSurface = hitNormalUp > FM_EPSILON;
 
-      // Reject hits outside the snap window
       bool inSnapRange = clearance <= maxSnap && clearance >= -maxSnap;
 
       float effectiveClearance = clearance;
@@ -242,9 +205,8 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
       if(inSnapRange && hitNormalUp >= walkCos) {
         const float velUp = fm_vec3_dot(&velocity, &up);
 
-        const bool stick = wasOnFloor && velUp <= 0.0f;
-        const bool landed = !wasOnFloor && velUp <= 0.0f &&
-                            effectiveClearance == 0;
+        const bool stick  = wasOnFloor && velUp <= 0.0f;
+        const bool landed = !wasOnFloor && velUp <= 0.0f && effectiveClearance == 0;
 
         if(stick) {
           const float delta = effectiveClearance;

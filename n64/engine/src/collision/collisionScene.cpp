@@ -1604,6 +1604,86 @@ namespace P64::Coll {
     return hit.didHit;
   }
 
+  bool CollisionScene::capsuleSweep(
+    const fm_vec3_t& center,
+    const fm_vec3_t& axisUp,
+    float radius,
+    float innerHalfHeight,
+    const fm_vec3_t& displacement,
+    RaycastColliderTypeFlags collTypes,
+    uint8_t /*readMask*/,
+    CapsuleSweepHit& hit
+  ) const {
+    hit = CapsuleSweepHit{};
+
+    if (!hasFlag(collTypes, RaycastColliderTypeFlags::MESH_COLLIDERS))
+      return false;
+
+    float dist2 = fm_vec3_len2(&displacement);
+    if (dist2 < 1e-12f) return false;
+
+    // Compute world-space swept AABB for broadphase
+    fm_vec3_t extents = {
+      radius + fabsf(axisUp.x) * innerHalfHeight,
+      radius + fabsf(axisUp.y) * innerHalfHeight,
+      radius + fabsf(axisUp.z) * innerHalfHeight
+    };
+    AABB capsuleBox = { center - extents, center + extents };
+    AABB sweptBox;
+    aabbExtendDirection(capsuleBox, displacement, sweptBox);
+
+    constexpr int MAX_TRI = 64;
+    NodeProxy triCandidates[MAX_TRI];
+
+    CapsuleSweepHit candidate{};
+
+    for (const MeshCollider* mesh : meshColliders_) {
+      if (!mesh || mesh->triangleCount() == 0 || !mesh->ownerObject()) continue;
+
+      // Broad-phase: world AABB of mesh vs. swept AABB
+      if (!aabbOverlap(mesh->worldAabb(), sweptBox)) continue;
+
+      // Query mesh-local AABB tree with the swept box converted to local space
+      AABB localSweptBox = mesh->worldAabbToLocal(sweptBox);
+      int triCount = mesh->queryTriangleNodes(localSweptBox, triCandidates, MAX_TRI);
+
+      for (int i = 0; i < triCount; ++i) {
+        int triIdx = mesh->triangleIndexForNode(triCandidates[i]);
+        if (triIdx < 0 || triIdx >= static_cast<int>(mesh->triangleCount())) continue;
+
+        const MeshTriangleIndices& tri = mesh->triangleIndices(triIdx);
+
+        // Get world-space vertices and normal (handles mesh transform + scale correctly)
+        fm_vec3_t wv0 = mesh->hasTransform()
+          ? mesh->toWorldSpace(mesh->vertex(tri.indices[0]))
+          : mesh->vertex(tri.indices[0]);
+        fm_vec3_t wv1 = mesh->hasTransform()
+          ? mesh->toWorldSpace(mesh->vertex(tri.indices[1]))
+          : mesh->vertex(tri.indices[1]);
+        fm_vec3_t wv2 = mesh->hasTransform()
+          ? mesh->toWorldSpace(mesh->vertex(tri.indices[2]))
+          : mesh->vertex(tri.indices[2]);
+        fm_vec3_t wn = mesh->hasTransform()
+          ? mesh->localNormalToWorld(mesh->triangleNormal(triIdx))
+          : mesh->triangleNormal(triIdx);
+
+        candidate = CapsuleSweepHit{};
+        if (!capsuleSweepTriangle(center, axisUp, radius, innerHalfHeight,
+                                  displacement, wv0, wv1, wv2, wn, candidate))
+          continue;
+
+        // Keep the earliest contact; for t==0 keep the deepest overlap
+        if (!hit.didHit ||
+            candidate.t < hit.t ||
+            (candidate.t == 0.0f && candidate.depth > hit.depth)) {
+          hit = candidate;
+        }
+      }
+    }
+
+    return hit.didHit;
+  }
+
   // ── Main step ─────────────────────────────────────────────────────
 
   void CollisionScene::step() {

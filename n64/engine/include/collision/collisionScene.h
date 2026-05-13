@@ -11,6 +11,7 @@
 #include "contact.h"
 #include "aabbTree.h"
 #include "raycast.h"
+#include "capsuleSweep.h"
 #include <array>
 #include <deque>
 #include <functional>
@@ -98,6 +99,31 @@ namespace P64::Coll {
     ContactConstraint *findCachedConstraint(const ContactConstraintKey &key);
 
     bool raycast(Raycast &ray, RaycastHit &hit) const;
+
+    /**
+     * Sweeps a capsule (world-space) through the scene and returns the earliest contact.
+     * Only tests mesh colliders; collider bodies are not tested.
+     *
+     * @param center          Capsule center in physics space
+     * @param axisUp          Normalized capsule-axis direction
+     * @param radius          Capsule radius
+     * @param innerHalfHeight Half-length of the cylindrical section (not including sphere caps)
+     * @param displacement    Displacement vector in physics space (not normalized)
+     * @param collTypes       Which collider types to test against
+     * @param readMask        Collision read mask (currently ignored for mesh colliders)
+     * @param hit             Output contact result
+     * @return true if any contact was found
+     */
+    bool capsuleSweep(
+      const fm_vec3_t& center,
+      const fm_vec3_t& axisUp,
+      float radius,
+      float innerHalfHeight,
+      const fm_vec3_t& displacement,
+      RaycastColliderTypeFlags collTypes,
+      uint8_t readMask,
+      CapsuleSweepHit& hit
+    ) const;
 
   private:
 
