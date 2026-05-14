@@ -202,12 +202,15 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
       bool inSnapRange = clearance <= maxSnap && clearance >= -maxSnap;
 
       float effectiveClearance = clearance;
-      if(inSnapRange && supportSurface && clearance < -0) {
-        const float lift = -clearance;
-        owner->pos = owner->pos + up * (lift * gfxScale);
-        effectiveClearance = 0;
+      if(inSnapRange && supportSurface && clearance < 0.0f) {
         const float velUp = fm_vec3_dot(&velocity, &up);
-        if(velUp < 0.0f) velocity = velocity - up * velUp;
+        // Lift when grounded (stair stepping) or falling (landing correction).
+        const bool shouldLift = (wasOnFloor && !wasOnSteepSurface) || velUp < 0.0f;
+        if(shouldLift) {
+          owner->pos = owner->pos + up * (-clearance * gfxScale);
+          effectiveClearance = 0;
+          if(velUp < 0.0f) velocity = velocity - up * velUp;
+        }
       }
 
       if(inSnapRange && hitNormalUp >= walkCos) {
