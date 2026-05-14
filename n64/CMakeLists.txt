@@ -86,6 +86,7 @@ add_executable(n64_engine
         engine/src/collision/attach.cpp
         engine/include/collision/characterBody.h
         engine/src/collision/characterBody.cpp
+        engine/src/scene/components/charBody.cpp
         engine/src/scene/componentTable.cpp
         engine/src/scene/components/culling.cpp
         engine/include/renderer/material.h

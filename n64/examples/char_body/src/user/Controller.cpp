@@ -1,7 +1,7 @@
 #include "script/userScript.h"
 #include "scene/sceneManager.h"
 #include "scene/object.h"
-#include "collision/characterBody.h"
+#include "scene/components/charBody.h"
 #include <debug/debugDraw.h>
 
 namespace
@@ -25,7 +25,6 @@ namespace
 namespace P64::Script::CD0A328E7EE01313
 {
   P64_DATA(
-    Coll::CharacterBody charBody;
     fm_vec3_t camPosCur;
     fm_vec3_t camTargetCur;
     fm_vec3_t lastVel;
@@ -39,19 +38,6 @@ namespace P64::Script::CD0A328E7EE01313
 
   void init(Object& obj, Data *data)
   {
-    data->charBody = Coll::CharacterBody(obj);
-    data->charBody.settings.gravity           = 30.0f;
-    data->charBody.settings.maxFallSpeed      = 55.0f;
-    data->charBody.settings.floorMaxAngle     = 45.1_deg;
-    data->charBody.settings.floorSnapDistance = 0.5f;
-    data->charBody.settings.radius            = 0.3f;
-    data->charBody.settings.height            = 1.0f;
-    data->charBody.settings.centerOffset = {
-      0.0f,
-      data->charBody.settings.height * 0.5f,
-      0.0f
-    };
-
     data->coyoteTimer     = 0.0f;
     data->camYaw          = 0.0f;
     data->camYawTarget    = 0.0f;
@@ -68,6 +54,8 @@ namespace P64::Script::CD0A328E7EE01313
   void update(Object& obj, Data *data, float deltaTime) {
     auto inp     = joypad_get_inputs(JOYPAD_PORT_1);
     auto pressed = joypad_get_buttons_pressed(JOYPAD_PORT_1);
+
+    auto &body = obj.getComponent<P64::Comp::CharBody>()->getBody();
 
     // Camera controls
     if(pressed.c_right) data->camYawTarget -= CAM_YAW_SNAP;
@@ -93,12 +81,12 @@ namespace P64::Script::CD0A328E7EE01313
     data->lastVel += targetVelocity * data->moveSpeedFactor;
 
     // force respawn when falling down too much
-    if(obj.pos.y < -750.0f)obj.pos = {};
+    if(obj.pos.y < -750.0f) body.teleport({0, 100, 0});
 
-    const bool grounded = data->charBody.isOnFloor();
-    const fm_vec3_t bodyUp = data->charBody.settings.up;
+    const bool grounded = body.isOnFloor();
+    const fm_vec3_t bodyUp = body.settings.up;
 
-    data->charBody.inputVelocity = data->lastVel;
+    body.inputVelocity = data->lastVel;
 
     if(grounded) {
       data->coyoteTimer = COYOTE_TIME;
@@ -107,20 +95,18 @@ namespace P64::Script::CD0A328E7EE01313
     }
 
     if(pressed.a && data->coyoteTimer > 0.0f) {
-      data->charBody.setVelocity(data->charBody.getVelocity() + bodyUp * JUMP_SPEED);
+      body.setVelocity(body.getVelocity() + bodyUp * JUMP_SPEED);
       data->coyoteTimer = 0.0f; // consume so we don't re-trigger mid-air
     }
 
-    auto& scene = SceneManager::getCurrent().getCollision();
-    data->charBody.moveAndSlide(deltaTime, scene);
-
-    if(data->charBody.isOnSteepSurface()) {
+    body.moveAndSlide(deltaTime);
+    if(body.isOnSteepSurface()) {
       data->moveSpeedFactor *= 0.7f;
     } else {
       data->moveSpeedFactor = fminf(1.0f, data->moveSpeedFactor + 2.0f * deltaTime);
     }
 
-    float camYInterp = data->charBody.isOnFloor() ? CAM_POS_INTERP_Y_GROUND : CAM_POS_INTERP_Y_AIR;
+    float camYInterp = body.isOnFloor() ? CAM_POS_INTERP_Y_GROUND : CAM_POS_INTERP_Y_AIR;
     data->camTargetCur.x = fm_lerp(data->camTargetCur.x, obj.pos.x, CAM_POS_INTERP_XZ);
     data->camTargetCur.y = fm_lerp(data->camTargetCur.y, obj.pos.y, camYInterp);
     data->camTargetCur.z = fm_lerp(data->camTargetCur.z, obj.pos.z, CAM_POS_INTERP_XZ);
@@ -136,9 +122,9 @@ namespace P64::Script::CD0A328E7EE01313
     auto &cam = obj.getScene().getActiveCamera();
     cam.setLookAt(data->camPosCur, data->camTargetCur);
 
-    if(inp.btn.z) 
+    if(inp.btn.z)
     {
-      data->charBody.debugDraw();
+      body.debugDraw();
     }
   }
 
@@ -146,41 +132,43 @@ namespace P64::Script::CD0A328E7EE01313
   {
   }
 
-  void draw(Object& obj, Data *data, float deltaTime) 
+  void draw(Object& obj, Data *data, float deltaTime)
   {
     DrawLayer::use2D();
     rdpq_mode_push();
-    
+
+    auto &body = obj.getComponent<P64::Comp::CharBody>()->getBody();
+
     Debug::printStart();
     Debug::isMonospace = true;
     uint16_t posX = 16;
     uint16_t posY = 16;
-    Debug::printf(posX, posY, "Pos : %.1f %.1f %.1f\n",
+    Debug::printf(posX, posY, "Pos : %+.3f %+.3f %+.3f\n",
       obj.pos.x,
       obj.pos.y,
       obj.pos.z
     );
     posY += 9;
     Debug::printf(posX, posY, "Velo: %.1f %.1f %.1f\n",
-      data->charBody.getVelocity().x,
-      data->charBody.getVelocity().y,
-      data->charBody.getVelocity().z
+      body.getVelocity().x,
+      body.getVelocity().y,
+      body.getVelocity().z
     );
-    
+
     posY += 9;
-    float normSteepness = acosf(data->charBody.floorNormal().y) * (180.0f / Math::PI);
+    float normSteepness = acosf(body.floorNormal().y) * (180.0f / Math::PI);
     Debug::printf(posX, posY, "Norm: %.2f %.2f %.2f (%.1f deg)\n",
-      data->charBody.floorNormal().x,
-      data->charBody.floorNormal().y,
-      data->charBody.floorNormal().z,
+      body.floorNormal().x,
+      body.floorNormal().y,
+      body.floorNormal().z,
       normSteepness
     );
 
     posY = 240 - 16;
     Debug::printf(posX, posY, "State: %s %s %s\n",
-      data->charBody.isOnFloor() ? "Floor" : "  -  ",
-      data->charBody.isOnSteepSurface() ? "Steep" : "  -  ",
-      data->charBody.didSnapToFloor() ? "FSnap" : "  -  "
+      body.isOnFloor() ? "Floor" : "  -  ",
+      body.isOnSteepSurface() ? "Steep" : "  -  ",
+      body.didSnapToFloor() ? "FSnap" : "  -  "
     );
 
     rdpq_mode_pop();

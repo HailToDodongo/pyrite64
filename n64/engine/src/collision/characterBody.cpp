@@ -5,6 +5,8 @@
 #include "collision/characterBody.h"
 #include "collision/capsuleSweep.h"
 #include "collision/gfxScale.h"
+#include "scene/sceneManager.h"
+#include "scene/scene.h"
 #include "scene/object.h"
 #include "debug/debugDraw.h"
 
@@ -12,8 +14,8 @@
 
 using namespace P64::Coll;
 
-CharacterBody::CharacterBody(Object &owner_)
-  : owner(&owner_)
+CharacterBody::CharacterBody(Object *owner_)
+  : owner(owner_)
 {
   inputVelocity = VEC3_ZERO;
   velocity = VEC3_ZERO;
@@ -50,8 +52,9 @@ void CharacterBody::teleport(const fm_vec3_t& ownerPos, bool resetForces)
   }
 }
 
-void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
+void CharacterBody::moveAndSlide(float deltaTime)
 {
+  CollisionScene& scene = SceneManager::getCurrent().getCollision();
   const float gfxScale = getGfxScale();
   const float walkCos = fm_cosf(settings.floorMaxAngle);
   const bool wasOnFloor = onFloor;

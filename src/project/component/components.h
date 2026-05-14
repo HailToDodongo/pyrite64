@@ -86,6 +86,7 @@ namespace Project::Component
   MAKE_COMP(Culling)
   MAKE_COMP(NodeGraph)
   MAKE_COMP(AnimModel)
+  MAKE_COMP(CharBody)
 
   constexpr std::array TABLE{
     CompInfo{
@@ -234,6 +235,18 @@ namespace Project::Component
       .funcSerialize = RigidBody::serialize,
       .funcDeserialize = RigidBody::deserialize,
       .funcBuild = RigidBody::build,
+      .funcGetAABB = nullptr
+    },
+    CompInfo{
+      .id = 12,
+      .icon = ICON_MDI_RUN " ",
+      .name = "Character-Body",
+      .funcInit = CharBody::init,
+      .funcDraw = CharBody::draw,
+      .funcDrawPost3D = CharBody::draw3D,
+      .funcSerialize = CharBody::serialize,
+      .funcDeserialize = CharBody::deserialize,
+      .funcBuild = CharBody::build,
       .funcGetAABB = nullptr
     },
   };

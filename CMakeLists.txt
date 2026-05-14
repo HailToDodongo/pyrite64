@@ -229,6 +229,7 @@ add_executable(pyrite64 src/main.cpp
         src/build/collisionBuilder.cpp
         src/project/component/types/compCollBody.cpp
         src/project/component/types/compRigidBody.cpp
+        src/project/component/types/compCharBody.cpp
         src/build/fontBuilder.cpp
         src/utils/prop.h
         src/project/scene/prefab.h

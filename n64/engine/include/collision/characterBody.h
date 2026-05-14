@@ -44,7 +44,7 @@ namespace P64::Coll
       uint8_t readMask{0xFF};
     };
 
-    CharacterBody(Object& owner_);
+    CharacterBody(Object* owner_);
 
     Settings settings{};
 
@@ -108,9 +108,8 @@ namespace P64::Coll
      * snaps to floor, then writes the final position back to the owning Object.
      *
      * @param deltaTime time step to move for, in seconds
-     * @param scene collision scene to query for sweeps and snaps
      */
-    void moveAndSlide(float deltaTime, CollisionScene& scene);
+    void moveAndSlide(float deltaTime);
 
     /**
      * Draws the capsule shape and floor-snap probe in debug wireframe.
@@ -119,9 +118,9 @@ namespace P64::Coll
     void debugDraw() const;
 
   private:
-    Object* owner; // Note: we can't use a reference since it prevents a copy-constructor
     fm_vec3_t velocity{};
     fm_vec3_t contactNormal{};
+    Object* owner; // Note: we can't use a reference since it prevents a copy-constructor
 
     uint8_t onFloor{};
     uint8_t onSteepSurface{};

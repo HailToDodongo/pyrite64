@@ -419,7 +419,7 @@
                 "uuid": 6374829485277938164
               }
             ],
-            "enabled": true,
+            "enabled": false,
             "id": 6,
             "name": "Box",
             "pos": [
@@ -529,7 +529,7 @@
                 "uuid": 6374829485277938164
               }
             ],
-            "enabled": true,
+            "enabled": false,
             "id": 7,
             "name": "Box",
             "pos": [
@@ -605,9 +605,9 @@
                     32.0,
                     32.0
                   ],
-                  "isTrigger": false,
-                  "maskRead": 3,
-                  "maskWrite": 1,
+                  "isTrigger": true,
+                  "maskRead": 0,
+                  "maskWrite": 0,
                   "offset": [
                     0.0,
                     0.0,
@@ -639,13 +639,13 @@
                 "uuid": 6374829485277938164
               }
             ],
-            "enabled": true,
+            "enabled": false,
             "id": 8,
             "name": "Box",
             "pos": [
-              -886.8582763671875,
-              171.93011474609375,
-              -66.90501403808594
+              357.6692199707031,
+              237.09393310546875,
+              -189.84124755859375
             ],
             "propOverrides": {},
             "proportionalScale": false,
@@ -708,44 +708,48 @@
               },
               {
                 "data": {
-                  "bounce": 0.0,
-                  "friction": 0.800000011920929,
-                  "halfExtend": [
-                    32.0,
-                    16.0,
-                    32.0
-                  ],
-                  "isTrigger": false,
-                  "maskRead": 1,
-                  "maskWrite": 1,
-                  "offset": [
-                    0.0,
-                    48.0,
-                    0.0
-                  ],
-                  "type": 3
-                },
-                "id": 5,
-                "name": "Collider",
-                "uuid": 18409191177781385358
-              },
-              {
-                "data": {
                   "args": {},
                   "script": 14774677115137692435
                 },
                 "id": 0,
                 "name": "Code",
                 "uuid": 8505422843609510352
+              },
+              {
+                "data": {
+                  "centerOffset": [
+                    0.0,
+                    0.5,
+                    0.0
+                  ],
+                  "collTypes": 1,
+                  "floorMaxAngle": 0.8028514385223389,
+                  "floorSnapDistance": 0.30000001192092896,
+                  "gravity": 30.0,
+                  "height": 1.100000023841858,
+                  "maxFallSpeed": 55.0,
+                  "maxSlides": 4,
+                  "radius": 0.25,
+                  "readMask": 1,
+                  "stepHeight": 0.30000001192092896,
+                  "up": [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                },
+                "id": 12,
+                "name": "Character-Body",
+                "uuid": 6334253645984519954
               }
             ],
             "enabled": true,
             "id": 9,
             "name": "Player",
             "pos": [
-              15.200164794921875,
-              130.19760131835938,
-              -144.00521850585938
+              20.0,
+              10.0,
+              -140.0
             ],
             "propOverrides": {},
             "proportionalScale": false,
