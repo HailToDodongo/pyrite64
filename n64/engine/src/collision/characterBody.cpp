@@ -124,6 +124,17 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
         if(len2 < FM_EPSILON * FM_EPSILON) { continue; }
         pushDir = pushDir * (1.0f / sqrtf(len2));
       }
+      // Don't push into the previous surface, constraining the push direction
+      // avoids ping-pong oscillation between two walls of a corner.
+      if(hasPrevHit) {
+        const float intoPrev = fm_vec3_dot(&pushDir, &prevHitNormal);
+        if(intoPrev < -FM_EPSILON) {
+          pushDir = pushDir - prevHitNormal * intoPrev;
+          const float len2 = fm_vec3_len2(&pushDir);
+          if(len2 < FM_EPSILON * FM_EPSILON) { continue; }
+          pushDir = pushDir * (1.0f / sqrtf(len2));
+        }
+      }
       owner->pos = owner->pos + pushDir * (pushOut * gfxScale);
       // Strip the into-wall component from displacement so re-tries don't re-enter.
       const float dispInto = fminf(0.0f, fm_vec3_dot(&displacement, &pushDir));
@@ -138,6 +149,16 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
           crease = crease * (1.0f / sqrtf(creaseLen2));
           displacement = crease * fm_vec3_dot(&displacement, &crease);
         } else {
+          displacement = VEC3_ZERO;
+        }
+      }
+      // When nothing was stripped from displacement (it was already parallel
+      // to this surface) and it doesn't point into any previous surface, apply
+      // it now. This stops gravity accumulation from being silently discarded
+      // in sharp corners where every sweep returns t=0.
+      if(fabsf(dispInto) <= FM_EPSILON) {
+        if(!hasPrevHit || fm_vec3_dot(&displacement, &prevHitNormal) >= -FM_EPSILON) {
+          owner->pos = owner->pos + displacement * gfxScale;
           displacement = VEC3_ZERO;
         }
       }
@@ -161,10 +182,17 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
       sweptFloorNormal = normal;
     }
 
-    // Prevent sliding downward along a steep wall while grounded
+    // Prevent sliding along a steep wall while grounded.
+    // Strip the vertical component from the slide so the character doesn't
+    // climb or dive into the wall, and damp the toward-wall velocity to avoid
+    // residual energy accumulating frame-to-frame (causes jitter in corners).
     if(wasOnFloor && !wasOnSteepSurface && normalUp < walkCos) {
       const float slideUp = fm_vec3_dot(&slide, &up);
       slide = slide - up * slideUp;
+      const float velInto = fm_vec3_dot(&velocity, &normal);
+      if(velInto > 0.0f) {
+        velocity = velocity - normal * velInto;
+      }
     }
 
     // Crease fix: when the slide points back into the previously-hit surface the
@@ -200,6 +228,9 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
   {
     constexpr fm_vec3_t depProbe = VEC3_ZERO; // zero displacement → overlap query
 
+    fm_vec3_t prevDepN = VEC3_ZERO;
+    bool hasPrevDep = false;
+
     // Run a few iterations to clear compound overlaps
     for(int di = 0; di < 3; ++di) {
       CapsuleSweepHit depHit;
@@ -211,13 +242,36 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
       );
       if(!hasOverlap || depHit.depth <= FM_EPSILON) break;
 
-      const fm_vec3_t normal = vec3NormalizeOrFallback(depHit.normal, up);
-      const float normalUp = fm_vec3_dot(&normal, &up);
+      const fm_vec3_t origN = vec3NormalizeOrFallback(depHit.normal, up);
+      const float normalUp = fm_vec3_dot(&origN, &up);
       // Skip floors — handled by floor snap below
       if(normalUp > FM_EPSILON) break;
 
+      fm_vec3_t pushDir = origN;
+      // Don't push into the previously resolved surface — in obtuse corners
+      // pushing perpendicular to one wall drives the capsule into the other.
+      if(hasPrevDep) {
+        const float intoPrev = fm_vec3_dot(&pushDir, &prevDepN);
+        if(intoPrev < -FM_EPSILON) {
+          pushDir = pushDir - prevDepN * intoPrev;
+          const float len2 = fm_vec3_len2(&pushDir);
+          if(len2 < FM_EPSILON * FM_EPSILON) { break; }
+          pushDir = pushDir * (1.0f / sqrtf(len2));
+        }
+      }
+
       float pushOut = depHit.depth;
-      owner->pos = owner->pos + normal * (pushOut * gfxScale);
+      // When the push direction was constrained away from the original normal,
+      // scale up to compensate — depth is measured along origN, not pushDir.
+      {
+        const float efficiency = fm_vec3_dot(&pushDir, &origN);
+        if(efficiency > FM_EPSILON) {
+          pushOut = fminf(pushOut / efficiency, 0.1f);
+        }
+      }
+      owner->pos = owner->pos + pushDir * (pushOut * gfxScale);
+      prevDepN = pushDir;
+      hasPrevDep = true;
     }
   }
 
