@@ -92,6 +92,12 @@ namespace P64::Coll
      */
     void moveAndSlide(float deltaTime, CollisionScene& scene);
 
+    /**
+     * Draws the capsule shape and floor-snap probe in debug wireframe.
+     * Call once per frame after moveAndSlide.
+     */
+    void debugDraw() const;
+
   private:
     Object* owner; // Note: we can't use a reference since it prevents a copy-constructor
     fm_vec3_t velocity{};

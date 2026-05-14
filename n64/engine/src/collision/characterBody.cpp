@@ -6,6 +6,7 @@
 #include "collision/capsuleSweep.h"
 #include "collision/gfxScale.h"
 #include "scene/object.h"
+#include "debug/debugDraw.h"
 
 #include <cmath>
 
@@ -140,9 +141,6 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
   // that the swept loop could not observe (e.g. the capsule side already inside
   // a wall while moving parallel to it).
   {
-    constexpr float DEPEN_RATE = 160.0f; // physics units / second
-    const float maxPush = DEPEN_RATE * deltaTime;
-
     constexpr fm_vec3_t depProbe = VEC3_ZERO; // zero displacement → overlap query
 
     // Run a few iterations to clear compound overlaps
@@ -225,5 +223,39 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
         contactNormal = vec3NormalizeOrFallback(hit.normal, up);
       }
     }
+  }
+}
+
+void CharacterBody::debugDraw() const
+{
+  const float gfxScale = getGfxScale();
+  const fm_vec3_t up = vec3NormalizeOrFallback(settings.up, VEC3_UP);
+  const float r  = settings.radius;
+  const float hh = fmaxf(settings.height * 0.5f, r);
+  const float ih = hh - r;
+
+  // Capsule shape — green when on floor, yellow on steep, white when airborne
+  color_t capsuleColor = {0xFF, 0xFF, 0xFF, 0xFF};
+  if(onFloor) {
+    capsuleColor = onSteepSurface
+      ? color_t{0xFF, 0xA0, 0x00, 0xFF}
+      : color_t{0x00, 0xFF, 0x40, 0xFF};
+  }
+
+  const fm_vec3_t center = capsuleCenter();
+  Debug::drawCapsule(center * gfxScale, r * gfxScale, ih * gfxScale, QUAT_IDENTITY, capsuleColor);
+
+  // Floor snap probe: line from capsule center downward showing probe reach
+  const float probeDist = hh + settings.floorSnapDistance;
+  const fm_vec3_t probeEnd = center - up * probeDist;
+  const color_t probeColor = {0x80, 0x80, 0xFF, 0xFF};
+  Debug::drawLine(center * gfxScale, probeEnd * gfxScale, probeColor);
+
+  // Contact normal arrow (cyan)
+  if(onFloor) {
+    const fm_vec3_t bottom = center - up * hh;
+    const fm_vec3_t normalTip = bottom + contactNormal * r;
+    const color_t normalColor = {0x00, 0xFF, 0xFF, 0xFF};
+    Debug::drawLine(bottom * gfxScale, normalTip * gfxScale, normalColor);
   }
 }

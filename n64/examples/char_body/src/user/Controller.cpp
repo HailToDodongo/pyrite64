@@ -45,7 +45,7 @@ namespace P64::Script::CD0A328E7EE01313
     data->charBody.settings.floorMaxAngle     = 45.1_deg;
     data->charBody.settings.floorSnapDistance = 0.5f;
     data->charBody.settings.radius            = 0.3f;
-    data->charBody.settings.height            = 1.7f;
+    data->charBody.settings.height            = 1.0f;
     data->charBody.settings.centerOffset = {
       0.0f,
       data->charBody.settings.height * 0.5f,
@@ -135,6 +135,11 @@ namespace P64::Script::CD0A328E7EE01313
 
     auto &cam = obj.getScene().getActiveCamera();
     cam.setLookAt(data->camPosCur, data->camTargetCur);
+
+    if(inp.btn.z) 
+    {
+      data->charBody.debugDraw();
+    }
   }
 
   void fixedUpdate(Object& obj, Data *data, float fixedDeltaTime)
