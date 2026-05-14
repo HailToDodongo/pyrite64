@@ -90,6 +90,8 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
   bool sweptWalkableFloor = false;
   fm_vec3_t sweptFloorNormal = up;
   fm_vec3_t displacement = stepVel * deltaTime;
+  fm_vec3_t prevHitNormal = VEC3_ZERO;
+  bool      hasPrevHit    = false;
 
   for(uint8_t iter = 0; iter < settings.maxSlides; ++iter) {
     float dispLen2 = fm_vec3_len2(&displacement);
@@ -114,8 +116,33 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
     if(hit.t <= 0.0f) {
       constexpr float MAX_DEPEN = 0.05f; // metres per iteration
       float pushOut = fminf(hit.depth + FM_EPSILON, MAX_DEPEN);
-      owner->pos = owner->pos + hit.normal * (pushOut * gfxScale);
-      // don't consume displacement, next iteration handles it.
+      fm_vec3_t pushDir = vec3NormalizeOrFallback(hit.normal, up);
+      const float pushUp = fm_vec3_dot(&pushDir, &up);
+      if(pushUp > FM_EPSILON) {
+        pushDir = pushDir - up * pushUp;
+        const float len2 = fm_vec3_len2(&pushDir);
+        if(len2 < FM_EPSILON * FM_EPSILON) { continue; }
+        pushDir = pushDir * (1.0f / sqrtf(len2));
+      }
+      owner->pos = owner->pos + pushDir * (pushOut * gfxScale);
+      // Strip the into-wall component from displacement so re-tries don't re-enter.
+      const float dispInto = fminf(0.0f, fm_vec3_dot(&displacement, &pushDir));
+      displacement = displacement - pushDir * dispInto;
+      // Crease fix for t=0: when stripping this surface would press displacement back
+      // into the previous one (V-corner trap), project onto the crease of both planes.
+      if(hasPrevHit && fm_vec3_dot(&displacement, &prevHitNormal) < -FM_EPSILON) {
+        fm_vec3_t crease;
+        fm_vec3_cross(&crease, &pushDir, &prevHitNormal);
+        const float creaseLen2 = fm_vec3_len2(&crease);
+        if(creaseLen2 > FM_EPSILON * FM_EPSILON) {
+          crease = crease * (1.0f / sqrtf(creaseLen2));
+          displacement = crease * fm_vec3_dot(&displacement, &crease);
+        } else {
+          displacement = VEC3_ZERO;
+        }
+      }
+      prevHitNormal = pushDir;
+      hasPrevHit    = true;
       continue;
     }
 
@@ -139,6 +166,24 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
       const float slideUp = fm_vec3_dot(&slide, &up);
       slide = slide - up * slideUp;
     }
+
+    // Crease fix: when the slide points back into the previously-hit surface the
+    // character is trapped (e.g. a V-corner). Project onto the intersection line
+    // of both planes so motion follows the crease (straight down for vertical walls).
+    if(hasPrevHit && fm_vec3_dot(&slide, &prevHitNormal) < -FM_EPSILON) {
+      fm_vec3_t crease;
+      fm_vec3_cross(&crease, &normal, &prevHitNormal);
+      const float creaseLen2 = fm_vec3_len2(&crease);
+      if(creaseLen2 > FM_EPSILON * FM_EPSILON) {
+        crease = crease * (1.0f / sqrtf(creaseLen2));
+        slide = crease * fm_vec3_dot(&slide, &crease);
+      } else {
+        slide = VEC3_ZERO;
+      }
+    }
+    prevHitNormal = normal;
+    hasPrevHit    = true;
+
     displacement = slide;
 
     // Cancel upward velocity on ceiling hit
