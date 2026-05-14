@@ -51,6 +51,16 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
   const float hh  = fmaxf(settings.height * 0.5f, r); // total half-height
   const float ih  = hh - r;                            // inner (cylindrical) half-height
 
+  // Shorten the physics capsule from the bottom by stepHeight so that stair
+  // risers below that height are invisible to the sweep. The floor snap corrects
+  // the vertical position afterward.
+  // Clamp stepH to floorSnapDistance: when the swept loop hits a floor, it
+  // places the capsule stepH below the correct position; the floor snap must
+  // compensate, which requires stepH <= floorSnapDistance. Also clamp to ih
+  // so ih_phys stays >= 0.
+  const float stepH   = fminf(fminf(settings.stepHeight, ih), settings.floorSnapDistance);
+  const float ih_phys = ih - stepH;
+
   // Build per-frame velocity (same logic as before)
   auto horiz = inputVelocity - up * fm_vec3_dot(&inputVelocity, &up);
   float vAlongUp = fm_vec3_dot(&velocity, &up);
@@ -85,7 +95,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
 
     CapsuleSweepHit hit;
     bool didHit = scene.capsuleSweep(
-      capsuleCenter(), up, r, ih,
+      capsuleCenter(), up, r, ih_phys,
       displacement,
       settings.collTypes, settings.readMask,
       hit
@@ -147,7 +157,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
     for(int di = 0; di < 3; ++di) {
       CapsuleSweepHit depHit;
       bool hasOverlap = scene.capsuleSweep(
-        capsuleCenter(), up, r, ih,
+        capsuleCenter(), up, r, ih_phys,
         depProbe,
         settings.collTypes, settings.readMask,
         depHit
@@ -230,32 +240,44 @@ void CharacterBody::debugDraw() const
 {
   const float gfxScale = getGfxScale();
   const fm_vec3_t up = vec3NormalizeOrFallback(settings.up, VEC3_UP);
-  const float r  = settings.radius;
-  const float hh = fmaxf(settings.height * 0.5f, r);
-  const float ih = hh - r;
+  const float r    = settings.radius;
+  const float hh   = fmaxf(settings.height * 0.5f, r);
+  const float ih   = hh - r;
+  const float stepH   = fminf(fminf(settings.stepHeight, ih), settings.floorSnapDistance);
+  const float ih_phys = ih - stepH;
 
-  // Capsule shape — green when on floor, yellow on steep, white when airborne
-  color_t capsuleColor = {0xFF, 0xFF, 0xFF, 0xFF};
+  const fm_vec3_t center = capsuleCenter();
+
+  // Dim outline of the full logical capsule
+  Debug::drawCapsule(center * gfxScale, r * gfxScale, ih * gfxScale, QUAT_IDENTITY,
+    color_t{0x40, 0x40, 0x40, 0xFF});
+
+  // Physics capsule (what actually collides) — green on floor, orange on steep, white airborne
+  color_t physColor = {0xFF, 0xFF, 0xFF, 0xFF};
   if(onFloor) {
-    capsuleColor = onSteepSurface
+    physColor = onSteepSurface
       ? color_t{0xFF, 0xA0, 0x00, 0xFF}
       : color_t{0x00, 0xFF, 0x40, 0xFF};
   }
+  Debug::drawCapsule(center * gfxScale, r * gfxScale, ih_phys * gfxScale, QUAT_IDENTITY, physColor);
 
-  const fm_vec3_t center = capsuleCenter();
-  Debug::drawCapsule(center * gfxScale, r * gfxScale, ih * gfxScale, QUAT_IDENTITY, capsuleColor);
+  // Step zone indicator: horizontal line at the physics capsule bottom
+  if(stepH > 0.0f) {
+    const fm_vec3_t physBottom = center - up * (ih_phys + r);
+    const fm_vec3_t side = fm_vec3_t{{up.y, up.z, up.x}} * r; // arbitrary perpendicular
+    Debug::drawLine((physBottom - side) * gfxScale, (physBottom + side) * gfxScale,
+      color_t{0xFF, 0xFF, 0x00, 0xFF});
+  }
 
-  // Floor snap probe: line from capsule center downward showing probe reach
+  // Floor snap probe: line from capsule center showing full probe reach
   const float probeDist = hh + settings.floorSnapDistance;
   const fm_vec3_t probeEnd = center - up * probeDist;
-  const color_t probeColor = {0x80, 0x80, 0xFF, 0xFF};
-  Debug::drawLine(center * gfxScale, probeEnd * gfxScale, probeColor);
+  Debug::drawLine(center * gfxScale, probeEnd * gfxScale, color_t{0x80, 0x80, 0xFF, 0xFF});
 
-  // Contact normal arrow (cyan)
+  // Contact normal from capsule bottom (cyan, only when on floor)
   if(onFloor) {
     const fm_vec3_t bottom = center - up * hh;
-    const fm_vec3_t normalTip = bottom + contactNormal * r;
-    const color_t normalColor = {0x00, 0xFF, 0xFF, 0xFF};
-    Debug::drawLine(bottom * gfxScale, normalTip * gfxScale, normalColor);
+    Debug::drawLine(bottom * gfxScale, (bottom + contactNormal * r) * gfxScale,
+      color_t{0x00, 0xFF, 0xFF, 0xFF});
   }
 }

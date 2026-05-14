@@ -25,7 +25,16 @@ namespace P64::Coll
       float gravity{30.0f};            // meters / s^2 applied along -up
       float maxFallSpeed{55.0f};       // Terminal speed along -up
       float floorMaxAngle{45.0_deg};   // Max walkable slope (radians from up)
-      float floorSnapDistance{0.25f};  // Snap reach when leaving the floor
+      /// Max height of a step the character automatically climbs.
+      /// The physics capsule is shortened from the bottom by this amount, making
+      /// stair risers below this height invisible to collision. The floor snap
+      /// then lifts the character up. Must be <= innerHalfHeight (height/2 - radius).
+      /// floorSnapDistance must be >= stepHeight for stair climbing to work.
+      float stepHeight{0.25f};
+      /// How far below the full capsule bottom the floor snap probe reaches.
+      /// Controls sticking to ground on slopes and snapping over step edges.
+      /// Must be >= stepHeight for stair climbing to work.
+      float floorSnapDistance{0.30f};
       float radius{0.5f};              // Capsule radius in meters.
       /// Capsule total height in meters (including both hemispherical caps).
       /// Must be >= 2 * radius, values below that clamp to a sphere.
