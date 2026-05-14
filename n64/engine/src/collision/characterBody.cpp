@@ -129,7 +129,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
 
     const float normalUp = fm_vec3_dot(&normal, &up);
     const float dirUp = fm_vec3_dot(&displacement, &up) / dispLen;
-    if(normalUp >= walkCos && dirUp <= FM_EPSILON) {
+    if(normalUp >= walkCos && dirUp < -FM_EPSILON) {
       sweptWalkableFloor = true;
       sweptFloorNormal = normal;
     }
@@ -137,7 +137,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
     // Prevent sliding downward along a steep wall while grounded
     if(wasOnFloor && !wasOnSteepSurface && normalUp < walkCos) {
       const float slideUp = fm_vec3_dot(&slide, &up);
-      if(slideUp < 0.0f) slide = slide - up * slideUp;
+      slide = slide - up * slideUp;
     }
     displacement = slide;
 
@@ -201,6 +201,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
 
       bool inSnapRange = clearance <= maxSnap && clearance >= -maxSnap;
 
+      bool liftApplied = false;
       float effectiveClearance = clearance;
       if(inSnapRange && supportSurface && clearance < 0.0f) {
         const float velUp = fm_vec3_dot(&velocity, &up);
@@ -209,7 +210,9 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
         if(shouldLift) {
           owner->pos = owner->pos + up * (-clearance * gfxScale);
           effectiveClearance = 0;
-          if(velUp < 0.0f) velocity = velocity - up * velUp;
+          // Only zero falling velocity for walkable surfaces; steep surfaces must let gravity accumulate.
+          if(velUp < 0.0f && hitNormalUp >= walkCos) velocity = velocity - up * velUp;
+          liftApplied = true;
         }
       }
 
@@ -227,7 +230,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
         }
         if(stick || landed) {
           onFloor = true;
-          probeFoundFloor = 1;
+          if(!liftApplied) probeFoundFloor = 1;
           contactNormal = vec3NormalizeOrFallback(hit.normal, up);
           velocity = velocity - up * fm_vec3_dot(&velocity, &up);
         }
