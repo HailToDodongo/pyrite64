@@ -119,11 +119,12 @@ namespace P64::Coll {
     /// Call destroyData() to free them.
     static MeshCollider *createFromRawData(void *rawData, Object *obj);
 
-    /// Create a MeshCollider from manually defined geometry, binding to the given Object's transform.
+    /// Create a MeshCollider from manually defined geometry. If a non-null owner Object is given, the
+    /// MeshCollider's transform will be synced to that of the owner.
     /// Coordinates must use internal physics scale (i.e. 1 unit = 1 meter).
     /// Ownership of the given arrays (vertices, triangleIndices) is transferred to the returned MeshCollider
     /// object; call destroyData() to free them.
-    static MeshCollider* create(fm_vec3_t* vertices, uint16_t vertexCount, MeshTriangleIndices* triangleIndices, uint16_t triangleCount, Object *obj);
+    static MeshCollider* create(fm_vec3_t* vertices, uint16_t vertexCount, MeshTriangleIndices* triangleIndices, uint16_t triangleCount, Object *owner);
 
     static inline fm_vec3_t triangleNormalFromVertices(const fm_vec3_t &v0, const fm_vec3_t &v1, const fm_vec3_t &v2)
     {

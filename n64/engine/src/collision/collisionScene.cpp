@@ -1489,7 +1489,7 @@ namespace P64::Coll {
     if(hasFlag(ray.collTypes, RaycastColliderTypeFlags::MESH_COLLIDERS)) {
       for(std::size_t m = 0; m < meshColliders_.size(); ++m) {
         const MeshCollider *mesh = meshColliders_[m];
-        if(!mesh || mesh->triangleCount_ == 0 || !mesh->owner_) continue;
+        if(!mesh || mesh->triangleCount_ == 0) continue;
         Raycast localRay = ray;
         if(mesh->hasScale()) {
           const fm_vec3_t &scale = mesh->owner_->scale;
@@ -1529,7 +1529,7 @@ namespace P64::Coll {
           currentHit.normal = mesh->hasTransform() ? mesh->localNormalToWorld(currentHit.normal) : currentHit.normal;
           const fm_vec3_t hitDelta = currentHit.point - ray.origin;
           currentHit.distance = fm_vec3_len(&hitDelta);
-          currentHit.hitObjectId = mesh->owner_->id;
+          currentHit.hitObjectId = mesh->owner_ ? mesh->owner_->id : 0;
 
           hit.didHit = true;
           if(currentHit.didHit && currentHit.distance < hit.distance && currentHit.distance <= ray.maxDistance) {
@@ -1735,31 +1735,15 @@ namespace P64::Coll {
 
         color_t color = Debug::paletteColor(static_cast<uint32_t>(meshIdx));
 
-        const bool useRotation = meshCollider->hasRotation();
-
-  const fm_quat_t rot = meshCollider->owner_->rot;
-  const fm_vec3_t pos = meshCollider->owner_->pos;
-  const fm_vec3_t scale = meshCollider->owner_->scale;
-
-        auto toWorldMesh = [&](const fm_vec3_t &local)
-        {
-          fm_vec3_t scaled = fm_vec3_t{{local.x * scale.x, local.y * scale.y, local.z * scale.z}};
-          if (useRotation)
-          {
-            scaled = rot * scaled;
-          }
-          return (scaled + pos) * getGfxScale();
-        };
-
         for (uint16_t t = 0; t < meshCollider->triangleCount_; ++t)
         {
           int idxA = meshCollider->triangles_[t].indices[0];
           int idxB = meshCollider->triangles_[t].indices[1];
           int idxC = meshCollider->triangles_[t].indices[2];
 
-          fm_vec3_t v0 = toWorldMesh(meshCollider->vertices_[idxA]);
-          fm_vec3_t v1 = toWorldMesh(meshCollider->vertices_[idxB]);
-          fm_vec3_t v2 = toWorldMesh(meshCollider->vertices_[idxC]);
+          fm_vec3_t v0 = meshCollider->toWorldSpace(meshCollider->vertices_[idxA]) * getGfxScale();
+          fm_vec3_t v1 = meshCollider->toWorldSpace(meshCollider->vertices_[idxB]) * getGfxScale();
+          fm_vec3_t v2 = meshCollider->toWorldSpace(meshCollider->vertices_[idxC]) * getGfxScale();
 
           Debug::drawLine(v0, v1, color);
           Debug::drawLine(v1, v2, color);

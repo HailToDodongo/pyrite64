@@ -357,15 +357,15 @@ namespace P64::Coll {
     collider->recalculateWorldAabb();
   }
 
-  MeshCollider* MeshCollider::create(fm_vec3_t* vertices, uint16_t vertexCount, MeshTriangleIndices* triangleIndices, uint16_t triangleCount, Object *obj) {
-    if (!vertices || vertexCount == 0 || !triangleIndices || triangleCount == 0 || !obj) return nullptr;
+  MeshCollider* MeshCollider::create(fm_vec3_t* vertices, uint16_t vertexCount, MeshTriangleIndices* triangleIndices, uint16_t triangleCount, Object *owner) {
+    if (!vertices || vertexCount == 0 || !triangleIndices || triangleCount == 0) return nullptr;
 
     auto *collider = new MeshCollider();
     collider->vertices_ = vertices;
     collider->vertexCount_ = vertexCount;
     collider->triangles_ = triangleIndices;
     collider->triangleCount_ = triangleCount;
-    collider->owner_ = obj;
+    collider->owner_ = owner;
 
     collider->normals_ = new fm_vec3_t[triangleCount];
     for (uint16_t t = 0; t < triangleCount; ++t) {
