@@ -42,9 +42,11 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
   const float walkCos = fm_cosf(settings.floorMaxAngle);
   const bool wasOnFloor = onFloor;
   const bool wasOnSteepSurface = onSteepSurface;
+  const bool wasProbeFloor = probeFoundFloor;
   const fm_vec3_t up = vec3NormalizeOrFallback(settings.up, VEC3_UP);
   onSteepSurface = 0;
   snappedFloor = 0;
+  probeFoundFloor = 0;
 
   // Capsule geometry in physics units
   const float r   = settings.radius;
@@ -64,7 +66,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
   // Build per-frame velocity (same logic as before)
   auto horiz = inputVelocity - up * fm_vec3_dot(&inputVelocity, &up);
   float vAlongUp = fm_vec3_dot(&velocity, &up);
-  if(wasOnFloor && !wasOnSteepSurface) {
+  if(wasOnFloor && !wasOnSteepSurface && wasProbeFloor) {
     vAlongUp = fmaxf(vAlongUp, 0.0f);
   } else {
     vAlongUp -= settings.gravity * deltaTime;
@@ -74,7 +76,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
 
   // Reshape displacement for slope-following when grounded
   fm_vec3_t stepVel = velocity;
-  if(wasOnFloor && !wasOnSteepSurface) {
+  if(wasOnFloor && !wasOnSteepSurface && wasProbeFloor) {
     fm_vec3_t along = horiz - vec3Project(horiz, contactNormal);
     float horizLen2 = fm_vec3_len2(&horiz);
     float alongLen2 = fm_vec3_len2(&along);
@@ -178,8 +180,6 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
   onFloor = sweptWalkableFloor;
   if(sweptWalkableFloor) {
     contactNormal = sweptFloorNormal;
-    const float velUp = fm_vec3_dot(&velocity, &up);
-    if(velUp < 0.0f) velocity = velocity - up * velUp;
   }
   {
     const float halfHeight = fmaxf(settings.height * 0.5f, settings.radius);
@@ -227,6 +227,7 @@ void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
         }
         if(stick || landed) {
           onFloor = true;
+          probeFoundFloor = 1;
           contactNormal = vec3NormalizeOrFallback(hit.normal, up);
           velocity = velocity - up * fm_vec3_dot(&velocity, &up);
         }

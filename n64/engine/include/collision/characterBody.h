@@ -115,6 +115,7 @@ namespace P64::Coll
     uint8_t onFloor{};
     uint8_t onSteepSurface{};
     uint8_t snappedFloor{};
+    uint8_t probeFoundFloor{}; // set when floor probe confirms solid ground; gates gravity suppression
 
     /// Capsule center in physics-space, derived from owner's current position + offset.
     fm_vec3_t capsuleCenter() const;
