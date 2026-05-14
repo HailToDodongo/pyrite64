@@ -36,6 +36,20 @@ float CharacterBody::extentAlong(const fm_vec3_t& dir) const
   return alongUp * (halfHeight - r) + r;
 }
 
+void CharacterBody::teleport(const fm_vec3_t& ownerPos, bool resetForces)
+{
+  owner->pos = ownerPos;
+  if(resetForces) {
+    velocity       = VEC3_ZERO;
+    inputVelocity  = VEC3_ZERO;
+    onFloor        = 0;
+    onSteepSurface = 0;
+    snappedFloor   = 0;
+    probeFoundFloor = 0;
+    contactNormal  = vec3NormalizeOrFallback(settings.up, VEC3_UP);
+  }
+}
+
 void CharacterBody::moveAndSlide(float deltaTime, CollisionScene& scene)
 {
   const float gfxScale = getGfxScale();

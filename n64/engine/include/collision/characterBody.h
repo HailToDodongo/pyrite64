@@ -92,6 +92,17 @@ namespace P64::Coll
     bool didSnapToFloor() const { return snappedFloor; }
 
     /**
+     * Instantly moves the character to a new owner position.
+     * When resetForces is true (default), also zeroes velocity and clears the
+     * grounded state so the body starts clean, use this for respawning.
+     * When false, only the position changes (e.g. portal / seamless teleport).
+     *
+     * @param ownerPos New position in graphics space (same space as Object::pos).
+     * @param resetForces If true, zero velocity and clear grounded state.
+     */
+    void teleport(const fm_vec3_t& ownerPos, bool resetForces = true);
+
+    /**
      * Performs movement for the body.
      * Handles: gravity, sweeps, slides on hits,
      * snaps to floor, then writes the final position back to the owning Object.
