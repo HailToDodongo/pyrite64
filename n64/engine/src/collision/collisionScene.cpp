@@ -1501,8 +1501,10 @@ namespace P64::Coll {
 
     // Test mesh colliders
     if(hasFlag(ray.collTypes, RaycastColliderTypeFlags::MESH_COLLIDERS)) {
-      for(std::size_t m = 0; m < meshColliders_.size(); ++m) {
-        const MeshCollider *mesh = meshColliders_[m];
+      NodeProxy meshCandidates[RAYCAST_MAX_COLLIDER_TESTS];
+      int meshCount = meshColliderAABBTree.queryRay(ray, meshCandidates, RAYCAST_MAX_COLLIDER_TESTS);
+      for(int m = 0; m < meshCount; ++m) {
+        const MeshCollider* mesh = static_cast<const MeshCollider*>(meshColliderAABBTree.getNodeData(meshCandidates[m]));
         if(!mesh || mesh->triangleCount_ == 0) continue;
         Raycast localRay = ray;
         if(mesh->hasScale()) {
