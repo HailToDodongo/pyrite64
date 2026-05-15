@@ -827,6 +827,9 @@ namespace P64::Coll {
     std::vector<NodeProxy> candidates;
     candidates.resize(colliders_.size());
 
+    std::vector<NodeProxy> meshCandidates;
+    meshCandidates.resize(meshColliders_.size());
+
     for(RigidBody *body : rigidBodies_) {
       if(!body || body->isSleeping_ || body->isKinematic_) continue;
 
@@ -909,12 +912,18 @@ namespace P64::Coll {
         if (hit) break;
 
         // Broadphase + narrowphase against mesh colliders
-        for(MeshCollider *mesh : meshColliders_) {
-          if(!mesh || mesh->triangleCount_ <= 0) continue;
-          for(Collider *collider : *ownerColliders) {
-            if(!collider || !collider->owner_) continue;
+        for(Collider *collider : *ownerColliders) {
+          if(!collider || !collider->owner_) continue;
+          const int meshCandidateCount = meshColliderAABBTree.queryBounds(
+             collider->worldAabb_,
+             meshCandidates.data(),
+             static_cast<int>(meshCandidates.size()));
+          for(int m = 0; m < meshCandidateCount; ++m) {
+            void *data = meshColliderAABBTree.getNodeData(meshCandidates[m]);
+            if (!data) continue;
+            MeshCollider* mesh = static_cast<MeshCollider *>(data);
+            if(!mesh || mesh->triangleCount_ <= 0) continue;
             if(!collider->readsMeshCollider(mesh) && !mesh->readsCollider(collider)) continue;
-            if(!aabbOverlap(collider->worldAabb_, mesh->worldAabb_)) continue;
             if(collideDetectObjectToMesh(collider, body, *mesh, false)) {
               debugf("CCD substep %d/%d: body %u hit mesh %u", k, substeps, collider->owner_->id, mesh->owner_ ? static_cast<unsigned>(mesh->owner_->id) : 0u);
               hit = true;
