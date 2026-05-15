@@ -100,6 +100,7 @@ namespace P64::Coll {
     std::vector<ContactConstraint *> solverConstraints_{};
 
     AABBTree colliderAABBTree;
+    AABBTree meshColliderAABBTree;
 
     // Multiple mesh colliders
     std::vector<MeshCollider *> meshColliders_{};

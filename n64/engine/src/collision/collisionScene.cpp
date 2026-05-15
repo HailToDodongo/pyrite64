@@ -148,6 +148,7 @@ namespace P64::Coll {
 
   void CollisionScene::reset() {
     colliderAABBTree.destroy();
+    meshColliderAABBTree.destroy();
 
     rigidBodies_.clear();
     ownerRigidBodies_.clear();
@@ -174,6 +175,7 @@ namespace P64::Coll {
     ticksTotal = 0;
 
     colliderAABBTree.init(32); // Initial capacity (will grow as needed)
+    meshColliderAABBTree.init(32);
   }
 
   RigidBody *CollisionScene::findRigidBodyByOwner(const Object *owner) const {
@@ -373,6 +375,8 @@ namespace P64::Coll {
     mesh->syncOwnerTransform();
 
     meshColliders_.push_back(mesh);
+
+    mesh->aabbTreeNodeId_ = meshColliderAABBTree.createNode(mesh->worldAabb_, mesh);
   }
 
   void CollisionScene::removeMeshCollider(MeshCollider *mesh) {
@@ -391,6 +395,11 @@ namespace P64::Coll {
         meshColliders_.pop_back();
         break;
       }
+    }
+
+    if (mesh->aabbTreeNodeId_ != NULL_NODE) {
+      meshColliderAABBTree.removeLeaf(mesh->aabbTreeNodeId_, true);
+      mesh->aabbTreeNodeId_ = NULL_NODE;
     }
   }
 
@@ -1471,8 +1480,20 @@ namespace P64::Coll {
       mesh->transformChanged_ = mesh->hasOwnerTransformChanged();
       if(!mesh->transformChanged_ && mesh->hasCachedOwnerTransform_) continue;
 
+      fm_vec3_t prevOwnerPhysicsPos = mesh->owner_ ? mesh->owner_->pos * getInvGfxScale() : VEC3_ZERO;
+
       mesh->recalculateWorldAabb();
       mesh->syncOwnerTransform();
+
+      if (mesh->aabbTreeNodeId_ != NULL_NODE) {
+        if (mesh->owner_) {
+          fm_vec3_t ownerPhysicsPos = mesh->owner_->pos * getInvGfxScale();
+          const fm_vec3_t disp = ownerPhysicsPos - prevOwnerPhysicsPos;
+          meshColliderAABBTree.moveNode(mesh->aabbTreeNodeId_, mesh->worldAabb_, disp);
+        } else {
+          meshColliderAABBTree.moveNode(mesh->aabbTreeNodeId_, mesh->worldAabb_, VEC3_ZERO);
+        }
+      }
     }
   }
 
