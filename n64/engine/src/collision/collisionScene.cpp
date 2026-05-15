@@ -1011,40 +1011,33 @@ namespace P64::Coll {
     }
     ticksDetectBodyPairs = get_ticks() - bodyDetectStart;
 
+    std::vector<NodeProxy> candidateMeshColliders;
+    candidateMeshColliders.resize(meshColliders_.size());
+
     const uint64_t meshDetectStart = get_ticks();
-    for (std::size_t m = 0; m < meshColliders_.size(); ++m)
-    {
+    for (Collider *collider : colliders_) {
+      if (!collider || !collider->owner_) continue;
 
-      MeshCollider *mesh = meshColliders_[m];
+      RigidBody *rigidBodyA = findRigidBodyByOwner(collider->owner_);
 
-      if (!mesh || mesh->triangleCount_ <= 0)
-        continue;
+      if (!collider->isTrigger_ && rigidBodyA && rigidBodyA->isSleeping_) continue;
 
-      const int candidateCount = colliderAABBTree.queryBounds(
-          mesh->worldAabb_,
-          candidateColliders.data(),
-          static_cast<int>(candidateColliders.size()));
+      const int candidateCount = meshColliderAABBTree.queryBounds(
+          collider->worldAabb_,
+          candidateMeshColliders.data(),
+          static_cast<int>(candidateMeshColliders.size()));
 
-      for (int candidateIdx = 0; candidateIdx < candidateCount; ++candidateIdx)
-      {
-        void *data = colliderAABBTree.getNodeData(candidateColliders[candidateIdx]);
-        if (!data)
-          continue;
+      for (int candidateIdx = 0; candidateIdx < candidateCount; ++candidateIdx) {
+        void *data = meshColliderAABBTree.getNodeData(candidateMeshColliders[candidateIdx]);
+        if (!data) continue;
 
-        Collider *collA = static_cast<Collider *>(data);
-        if(!collA || !collA->owner_)
-          continue;
+        MeshCollider *meshA = static_cast<MeshCollider *>(data);
+        if (!meshA || meshA->triangleCount_ <= 0) continue;
 
-        if (!collA->readsMeshCollider(mesh) && !mesh->readsCollider(collA))
-          continue;
+        if (!meshA->readsCollider(collider) && !collider->readsMeshCollider(meshA)) continue;
 
-        RigidBody *rigidBodyA = findRigidBodyByOwner(collA->owner_);
-        //prevent perpetural collision checks of sleeping objects with meshes
-        if(!mesh->transformChanged_ && rigidBodyA && rigidBodyA->isSleeping_ && !collA->isTrigger_)
-          continue;
-        collideDetectObjectToMesh(collA, rigidBodyA, *mesh, true);
+        collideDetectObjectToMesh(collider, rigidBodyA, *meshA, true);
       }
-
     }
     ticksDetectMeshPairs = get_ticks() - meshDetectStart;
     //TODO: possibly offer mesh-mesh collision detection in the future, but not needed for current use cases
