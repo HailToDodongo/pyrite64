@@ -90,13 +90,6 @@ namespace P64::Coll
     bool isOnSteepSurface() const { return onSteepSurface; }
 
     /**
-     * Returns true if the body was snapped upwards to a floor (e.g. stairs) after the last 'moveAndSlide' call.
-     * It will reset automatically at the beginning of 'moveAndSlide'.
-     * @return true if snapped
-     */
-    bool didSnapToFloor() const { return snappedFloor; }
-
-    /**
      * Sets the body's up vector and refreshes some internal caches.
      * Use this instead of writing `settings.up` directly
      * The input does not need to be pre-normalized.
@@ -138,7 +131,6 @@ namespace P64::Coll
 
     uint8_t onFloor{};
     uint8_t onSteepSurface{};
-    uint8_t snappedFloor{};
     uint8_t probeFoundFloor{}; // set when floor probe confirms solid ground; gates gravity suppression
 
     Attach floorAttach{}; // tracks the contact point on the mesh stood on for followFloor

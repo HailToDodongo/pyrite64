@@ -22,6 +22,7 @@ namespace
   constexpr float CAM_PITCH_MAX = 70.0_deg;
 
   constinit uint64_t ticks{0};
+  constexpr fm_vec3_t PLANET_POS{0, 1300, 0};
 }
 
 namespace P64::Script::CD0A328E7EE01313
@@ -37,6 +38,8 @@ namespace P64::Script::CD0A328E7EE01313
     float camYawTarget;
     float camPitch;
     float camPitchTarget;
+    bool planetGravity;
+    fm_vec3_t currentUp;
   );
 
   void init(Object& obj, Data *data)
@@ -51,6 +54,8 @@ namespace P64::Script::CD0A328E7EE01313
     data->camForward      = {0.0f, 0.0f, 1.0f};
     data->lastVel = {};
     data->moveSpeedFactor = 1.0f;
+    data->planetGravity = false;
+    data->currentUp    = {0.0f, 1.0f, 0.0f};
   }
 
   void destroy(Object& obj, Data *data) {}
@@ -61,11 +66,21 @@ namespace P64::Script::CD0A328E7EE01313
 
     auto &body = obj.getComponent<P64::Comp::CharBody>()->getBody();
 
-    if(inp.btn.r) {
-      body.setUp(obj.pos);
-    } else {
-      body.setUp({0,1,0});
+    if(pressed.r) {
+      data->planetGravity = !data->planetGravity;
     }
+
+    constexpr float UP_TRANSITION_SPEED = 0.15f;
+    fm_vec3_t targetUp;
+    if(data->planetGravity) {
+      auto relPos =  obj.pos - PLANET_POS;
+      fm_vec3_norm(&targetUp, &relPos);
+    } else {
+      targetUp = {0.0f, 1.0f, 0.0f};
+    }
+    fm_vec3_lerp(&data->currentUp, &data->currentUp, &targetUp, UP_TRANSITION_SPEED);
+    fm_vec3_norm(&data->currentUp, &data->currentUp);
+    body.setUp(data->currentUp);
 
     const fm_vec3_t up = body.settings.up;
     fm_vec3_t forward0 = data->camForward - up * fm_vec3_dot(&data->camForward, &up);
@@ -218,7 +233,7 @@ namespace P64::Script::CD0A328E7EE01313
     Debug::printf(posX, posY, "State: %s %s %s",
       body.isOnFloor() ? "Floor" : "  -  ",
       body.isOnSteepSurface() ? "Steep" : "  -  ",
-      body.didSnapToFloor() ? "FSnap" : "  -  "
+      data->planetGravity ? "Planet" : "  -  "
     );
     posY -= 9;
     Debug::printf(posX, posY, "T: %lldus", TICKS_TO_US(ticks));

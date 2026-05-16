@@ -63,7 +63,6 @@ void CharacterBody::teleport(const fm_vec3_t& ownerPos, bool resetForces)
     inputVelocity  = VEC3_ZERO;
     onFloor        = 0;
     onSteepSurface = 0;
-    snappedFloor   = 0;
     probeFoundFloor = 0;
     contactNormal  = vec3NormalizeOrFallback(settings.up, VEC3_UP);
   }
@@ -79,7 +78,6 @@ void CharacterBody::moveAndSlide(float deltaTime)
   const bool wasProbeFloor = probeFoundFloor;
   const fm_vec3_t up = vec3NormalizeOrFallback(settings.up, VEC3_UP);
   onSteepSurface = 0;
-  snappedFloor = 0;
   probeFoundFloor = 0;
 
   // Track transform of object you are standing on (tracked at foot-position).
