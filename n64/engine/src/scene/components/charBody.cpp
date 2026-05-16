@@ -37,23 +37,23 @@ namespace P64::Comp
 
     InitData* initData = static_cast<InitData*>(initData_);
 
-    // Placement-new with the owning object
+    // Placement-new with the owning object, then apply editor settings
     data->body = Coll::CharacterBody{&obj};
-
-    // Apply settings from the editor
-    data->body.settings.up               = initData->up;
-    data->body.settings.centerOffset     = initData->centerOffset;
-    data->body.settings.gravity          = initData->gravity;
-    data->body.settings.maxFallSpeed     = initData->maxFallSpeed;
-    data->body.settings.floorMaxAngle    = initData->floorMaxAngle;
-    data->body.settings.stepHeight       = initData->stepHeight;
-    data->body.settings.floorSnapDistance = initData->floorSnapDistance;
-    data->body.settings.radius           = initData->radius;
-    data->body.settings.height           = initData->height;
-    data->body.settings.collTypes        = static_cast<Coll::RaycastColliderTypeFlags>(initData->collTypes);
-    data->body.settings.maxSlides        = initData->maxSlides;
-    data->body.settings.readMask         = initData->readMask;
-    data->body.settings.followFloor      = initData->followFloor;
+    data->body.configure({
+      .up               = initData->up,
+      .centerOffset     = initData->centerOffset,
+      .gravity          = initData->gravity,
+      .maxFallSpeed     = initData->maxFallSpeed,
+      .floorMaxAngle    = initData->floorMaxAngle,
+      .stepHeight       = initData->stepHeight,
+      .floorSnapDistance = initData->floorSnapDistance,
+      .radius           = initData->radius,
+      .height           = initData->height,
+      .collTypes        = static_cast<Coll::RaycastColliderTypeFlags>(initData->collTypes),
+      .maxSlides        = initData->maxSlides,
+      .readMask         = initData->readMask,
+      .followFloor      = static_cast<bool>(initData->followFloor),
+    });
   }
 
   void CharBody::update(Object& obj, CharBody* data, float deltaTime)

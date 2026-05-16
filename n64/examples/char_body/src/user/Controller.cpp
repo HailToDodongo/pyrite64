@@ -82,7 +82,7 @@ namespace P64::Script::CD0A328E7EE01313
     fm_vec3_norm(&data->currentUp, &data->currentUp);
     body.setUp(data->currentUp);
 
-    const fm_vec3_t up = body.settings.up;
+    const fm_vec3_t up = body.getSettings().up;
     fm_vec3_t forward0 = data->camForward - up * fm_vec3_dot(&data->camForward, &up);
     float fwdLen2 = fm_vec3_len2(&forward0);
     if(fwdLen2 < 1e-4f) {
@@ -139,7 +139,7 @@ namespace P64::Script::CD0A328E7EE01313
     if(obj.pos.y < -750.0f) body.teleport({0, 100, 0});
 
     const bool grounded = body.isOnFloor();
-    const fm_vec3_t bodyUp = body.settings.up;
+    const fm_vec3_t bodyUp = body.getSettings().up;
 
     body.inputVelocity = data->lastVel;
 

@@ -51,7 +51,14 @@ namespace P64::Coll
 
     CharacterBody(Object* owner_);
 
-    Settings settings{};
+    /**
+     * Applies settings in bulk (e.g. from editor init data).
+     * Refreshes all internal caches derived from settings.
+     */
+    void configure(const Settings& s);
+
+    /// Read-only access to current settings.
+    const Settings& getSettings() const { return settings; }
 
     /// velocity to be applied during the next 'moveAndSlide' call.
     fm_vec3_t inputVelocity{};
@@ -90,12 +97,17 @@ namespace P64::Coll
     bool isOnSteepSurface() const { return onSteepSurface; }
 
     /**
-     * Sets the body's up vector and refreshes some internal caches.
-     * Use this instead of writing `settings.up` directly
+     * Sets the body's up vector and refreshes internal caches.
      * The input does not need to be pre-normalized.
      * @param newUp new up direction
      */
     void setUp(const fm_vec3_t& newUp);
+
+    /**
+     * Sets the center offset and refreshes the cached rotated offset.
+     * @param offset offset in meters from the object origin to the capsule center
+     */
+    void setCenterOffset(const fm_vec3_t& offset);
 
     /**
      * Instantly moves the character to a new owner position.
@@ -124,10 +136,18 @@ namespace P64::Coll
     void debugDraw() const;
 
   private:
+    void refreshCache();
+
+    Settings settings{};
     fm_vec3_t velocity{};
     fm_vec3_t contactNormal{};
-    fm_vec3_t cachedCenterOffset{};
     Object* owner; // Note: we can't use a reference since it prevents a copy-constructor
+
+    // Cached derived values (refreshed by configure/setUp/setCenterOffset)
+    fm_vec3_t normUp{0, 1, 0};              // normalized settings.up
+    fm_vec3_t cachedCenterOffset{};          // settings.centerOffset rotated from +Y-up to normUp
+    float halfHeight{1.0f};                  // max(height/2, radius)
+    float innerHalfHeight{0.5f};             // halfHeight - radius
 
     uint8_t onFloor{};
     uint8_t onSteepSurface{};

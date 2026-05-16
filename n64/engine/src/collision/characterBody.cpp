@@ -20,25 +20,47 @@ CharacterBody::CharacterBody(Object *owner_)
 {
   inputVelocity = VEC3_ZERO;
   velocity = VEC3_ZERO;
-  contactNormal = vec3NormalizeOrFallback(settings.up, VEC3_UP);
   onFloor = false;
   onSteepSurface = false;
-  setUp(settings.up); // initialize upQuat from the default settings.up
+  refreshCache();
+  contactNormal = normUp;
+}
+
+void CharacterBody::configure(const Settings& s)
+{
+  settings = s;
+  refreshCache();
+  contactNormal = normUp;
+}
+
+void CharacterBody::refreshCache()
+{
+  normUp = vec3NormalizeOrFallback(settings.up, VEC3_UP);
+
+  // Rotate centerOffset from its authored +Y-up space to the current up.
+  fm_quat_t q;
+  if(normUp.y < -0.9999f) {
+    q = {1.0f, 0.0f, 0.0f, 0.0f};
+  } else {
+    q = {normUp.z, 0.0f, -normUp.x, 1.0f + normUp.y};
+    fm_quat_norm(&q, &q);
+  }
+  cachedCenterOffset = q * settings.centerOffset;
+
+  halfHeight = fmaxf(settings.height * 0.5f, settings.radius);
+  innerHalfHeight = halfHeight - settings.radius;
 }
 
 void CharacterBody::setUp(const fm_vec3_t& newUp)
 {
-  const fm_vec3_t up = vec3NormalizeOrFallback(newUp, VEC3_UP);
-  settings.up = up;
-  // Rotate centerOffset from its authored +Y-up space to the current up.
-  fm_quat_t q;
-  if(up.y < -0.9999f) {
-    q = {1.0f, 0.0f, 0.0f, 0.0f};
-  } else {
-    q = {up.z, 0.0f, -up.x, 1.0f + up.y};
-    fm_quat_norm(&q, &q);
-  }
-  cachedCenterOffset = q * settings.centerOffset;
+  settings.up = vec3NormalizeOrFallback(newUp, VEC3_UP);
+  refreshCache();
+}
+
+void CharacterBody::setCenterOffset(const fm_vec3_t& offset)
+{
+  settings.centerOffset = offset;
+  refreshCache();
 }
 
 fm_vec3_t CharacterBody::capsuleCenter() const
@@ -48,11 +70,8 @@ fm_vec3_t CharacterBody::capsuleCenter() const
 
 float CharacterBody::extentAlong(const fm_vec3_t& dir) const
 {
-  const fm_vec3_t up = vec3NormalizeOrFallback(settings.up, VEC3_UP);
-  const float r = settings.radius;
-  const float halfHeight = fmaxf(settings.height * 0.5f, r);
-  const float alongUp = fabsf(fm_vec3_dot(&dir, &up));
-  return alongUp * (halfHeight - r) + r;
+  const float alongUp = fabsf(fm_vec3_dot(&dir, &normUp));
+  return alongUp * innerHalfHeight + settings.radius;
 }
 
 void CharacterBody::teleport(const fm_vec3_t& ownerPos, bool resetForces)
@@ -64,7 +83,7 @@ void CharacterBody::teleport(const fm_vec3_t& ownerPos, bool resetForces)
     onFloor        = 0;
     onSteepSurface = 0;
     probeFoundFloor = 0;
-    contactNormal  = vec3NormalizeOrFallback(settings.up, VEC3_UP);
+    contactNormal  = normUp;
   }
 }
 
@@ -76,23 +95,22 @@ void CharacterBody::moveAndSlide(float deltaTime)
   const bool wasOnFloor = onFloor;
   const bool wasOnSteepSurface = onSteepSurface;
   const bool wasProbeFloor = probeFoundFloor;
-  const fm_vec3_t up = vec3NormalizeOrFallback(settings.up, VEC3_UP);
+  const fm_vec3_t& up = normUp;
   onSteepSurface = 0;
   probeFoundFloor = 0;
 
   // Track transform of object you are standing on (tracked at foot-position).
   // This is applied before anything else
   if(settings.followFloor) {
-    const float footHH = fmaxf(settings.height * 0.5f, settings.radius);
-    const fm_vec3_t foot = capsuleCenter() - up * footHH;
+    const fm_vec3_t foot = capsuleCenter() - up * halfHeight;
     fm_vec3_t carryDiff = floorAttach.update(foot);
     owner->pos = owner->pos - carryDiff * gfxScale;
   }
 
   // Capsule geometry in physics units
   const float r   = settings.radius;
-  const float hh  = fmaxf(settings.height * 0.5f, r); // total half-height
-  const float ih  = hh - r;                            // inner (cylindrical) half-height
+  const float hh  = halfHeight;
+  const float ih  = innerHalfHeight;
 
   // Shorten the physics capsule from the bottom by stepHeight so that stair
   // risers below that height are invisible to the sweep. The floor snap corrects
@@ -324,7 +342,6 @@ void CharacterBody::moveAndSlide(float deltaTime)
     contactNormal = sweptFloorNormal;
   }
   {
-    const float halfHeight = fmaxf(settings.height * 0.5f, settings.radius);
     const float maxSnap = settings.floorSnapDistance;
     const float effectiveReach = halfHeight;
     const fm_vec3_t origin = capsuleCenter();
@@ -398,10 +415,10 @@ void CharacterBody::moveAndSlide(float deltaTime)
 void CharacterBody::debugDraw() const
 {
   const float gfxScale = getGfxScale();
-  const fm_vec3_t up = vec3NormalizeOrFallback(settings.up, VEC3_UP);
+  const fm_vec3_t& up = normUp;
   const float r    = settings.radius;
-  const float hh   = fmaxf(settings.height * 0.5f, r);
-  const float ih   = hh - r;
+  const float hh   = halfHeight;
+  const float ih   = innerHalfHeight;
   const float stepH   = fminf(fminf(settings.stepHeight, ih), settings.floorSnapDistance);
   const float ih_phys = ih - stepH;
 
