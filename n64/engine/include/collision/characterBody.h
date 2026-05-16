@@ -97,6 +97,14 @@ namespace P64::Coll
     bool didSnapToFloor() const { return snappedFloor; }
 
     /**
+     * Sets the body's up vector and refreshes some internal caches.
+     * Use this instead of writing `settings.up` directly
+     * The input does not need to be pre-normalized.
+     * @param newUp new up direction
+     */
+    void setUp(const fm_vec3_t& newUp);
+
+    /**
      * Instantly moves the character to a new owner position.
      * When resetForces is true (default), also zeroes velocity and clears the
      * grounded state so the body starts clean, use this for respawning.
@@ -125,6 +133,7 @@ namespace P64::Coll
   private:
     fm_vec3_t velocity{};
     fm_vec3_t contactNormal{};
+    fm_vec3_t cachedCenterOffset{};
     Object* owner; // Note: we can't use a reference since it prevents a copy-constructor
 
     uint8_t onFloor{};

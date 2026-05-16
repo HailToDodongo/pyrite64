@@ -23,11 +23,27 @@ CharacterBody::CharacterBody(Object *owner_)
   contactNormal = vec3NormalizeOrFallback(settings.up, VEC3_UP);
   onFloor = false;
   onSteepSurface = false;
+  setUp(settings.up); // initialize upQuat from the default settings.up
+}
+
+void CharacterBody::setUp(const fm_vec3_t& newUp)
+{
+  const fm_vec3_t up = vec3NormalizeOrFallback(newUp, VEC3_UP);
+  settings.up = up;
+  // Rotate centerOffset from its authored +Y-up space to the current up.
+  fm_quat_t q;
+  if(up.y < -0.9999f) {
+    q = {1.0f, 0.0f, 0.0f, 0.0f};
+  } else {
+    q = {up.z, 0.0f, -up.x, 1.0f + up.y};
+    fm_quat_norm(&q, &q);
+  }
+  cachedCenterOffset = q * settings.centerOffset;
 }
 
 fm_vec3_t CharacterBody::capsuleCenter() const
 {
-  return owner->pos * getInvGfxScale() + settings.centerOffset;
+  return owner->pos * getInvGfxScale() + cachedCenterOffset;
 }
 
 float CharacterBody::extentAlong(const fm_vec3_t& dir) const
@@ -94,7 +110,9 @@ void CharacterBody::moveAndSlide(float deltaTime)
   auto horiz = inputVelocity - up * fm_vec3_dot(&inputVelocity, &up);
   float vAlongUp = fm_vec3_dot(&velocity, &up);
   if(wasOnFloor && !wasOnSteepSurface && wasProbeFloor) {
-    vAlongUp = fmaxf(vAlongUp, 0.0f);
+    // handle cases where the up-vector changes between frames and causes a bit of noise in the ground detection
+    constexpr float UP_IMPULSE_THRESHOLD = 0.5f;
+    vAlongUp = (vAlongUp > UP_IMPULSE_THRESHOLD) ? vAlongUp : 0.0f;
   } else {
     vAlongUp -= settings.gravity * deltaTime;
   }
@@ -327,7 +345,6 @@ void CharacterBody::moveAndSlide(float deltaTime)
 
       bool inSnapRange = clearance <= maxSnap && clearance >= -maxSnap;
 
-      bool liftApplied = false;
       float effectiveClearance = clearance;
       if(inSnapRange && supportSurface && clearance < 0.0f) {
         const float velUp = fm_vec3_dot(&velocity, &up);
@@ -338,15 +355,18 @@ void CharacterBody::moveAndSlide(float deltaTime)
           effectiveClearance = 0;
           // Only zero falling velocity for walkable surfaces; steep surfaces must let gravity accumulate.
           if(velUp < 0.0f && hitNormalUp >= walkCos) velocity = velocity - up * velUp;
-          liftApplied = true;
         }
       }
 
       if(inSnapRange && hitNormalUp >= walkCos) {
         const float velUp = fm_vec3_dot(&velocity, &up);
 
-        const bool stick  = wasOnFloor && velUp <= 0.0f;
-        const bool landed = !wasOnFloor && velUp <= 0.0f && effectiveClearance == 0;
+        // more handling if the up-vector changes across frames
+        constexpr float STICK_VEL_THRESHOLD = 0.5f;
+        const float stickVelUp = (fabsf(velUp) < STICK_VEL_THRESHOLD) ? 0.0f : velUp;
+
+        const bool stick  = wasOnFloor && stickVelUp <= 0.0f;
+        const bool landed = !wasOnFloor && stickVelUp <= 0.0f && effectiveClearance == 0;
 
         if(stick) {
           const float delta = effectiveClearance;
@@ -356,7 +376,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
         }
         if(stick || landed) {
           onFloor = true;
-          if(!liftApplied) probeFoundFloor = 1;
+          probeFoundFloor = 1;
           contactNormal = vec3NormalizeOrFallback(hit.normal, up);
           velocity = velocity - up * fm_vec3_dot(&velocity, &up);
 
