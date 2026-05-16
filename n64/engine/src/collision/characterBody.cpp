@@ -8,6 +8,7 @@
 #include "scene/sceneManager.h"
 #include "scene/scene.h"
 #include "scene/object.h"
+#include "scene/components/collMesh.h"
 #include "debug/debugDraw.h"
 
 #include <cmath>
@@ -65,6 +66,15 @@ void CharacterBody::moveAndSlide(float deltaTime)
   snappedFloor = 0;
   probeFoundFloor = 0;
 
+  // Track transform of object you are standing on (tracked at foot-position).
+  // This is applied before anything else
+  if(settings.followFloor) {
+    const float footHH = fmaxf(settings.height * 0.5f, settings.radius);
+    const fm_vec3_t foot = capsuleCenter() - up * footHH;
+    fm_vec3_t carryDiff = floorAttach.update(foot);
+    owner->pos = owner->pos - carryDiff * gfxScale;
+  }
+
   // Capsule geometry in physics units
   const float r   = settings.radius;
   const float hh  = fmaxf(settings.height * 0.5f, r); // total half-height
@@ -80,7 +90,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
   const float stepH   = fminf(fminf(settings.stepHeight, ih), settings.floorSnapDistance);
   const float ih_phys = ih - stepH;
 
-  // Build per-frame velocity (same logic as before)
+  // Build per-frame velocity
   auto horiz = inputVelocity - up * fm_vec3_dot(&inputVelocity, &up);
   float vAlongUp = fm_vec3_dot(&velocity, &up);
   if(wasOnFloor && !wasOnSteepSurface && wasProbeFloor) {
@@ -349,6 +359,14 @@ void CharacterBody::moveAndSlide(float deltaTime)
           if(!liftApplied) probeFoundFloor = 1;
           contactNormal = vec3NormalizeOrFallback(hit.normal, up);
           velocity = velocity - up * fm_vec3_dot(&velocity, &up);
+
+          if(settings.followFloor && hit.hitObjectId != 0) {
+            auto* floorObj = SceneManager::getCurrent().getObjectById(hit.hitObjectId);
+            auto* floorMesh = floorObj ? floorObj->getComponent<Comp::CollMesh>() : nullptr;
+            if(floorMesh && floorMesh->meshCollider) {
+              floorAttach.setReference(floorMesh->meshCollider);
+            }
+          }
         }
       } else if(inSnapRange && supportSurface) {
         onFloor = true;

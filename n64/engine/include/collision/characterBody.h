@@ -7,6 +7,7 @@
 #include "vecMath.h"
 #include "raycast.h"
 #include "collisionScene.h"
+#include "attach.h"
 
 namespace P64
 {
@@ -42,6 +43,10 @@ namespace P64::Coll
       RaycastColliderTypeFlags collTypes{RaycastColliderTypeFlags::MESH_COLLIDERS};
       uint8_t maxSlides{4};            // Slide iterations per move
       uint8_t readMask{0xFF};
+      /// When true, position is carried along with the mesh collider currently
+      /// stood on (translation + rotation of the contact point). The character's
+      /// own facing is not changed.
+      bool followFloor{true};
     };
 
     CharacterBody(Object* owner_);
@@ -126,6 +131,8 @@ namespace P64::Coll
     uint8_t onSteepSurface{};
     uint8_t snappedFloor{};
     uint8_t probeFoundFloor{}; // set when floor probe confirms solid ground; gates gravity suppression
+
+    Attach floorAttach{}; // tracks the contact point on the mesh stood on for followFloor
 
     /// Capsule center in physics-space, derived from owner's current position + offset.
     fm_vec3_t capsuleCenter() const;

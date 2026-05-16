@@ -1,7 +1,7 @@
 {
   "collLayer0": "Solid",
   "collLayer1": "Player",
-  "collLayer2": "",
+  "collLayer2": "Objects",
   "collLayer3": "",
   "collLayer4": "",
   "collLayer5": "",

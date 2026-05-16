@@ -36,6 +36,7 @@ namespace Project::Component::CharBody
     PROP_U32(collTypes);
     PROP_U32(maxSlides);
     PROP_U32(readMask);
+    PROP_BOOL(followFloor);
   };
 
   std::shared_ptr<Data> makeDefault() {
@@ -52,6 +53,7 @@ namespace Project::Component::CharBody
     data->collTypes.value     = COLLTYPE_MESH;
     data->maxSlides.value     = 4;
     data->readMask.value      = 0x1;
+    data->followFloor.value   = true;
     return data;
   }
 
@@ -76,6 +78,7 @@ namespace Project::Component::CharBody
       .set(data.collTypes)
       .set(data.maxSlides)
       .set(data.readMask)
+      .set(data.followFloor)
       .doc;
   }
 
@@ -93,6 +96,7 @@ namespace Project::Component::CharBody
     Utils::JSON::readProp(doc, data->collTypes,       data->collTypes.value);
     Utils::JSON::readProp(doc, data->maxSlides,       data->maxSlides.value);
     Utils::JSON::readProp(doc, data->readMask,        data->readMask.value);
+    Utils::JSON::readProp(doc, data->followFloor,     data->followFloor.value);
     return data;
   }
 
@@ -111,6 +115,7 @@ namespace Project::Component::CharBody
     ctx.fileObj.write<uint8_t>(data.collTypes.resolve(obj.propOverrides));
     ctx.fileObj.write<uint8_t>(data.maxSlides.resolve(obj.propOverrides));
     ctx.fileObj.write<uint8_t>(data.readMask.resolve(obj.propOverrides));
+    ctx.fileObj.write<uint8_t>(data.followFloor.resolve(obj.propOverrides) ? 1 : 0);
   }
 
   void draw(Object &obj, Entry &entry)
@@ -161,6 +166,8 @@ namespace Project::Component::CharBody
         slideInt = std::clamp(slideInt, 1, 8);
         slides = (uint32_t)slideInt;
       }
+
+      ImTable::addObjProp("Follow Floor", data.followFloor);
 
       ImTable::addObjProp("Up Direction", data.up);
 

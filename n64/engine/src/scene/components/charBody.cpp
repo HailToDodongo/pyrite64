@@ -22,6 +22,7 @@ namespace
     uint8_t collTypes{};
     uint8_t maxSlides{};
     uint8_t readMask{};
+    uint8_t followFloor{};
   };
 }
 
@@ -52,6 +53,7 @@ namespace P64::Comp
     data->body.settings.collTypes        = static_cast<Coll::RaycastColliderTypeFlags>(initData->collTypes);
     data->body.settings.maxSlides        = initData->maxSlides;
     data->body.settings.readMask         = initData->readMask;
+    data->body.settings.followFloor      = initData->followFloor;
   }
 
   void CharBody::update(Object& obj, CharBody* data, float deltaTime)
