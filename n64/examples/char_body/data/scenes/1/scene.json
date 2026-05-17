@@ -333,6 +333,103 @@
         "uuidPrefab": 0
       },
       {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "",
+              "model": 4514132608101242667
+            },
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 1194680501142561258
+          },
+          {
+            "data": {
+              "maskRead": 1,
+              "maskWrite": 1,
+              "meshFilter": "",
+              "modelUUID": 4514132608101242667
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 16815571183072908429
+          },
+          {
+            "data": {
+              "halfExtend": [
+                750.0,
+                750.0,
+                750.0
+              ],
+              "offset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "type": 1
+            },
+            "id": 8,
+            "name": "Culling",
+            "uuid": 16943345445275424312
+          }
+        ],
+        "enabled": true,
+        "id": 13,
+        "name": "Planet",
+        "pos": [
+          0.0,
+          1300.0,
+          0.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.350000023841858,
+          1.350000023841858,
+          1.350000023841858
+        ],
+        "selectable": false,
+        "uuid": 2382657976,
+        "uuidPrefab": 0
+      },
+      {
         "children": [
           {
             "children": [],
