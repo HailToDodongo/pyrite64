@@ -1635,13 +1635,16 @@ namespace P64::Coll {
     constexpr int MAX_TRI = 64;
     NodeProxy triCandidates[MAX_TRI];
 
+    constexpr int MAX_MESH_CANDIDATES = 32;
+    NodeProxy meshCandidates[MAX_MESH_CANDIDATES];
+
     CapsuleSweepHit candidate{};
 
-    for (const MeshCollider* mesh : meshColliders_) {
+    int meshCount = meshColliderAABBTree.queryBounds(sweptBox, meshCandidates, MAX_MESH_CANDIDATES);
+    for (int m = 0; m < meshCount; ++m) {
+      const MeshCollider* mesh = static_cast<const MeshCollider*>(
+        meshColliderAABBTree.getNodeData(meshCandidates[m]));
       if (!mesh || mesh->triangleCount() == 0 || !mesh->ownerObject()) continue;
-
-      // Broad-phase: world AABB of mesh vs. swept AABB
-      if (!aabbOverlap(mesh->worldAabb(), sweptBox)) continue;
 
       // Query mesh-local AABB tree with the swept box converted to local space
       AABB localSweptBox = mesh->worldAabbToLocal(sweptBox);
