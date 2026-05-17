@@ -49,11 +49,14 @@ void CharacterBody::refreshCache()
 
   halfHeight = fmaxf(settings.height * 0.5f, settings.radius);
   innerHalfHeight = halfHeight - settings.radius;
+  walkCos = fm_cosf(settings.floorMaxAngle);
 }
 
 void CharacterBody::setUp(const fm_vec3_t& newUp)
 {
-  settings.up = vec3NormalizeOrFallback(newUp, VEC3_UP);
+  const fm_vec3_t up = vec3NormalizeOrFallback(newUp, VEC3_UP);
+  if(fm_vec3_dot(&up, &normUp) > 0.9999f) return;
+  settings.up = up;
   refreshCache();
 }
 
@@ -91,7 +94,6 @@ void CharacterBody::moveAndSlide(float deltaTime)
 {
   CollisionScene& scene = SceneManager::getCurrent().getCollision();
   const float gfxScale = getGfxScale();
-  const float walkCos = fm_cosf(settings.floorMaxAngle);
   const bool wasOnFloor = onFloor;
   const bool wasOnSteepSurface = onSteepSurface;
   const bool wasProbeFloor = probeFoundFloor;
@@ -109,7 +111,6 @@ void CharacterBody::moveAndSlide(float deltaTime)
 
   // Capsule geometry in physics units
   const float r   = settings.radius;
-  const float hh  = halfHeight;
   const float ih  = innerHalfHeight;
 
   // Shorten the physics capsule from the bottom by stepHeight so that stair
@@ -138,7 +139,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
   // Reshape displacement for slope-following when grounded
   fm_vec3_t stepVel = velocity;
   if(wasOnFloor && !wasOnSteepSurface && wasProbeFloor) {
-    fm_vec3_t along = horiz - vec3Project(horiz, contactNormal);
+    fm_vec3_t along = horiz - vec3ProjectOntoUnit(horiz, contactNormal);
     float horizLen2 = fm_vec3_len2(&horiz);
     float alongLen2 = fm_vec3_len2(&along);
     if(horizLen2 > FM_EPSILON * FM_EPSILON && alongLen2 > FM_EPSILON * FM_EPSILON) {
@@ -177,7 +178,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
     if(hit.t <= 0.0f) {
       constexpr float MAX_DEPEN = 0.05f; // metres per iteration
       float pushOut = fminf(hit.depth + FM_EPSILON, MAX_DEPEN);
-      fm_vec3_t pushDir = vec3NormalizeOrFallback(hit.normal, up);
+      fm_vec3_t pushDir = vec3AssumeNormalized(hit.normal, up);
       const float pushUp = fm_vec3_dot(&pushDir, &up);
       if(pushUp > FM_EPSILON) {
         pushDir = pushDir - up * pushUp;
@@ -232,9 +233,9 @@ void CharacterBody::moveAndSlide(float deltaTime)
     float allowed = hit.t * dispLen;
     owner->pos = owner->pos + displacement / dispLen * (allowed * gfxScale);
 
-    fm_vec3_t normal = vec3NormalizeOrFallback(hit.normal, up);
+    fm_vec3_t normal = vec3AssumeNormalized(hit.normal, up);
     fm_vec3_t remaining = displacement / dispLen * (dispLen - allowed);
-    fm_vec3_t slide = remaining - vec3Project(remaining, normal);
+    fm_vec3_t slide = remaining - vec3ProjectOntoUnit(remaining, normal);
 
     const float normalUp = fm_vec3_dot(&normal, &up);
     const float dirUp = fm_vec3_dot(&displacement, &up) / dispLen;
@@ -303,7 +304,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
       );
       if(!hasOverlap || depHit.depth <= FM_EPSILON) break;
 
-      const fm_vec3_t origN = vec3NormalizeOrFallback(depHit.normal, up);
+      const fm_vec3_t origN = vec3AssumeNormalized(depHit.normal, up);
       const float normalUp = fm_vec3_dot(&origN, &up);
       // Skip floors — handled by floor snap below
       if(normalUp > FM_EPSILON) break;
@@ -392,7 +393,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
         if(stick || landed) {
           onFloor = true;
           probeFoundFloor = 1;
-          contactNormal = vec3NormalizeOrFallback(hit.normal, up);
+          contactNormal = vec3AssumeNormalized(hit.normal, up);
           velocity = velocity - up * fm_vec3_dot(&velocity, &up);
 
           if(settings.followFloor && hit.hitObjectId != 0) {
@@ -406,7 +407,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
       } else if(inSnapRange && supportSurface) {
         onFloor = true;
         onSteepSurface = true;
-        contactNormal = vec3NormalizeOrFallback(hit.normal, up);
+        contactNormal = vec3AssumeNormalized(hit.normal, up);
       }
     }
   }

@@ -31,6 +31,12 @@ namespace P64::Coll {
     return fallback;
   }
 
+  /// Use when the vector is already known to be unit-length (e.g. hit normals from
+  /// capsule sweeps / raycasts). Only falls back for degenerate (zero) vectors.
+  inline fm_vec3_t vec3AssumeNormalized(const fm_vec3_t &n, const fm_vec3_t &fallback) {
+    return fm_vec3_len2(&n) > FM_EPSILON * FM_EPSILON ? n : fallback;
+  }
+
   inline fm_vec3_t vec3Perpendicular(const fm_vec3_t &a) {
     fm_vec3_t temp;
     if(fabsf(a.x) > fabsf(a.z)) {
@@ -91,6 +97,11 @@ namespace P64::Coll {
     if (m < FM_EPSILON)
       return VEC3_ZERO;
     return onto * (d / m);
+  }
+
+  /// Projects v onto an already-unit-length vector onto.
+  inline fm_vec3_t vec3ProjectOntoUnit(const fm_vec3_t &v, const fm_vec3_t &onto) {
+    return onto * fm_vec3_dot(&v, &onto);
   }
 
 

@@ -148,6 +148,7 @@ namespace P64::Coll
     fm_vec3_t cachedCenterOffset{};          // settings.centerOffset rotated from +Y-up to normUp
     float halfHeight{1.0f};                  // max(height/2, radius)
     float innerHalfHeight{0.5f};             // halfHeight - radius
+    float walkCos{0.707f};                   // cos(floorMaxAngle), used every frame
 
     uint8_t onFloor{};
     uint8_t onSteepSurface{};
