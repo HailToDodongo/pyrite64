@@ -32,6 +32,50 @@ namespace
   DragDropTask dragDropTask{};
 
   /**
+   * Builds the icon prefix shown before the node name in the scene tree.
+   *
+   * The prefix may contain the prefab marker plus either the first component icon or a fallback icon.
+   *
+   * @param obj Scene object whose tree-row icons will be generated.
+   * @return Concatenated icon string displayed before the node name.
+   */
+  std::string getNodeIcons(const Project::Object &obj)
+  {
+    std::string prefix{};
+
+    // Is a prefab --> Add prefab icon
+    if(obj.uuidPrefab.value)
+      prefix += ICON_MDI_PACKAGE_VARIANT_CLOSED " ";
+
+    bool gotComponentIcon = false;
+    // The object has components
+    if (!obj.components.empty()) {
+      // Reuse the first component icon so the node hints at its main role
+      const Project::Component::Entry &compEntry = obj.components.front();
+
+      // Is a valid component
+      if (compEntry.id >= 0 && (size_t)compEntry.id < Project::Component::TABLE.size()) {
+        const Project::Component::CompInfo &def = Project::Component::TABLE[compEntry.id];
+
+        // The component has a custom icon --> Use it
+        if (def.icon) {
+          prefix += def.icon;
+          gotComponentIcon = true;
+        }
+      }
+    }
+
+    // Couldn't get a component icon --> Fall back to a root icon or a generic cube icon
+    if (!gotComponentIcon) {
+      prefix += (obj.parent == nullptr)
+        ? ICON_MDI_MOVIE_OPEN_OUTLINE " "
+        : ICON_MDI_CUBE_OUTLINE " ";
+    }
+
+    return prefix;
+  }
+
+  /**
    * Computes the horizontal area reserved for the controls at the right side of a row.
    *
    * @return Width that must remain free at the right side of the row.
@@ -151,6 +195,7 @@ namespace
     ImVec2 renamePos = nodeRectMin;
     const ImGuiStyle& style = ImGui::GetStyle();
     renamePos.x += ImGui::GetTreeNodeToLabelSpacing() / 2 - style.FramePadding.x + 2;
+    renamePos.x += ImGui::CalcTextSize(getNodeIcons(obj).c_str()).x;
     renamePos.y -= 1;
     ImGui::SetCursorScreenPos(renamePos);
 
@@ -219,27 +264,7 @@ namespace
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 3_px));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
 
-    std::string nameID{};
-    if(obj.uuidPrefab.value) {
-      nameID += ICON_MDI_PACKAGE_VARIANT_CLOSED " ";
-    }
-    bool gotComponentIcon = false;
-    if (!obj.components.empty()) {
-      const auto &compEntry = obj.components.front();
-      if (compEntry.id >= 0 && (size_t)compEntry.id < Project::Component::TABLE.size()) {
-        const auto &def = Project::Component::TABLE[compEntry.id];
-        if (def.icon) {
-          nameID += def.icon;
-          gotComponentIcon = true;
-        }
-      }
-    }
-    if (!gotComponentIcon) {
-      nameID += (obj.parent == nullptr)
-        ? ICON_MDI_MOVIE_OPEN_OUTLINE " "
-        : ICON_MDI_CUBE_OUTLINE " ";
-    }
-    nameID += obj.name + "##" + std::to_string(obj.uuid);
+    std::string nameID = getNodeIcons(obj) + obj.name + "##" + std::to_string(obj.uuid);
 
     bool isOpen = ImGui::TreeNodeEx(nameID.c_str(), flag);
     ImGui::PopStyleVar(2);
