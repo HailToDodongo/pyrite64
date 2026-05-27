@@ -225,8 +225,9 @@ namespace Project::Component::CollMesh
         aabbCol = {0xFF,0xAA,0x00,0xFF};
       }
 
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, aabbCol);
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, aabbCol);
+      auto rot = obj.rot.resolve(obj.propOverrides);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, aabbCol, rot);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, aabbCol, rot);
     }
   }
 
