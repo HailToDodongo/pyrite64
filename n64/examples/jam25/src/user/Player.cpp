@@ -272,11 +272,17 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       fm_vec3_t camRight = camRot * fm_vec3_t{1.0f, 0.0f, 0.0f};
       camRight.y = 0.0f;
       fm_vec3_norm(&camRight, &camRight);
-
-      fm_vec3_t moveDir = camForward * moveInput.z + camRight * moveInput.x;
+	  
+	  //Prevent diagonal movement from being faster than cardinal directions
+	  if (float l = sqrtf(moveInput.z * moveInput.z + moveInput.x * moveInput.x); l > 1.0f) {
+		moveInput.z = moveInput.z / l;
+		moveInput.x = moveInput.x / l;
+	  }
+	  
+	  fm_vec3_t moveDir = camForward * moveInput.z + camRight * moveInput.x;
       //fm_vec3_norm(&moveDir, &moveDir);
 
-      data->lastMoveDir = moveDir;
+	  data->lastMoveDir = moveDir;
       data->moveInputWorld = moveDir;
 
       /*if(data->isJumpEnd && data->floorCast.hasResult())
