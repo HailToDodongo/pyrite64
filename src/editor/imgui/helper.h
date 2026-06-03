@@ -243,19 +243,135 @@ namespace ImTable
   }
 
   /**
-   * Returns whether a label matches a filter.
+   * Returns whether a character starts a searchable PascalCase word.
+   * @param label Item text being searched.
+   * @param labelLength Cached label length used to inspect the next character safely
+   * @param index Character index to test.
+   * @return True when the character should be treated as a word start.
+   */
+  inline bool isPascalWordStart(const char *label, size_t labelLength, size_t index)
+  {
+    unsigned char currentChar = label[index];
+
+    // Separators are not words, but the first alphanumeric character after them is
+    if (!std::isalnum(currentChar)) return false;
+    if (index == 0) return true;
+
+    unsigned char previousChar = label[index - 1];
+
+    // Non-alphanumeric separators split words, and digit runs start only on the first digit
+    if (!std::isalnum(previousChar)) return true;
+    if (std::isdigit(currentChar)) return !std::isdigit(previousChar);
+    if (std::isdigit(previousChar)) return true;
+
+    // Uppercase letters after lowercase letters mark normal PascalCase boundaries
+    if (!std::isupper(currentChar)) return false;
+    if (std::islower(previousChar)) return true;
+
+    // Treat the last capital in an acronym as a word start. For example XMLParser -> Parser
+    bool nextIsLower = index + 1 < labelLength && std::islower((unsigned char)label[index + 1]);
+    return std::isupper(previousChar) && nextIsLower;
+  }
+
+  /**
+   * Returns whether a label word starts with a filter token, ignoring case.
+   * @param label Item text being searched.
+   * @param labelLength Cached label length used to avoid reading past the end.
+   * @param labelStart Word start index inside label.
+   * @param filter Full filter text.
+   * @param filterStart Token start index inside filter.
+   * @param filterEnd Token end index inside filter.
+   * @return True when the token matches the start of the label word.
+   */
+  inline bool labelStartsWithFilterToken(
+    const char *label,
+    size_t labelLength,
+    size_t labelStart,
+    const std::string &filter,
+    size_t filterStart,
+    size_t filterEnd
+  )
+  {
+    size_t tokenLength = filterEnd - filterStart;
+
+    // The token cannot match if it would extend past the label
+    if (labelStart + tokenLength > labelLength) return false;
+
+    // Compare the token against the label word prefix without case sensitivity
+    for (size_t i = 0; i < tokenLength; ++i) {
+      auto labelChar = (unsigned char)label[labelStart + i];
+      auto filterChar = (unsigned char)filter[filterStart + i];
+      if (std::tolower(labelChar) != std::tolower(filterChar)) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Matches a spaced filter against ordered PascalCase word starts.
+   * @param label Item text being searched.
+   * @param filter Filter text split by spaces into word-prefix tokens.
+   * @return True when every token matches a later PascalCase word start.
+   */
+  inline bool labelMatchesPascalWordFilter(const char *label, const std::string &filter)
+  {
+    size_t labelLength = std::strlen(label);
+    size_t labelStart = 0;
+    size_t filterStart = 0;
+
+    while (filterStart < filter.size()) {
+      // Collapse repeated spaces between filter tokens
+      while (filterStart < filter.size() && std::isspace((unsigned char)filter[filterStart])) {
+        ++filterStart;
+      }
+      if (filterStart >= filter.size()) return true;
+
+      // Read one token from the spaced filter
+      size_t filterEnd = filterStart;
+      while (filterEnd < filter.size() && !std::isspace((unsigned char)filter[filterEnd])) {
+        ++filterEnd;
+      }
+
+      // Each token must match the start of a later PascalCase word
+      bool foundToken = false;
+      for (; labelStart < labelLength; ++labelStart) {
+        if (!isPascalWordStart(label, labelLength, labelStart)) continue;
+        if (!labelStartsWithFilterToken(label, labelLength, labelStart, filter, filterStart, filterEnd)) continue;
+
+        labelStart += filterEnd - filterStart;
+        foundToken = true;
+        break;
+      }
+      if (!foundToken) return false;
+
+      filterStart = filterEnd;
+    }
+
+    return true;
+  }
+
+  /**
+   * Returns whether a label matches a filter, ignoring case.
    * @param label Item text.
    * @param filter Filter text.
    * @return True when the item matches the filter.
    */
   inline bool labelMatchesFilter(const char *label, const std::string &filter)
   {
-    if (filter.empty())return true;
+    // There is no filter --> The label matches
+    if (filter.empty()) return true;
 
+    // The filter contains spaces --> Filter PascalCase words
+    if (std::any_of(filter.begin(), filter.end(), [](unsigned char c) { return std::isspace(c); })) {
+      return labelMatchesPascalWordFilter(label, filter);
+    }
+
+    // std::search needs an explicit end pointer for the C-string label
     const char *labelEnd = label + std::strlen(label);
+
+    // Compare each character case-insensitively while searching for the filter text
     return std::search(label, labelEnd, filter.begin(), filter.end(),
-      [](unsigned char lhs, unsigned char rhs) {
-        return std::tolower(lhs) == std::tolower(rhs);
+      [](unsigned char labelChar, unsigned char filterChar) {
+        return std::tolower(labelChar) == std::tolower(filterChar);
       }
     ) != labelEnd;
   }
