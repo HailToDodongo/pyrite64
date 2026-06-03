@@ -16,6 +16,7 @@ namespace Project::Component::Code
   struct Data
   {
     uint64_t scriptUUID{0};
+    bool openScriptComboBox{true}; // Open the Script ComboBox when the component is added
     std::unordered_map<std::string, PropString> args{};
   };
 
@@ -41,6 +42,7 @@ namespace Project::Component::Code
   std::shared_ptr<void> deserialize(nlohmann::json &doc) {
     auto data = std::make_shared<Data>();
     data->scriptUUID = doc["script"].get<uint64_t>();
+    data->openScriptComboBox = false;
     if (doc.contains("args")) {
       auto &argsObj = doc["args"];
       for (auto& [key, val] : argsObj.items()) {
@@ -185,6 +187,13 @@ namespace Project::Component::Code
           }
         }
       }
+
+      // Need to open the Script ComboBox (the component is being added)
+      if (data.openScriptComboBox) {
+        ImTable::unfoldComboBox("##Script");
+        data.openScriptComboBox = false;
+      }
+
       ImTable::end();
     }
   }

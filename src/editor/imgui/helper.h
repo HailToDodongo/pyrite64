@@ -214,6 +214,16 @@ namespace ImTable
   }
 
   /**
+   * Opens a ComboBox popup on the next BeginCombo call.
+   * @param label Internal ImGui label used by the ComboBox.
+   */
+  inline void unfoldComboBox(const char *label)
+  {
+    ImGuiID popupId = ImHashStr("##ComboPopup", 0, ImGui::GetID(label));
+    ImGui::OpenPopupEx(popupId, ImGuiPopupFlags_None);
+  }
+
+  /**
    * Draws a search input for an opened ComboBox popup.
    * @param label ImGui label used to derive the combo-specific filter state.
    * @return Pointer to the filter string owned by this helper.
