@@ -101,7 +101,7 @@ namespace Project::Component::Code
 
     if (ImTable::start("Comp", &obj)) {
       ImTable::add("Name", entry.name);
-      ImTable::addAssetVecComboBox("Script", scriptList, data.scriptUUID);
+      ImTable::addAssetVecComboBox("Script", scriptList, data.scriptUUID, true);
 
       auto script = assets.getEntryByUUID(data.scriptUUID);
       if (script) {
