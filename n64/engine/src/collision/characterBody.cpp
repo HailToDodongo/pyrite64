@@ -164,7 +164,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
       capsuleCenter(), up, r, ih_phys,
       displacement,
       settings.collTypes, settings.readMask,
-      hit
+      hit, owner
     );
 
     if(!didHit) {
@@ -300,7 +300,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
         capsuleCenter(), up, r, ih_phys,
         depProbe,
         settings.collTypes, settings.readMask,
-        depHit
+        depHit, owner
       );
       if(!hasOverlap || depHit.depth <= FM_EPSILON) break;
 

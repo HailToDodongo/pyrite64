@@ -101,8 +101,7 @@ namespace P64::Coll {
     bool raycast(Raycast &ray, RaycastHit &hit) const;
 
     /**
-     * Sweeps a capsule (world-space) through the scene and returns the earliest contact.
-     * Only tests mesh colliders; collider bodies are not tested.
+     * Sweeps a capsule through the scene and returns the earliest contact.
      *
      * @param center          Capsule center in physics space
      * @param axisUp          Normalized capsule-axis direction
@@ -110,7 +109,7 @@ namespace P64::Coll {
      * @param innerHalfHeight Half-length of the cylindrical section (not including sphere caps)
      * @param displacement    Displacement vector in physics space (not normalized)
      * @param collTypes       Which collider types to test against
-     * @param readMask        Collision read mask (currently ignored for mesh colliders)
+     * @param readMask        Collision read mask (@TODO: not implemented)
      * @param hit             Output contact result
      * @return true if any contact was found
      */
@@ -122,7 +121,8 @@ namespace P64::Coll {
       const fm_vec3_t& displacement,
       RaycastColliderTypeFlags collTypes,
       uint8_t readMask,
-      CapsuleSweepHit& hit
+      CapsuleSweepHit& hit,
+      const Object* ignoreOwner = nullptr
     ) const;
 
   private:
