@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   class="cb-diagram cb-diagram--md"
+   viewBox="0 0 584.0368 357.67111"
+   font-family="'Segoe UI', Helvetica, Arial, sans-serif"
+   version="1.1"
+   id="svg62"
+   sodipodi:docname="char_body_stairs.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   width="584.0368"
+   height="357.67111"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview64"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     showgrid="false"
+     inkscape:zoom="1.3766485"
+     inkscape:cx="406.78502"
+     inkscape:cy="156.17639"
+     inkscape:window-width="1920"
+     inkscape:window-height="1031"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg62" />
+  <defs
+     id="defs8">
+    <marker
+       style="overflow:visible"
+       id="marker1695"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path1693" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="TriangleStart"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+    <marker
+       id="stArr"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#4f93e6"
+         id="path2" />
+    </marker>
+    <marker
+       id="stDim"
+       markerWidth="9"
+       markerHeight="9"
+       refX="7"
+       refY="3.5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#e6b417"
+         id="path5" />
+    </marker>
+    <marker
+       id="cbDimY"
+       markerWidth="9"
+       markerHeight="9"
+       refX="7"
+       refY="3.5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#e6b417"
+         id="path5-6" />
+    </marker>
+    <marker
+       id="marker5884"
+       markerWidth="9"
+       markerHeight="9"
+       refX="7"
+       refY="3.5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#e6b417"
+         id="path5882" />
+    </marker>
+  </defs>
+  <rect
+     x="0.45624599"
+     y="0.45624599"
+     width="583.12433"
+     height="356.75861"
+     rx="9.125576"
+     fill="#1b1e26"
+     stroke="#3b414e"
+     id="rect10"
+     style="stroke-width:0.912492" />
+  <text
+     x="292.0184"
+     y="37.098866"
+     text-anchor="middle"
+     font-size="17px"
+     font-weight="600"
+     fill="#e9ebf1"
+     class="cb-title"
+     id="text12">Stair stepping</text>
+  <!-- geometry: lower ground, riser, upper ground -->
+  <g
+     fill="#2a2f3a"
+     stroke="#8e97a6"
+     stroke-width="2"
+     id="g16"
+     transform="translate(-27.98159,-34.328914)">
+    <path
+       d="M 155.15416,280 H 360 V 245.27321 H 539.05084 V 320 H 155.15416 Z"
+       id="path14"
+       sodipodi:nodetypes="ccccccc" />
+  </g>
+  <!-- capsule before the step (faded) -->
+  <rect
+     x="240.45006"
+     y="126.30747"
+     width="56"
+     height="118"
+     rx="28"
+     fill="#9aa3b3"
+     fill-opacity="0.05"
+     stroke="#8e97a6"
+     stroke-width="1.8"
+     stroke-dasharray="5, 4"
+     id="rect36" />
+  <rect
+     x="348.59421"
+     y="126.0752"
+     width="56"
+     height="118"
+     rx="28"
+     fill="#9aa3b3"
+     fill-opacity="0.05"
+     stroke="#8e97a6"
+     stroke-width="1.8"
+     stroke-dasharray="5, 4"
+     id="rect36-3" />
+  <!-- capsule after stepping up (solid) -->
+  <rect
+     x="347.94418"
+     y="91.726692"
+     width="56"
+     height="118"
+     rx="28"
+     fill="#9aa3b3"
+     fill-opacity="0.08"
+     stroke="#9aa3b3"
+     stroke-width="2"
+     id="rect38" />
+  <!-- physics capsule bottom (green) shortened so the riser is invisible to the sweep -->
+  <!-- motion + snap arrows -->
+  <path
+     d="M 296.20858,175.67109 H 396.56216"
+     fill="none"
+     stroke="#4f93e6"
+     stroke-width="2.2"
+     marker-end="url(#stArr)"
+     id="path42"
+     style="marker-end:url(#marker1695)"
+     sodipodi:nodetypes="cc" />
+  <path
+     d="M 376.80316,244.62889 V 218.86274"
+     fill="none"
+     stroke="#4f93e6"
+     stroke-width="2.2"
+     marker-end="url(#stArr)"
+     id="path44"
+     sodipodi:nodetypes="cc"
+     style="marker-end:url(#TriangleStart)" />
+  <text
+     x="323.86938"
+     y="171.40399"
+     text-anchor="middle"
+     font-size="12px"
+     fill="#4f93e6"
+     id="text46">walk</text>
+  <text
+     x="334.34293"
+     y="255.85272"
+     font-size="12px"
+     fill="#4f93e6"
+     id="text48">floor snap lifts up</text>
+  <!-- step height dimension on the riser -->
+  <text
+     text-anchor="middle"
+     font-size="12.5px"
+     fill="#c5cbd6"
+     id="text60"
+     x="-27.98159"
+     y="-34.328915"><tspan
+       x="292.0184"
+       y="321.67108"
+       id="tspan56">Steps up to stepHeight are invisible to the sweep, the capsule is shortened from the bottom.</tspan><tspan
+       x="292.0184"
+       y="339.67108"
+       id="tspan58">The floor probe then snaps the body up onto the higher ground.</tspan></text>
+  <rect
+     x="239.82039"
+     y="202.40257"
+     width="56.791958"
+     height="43.287163"
+     fill="#ffcc00"
+     fill-opacity="0.22"
+     id="rect38-7"
+     style="stroke-width:0.886522" />
+  <line
+     x1="231.84602"
+     y1="204.15948"
+     x2="231.84602"
+     y2="243.48523"
+     stroke="#e6b417"
+     stroke-width="1.50566"
+     marker-start="url(#cbDimY)"
+     marker-end="url(#cbDimY)"
+     id="line68" />
+  <text
+     x="178.4176"
+     y="226.52695"
+     font-size="9.57307px"
+     fill="#e6b417"
+     font-weight="600"
+     id="text70"
+     style="stroke-width:0.765845">stepHeight</text>
+</svg>

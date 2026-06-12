@@ -12,6 +12,7 @@
 #include "../../../utils/meshGen.h"
 #include <glm/gtc/quaternion.hpp>
 #include <algorithm>
+#include <cmath>
 
 namespace
 {
@@ -37,6 +38,10 @@ namespace Project::Component::CharBody
     PROP_U32(maxSlides);
     PROP_U32(readMask);
     PROP_BOOL(followFloor);
+
+    // non-saved data:
+    double uiStepPulseUntil = 0.0;
+    double uiSnapPulseUntil = 0.0;
   };
 
   std::shared_ptr<Data> makeDefault() {
@@ -143,9 +148,13 @@ namespace Project::Component::CharBody
       if(ImTable::add("Step Height", stepH)) {
         stepH = std::clamp(stepH, 0.0f, maxStep);
       }
+      // Keep the step ring pulsing while this field is focused/edited
+      if(ImGui::IsItemActive()) data.uiStepPulseUntil = ImGui::GetTime() + 0.15;
+
       if(ImTable::add("Floor Snap Dist.", snapD)) {
         snapD = std::max(snapD, stepH);
       }
+      if(ImGui::IsItemActive()) data.uiSnapPulseUntil = ImGui::GetTime() + 0.15;
 
       if(ImTable::add("Gravity", data.gravity.value)) {
         data.gravity.value = std::max(0.0f, data.gravity.value);
@@ -231,20 +240,72 @@ namespace Project::Component::CharBody
       objRot
     );
 
-    // Step zone indicator: horizontal cross at physics capsule bottom
+    // Step-height & snap-distance visualization:
+    // Key levels along the up axis (distance below the capsule center):
+    glm::vec3 footBottom = center - upDir * (hh * toVis);            // logical capsule foot (full reach)
+    glm::vec3 stepTop    = center - upDir * ((hh - stepH) * toVis);  // physics capsule bottom = top of the climbable step
+    glm::vec3 snapReach  = center - upDir * ((hh + snapD) * toVis);  // how far the floor-snap probe reaches below the foot
+    float ringR = r * toVis;
+
+    glm::u8vec4 footCol{0xC0, 0xC0, 0xC0, 0xFF};
+    glm::u8vec4 stepCol{0xFF, 0xCC, 0x00, 0xFF};
+    glm::u8vec4 snapCol{0x40, 0x90, 0xFF, 0xFF};
+
+    // Pulse the band whose inspector field is currently being edited: lerp the
+    // color toward white on a sine so the active zone visibly throbs.
+    double now = ImGui::GetTime();
+    float pulse = 0.5f + 0.5f * (float)std::sin(now * 8.0); // 0..1
+    auto pulseCol = [&](glm::u8vec4 c, bool active) -> glm::u8vec4 {
+      if(!active) return c;
+      return glm::u8vec4{
+        (uint8_t)(c.r + (255 - c.r) * pulse),
+        (uint8_t)(c.g + (255 - c.g) * pulse),
+        (uint8_t)(c.b + (255 - c.b) * pulse),
+        c.a
+      };
+    };
+    glm::u8vec4 stepDraw = pulseCol(stepCol, now < data.uiStepPulseUntil);
+    glm::u8vec4 snapDraw = pulseCol(snapCol, now < data.uiSnapPulseUntil);
+
+    glm::vec3 axisA = glm::normalize(glm::vec3{upDir.y, upDir.z, upDir.x});
+    axisA = glm::normalize(axisA - upDir * glm::dot(axisA, upDir));
+    glm::vec3 axisB = glm::normalize(glm::cross(upDir, axisA));
+
+    auto addRing = [&](const glm::vec3 &c, float rad, const glm::u8vec4 &col) {
+      constexpr int N = 20;
+      glm::vec3 prev = c + axisA * rad;
+      for(int i = 1; i <= N; ++i) {
+        float t = (float)i / N * 6.28318530718f;
+        glm::vec3 p = c + (axisA * std::cos(t) + axisB * std::sin(t)) * rad;
+        Utils::Mesh::addLine(*vp.getLines(), prev, p, col);
+        prev = p;
+      }
+    };
+    auto addTicks = [&](const glm::vec3 &top, const glm::vec3 &bot, float rad, const glm::u8vec4 &col) {
+      for(const glm::vec3 &dir : { axisA, -axisA, axisB, -axisB }) {
+        glm::vec3 off = dir * rad;
+        Utils::Mesh::addLine(*vp.getLines(), top + off, bot + off, col);
+      }
+    };
+
+    // Foot reference ring (where the full capsule meets the ground).
+    addRing(footBottom, ringR, footCol);
+
+    // Step height: band between the physics-capsule bottom (step top) and the foot.
+    // Obstacles within this band are stepped over.
     if(stepH > 0.001f) {
-      glm::vec3 physBottom = center - upDir * ((ihPhys + r) * toVis);
-      glm::vec3 perpA = glm::normalize(glm::vec3{upDir.y, upDir.z, upDir.x}) * r * toVis;
-      glm::vec3 perpB = glm::normalize(glm::cross(upDir, perpA)) * r * toVis;
-      glm::u8vec4 stepCol{0xFF, 0xCC, 0x00, 0xFF};
-      Utils::Mesh::addLine(*vp.getLines(), physBottom - perpA, physBottom + perpA, stepCol);
-      Utils::Mesh::addLine(*vp.getLines(), physBottom - perpB, physBottom + perpB, stepCol);
+      addRing(stepTop, ringR, stepDraw);
+      addTicks(stepTop, footBottom, ringR, stepDraw);
     }
 
-    // Floor snap probe line (blue, from center downward)
-    float probeLen = (hh + snapD) * toVis;
-    glm::vec3 probeEnd = center - upDir * probeLen;
-    Utils::Mesh::addLine(*vp.getLines(), center, probeEnd, glm::u8vec4{0x60, 0x60, 0xFF, 0xFF});
+    // Floor snap distance: band reaching from the foot down to the probe end.
+    if(snapD > 0.001f) {
+      addRing(snapReach, ringR, snapDraw);
+      addTicks(footBottom, snapReach, ringR, snapDraw);
+    }
+
+    // Central floor-snap probe line (center down to the probe reach).
+    Utils::Mesh::addLine(*vp.getLines(), center, snapReach, glm::u8vec4{0x60, 0x60, 0xFF, 0xFF});
   }
 
   void drawCopyPass(Object&, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass* pass) {}

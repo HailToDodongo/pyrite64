@@ -984,7 +984,7 @@
               }
             ],
             "enabled": true,
-            "id": 82,
+            "id": 110,
             "name": "Platform Gap",
             "pos": [
               -606.5125732421875,
@@ -1227,7 +1227,7 @@
               }
             ],
             "enabled": true,
-            "id": 9,
+            "id": 107,
             "name": "Platform Gap",
             "pos": [
               -847.7291259765625,
@@ -2288,7 +2288,7 @@
                   }
                 ],
                 "enabled": true,
-                "id": 19,
+                "id": 112,
                 "name": "Coin (14)",
                 "pos": [
                   0.0,
@@ -2333,7 +2333,7 @@
                   }
                 ],
                 "enabled": true,
-                "id": 36,
+                "id": 106,
                 "name": "Coin (15)",
                 "pos": [
                   10.0,
@@ -2378,7 +2378,7 @@
                   }
                 ],
                 "enabled": true,
-                "id": 17,
+                "id": 109,
                 "name": "Coin (16)",
                 "pos": [
                   10.0,
@@ -2423,7 +2423,7 @@
                   }
                 ],
                 "enabled": true,
-                "id": 18,
+                "id": 108,
                 "name": "Coin (17)",
                 "pos": [
                   20.0,
@@ -2687,7 +2687,7 @@
               }
             ],
             "enabled": true,
-            "id": 13,
+            "id": 111,
             "name": "Coin (19)",
             "pos": [
               0.0,
@@ -3564,7 +3564,7 @@
             "components": [
               {
                 "data": {
-                  "objectUUID": 349521444,
+                  "objectUUID": 0,
                   "type": 1,
                   "usePos": false,
                   "useRot": false,
@@ -3609,7 +3609,7 @@
             "components": [
               {
                 "data": {
-                  "objectUUID": 349521444,
+                  "objectUUID": 0,
                   "type": 1,
                   "usePos": false,
                   "useRot": false,
@@ -3654,7 +3654,7 @@
             "components": [
               {
                 "data": {
-                  "objectUUID": 349521444,
+                  "objectUUID": 0,
                   "type": 1,
                   "usePos": false,
                   "useRot": false,

@@ -24,8 +24,8 @@
             10.0
           ],
           "isTrigger": true,
-          "maskRead": 1,
-          "maskWrite": 1,
+          "maskRead": 4,
+          "maskWrite": 0,
           "offset": [
             0.0,
             0.0,

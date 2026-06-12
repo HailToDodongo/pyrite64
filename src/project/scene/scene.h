@@ -100,5 +100,8 @@ namespace Project
       void deserialize(const std::string &data);
 
       uint16_t getFreeObjectId();
+
+      // hack, @TODO: get rid of IDs in the editor completely
+      void fixDuplicateObjectIds();
   };
 }

@@ -19,3 +19,17 @@ body .sidebar-brand-text {
 body h1 sup {
   font-size: 26px;
 }
+
+/* Inlined diagram SVGs — pick up the docs' fonts centrally
+   (titles in DIN like headings, labels in Noto like body text). */
+.cb-diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 1.2rem auto;
+}
+.cb-diagram--sm { max-width: 420px; }
+.cb-diagram--md { max-width: 580px; }
+.cb-diagram--lg { max-width: 700px; }
+.cb-diagram text { font-family: "Noto", Arial, sans-serif; }
+.cb-diagram .cb-title { font-family: "DIN", Helvetica, sans-serif; }

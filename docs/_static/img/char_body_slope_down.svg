@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   class="cb-diagram cb-diagram--md"
+   viewBox="0 0 728.11328 410"
+   font-family="'Segoe UI', Helvetica, Arial, sans-serif"
+   version="1.1"
+   id="svg65"
+   sodipodi:docname="char_body_slope_down.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   width="728.11328"
+   height="410"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview67"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     showgrid="false"
+     inkscape:zoom="1.78"
+     inkscape:cx="322.47191"
+     inkscape:cy="225.2809"
+     inkscape:window-width="1920"
+     inkscape:window-height="1031"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg65" />
+  <defs
+     id="defs11">
+    <marker
+       style="overflow:visible"
+       id="TriangleStart"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+    <marker
+       id="sdG"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#2ec66e"
+         id="path2" />
+    </marker>
+    <marker
+       id="sdR"
+       markerWidth="9"
+       markerHeight="8"
+       refX="8"
+       refY="4"
+       orient="auto"
+       viewBox="0 0 9 8"
+       preserveAspectRatio="xMidYMid">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#e05a4d"
+         fill-opacity="0.65"
+         id="path5" />
+    </marker>
+    <marker
+       id="sdB"
+       markerWidth="10"
+       markerHeight="10"
+       refX="7"
+       refY="3.5"
+       orient="auto">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#4f93e6"
+         id="path8" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="TriangleStart-7"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135-5" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="TriangleStart-2"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135-9" />
+    </marker>
+  </defs>
+  <rect
+     x="-2.2990537"
+     y="0.50993502"
+     width="727.09338"
+     height="408.98013"
+     rx="10.40191"
+     fill="#1b1e26"
+     stroke="#3b414e"
+     id="rect13"
+     style="stroke-width:1.01987" />
+  <text
+     x="369.20993"
+     y="28.52107"
+     text-anchor="middle"
+     font-size="17px"
+     font-weight="600"
+     fill="#e9ebf1"
+     class="cb-title"
+     id="text15">Walking up &amp; down a slope</text>
+  <!-- flat then descending ramp (convex edge at the kink) -->
+  <path
+     d="M 55.692272,315.28951 221.2859,200 h 238.3854 l 214.09855,122 v 8 H 55.692272 Z"
+     fill="#2a2f3a"
+     stroke="#8e97a6"
+     stroke-width="2"
+     id="path17"
+     sodipodi:nodetypes="csccccc" />
+  <!-- solid capsule on the flat, about to go over the edge -->
+  <rect
+     x="391.21411"
+     y="90.35836"
+     width="50"
+     height="110"
+     rx="25"
+     fill="#9aa3b3"
+     fill-opacity="0.08"
+     stroke="#9aa3b3"
+     stroke-width="2"
+     id="rect33" />
+  <circle
+     cx="416.73328"
+     cy="147.92477"
+     r="3"
+     fill="#e9ebf1"
+     id="circle35" />
+  <rect
+     x="91.825562"
+     y="155.48544"
+     width="50"
+     height="110"
+     rx="25"
+     fill="#9aa3b3"
+     fill-opacity="0.08"
+     stroke="#9aa3b3"
+     stroke-width="2"
+     id="rect33-3" />
+  <circle
+     cx="117.34473"
+     cy="213.05186"
+     r="3"
+     fill="#e9ebf1"
+     id="circle35-6" />
+  <!-- snap-reach probe at the convex edge -->
+  <line
+     x1="429.88654"
+     y1="200"
+     x2="429.88654"
+     y2="236"
+     stroke="#4f93e6"
+     stroke-width="1.6"
+     stroke-dasharray="5, 3"
+     marker-end="url(#sdB)"
+     id="line37" />
+  <text
+     x="426.75409"
+     y="215.91084"
+     text-anchor="end"
+     font-size="11px"
+     fill="#4f93e6"
+     id="text39">snap reach</text>
+  <!-- WITH snap: motion follows the surface down -->
+  <path
+     d="m 440.04198,146.65107 h 25.31414 l 123.02891,64.46525"
+     fill="none"
+     stroke="#2ec66e"
+     stroke-width="2.6"
+     marker-end="url(#sdG)"
+     id="path41"
+     sodipodi:nodetypes="ccc"
+     style="marker-end:url(#TriangleStart);stroke-width:2;stroke-dasharray:none" />
+  <path
+     d="m 141.15527,191.87963 63.98769,-43.7499 52.21083,0.53648"
+     fill="none"
+     stroke="#2ec66e"
+     stroke-width="2.6"
+     marker-end="url(#sdG)"
+     id="path41-1"
+     sodipodi:nodetypes="ccc"
+     style="stroke-width:2;stroke-dasharray:none;marker-end:url(#TriangleStart-2)" />
+  <!-- snapped ghost on the ramp -->
+  <rect
+     x="596.52448"
+     y="177.09651"
+     width="50"
+     height="110"
+     rx="25"
+     fill="#2ec66e"
+     fill-opacity="0.06"
+     stroke="#2ec66e"
+     stroke-width="1.8"
+     stroke-dasharray="6, 4"
+     id="rect43" />
+  <rect
+     x="264.38135"
+     y="90.188881"
+     width="50"
+     height="110"
+     rx="25"
+     fill="#2ec66e"
+     fill-opacity="0.06"
+     stroke="#2ec66e"
+     stroke-width="1.8"
+     stroke-dasharray="6, 4"
+     id="rect43-6" />
+  <text
+     x="605.1427"
+     y="153.05035"
+     font-size="12.5px"
+     fill="#2ec66e"
+     font-weight="600"
+     id="text45">with snap:</text>
+  <text
+     x="605.74969"
+     y="164.34978"
+     font-size="12.5px"
+     fill="#2ec66e"
+     id="text47">stays grounded</text>
+  <text
+     x="255.22009"
+     y="214.57149"
+     font-size="12.5px"
+     fill="#2ec66e"
+     font-weight="600"
+     id="text45-6">with snap:</text>
+  <text
+     x="255.82709"
+     y="225.87093"
+     font-size="12.5px"
+     fill="#2ec66e"
+     id="text47-0">stays grounded</text>
+  <!-- WITHOUT snap: launches off the convex edge -->
+  <path
+     d="m 441.48036,145.34778 c 32.85974,-9.52919 41.95684,-9.07585 79.30705,9.02798"
+     fill="none"
+     stroke="#e05a4d"
+     stroke-width="2"
+     stroke-opacity="0.6"
+     stroke-dasharray="6, 5"
+     marker-end="url(#sdR)"
+     id="path49"
+     sodipodi:nodetypes="cc"
+     style="stroke:#e8877f;stroke-dasharray:4, 2;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#TriangleStart)" />
+  <path
+     d="m 140.38356,192.01213 c 37.1477,-36.60964 37.89783,-42.35859 93.01486,-64.04819"
+     fill="none"
+     stroke="#e05a4d"
+     stroke-width="2"
+     stroke-opacity="0.6"
+     stroke-dasharray="6, 5"
+     marker-end="url(#sdR)"
+     id="path49-3"
+     sodipodi:nodetypes="cc"
+     style="stroke:#e8877f;stroke-dasharray:4, 2;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#TriangleStart-7)" />
+  <rect
+     x="527.77216"
+     y="117.32608"
+     width="50"
+     height="110"
+     rx="25"
+     fill="#e05a4d"
+     fill-opacity="0.04"
+     stroke="#e05a4d"
+     stroke-opacity="0.55"
+     stroke-width="1.8"
+     stroke-dasharray="6, 4"
+     id="rect51" />
+  <rect
+     x="240.06691"
+     y="71.368042"
+     width="50"
+     height="110"
+     rx="25"
+     fill="#e05a4d"
+     fill-opacity="0.04"
+     stroke="#e05a4d"
+     stroke-opacity="0.55"
+     stroke-width="1.8"
+     stroke-dasharray="6, 4"
+     id="rect51-5" />
+  <g
+     id="g3229"
+     transform="translate(-3.0487701,32.373556)">
+    <text
+       x="143.23204"
+       y="49.097519"
+       font-size="12.5px"
+       fill="#e05a4d"
+       fill-opacity="0.85"
+       font-weight="600"
+       id="text53">without snap:</text>
+    <text
+       x="143.33269"
+       y="62.053787"
+       font-size="12.5px"
+       fill="#e05a4d"
+       fill-opacity="0.85"
+       id="text55">flies off the edge</text>
+  </g>
+  <g
+     id="g3229-0"
+     transform="translate(365.36297,47.867474)">
+    <text
+       x="143.23204"
+       y="49.097519"
+       font-size="12.5px"
+       fill="#e05a4d"
+       fill-opacity="0.85"
+       font-weight="600"
+       id="text53-9">without snap:</text>
+    <text
+       x="143.33269"
+       y="62.053787"
+       font-size="12.5px"
+       fill="#e05a4d"
+       fill-opacity="0.85"
+       id="text55-3">flies off the edge</text>
+  </g>
+  <text
+     text-anchor="middle"
+     font-size="12.5px"
+     fill="#c5cbd6"
+     id="text63"
+     x="25.365049"
+     y="-1.4305115e-06"><tspan
+       x="375.36505"
+       y="372"
+       id="tspan59">Going on or off a ramp, the floor probe reaches floorSnapDistance below the foot</tspan><tspan
+       x="375.36505"
+       y="390"
+       id="tspan61">and pulls the body onto the slope so it walks up or down smoothly instead of launching off the edge.</tspan></text>
+</svg>

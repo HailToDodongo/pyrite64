@@ -71,6 +71,11 @@ fm_vec3_t CharacterBody::capsuleCenter() const
   return owner->pos * getInvGfxScale() + cachedCenterOffset;
 }
 
+fm_vec3_t CharacterBody::getFootPos() const
+{
+  return (capsuleCenter() - normUp * halfHeight) * getGfxScale();
+}
+
 float CharacterBody::extentAlong(const fm_vec3_t& dir) const
 {
   const float alongUp = fabsf(fm_vec3_dot(&dir, &normUp));

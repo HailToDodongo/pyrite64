@@ -97,16 +97,16 @@
             0.0
           ],
           "collTypes": 255,
-          "floorMaxAngle": 0.785398006439209,
-          "floorSnapDistance": 0.30000001192092896,
+          "floorMaxAngle": 1.1344640254974365,
+          "floorSnapDistance": 0.10000000149011612,
           "followFloor": true,
           "gravity": 8.0,
           "height": 0.5,
           "maxFallSpeed": 55.0,
           "maxSlides": 4,
-          "radius": 0.20000000298023224,
+          "radius": 0.17000000178813934,
           "readMask": 1,
-          "stepHeight": 0.25,
+          "stepHeight": 0.07999999821186066,
           "up": [
             0.0,
             1.0,
@@ -127,8 +127,8 @@
             20.0
           ],
           "isTrigger": false,
-          "maskRead": 0,
-          "maskWrite": 1,
+          "maskRead": 2,
+          "maskWrite": 6,
           "offset": [
             0.0,
             20.0,

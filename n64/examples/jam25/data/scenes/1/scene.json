@@ -499,7 +499,7 @@
         "propOverrides": {
           "11272843812465326562": "1:1.000000,1.000000,1.000000",
           "13460160539698755218": "2:1.000000,1.000000,1.000000,0.368627",
-          "13911321452997764027": "1:91.142403,0.000000,431.787262",
+          "13911321452997764027": "1:91.479706,83.864731,430.000000",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
         "proportionalScale": false,
@@ -533,7 +533,7 @@
             ],
             "propOverrides": {
               "11272843812465326562": "1:1.000000,1.000000,1.000000",
-              "13911321452997764027": "1:-149.298981,14.217823,39.793598",
+              "13911321452997764027": "1:-150.000000,10.000000,40.000000",
               "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
             },
             "proportionalScale": false,
@@ -1018,7 +1018,7 @@
                   ],
                   "isTrigger": false,
                   "maskRead": 0,
-                  "maskWrite": 8,
+                  "maskWrite": 9,
                   "offset": [
                     0.0,
                     0.0,
@@ -1219,97 +1219,6 @@
                     "setLighting": false,
                     "setPrim": false
                   },
-                  "meshFilter": "model",
-                  "model": 244801699526709921
-                },
-                "id": 1,
-                "name": "Model",
-                "uuid": 17528814242325218933
-              },
-              {
-                "data": {
-                  "bounce": 0.0,
-                  "friction": 0.800000011920929,
-                  "halfExtend": [
-                    32.0,
-                    32.0,
-                    32.0
-                  ],
-                  "isTrigger": false,
-                  "maskRead": 0,
-                  "maskWrite": 8,
-                  "offset": [
-                    0.0,
-                    0.0,
-                    0.0
-                  ],
-                  "type": 0
-                },
-                "id": 5,
-                "name": "Collision-Body",
-                "uuid": 7581312690790611521
-              }
-            ],
-            "enabled": true,
-            "id": 48,
-            "name": "Platform (2)",
-            "pos": [
-              396.0946350097656,
-              110.21680450439453,
-              16.77037811279297
-            ],
-            "propOverrides": {},
-            "proportionalScale": false,
-            "rot": [
-              0.0,
-              0.0,
-              0.0,
-              1.0
-            ],
-            "scale": [
-              3.0,
-              3.0,
-              3.0
-            ],
-            "selectable": true,
-            "uuid": 1036434647,
-            "uuidPrefab": 0
-          },
-          {
-            "children": [],
-            "components": [
-              {
-                "data": {
-                  "culling": false,
-                  "layerIdx": 0,
-                  "material": {
-                    "depth": 0,
-                    "env": [
-                      1.0,
-                      1.0,
-                      1.0,
-                      1.0
-                    ],
-                    "fresnel": 0,
-                    "fresnelColor": [
-                      1.0,
-                      1.0,
-                      1.0,
-                      1.0
-                    ],
-                    "lighting": true,
-                    "prim": [
-                      1.0,
-                      1.0,
-                      1.0,
-                      1.0
-                    ],
-                    "setDepth": false,
-                    "setEnv": false,
-                    "setFresnel": false,
-                    "setLighting": false,
-                    "setPrim": false
-                  },
                   "meshFilter": "",
                   "model": 11061195382390923948
                 },
@@ -1379,7 +1288,7 @@
         "propOverrides": {
           "0": "9:2",
           "11272843812465326562": "1:2.000000,2.000000,2.000000",
-          "13911321452997764027": "1:-64.394371,42.185593,-81.970398",
+          "13911321452997764027": "1:-60.000000,40.000000,-80.000000",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
         "proportionalScale": false,
@@ -1439,6 +1348,97 @@
         ],
         "selectable": true,
         "uuid": 683084570,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "model",
+              "model": 244801699526709921
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 17528814242325218933
+          },
+          {
+            "data": {
+              "bounce": 0.0,
+              "friction": 0.800000011920929,
+              "halfExtend": [
+                32.0,
+                32.0,
+                32.0
+              ],
+              "isTrigger": false,
+              "maskRead": 0,
+              "maskWrite": 9,
+              "offset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "type": 0
+            },
+            "id": 5,
+            "name": "Collision-Body",
+            "uuid": 7581312690790611521
+          }
+        ],
+        "enabled": true,
+        "id": 48,
+        "name": "Platform (2)",
+        "pos": [
+          130.0,
+          130.0,
+          260.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          3.0,
+          3.0,
+          3.0
+        ],
+        "selectable": true,
+        "uuid": 1036434647,
         "uuidPrefab": 0
       },
       {

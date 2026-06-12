@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 600 340.75217"
+   class="cb-diagram cb-diagram--md"
+   version="1.1"
+   id="svg80"
+   sodipodi:docname="char_body_overview.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   width="600"
+   height="340.75217"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview82"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     showgrid="false"
+     inkscape:zoom="2.0766667"
+     inkscape:cx="279.77528"
+     inkscape:cy="101.60514"
+     inkscape:window-width="1920"
+     inkscape:window-height="1031"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg80" />
+  <defs
+     id="defs14">
+    <marker
+       style="overflow:visible"
+       id="marker3284"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path3282" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker1796"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path1794" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="TriangleStart"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+    <marker
+       id="ovU"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#9aa3b3"
+         id="path2" />
+    </marker>
+    <marker
+       id="ovG"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#e05a4d"
+         id="path5" />
+    </marker>
+    <marker
+       id="ovI"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#4f93e6"
+         id="path8" />
+    </marker>
+    <marker
+       id="ovM"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#2ec66e"
+         id="path11" />
+    </marker>
+  </defs>
+  <rect
+     x="0.47852799"
+     y="0.47852799"
+     width="599.04297"
+     height="339.7951"
+     rx="10.000717"
+     fill="#1b1e26"
+     stroke="#3b414e"
+     id="rect16"
+     style="stroke-width:0.957056" />
+  <text
+     x="300"
+     y="31.346586"
+     text-anchor="middle"
+     font-size="17px"
+     font-weight="600"
+     fill="#e9ebf1"
+     class="cb-title"
+     id="text18">Overview</text>
+  <!-- ground -->
+  <line
+     x1="41.264286"
+     y1="273.9581"
+     x2="557.02008"
+     y2="207.65604"
+     stroke="#8e97a6"
+     stroke-width="2"
+     id="line20" />
+  <g
+     stroke="#5a6373"
+     stroke-width="1.4"
+     id="g46"
+     transform="rotate(-7.3253808,55.926772,263.10386)">
+    <line
+       x1="64"
+       y1="272"
+       x2="52"
+       y2="286"
+       id="line22" />
+    <line
+       x1="104"
+       y1="272"
+       x2="92"
+       y2="286"
+       id="line24" />
+    <line
+       x1="144"
+       y1="272"
+       x2="132"
+       y2="286"
+       id="line26" />
+    <line
+       x1="184"
+       y1="272"
+       x2="172"
+       y2="286"
+       id="line28" />
+    <line
+       x1="224"
+       y1="272"
+       x2="212"
+       y2="286"
+       id="line30" />
+    <line
+       x1="264"
+       y1="272"
+       x2="252"
+       y2="286"
+       id="line32" />
+    <line
+       x1="304"
+       y1="272"
+       x2="292"
+       y2="286"
+       id="line34" />
+    <line
+       x1="344"
+       y1="272"
+       x2="332"
+       y2="286"
+       id="line36" />
+    <line
+       x1="384"
+       y1="272"
+       x2="372"
+       y2="286"
+       id="line38" />
+    <line
+       x1="424"
+       y1="272"
+       x2="412"
+       y2="286"
+       id="line40" />
+    <line
+       x1="464"
+       y1="272"
+       x2="452"
+       y2="286"
+       id="line42" />
+    <line
+       x1="504"
+       y1="272"
+       x2="492"
+       y2="286"
+       id="line44" />
+  </g>
+  <!-- start capsule -->
+  <rect
+     x="132"
+     y="128.89238"
+     width="56"
+     height="130"
+     rx="28"
+     fill="#9aa3b3"
+     fill-opacity="0.08"
+     stroke="#9aa3b3"
+     stroke-width="2"
+     id="rect48" />
+  <circle
+     cx="160"
+     cy="193.24071"
+     r="3"
+     fill="#e9ebf1"
+     id="circle50" />
+  <!-- resolved position capsule (faded) -->
+  <rect
+     x="352"
+     y="99.095245"
+     width="56"
+     height="130"
+     rx="28"
+     fill="#2ec66e"
+     fill-opacity="0.06"
+     stroke="#2ec66e"
+     stroke-width="1.8"
+     stroke-dasharray="6, 4"
+     id="rect52" />
+  <!-- up -->
+  <line
+     x1="160"
+     y1="129.97523"
+     x2="160"
+     y2="98.008026"
+     stroke="#9aa3b3"
+     stroke-width="1.53881"
+     marker-end="url(#ovU)"
+     id="line54"
+     style="marker-end:url(#marker3284)" />
+  <text
+     x="169.25853"
+     y="101.22363"
+     font-size="12.5px"
+     fill="#9aa3b3"
+     id="text56">up</text>
+  <!-- gravity -->
+  <line
+     x1="275.47339"
+     y1="167.00829"
+     x2="275.47339"
+     y2="202.27563"
+     stroke="#e05a4d"
+     stroke-width="1.26612"
+     marker-end="url(#ovG)"
+     id="line58" />
+  <text
+     x="198.48671"
+     y="186.56018"
+     font-size="12.5px"
+     fill="#e05a4d"
+     id="text60">gravity (−up)</text>
+  <!-- inputVelocity -->
+  <line
+     x1="187.82231"
+     y1="168.27063"
+     x2="343.0455"
+     y2="168.27063"
+     stroke="#4f93e6"
+     stroke-width="2.61339"
+     marker-end="url(#ovI)"
+     id="line62"
+     style="marker-end:url(#TriangleStart)" />
+  <text
+     x="196"
+     y="160.75217"
+     font-size="12.5px"
+     fill="#4f93e6"
+     id="text64">inputVelocity</text>
+  <!-- resolved motion -->
+  <line
+     x1="188.97653"
+     y1="222.23523"
+     x2="343.56415"
+     y2="207.30875"
+     stroke="#2ec66e"
+     stroke-width="2.23858"
+     marker-end="url(#ovM)"
+     id="line66"
+     style="marker-end:url(#marker1796)" />
+  <text
+     x="277.91022"
+     y="231.67963"
+     text-anchor="middle"
+     font-size="12px"
+     fill="#2ec66e"
+     font-weight="600"
+     id="text68">moveAndSlide</text>
+  <text
+     text-anchor="middle"
+     font-size="12.5px"
+     fill="#c5cbd6"
+     id="text78"
+     x="-0.67472523"
+     y="-31.247831"><tspan
+       x="299.32529"
+       y="306.75217"
+       id="tspan74">Each frame: set <tspan
+   font-weight="600"
+   id="tspan70">inputVelocity</tspan>, call <tspan
+   font-weight="600"
+   id="tspan72">moveAndSlide()</tspan>. The body adds gravity, sweeps &amp; slides,</tspan><tspan
+       x="299.32529"
+       y="324.75217"
+       id="tspan76">snaps to the floor, then writes the new position back to the object.</tspan></text>
+</svg>

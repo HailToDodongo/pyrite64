@@ -10,6 +10,8 @@
 #include "../../utils/jsonBuilder.h"
 #include "../../utils/logger.h"
 
+#include <unordered_set>
+
 #define __LIBDRAGON_N64SYS_H 1
 #define PhysicalAddr(a) (uint64_t)(a)
 #include "../graph/nodes/nodeObjDel.h"
@@ -237,8 +239,30 @@ bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool a
   return true;
 }
 
+void Project::Scene::fixDuplicateObjectIds()
+{
+  std::unordered_set<uint16_t> usedIds{};
+  for (auto &[uuid, obj] : objectsMap)
+  {
+    if (!obj || obj->id == 0) continue;
+    // The first object seen with a given id keeps it; any later one is a duplicate.
+    if (usedIds.insert(obj->id).second) continue;
+
+    const uint16_t oldId = obj->id;
+    const uint16_t newId = getFreeObjectId(); // smallest id not used by any object
+    obj->id = newId;
+    usedIds.insert(newId);
+
+    Utils::Logger::log(
+      "Duplicate object id " + std::to_string(oldId) + " on object '" + obj->name +
+      "' re-assigned to " + std::to_string(newId),
+      Utils::Logger::LEVEL_WARN);
+  }
+}
+
 void Project::Scene::save()
 {
+  fixDuplicateObjectIds();
   Utils::FS::saveTextFile(scenePath + "/scene.json", serialize());
 }
 

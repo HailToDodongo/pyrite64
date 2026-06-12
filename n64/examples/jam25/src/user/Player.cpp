@@ -40,10 +40,23 @@ namespace
     for(uint32_t i=0; i<count; ++i) {
       auto pt = pos;
       pt.x += (P64::Math::rand01()-0.5f) * dist;
-      pt.y -= 25.0f;
       pt.z += (P64::Math::rand01()-0.5f) * dist + 0.2f;
       P64::User::Sprites::dust->add(pt, seed+i, P64::Math::rand01() * 0.2f + size);
     }
+  }
+
+  fm_quat_t quatFromEuler(const fm_vec3_t &v)
+  {
+    float c1, c2, c3, s1, s2, s3;
+    fm_sincosf(v.x * 0.5f, &s1, &c1);
+    fm_sincosf(v.y * 0.5f, &s2, &c2);
+    fm_sincosf(v.z * 0.5f, &s3, &c3);
+    return { 
+      c1 * c2 * c3 + s1 * s2 * s3,
+      s1 * c2 * c3 - c1 * s2 * s3,
+      c1 * s2 * c3 + s1 * c2 * s3,
+      c1 * c2 * s3 - s1 * s2 * c3 
+    };
   }
 }
 
@@ -127,12 +140,6 @@ namespace P64::Script::C17EA8EAB6CF1DEB
         data->body->teleport(data->lastSafePos);
         data->hurtVelocity = {};
       }
-
-      // Downward cast for drop-shadow placement (independent of body's own probe)
-      Coll::Raycast shadowRay = Coll::Raycast::create(
-        obj.pos * Coll::getInvGfxScale(), {0.0f, -1.0f, 0.0f}, 5.0f,
-        Coll::RaycastColliderTypeFlags::ALL, false, 0x08);
-      SceneManager::getCurrent().getCollision().raycast(shadowRay, data->shadowCast);
 
       bool moveOnFloor = data->body->isOnFloor() && !data->body->isOnSteepSurface();
       bool canJump = moveOnFloor || data->inAirTime < (1.0f / 60.0f * 4);
@@ -275,9 +282,7 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     camPitchNorm *= camPitchNorm;
     camPitchNorm = (camPitchNorm * 0.5f) - 0.5f;
 
-    fm_quat_t camRot;
-    fm_vec3_t eulerCam{0, -data->camYaw, data->camPitch};
-    fm_quat_from_euler(&camRot, eulerCam.v);
+    fm_quat_t camRot = quatFromEuler({0, -data->camYaw, data->camPitch});
 
     // Determine cam target, this is slightly ahead of the player in the direction facing.
     fm_vec3_t camTarget = obj.pos + fm_vec3_t{0.0f, 20.0f, 0.0f};
@@ -375,8 +380,7 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     data->targetMoveYaw = t3d_lerp_angle(data->targetMoveYaw, currYaw, MOVE_YAW_LERP);
     data->camTargetOffsetYaw = t3d_lerp_angle(data->camTargetOffsetYaw, currYaw, CAM_OFFSET_YAW_LERP);
 
-    fm_vec3_t euler{0.0f, -data->targetMoveYaw, -T3D_PI};
-    fm_quat_from_euler(&obj.rot, euler.v);
+    obj.rot = quatFromEuler({0.0f, -data->targetMoveYaw, -T3D_PI});
     fm_quat_norm(&obj.rot, &obj.rot);
 
     if(data->lastFramePos.x == obj.pos.x && data->lastFramePos.y - obj.pos.y < 0.01f && data->lastFramePos.z == obj.pos.z)
@@ -414,7 +418,7 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     {
       data->dustTimer = 0.1f + Math::rand01() * 0.3f;
       auto seed = (uint32_t)rand();
-      spawnParticles(obj.pos, seed % 3 + 1, seed, 40.0f, 0.5f);
+      spawnParticles(data->body->getFootPos(), seed % 3 + 1, seed, 40.0f, 0.5f);
     }
 
     data->lastFramePos = obj.pos;
@@ -488,18 +492,39 @@ namespace P64::Script::C17EA8EAB6CF1DEB
 
   void draw(Object& obj, Data *data, float deltaTime)
   {
-    // drop shadow
-    float floorY = data->shadowCast.point.y * P64::Coll::getGfxScale();
-    float shadowHeight = obj.pos.y - floorY;
-    shadowHeight *= 0.001f;
-    shadowHeight = Math::clamp(shadowHeight, 0.0f, 1.0f);
-    shadowHeight = 1.0f - shadowHeight;
-    if(data->shadowCast.didHit)
+    // drop shadow: when grounded, take the floor straight from the body,
+    // when airborne, do an additional cast down
+    fm_vec3_t floorPos;
+    fm_vec3_t floorNormal;
+    bool haveFloor;
+    if(data->body->isOnFloor())
+    {
+      floorPos    = data->body->getFootPos();
+      floorNormal = data->body->floorNormal();
+      haveFloor   = true;
+    } else {
+      Coll::Raycast ray = Coll::Raycast::create(
+        obj.pos * Coll::getInvGfxScale(), {0.0f, -1.0f, 0.0f}, 5.0f,
+        Coll::RaycastColliderTypeFlags::ALL, false, 0x08);
+      SceneManager::getCurrent().getCollision().raycast(ray, data->shadowCast);
+      floorPos    = data->shadowCast.point * P64::Coll::getGfxScale();
+      floorNormal = data->shadowCast.normal;
+      haveFloor   = data->shadowCast.didHit;
+    }
+
+    if(haveFloor)
+    {
+      float floorY = floorPos.y;
+      float shadowHeight = obj.pos.y - floorY;
+      shadowHeight *= 0.001f;
+      shadowHeight = Math::clamp(shadowHeight, 0.0f, 1.0f);
+      shadowHeight = 1.0f - shadowHeight;
       User::DropShadows::addShadow(
           {obj.pos.x, floorY, obj.pos.z},
-          data->shadowCast.normal,
+          floorNormal,
           0.55f * shadowHeight,
           1.0f);
+    }
 
     DrawLayer::use2D();
     DrawLayer::useDefault();

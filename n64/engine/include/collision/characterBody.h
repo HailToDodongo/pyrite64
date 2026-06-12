@@ -89,6 +89,12 @@ namespace P64::Coll
     const fm_vec3_t& floorNormal() const { return contactNormal; }
 
     /**
+     * World-space position of the bottom of the capsule.
+     * @return foot position in world space
+     */
+    fm_vec3_t getFootPos() const;
+
+    /**
      * True when the body is on an upward-facing surface steeper than the limit.
      * If this is the case, isOnFloor() will also return true.
      * This function here can be used to determine on which of the two you are standing
@@ -115,7 +121,7 @@ namespace P64::Coll
      * grounded state so the body starts clean, use this for respawning.
      * When false, only the position changes (e.g. portal / seamless teleport).
      *
-     * @param ownerPos New position in graphics space (same space as Object::pos).
+     * @param ownerPos New position in world space (same space as Object::pos).
      * @param resetForces If true, zero velocity and clear grounded state.
      */
     void teleport(const fm_vec3_t& ownerPos, bool resetForces = true);

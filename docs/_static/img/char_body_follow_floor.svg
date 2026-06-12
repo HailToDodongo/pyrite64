@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   class="cb-diagram cb-diagram--lg"
+   viewBox="0 0 840 500"
+   font-family="Segoe UI, Helvetica, Arial, sans-serif"
+   version="1.1"
+   id="svg112"
+   sodipodi:docname="char_body_follow_floor.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview114"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     showgrid="false"
+     inkscape:zoom="1.4833333"
+     inkscape:cx="443.93258"
+     inkscape:cy="110.5618"
+     inkscape:window-width="1920"
+     inkscape:window-height="1031"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg112"
+     showguides="true">
+    <sodipodi:guide
+       position="145.61798,162.92135"
+       orientation="0,-1"
+       id="guide3604"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="173.25843,146.06742"
+       orientation="0,-1"
+       id="guide3671"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
+  <defs
+     id="defs8">
+    <marker
+       style="overflow:visible"
+       id="TriangleStart"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker2904"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path2902" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker2725"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path2723" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker2417"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path2415" />
+    </marker>
+    <marker
+       id="ffD"
+       markerWidth="13"
+       markerHeight="13"
+       refX="8.5"
+       refY="4.5"
+       orient="auto">
+      <path
+         d="M 0,0 10,4.5 0,9 Z"
+         fill="#b6bdca"
+         id="path2" />
+    </marker>
+    <marker
+       id="ffG"
+       markerWidth="13"
+       markerHeight="13"
+       refX="8.5"
+       refY="4.5"
+       orient="auto">
+      <path
+         d="M 0,0 10,4.5 0,9 Z"
+         fill="#2ec66e"
+         id="path5" />
+    </marker>
+  </defs>
+  <path
+     id="rect10"
+     style="fill:#1b1e26;stroke:#3b414e"
+     d="m 10.5,0.5 h 819 c 5.54,0 10,4.46 10,10 v 479 c 0,5.54 -4.46,10 -10,10 h -819 c -5.54,0 -10,-4.46 -10,-10 v -479 c 0,-5.54 4.46,-10 10,-10 z" />
+  <text
+     x="420"
+     y="36"
+     text-anchor="middle"
+     font-size="18px"
+     font-weight="600"
+     fill="#e9ebf1"
+     class="cb-title"
+     id="text12">followFloor - moves with objects (pos / rot / scale)</text>
+  <line
+     x1="290"
+     y1="70"
+     x2="290"
+     y2="360"
+     stroke="#3b414e"
+     id="line14" />
+  <line
+     x1="565"
+     y1="70"
+     x2="565"
+     y2="360"
+     stroke="#3b414e"
+     id="line16" />
+  <!-- ===================== Translate ===================== -->
+  <text
+     x="145"
+     y="106"
+     text-anchor="middle"
+     font-size="14.5"
+     font-weight="600"
+     fill="#c5cbd6"
+     id="text18">Translate</text>
+  <rect
+     x="36"
+     y="196"
+     width="86"
+     height="86"
+     rx="8"
+     fill="#2a2f3a"
+     stroke="#8e97a6"
+     stroke-width="2"
+     id="rect20" />
+  <g
+     id="g28">
+    <circle
+       cx="103"
+       cy="215"
+       r="15"
+       fill="#9aa3b3"
+       fill-opacity="0.12"
+       stroke="#9aa3b3"
+       stroke-width="2.2"
+       id="circle22" />
+    <line
+       x1="103"
+       y1="215"
+       x2="103"
+       y2="196"
+       stroke="#9aa3b3"
+       stroke-width="2.2"
+       id="line24" />
+    <circle
+       cx="103"
+       cy="215"
+       r="2.6"
+       fill="#9aa3b3"
+       id="circle26" />
+  </g>
+  <rect
+     x="170"
+     y="196"
+     width="86"
+     height="86"
+     rx="8"
+     fill="#2ec66e"
+     fill-opacity="0.05"
+     stroke="#2ec66e"
+     stroke-width="2"
+     stroke-dasharray="7 4"
+     id="rect30" />
+  <g
+     id="g38">
+    <circle
+       cx="237"
+       cy="215"
+       r="15"
+       fill="#2ec66e"
+       fill-opacity="0.09"
+       stroke="#2ec66e"
+       stroke-width="2.2"
+       stroke-dasharray="5 3"
+       id="circle32" />
+    <line
+       x1="237"
+       y1="215"
+       x2="237"
+       y2="196"
+       stroke="#2ec66e"
+       stroke-width="2.2"
+       id="line34" />
+    <circle
+       cx="237"
+       cy="215"
+       r="2.6"
+       fill="#2ec66e"
+       id="circle36" />
+  </g>
+  <line
+     x1="87.006416"
+     y1="306.73685"
+     x2="187.00642"
+     y2="306.73685"
+     stroke="#b6bdca"
+     stroke-width="2.6"
+     marker-end="url(#ffD)"
+     id="line40"
+     style="marker-end:url(#TriangleStart)" />
+  <text
+     x="144.65408"
+     y="351.65781"
+     text-anchor="middle"
+     font-size="12.5px"
+     fill="#b6bdca"
+     id="text42">platform moves</text>
+  <!-- ===================== Rotate ===================== -->
+  <text
+     x="427"
+     y="106"
+     text-anchor="middle"
+     font-size="14.5"
+     font-weight="600"
+     fill="#c5cbd6"
+     id="text44">Rotate</text>
+  <rect
+     x="355.70209"
+     y="139.57068"
+     width="120.86192"
+     height="167.43468"
+     rx="11.24297"
+     fill="#2a2f3a"
+     stroke="#8e97a6"
+     stroke-width="3.30826"
+     id="rect46" />
+  <rect
+     x="-22.978685"
+     y="439.6084"
+     width="168.62369"
+     height="120.85664"
+     rx="15.685925"
+     fill="#2ec66e"
+     fill-opacity="0.05"
+     stroke="#2ec66e"
+     stroke-width="3.31991"
+     stroke-dasharray="7, 4"
+     transform="matrix(0.56188766,-0.82721355,0.82430935,0.56613965,0,0)"
+     id="rect48" />
+  <circle
+     cx="500.29858"
+     cy="-1.8686991"
+     r="3.2"
+     fill="#8e97a6"
+     id="circle50-3"
+     transform="rotate(33.874839)" />
+  <!-- big rotation indicator arc around the pivot -->
+  <path
+     d="m 417.01021,135.74078 a 58.559459,58.559459 0 0 1 92.18873,28.14865"
+     fill="none"
+     stroke="#b6bdca"
+     stroke-width="1.95198"
+     marker-end="url(#ffD)"
+     id="path52"
+     style="marker-end:url(#marker2417)" />
+  <!-- original body (local spot) -->
+  <g
+     id="g62"
+     transform="translate(-10.865634,-37.998357)">
+    <circle
+       cx="461"
+       cy="208"
+       r="15"
+       fill="#9aa3b3"
+       fill-opacity="0.12"
+       stroke="#9aa3b3"
+       stroke-width="2.2"
+       id="circle56" />
+    <line
+       x1="461"
+       y1="208"
+       x2="461"
+       y2="189"
+       stroke="#9aa3b3"
+       stroke-width="2.2"
+       id="line58" />
+    <circle
+       cx="461"
+       cy="208"
+       r="2.5999999"
+       fill="#9aa3b3"
+       id="circle60" />
+  </g>
+  <!-- carried body: same local spot, orbited; facing still up -->
+  <g
+     id="g70"
+     transform="rotate(0.47348245,-801.13725,10330.515)">
+    <circle
+       cx="418"
+       cy="194"
+       r="15"
+       fill="#2ec66e"
+       fill-opacity="0.09"
+       stroke="#2ec66e"
+       stroke-width="2.2"
+       stroke-dasharray="5, 3"
+       id="circle64" />
+    <line
+       x1="418"
+       y1="194"
+       x2="418"
+       y2="175"
+       stroke="#2ec66e"
+       stroke-width="2.2"
+       id="line66" />
+    <circle
+       cx="418"
+       cy="194"
+       r="2.5999999"
+       fill="#2ec66e"
+       id="circle68" />
+  </g>
+  <text
+     x="427.09735"
+     y="352.70633"
+     text-anchor="middle"
+     font-size="12.5px"
+     fill="#b6bdca"
+     id="text74">orbits the pivot, facing direction kept</text>
+  <!-- ===================== Scale ===================== -->
+  <text
+     x="700"
+     y="106"
+     text-anchor="middle"
+     font-size="14.5"
+     font-weight="600"
+     fill="#c5cbd6"
+     id="text76">Scale</text>
+  <rect
+     x="624"
+     y="160"
+     width="152"
+     height="152"
+     rx="10"
+     fill="#2ec66e"
+     fill-opacity="0.05"
+     stroke="#2ec66e"
+     stroke-width="2"
+     stroke-dasharray="7 4"
+     id="rect78" />
+  <rect
+     x="664"
+     y="200"
+     width="72"
+     height="72"
+     rx="8"
+     fill="#2a2f3a"
+     stroke="#8e97a6"
+     stroke-width="2"
+     id="rect80" />
+  <circle
+     cx="700"
+     cy="236"
+     r="3.2"
+     fill="#8e97a6"
+     id="circle82" />
+  <!-- big growth arrows along the diagonals -->
+  <line
+     x1="732.96844"
+     y1="270.21136"
+     x2="765.02838"
+     y2="302.65921"
+     stroke="#b6bdca"
+     stroke-width="2.2068"
+     marker-end="url(#ffD)"
+     id="line84"
+     style="marker-end:url(#marker2725)" />
+  <line
+     x1="666.16528"
+     y1="202.11772"
+     x2="633.70935"
+     y2="169.1013"
+     stroke="#b6bdca"
+     stroke-width="2.23976"
+     marker-end="url(#ffD)"
+     id="line86"
+     style="marker-end:url(#marker2904)" />
+  <!-- original body (local spot) -->
+  <g
+     id="g94"
+     transform="translate(-5.0341963,0.81467486)">
+    <circle
+       cx="724"
+       cy="216"
+       r="15"
+       fill="#9aa3b3"
+       fill-opacity="0.12"
+       stroke="#9aa3b3"
+       stroke-width="2.2"
+       id="circle88" />
+    <line
+       x1="724"
+       y1="216"
+       x2="724"
+       y2="197"
+       stroke="#9aa3b3"
+       stroke-width="2.2"
+       id="line90" />
+    <circle
+       cx="724"
+       cy="216"
+       r="2.5999999"
+       fill="#9aa3b3"
+       id="circle92" />
+  </g>
+  <!-- carried body: same local spot, scaled outward -->
+  <g
+     id="g102"
+     transform="translate(2.5611197,-4.7755952)">
+    <circle
+       cx="751"
+       cy="190"
+       r="15"
+       fill="#2ec66e"
+       fill-opacity="0.09"
+       stroke="#2ec66e"
+       stroke-width="2.2"
+       stroke-dasharray="5, 3"
+       id="circle96" />
+    <line
+       x1="751"
+       y1="190"
+       x2="751"
+       y2="171"
+       stroke="#2ec66e"
+       stroke-width="2.2"
+       id="line98" />
+    <circle
+       cx="751"
+       cy="190"
+       r="2.5999999"
+       fill="#2ec66e"
+       id="circle100" />
+  </g>
+  <text
+     x="702.78387"
+     y="350.77045"
+     text-anchor="middle"
+     font-size="12.5px"
+     fill="#b6bdca"
+     id="text104">grows: contact point moves out</text>
+  <text
+     text-anchor="middle"
+     font-size="13px"
+     fill="#c5cbd6"
+     id="text110"><tspan
+       x="420"
+       y="430"
+       id="tspan106">The foot's contact point is tracked in the platform's local space, so the platform's translation,</tspan><tspan
+       x="420"
+       y="450"
+       id="tspan108">rotation and scale all carry the body (green). Only its position is carried.</tspan></text>
+</svg>
