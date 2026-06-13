@@ -236,13 +236,14 @@ namespace P64::Script::CD0A328E7EE01313
     );
 */
     posY = 240 - 16;
-    Debug::printf(posX, posY, "State: %s %s %s",
+    Debug::printf(posX, posY, "State: %s %s",
       body.isOnFloor() ? "Floor" : "  -  ",
-      body.isOnSteepSurface() ? "Steep" : "  -  ",
-      data->planetGravity ? "Planet" : "  -  "
+      body.isOnSteepSurface() ? "Steep" : "  -  "
     );
+    //posY -= 9;
+    //Debug::printf(posX, posY, "T: %lldus", TICKS_TO_US(ticks));
     posY -= 9;
-    Debug::printf(posX, posY, "T: %lldus", TICKS_TO_US(ticks));
+    Debug::printf(posX, posY, "[R] Planet: %s", data->planetGravity ? "On " : "Off");
 
     rdpq_mode_pop();
 
