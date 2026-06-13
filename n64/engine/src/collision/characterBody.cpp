@@ -105,6 +105,8 @@ void CharacterBody::moveAndSlide(float deltaTime)
   const fm_vec3_t& up = normUp;
   onSteepSurface = 0;
   probeFoundFloor = 0;
+  floorObjId = 0;
+  movedByFloor = 0;
 
   // Track transform of object you are standing on (tracked at foot-position).
   // This is applied before anything else
@@ -112,6 +114,8 @@ void CharacterBody::moveAndSlide(float deltaTime)
     const fm_vec3_t foot = capsuleCenter() - up * halfHeight;
     fm_vec3_t carryDiff = floorAttach.update(foot);
     owner->pos = owner->pos - carryDiff * gfxScale;
+    // The floor dragged us this frame if the contact point moved (translation/rotation).
+    if(fm_vec3_len2(&carryDiff) > 1e-8f) movedByFloor = 1;
   }
 
   // Capsule geometry in physics units
@@ -365,6 +369,9 @@ void CharacterBody::moveAndSlide(float deltaTime)
       const bool supportSurface = hitNormalUp > FM_EPSILON;
 
       bool inSnapRange = clearance <= maxSnap && clearance >= -maxSnap;
+
+      // Remember which object we are grounded on (for platforms reacting to us).
+      if(inSnapRange && supportSurface) floorObjId = hit.hitObjectId;
 
       float effectiveClearance = clearance;
       if(inSnapRange && supportSurface && clearance < 0.0f) {

@@ -2,13 +2,14 @@
 #include "scene/sceneManager.h"
 #include "scene/object.h"
 #include "scene/components/charBody.h"
-#include <debug/debugDraw.h>
+#include "debug/debugMenu.h"
+#include "debug/debugDraw.h"
 
 namespace
 {
   constexpr float JUMP_SPEED  = 8.0f;  // Initial up-axis speed on jump
   constexpr float COYOTE_TIME = 0.15f;  // Grace window after leaving the floor
-  constexpr float MOVE_SPEED  = 0.009f;
+  float MOVE_SPEED  = 0.009f;
 
   constexpr float CAM_DIST   = 390.0f;
   constexpr float CAM_HEIGHT = 400.0f;
@@ -56,6 +57,9 @@ namespace P64::Script::CD0A328E7EE01313
     data->moveSpeedFactor = 1.0f;
     data->planetGravity = false;
     data->currentUp    = {0.0f, 1.0f, 0.0f};
+
+    Debug::Overlay::addCustomMenu("Game")
+      .add("Speed",   MOVE_SPEED, 0.001f, 0.04f, 0.001f);
   }
 
   void destroy(Object& obj, Data *data) {}
@@ -96,7 +100,7 @@ namespace P64::Script::CD0A328E7EE01313
     data->camForward = forward0;
 
     fm_vec3_t right0;
-    fm_vec3_cross(&right0, &up, &forward0); // up × forward → right (right-handed)
+    fm_vec3_cross(&right0, &up, &forward0);
 
     // Align the object's visual rotation so its local +Y matches body up.
     constexpr fm_vec3_t WORLD_Y = {0.0f, 1.0f, 0.0f};
@@ -208,6 +212,8 @@ namespace P64::Script::CD0A328E7EE01313
     Debug::isMonospace = true;
     uint16_t posX = 16;
     uint16_t posY = 16;
+
+/*
     Debug::printf(posX, posY, "Pos : %+.3f %+.3f %+.3f",
       obj.pos.x,
       obj.pos.y,
@@ -228,7 +234,7 @@ namespace P64::Script::CD0A328E7EE01313
       body.floorNormal().z,
       normSteepness
     );
-
+*/
     posY = 240 - 16;
     Debug::printf(posX, posY, "State: %s %s %s",
       body.isOnFloor() ? "Floor" : "  -  ",

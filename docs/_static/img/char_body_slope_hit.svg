@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   class="cb-diagram cb-diagram--sm"
+   viewBox="0 0 391.85358 407.15675"
+   font-family="'Segoe UI', Helvetica, Arial, sans-serif"
+   version="1.1"
+   id="svg86"
+   sodipodi:docname="char_body_slope_hit.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   width="391.85358"
+   height="407.15674"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview88"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     showgrid="false"
+     inkscape:zoom="1.3096848"
+     inkscape:cx="68.718825"
+     inkscape:cy="224.48149"
+     inkscape:window-width="1920"
+     inkscape:window-height="1031"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg86" />
+  <defs
+     id="defs14">
+    <marker
+       id="cbDimD"
+       markerWidth="9"
+       markerHeight="9"
+       refX="7"
+       refY="3.5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#b6bdca"
+         id="path2" />
+    </marker>
+    <marker
+       id="cbDimY"
+       markerWidth="9"
+       markerHeight="9"
+       refX="7"
+       refY="3.5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#e6b417"
+         id="path5" />
+    </marker>
+    <marker
+       id="cbDimB"
+       markerWidth="9"
+       markerHeight="9"
+       refX="7"
+       refY="3.5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#4f93e6"
+         id="path8" />
+    </marker>
+    <marker
+       id="cbDimV"
+       markerWidth="9"
+       markerHeight="9"
+       refX="7"
+       refY="3.5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#a679f5"
+         id="path11" />
+    </marker>
+  </defs>
+  <rect
+     x="0.425024"
+     y="0.425024"
+     width="391.00354"
+     height="406.3067"
+     rx="8.1629133"
+     fill="#1b1e26"
+     stroke="#3b414e"
+     id="rect16"
+     style="stroke-width:0.850048"
+     sodipodi:insensitive="true" />
+  <text
+     x="203.41096"
+     y="30.763546"
+     text-anchor="middle"
+     font-size="17px"
+     font-weight="600"
+     fill="#e9ebf1"
+     class="cb-title"
+     id="text18">Max. slope angle</text>
+  <!-- ground + hatching -->
+  <line
+     x1="39.545849"
+     y1="374.03244"
+     x2="195.38907"
+     y2="280.43484"
+     stroke="#8e97a6"
+     stroke-width="2"
+     id="line20"
+     style="stroke:#d8e7ff;stroke-width:3.48128;stroke-dasharray:none;stroke-opacity:1" />
+  <!-- capsule axis -->
+  <!-- snap band (blue) -->
+  <!-- step band (yellow) -->
+  <!-- logical capsule -->
+  <!-- physics capsule (shortened from the bottom) -->
+  <!-- capsule center -->
+  <!-- centerOffset: object origin (at the feet/ground) up to the capsule center -->
+  <!-- object origin marker at the ground -->
+  <g
+     id="g2385"
+     transform="translate(-60.605479)">
+    <line
+       x1="171.52708"
+       y1="73.721008"
+       x2="171.52708"
+       y2="331.33887"
+       stroke="#5a6373"
+       stroke-width="0.883549"
+       stroke-dasharray="3, 4"
+       id="line32" />
+    <circle
+       cx="171.52708"
+       cy="200.76355"
+       r="3.5"
+       fill="#e9ebf1"
+       id="circle44" />
+    <g
+       id="g823">
+      <rect
+         x="125.52708"
+         y="296.76355"
+         width="92"
+         height="34"
+         fill="#ffcc00"
+         fill-opacity="0.22"
+         id="rect38" />
+      <rect
+         x="125.52708"
+         y="70.76355"
+         width="92"
+         height="260"
+         rx="46"
+         ry="46"
+         fill="#9aa3b3"
+         fill-opacity="0.08"
+         stroke="#9aa3b3"
+         stroke-width="2"
+         id="rect40" />
+      <rect
+         x="125.52708"
+         y="70.76355"
+         width="92"
+         height="226"
+         rx="46"
+         ry="46"
+         fill="none"
+         stroke="#2ec66e"
+         stroke-width="2"
+         stroke-dasharray="6, 4"
+         id="rect42" />
+    </g>
+    <circle
+       cx="171.52708"
+       cy="330.76355"
+       r="1.7"
+       fill="#a679f5"
+       id="circle54" />
+  </g>
+  <line
+     x1="221.12775"
+     y1="384.74377"
+     x2="358.59018"
+     y2="265.7829"
+     stroke="#8e97a6"
+     stroke-width="2"
+     id="line20-3"
+     style="stroke:#d8e7ff;stroke-width:3.48128;stroke-dasharray:none;stroke-opacity:1" />
+  <line
+     x1="283.31311"
+     y1="71.750687"
+     x2="283.31311"
+     y2="329.36856"
+     stroke="#5a6373"
+     stroke-width="0.883549"
+     stroke-dasharray="3, 4"
+     id="line32-7" />
+  <circle
+     cx="283.31311"
+     cy="198.79323"
+     r="3.5"
+     fill="#e9ebf1"
+     id="circle44-5" />
+  <rect
+     x="237.31311"
+     y="313.34357"
+     width="92"
+     height="15.44966"
+     fill="#ffcc00"
+     fill-opacity="0.22"
+     id="rect38-5"
+     style="stroke-width:0.674094" />
+  <rect
+     x="237.3345"
+     y="68.814613"
+     width="95.992905"
+     height="259.95721"
+     rx="47.996452"
+     ry="45.992432"
+     fill="#9aa3b3"
+     fill-opacity="0.08"
+     stroke="#9aa3b3"
+     stroke-width="2.04277"
+     id="rect40-6" />
+  <rect
+     x="237.37335"
+     y="68.853111"
+     width="95.8908"
+     height="243.65208"
+     rx="47.9454"
+     ry="49.592903"
+     fill="none"
+     stroke="#2ec66e"
+     stroke-width="2.1201"
+     stroke-dasharray="6, 4"
+     id="rect42-2" />
+  <circle
+     cx="283.31311"
+     cy="328.79324"
+     r="1.7"
+     fill="#a679f5"
+     id="circle54-9" />
+  <!-- height dimension -->
+  <!-- radius dimension -->
+  <!-- step height dimension -->
+  <line
+     x1="52.476559"
+     y1="296.76355"
+     x2="52.476559"
+     y2="330.76355"
+     stroke="#e6b417"
+     stroke-width="1.4"
+     marker-start="url(#cbDimY)"
+     marker-end="url(#cbDimY)"
+     id="line68" />
+  <text
+     x="-345.46274"
+     y="38.472511"
+     font-size="12.5px"
+     fill="#e6b417"
+     font-weight="600"
+     id="text70"
+     transform="rotate(-90)">stepHeight</text>
+  <!-- floor snap dimension -->
+  <!-- legend -->
+  <g
+     font-size="12px"
+     fill="#c5cbd6"
+     id="g84"
+     transform="translate(1.527085,0.76354253)" />
+  <ellipse
+     style="fill:#850909;fill-opacity:1;stroke:#ff0000;stroke-width:3.29942;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+     id="path3494"
+     cx="317.02048"
+     cy="299.96494"
+     rx="6.1967692"
+     ry="6.134047" />
+</svg>

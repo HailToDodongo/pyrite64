@@ -24,6 +24,16 @@ namespace P64::Script::CF977D94F4DB7A71
     fm_quat_from_axis_angle(&obj.rot, &rotAxis, data->rot);
     fm_quat_norm(&obj.rot, &obj.rot);
 
+    // Character bodies produce no collision events, so detect the controlled player
+    // standing on this seesaw via the floor id the player publishes each frame.
+   // @TODO: add proper API in char-body for this
+    if(User::ctx.playerFloorId == obj.id)
+    {
+      data->playerPos = User::ctx.playerPos;
+      data->lastDiffX = obj.pos.x - data->playerPos.x;
+      data->state = 1;
+    }
+
     if(fabsf(data->lastDiffX) > 0.001f)
     {
       float diffX = obj.pos.x - data->playerPos.x;
@@ -41,13 +51,5 @@ namespace P64::Script::CF977D94F4DB7A71
       }
     }
     data->lastDiffX *= 0.9f;
-  }
-
-  void onCollision(Object& obj, Data *data, const Coll::CollEvent& event)
-  {
-    if(User::ctx.controlledId != event.otherObject->id)return;
-    data->playerPos = event.otherObject->pos;
-    data->lastDiffX = obj.pos.x - data->playerPos.x;
-    data->state = 1;
   }
 }

@@ -15,50 +15,227 @@ If you're looking for a usage example, check the `char_body` example project.
 A character body represents a capsule-shaped physics volume attached to a scene object.\
 Each frame you set an input velocity and call `moveAndSlide()`, the body then:
 
-- Applies gravity
+- Applies gravity (local up vector)
 - Sweeps the capsule through the collision scene
 - Slides along surfaces it hits
 - Steps over small obstacles (stairs)
 - Snaps to the floor on slopes and ledges
+- Moves with the object it's standing on (optional, handles pos/rot/scaling)
 - Writes the resolved position back to the owning object
 
-```{image} /_static/img/char_body_overview.png
-:align: center
-:width: 640px
+```{raw} html
+:file: ../../../../_static/img/char_body_overview.svg
 ```
 
 In contrast to actual colliders, it will never be moved by other colliders via forces.\
 It itself is also invisible to other real colliders / rigid-bodies.
 
 Certain responses are handled differently to make it control well.\
-For example standing on a slope will not make it slip off (unless you cross the defined threshold).\
-Moving on or off a ramp also keeps it to the floor, so you don't fly off when you move fast.
+For example, standing on a slope will not make it slip off (unless you cross the defined threshold).
 
 ## Capsule Shape
 
 The capsule consists of a cylindrical middle section with hemispherical caps at both ends.\
 Its orientation is fixed to the defined up-axis in the settings.
 
-```{image} /_static/img/char_body_capsule.png
-:align: center
-:width: 400px
+```{raw} html
+:file: ../../../../_static/img/char_body_capsule.svg
 ```
 
 Two distinct capsules exist internally:
 
-| Capsule | Purpose |
-|---|---|
-| **Logical capsule** | The full capsule matching your radius/height settings. Used for the floor-snap probe origin and debug visualization. |
-| **Physics capsule** | Shortened from the bottom by `stepHeight`. This is what actually collides during sweeps, letting the character walk over low obstacles. |
+| Capsule           | Purpose                                                                                                                                    |
+|-------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| **Full capsule**  | The full capsule matching your radius/height settings.<br>Used for the floor-snap probe origin and debug visualization.                    |
+| **Sweep capsule** | Shortened from the bottom by `stepHeight`.<br>This is what actually collides during sweeps, letting the character walk over low obstacles. |
 
 The `centerOffset` setting shifts the entire capsule relative to the object origin.\
 Typically you set this to place the capsule bottom at the object's feet.
+
+The following sections describe special cases and specific behaviors.
+
+## Behaviour
+
+### Wall Sliding
+
+When moving across a surface, any collision with walls is resolved by ignoring the movement into the wall,
+and moving the rest of the vector alongside it.\
+This lets the character body slide naturally along it.  
+
+<div style="display: flex">
+<video width="320" controls loop muted>
+   <source src="../../../../_static/img/v_cb_slide.mp4.webm" type="video/webm">
+</video>
+
+```{raw} html
+:file: ../../../../_static/img/char_body_move_and_slide.svg
+```
+
+</div>
+
+### Slope Following
+
+When grounded on a walkable floor, the horizontal velocity is reshaped to follow the surface.\
+This means walking up or down a ramp keeps the character on the ground without manual input.
+
+Going *down* a ramp (or off its edge) the floor probe reaches `floorSnapDistance` below the foot\
+and pulls the body back onto the slope, so it walks down smoothly instead of launching off and falling.
+
+<div style="display: flex">
+<video width="320" controls loop muted>
+   <source src="../../../../_static/img/v_cb_ramp.mp4.webm" type="video/webm">
+</video>
+
+```{raw} html
+:file: ../../../../_static/img/char_body_slope_down.svg
+```
+</div>
+
+
+### Stair Stepping
+
+The physics capsule is shortened from the bottom by `stepHeight`.\
+Risers below this height are invisible to the sweep, so the capsule passes through them.\
+After the sweep, the floor probe detects the higher ground and lifts the character up.
+
+<div style="display: flex">
+<video width="320" controls loop muted>
+   <source src="../../../../_static/img/v_cb_stairs.mp4.webm" type="video/webm">
+</video>
+
+```{raw} html
+:file: ../../../../_static/img/char_body_stairs.svg
+```
+
+</div>
+
+For stair climbing to work, `floorSnapDistance` must be ≥ `stepHeight`.\
+The snap distance determines how far the probe reaches below the capsule to find the floor.
+
+
+### Slope Angle
+
+A maximum allowed floor angle can also be defined.\
+Once a slope exceeds that, it is treated as a steep surface making the body slip off.
+
+<div style="display: flex; width: 100%; justify-content: center">
+<video width="320" controls loop muted>
+   <source src="../../../../_static/img/v_cb_slope.mp4.webm" type="video/webm">
+</video>
+</div>
+
+Make sure the maximum angle allowed doesn't collide with the sweep-capsule.\
+Or in other words: radius and stepping height must allow the angle to not touch the bottom capsule.
+
+```{figure} /_static/img/char_body_slope_hit.svg
+:align: center 
+:width: 340px
+```
+
+### Corner & Crease Handling
+
+When the character is pushed into a V-shaped corner (two walls meeting at an angle),\
+the slide from each wall would point into the other, trapping the character.\
+This is detected internally and projects motion onto the intersection line of both planes,\
+so the character slides into the corner and stops once fully inside.
+
+Without this, it would either oscillate side to side each frame\
+or get completely stuck (e.g.: unable to jump) once too deep into the corner.
+
+Note that this problem can't be avoided completely.
+with enough force or tiny/large capsule sizes, you may still face those issues partially.
+
+<div style="display: flex">
+<video width="320" controls loop muted>
+   <source src="../../../../_static/img/v_cb_corner.mp4.webm" type="video/webm">
+</video>
+
+```{raw} html
+:file: ../../../../_static/img/char_body_crease.svg
+```
+
+</div>
+
+### Moving Platforms
+
+When `followFloor` is enabled (default), the body is carried along with the mesh collider it currently stands on.\
+Each frame the contact point at the capsule foot is recorded in the mesh's local space.\
+On the next frame the new world position of that same local point is read back and the body is shifted by the difference,\
+so the character rides translating and rotating platforms naturally.
+
+<div style="display: flex">
+<video width="320" controls loop muted>
+   <source src="../../../../_static/img/v_cb_attach.mp4.webm" type="video/webm">
+</video>
+
+```{raw} html
+:file: ../../../../_static/img/char_body_follow_floor.svg
+```
+
+</div>
+
+Because the carry is driven by where that local point lands in world space,\
+the platform's translation, rotation **and** scaling all move the body.\
+Only the body's position is carried, not its rotation,\
+so the character does not visually spin with the platform.\
+If you need the character to face-spin with the platform,\
+apply the platform's yaw delta to the object yourself.
+
+```{note}
+Floor-carry only applies to **mesh colliders**. The body can stand on and collide with a moving
+collider-body (e.g. a box), but it will not be carried along by it.
+```
+
+### Up-Vector / Planets
+
+The up-vector can be freely set and changed over time if needed.\
+The global physics gravity is not considered for anything, only the own up-vector. 
+
+All logic that determines what floors, walls, and angles are, will be relative to this vector.\
+Meaning you can easily implement something like planetary gravity:
+
+<video width="320" controls loop muted>
+   <source src="../../../../_static/img/v_cb_up_vector.mp4.webm" type="video/webm">
+</video>
+
+### Falling off edges
+
+By default, a capsule has the annoying property that you can either balance off around edges,\
+or move way past a point you should be able to.\
+The former also allows going up a cliff again even though you should already be falling.
+
+The character body avoids both by treating the foot as a singular point when needed.\
+Once past an edge it commits with the fall, and when hitting the sweep capsule, also slides off.
+
+<video width="320" controls loop muted>
+   <source src="../../../../_static/img/v_cb_fall_slide.mp4.webm" type="video/webm">
+</video>
+
+At low speeds, this will not be perfectly smooth.\
+However, to also handle various slope-related behaviors, this trade-off was needed. 
+
+### Physics Interaction
+
+As mentioned, a character body is only an observer, it will not *cause* collisions.\
+If you wish to do so, you can attach real body ontop of it.\
+Just make sure to setup the collision masks in such a way that they don't see each other.
+
+Here is an example of a attached sphere slightly above the foot, and inside the body:
+
+<video width="320" controls loop muted>
+   <source src="../../../../_static/img/v_cb_interact.mp4.webm" type="video/webm">
+</video>
 
 ## Settings
 
 All parameters are configured through the **Character-Body** component in the editor.\
 When you add the component to an object, each setting appears as a UI field.\
 The table below maps each editor label to its C++ API name.
+
+```{image} /_static/img/editor_comp_char_body.png
+:align: center
+:width: 400px
+```
 
 ```{list-table} Character-Body Component Settings
 :header-rows: 1
@@ -146,9 +323,6 @@ void setUp(const fm_vec3_t& newUp);             // change up direction (auto-nor
 void setCenterOffset(const fm_vec3_t& offset);   // change capsule center offset
 ```
 
-`setUp()` has an early-out: if the new up is within ~0.8° of the current one,\
-the cache refresh is skipped entirely.
-
 If you create the body programmatically, also call `configure()` once at init:
 
 ```cpp
@@ -181,76 +355,6 @@ void moveAndSlide(float deltaTime);
 This is the main update function. Call it once per frame, typically from `update()` or `fixedUpdate()`.\
 Make sure to call it even if you don't move to apply gravity.\
 The collision scene is retrieved internally via `SceneManager::getCurrent()`.
-
-```{image} /_static/img/char_body_move_and_slide.png
-:align: center
-:width: 640px
-```
-
-Each call performs these steps in order:
-
-1. **Reset state**: Clears per-frame flags (`onSteepSurface`, `probeFoundFloor`).
-2. **Follow floor carry**: If `followFloor` is enabled and the body was on a floor, carries the body along with the floor mesh's movement since the last frame.
-3. **Apply gravity**: If not on a walkable floor, gravity is added to the vertical velocity.
-4. **Reshape velocity for slopes**: When grounded on a walkable slope, the horizontal velocity is projected onto the surface so movement follows the slope instead of clipping into it.
-5. **Swept slide loop**: The displacement vector (velocity × deltaTime) is swept through the collision scene up to `maxSlides` times. Uses a BVH broadphase to query only nearby mesh colliders. Each hit projects the remaining displacement onto the hit plane (slide), with special handling for:
-   - **Stair stepping**: The shortened physics capsule passes over risers below `stepHeight`
-   - **T=0 overlap resolution**: If the capsule already overlaps, it's pushed out before re-trying
-   - **Crease fix**: In V-corners, motion is projected onto the intersection line of both walls
-   - **Ceiling hits**: Upward velocity is cancelled on ceiling contact
-   - **Steep wall damping**: When grounded and sliding along a steep wall, vertical sliding is stripped
-6. **Overlap resolution**: A zero-length sweep finds and resolves any remaining lateral overlaps.
-7. **Floor probe**: A raycast downward from the capsule center detects the floor. Based on clearance and surface angle it either:
-   - **Lifts** the character when sunken (stair top-out or landing correction)
-   - **Snaps** the character down to maintain ground contact on slopes
-   - **Sets grounded state** on walkable surfaces (updating `isOnFloor()` and `floorNormal()`)
-   - **Sets steep surface state** on surfaces steeper than `floorMaxAngle`
-
-### Slope Following
-
-When grounded on a walkable floor, the horizontal velocity is reshaped to follow the surface.\
-This means walking up or down a ramp keeps the character on the ground without manual input.
-
-```{image} /_static/img/char_body_slope.png
-:align: center
-:width: 400px
-```
-
-### Stair Stepping
-
-The physics capsule is shortened from the bottom by `stepHeight`.\
-Risers below this height are invisible to the sweep, so the capsule passes through them.\
-After the sweep, the floor probe detects the higher ground and lifts the character up.
-
-```{image} /_static/img/char_body_stairs.png
-:align: center
-:width: 500px
-```
-
-For stair climbing to work, `floorSnapDistance` must be ≥ `stepHeight`.\
-The snap distance determines how far the probe reaches below the capsule to find the floor.
-
-### Corner & Crease Handling
-
-When the character is pushed into a V-shaped corner (two walls meeting at an angle),\
-the slide from each wall would point into the other, trapping the character.\
-The crease fix detects this and projects motion onto the intersection line of both planes,\
-so the character slides along the corner crease.
-
-The same logic applies to the static overlap resolver at T=0.
-
-### Moving Platforms
-
-When `followFloor` is enabled (default), the body is carried along with the mesh collider it currently stands on.\
-Each frame the contact point at the capsule foot is recorded in the mesh's local space.\
-On the next frame the new world position of that same local point is read back and the body is shifted by the difference,\
-so the character rides translating and rotating platforms naturally.
-
-Only the body's position is carried, not its rotation, so the character does not visually spin with the platform.\
-If you need the character to face-spin with the platform, apply the platform's yaw delta to the object yourself.
-
-The carry is applied before the sweep, so player input is integrated relative to the new floor position,\
-and any residual overlap from a fast-moving platform is resolved by the regular collision sweep.
 
 ## State Queries
 

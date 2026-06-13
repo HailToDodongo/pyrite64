@@ -1995,7 +1995,7 @@
                   }
                 ],
                 "enabled": true,
-                "id": 13,
+                "id": 15,
                 "name": "Coin (20)",
                 "pos": [
                   30.0,
@@ -2245,7 +2245,7 @@
                   }
                 ],
                 "enabled": true,
-                "id": 12,
+                "id": 77,
                 "name": "Coin (20)",
                 "pos": [
                   30.0,

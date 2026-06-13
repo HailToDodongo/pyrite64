@@ -95,6 +95,23 @@ namespace P64::Coll
     fm_vec3_t getFootPos() const;
 
     /**
+     * Object id of the surface the body is currently grounded on (0 when airborne).
+     * Lets other objects react to the character standing on them (e.g. platforms,
+     * pressure plates) now that the body produces no collision events itself.
+     * @return id of the floor object, or 0
+     */
+    uint16_t floorObjectId() const { return floorObjId; }
+
+    /**
+     * Whether the floor moved (carried) the body this frame via followFloor — i.e.
+     * the surface it stands on translated or rotated and dragged the body along.
+     * Useful e.g. to avoid banking a respawn point while on a moving platform.
+     * Note: only reflects followFloor carry (mesh-collider floors).
+     * @return true if a moving floor carried the body this frame
+     */
+    bool wasMovedByFloor() const { return movedByFloor; }
+
+    /**
      * True when the body is on an upward-facing surface steeper than the limit.
      * If this is the case, isOnFloor() will also return true.
      * This function here can be used to determine on which of the two you are standing
@@ -159,6 +176,8 @@ namespace P64::Coll
     uint8_t onFloor{};
     uint8_t onSteepSurface{};
     uint8_t probeFoundFloor{}; // set when floor probe confirms solid ground; gates gravity suppression
+    uint16_t floorObjId{};     // id of the object currently grounded on (0 = airborne)
+    uint8_t movedByFloor{};    // set when followFloor carried the body this frame
 
     Attach floorAttach{}; // tracks the contact point on the mesh stood on for followFloor
 

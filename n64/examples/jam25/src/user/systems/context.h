@@ -21,6 +21,7 @@ namespace P64::User
     uint32_t frame{0};
 
     fm_vec3_t playerPos{};
+    uint16_t  playerFloorId{0}; // id of the object the player is currently standing on (0 = airborne)
   };
 
   extern Context ctx;

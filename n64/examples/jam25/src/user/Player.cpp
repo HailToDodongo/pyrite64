@@ -31,8 +31,8 @@ namespace
   constexpr float CAM_PITCH_MAX = 1.1f;
 
   constexpr float HURT_TIMEOUT = 1.0f;
-  constexpr float JUMP_IMPULSE = 2.7f;
-  constexpr float JUMP_HOLD_BOOST = 3.6f;
+  constexpr float JUMP_IMPULSE = 2.6f;
+  constexpr float JUMP_HOLD_BOOST = 2.8f;
   constexpr float FALL_GRAVITY_MULT = 1.625f;
 
   void spawnParticles(const fm_vec3_t pos, uint32_t count, uint32_t seed, float dist, float size) {
@@ -45,19 +45,6 @@ namespace
     }
   }
 
-  fm_quat_t quatFromEuler(const fm_vec3_t &v)
-  {
-    float c1, c2, c3, s1, s2, s3;
-    fm_sincosf(v.x * 0.5f, &s1, &c1);
-    fm_sincosf(v.y * 0.5f, &s2, &c2);
-    fm_sincosf(v.z * 0.5f, &s3, &c3);
-    return { 
-      c1 * c2 * c3 + s1 * s2 * s3,
-      s1 * c2 * c3 - c1 * s2 * s3,
-      c1 * s2 * c3 + s1 * c2 * s3,
-      c1 * c2 * s3 - s1 * s2 * c3 
-    };
-  }
 }
 
 namespace P64::Script::C17EA8EAB6CF1DEB
@@ -208,6 +195,9 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       data->jumpRequested = 0;
 
       data->body->moveAndSlide(deltaTime);
+
+      // Publish what we're standing on so platforms can react (no collision events for char bodies).
+      User::ctx.playerFloorId = data->body->floorObjectId();
     }
 
     auto pressed = joypad_get_buttons_pressed(JOYPAD_PORT_1);
@@ -282,7 +272,8 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     camPitchNorm *= camPitchNorm;
     camPitchNorm = (camPitchNorm * 0.5f) - 0.5f;
 
-    fm_quat_t camRot = quatFromEuler({0, -data->camYaw, data->camPitch});
+    fm_quat_t camRot;
+    fm_quat_from_euler_zyx(&camRot, T3D_PI - data->camPitch, data->camYaw, 0.0f);
 
     // Determine cam target, this is slightly ahead of the player in the direction facing.
     fm_vec3_t camTarget = obj.pos + fm_vec3_t{0.0f, 20.0f, 0.0f};
@@ -380,10 +371,17 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     data->targetMoveYaw = t3d_lerp_angle(data->targetMoveYaw, currYaw, MOVE_YAW_LERP);
     data->camTargetOffsetYaw = t3d_lerp_angle(data->camTargetOffsetYaw, currYaw, CAM_OFFSET_YAW_LERP);
 
-    obj.rot = quatFromEuler({0.0f, -data->targetMoveYaw, -T3D_PI});
+    fm_quat_from_euler_zyx(&obj.rot, 0.0f, data->targetMoveYaw, 0.0f);
     fm_quat_norm(&obj.rot, &obj.rot);
 
-    if(data->lastFramePos.x == obj.pos.x && data->lastFramePos.y - obj.pos.y < 0.01f && data->lastFramePos.z == obj.pos.z)
+    // Only bank a respawn point on a floor that isn't carrying us (static surface).
+    bool floorMoved = data->body->wasMovedByFloor();
+
+    bool playerStill = data->lastFramePos.x == obj.pos.x
+                    && data->lastFramePos.y - obj.pos.y < 0.01f
+                    && data->lastFramePos.z == obj.pos.z;
+
+    if(playerStill && !floorMoved)
     {
       data->notMovingTime += deltaTime;
     } else {
