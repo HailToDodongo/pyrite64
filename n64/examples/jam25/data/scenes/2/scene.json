@@ -168,6 +168,9 @@
             "data": {
               "asset": 632490924792972403,
               "autoRun": false,
+              "objRefs": {
+                "0": 2325492290
+              },
               "repeatable": true
             },
             "id": 9,
@@ -176,7 +179,6 @@
           }
         ],
         "enabled": true,
-        "id": 1,
         "name": "Cam",
         "pos": [
           10.0,
@@ -272,7 +274,6 @@
           }
         ],
         "enabled": true,
-        "id": 2,
         "name": "Skybox",
         "pos": [
           -110.0,
@@ -367,7 +368,6 @@
           }
         ],
         "enabled": true,
-        "id": 3,
         "name": "Head",
         "pos": [
           0.0,
@@ -394,7 +394,6 @@
     ],
     "components": [],
     "enabled": true,
-    "id": 0,
     "name": "Scene",
     "pos": [
       0.0,

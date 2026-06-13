@@ -16,6 +16,11 @@ namespace P64::NodeGraph
 {
   typedef void (*GraphFunc)(void* arg);
 
+  // Max number of object references a single graph can declare (see the "Object" node).
+  // Object references are resolved to runtime object ids at build time and provided
+  // per-instance by the NodeGraph component.
+  constexpr int MAX_OBJ_REFS = 8;
+
   struct GraphDef;
   struct NodeDef;
 
@@ -28,6 +33,7 @@ namespace P64::NodeGraph
     public:
       Object *object{};
       uint32_t args[2]{};
+      uint16_t objRefs[MAX_OBJ_REFS]{};
       uint16_t asset{};
       uint8_t repeatable{};
 

@@ -121,6 +121,32 @@ collScene.raycast(ray, hit);
 ```
 Then the `hit` object will contain information about the raycast result.
 
+### Object IDs
+
+Object IDs are no longer set or stored in the editor.<br>
+Previously every object had an editable numeric **ID** field, which could clash between objects and had to be de-duplicated on save.
+
+IDs now only exist at runtime: they are assigned automatically during the project build and are **not** stable across builds.<br>
+The **ID** field was removed from the object inspector, and `id` is no longer written to scene files - a legacy `id` in existing scenes is ignored and dropped on the next save.
+
+No action is needed for the objects themselves, they get valid IDs assigned on the next build.<br>
+References *between* objects (the `Constraint` component, `Object`-typed script arguments, etc.) already used UUIDs and keep working unchanged.
+
+### Node-Graph object references
+
+The **Send Event** and **Delete Object** nodes no longer contain an object-ID dropdown.<br>
+Node-graphs are shared assets with no scene context, so they could never reliably reference a specific scene object by ID.
+
+Object targets are now provided through the new **Object** node:
+1. Add an **Object** node to the graph and give it a *slot* number.
+2. Connect its output to the *Object* input of a **Send Event** / **Delete Object** node.
+3. On each object that uses the graph, the **Node-Graph** component now shows a picker per slot where you select the actual scene object.
+
+An unconnected *Object* input still targets the object running the graph (`<Self>`).
+
+Existing graphs that referenced another object by ID fall back to `<Self>` (a warning is logged on load) and must be re-wired using the steps above.<br>
+Graphs that only used `<Self>` are unaffected.
+
 
 
 

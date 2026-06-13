@@ -107,7 +107,6 @@
         "children": [],
         "components": [],
         "enabled": true,
-        "id": 1,
         "name": "Title-Card",
         "pos": [
           -233.67893981933594,
@@ -192,7 +191,6 @@
           }
         ],
         "enabled": true,
-        "id": 23,
         "name": "Skybox",
         "pos": [
           480.0,
@@ -223,6 +221,7 @@
             "data": {
               "asset": 3153526507736140669,
               "autoRun": true,
+              "objRefs": {},
               "repeatable": false
             },
             "id": 9,
@@ -231,7 +230,6 @@
           }
         ],
         "enabled": true,
-        "id": 34,
         "name": "Intro Cutscene",
         "pos": [
           -40.643714904785156,
@@ -271,7 +269,6 @@
           }
         ],
         "enabled": true,
-        "id": 35,
         "name": "Audio",
         "pos": [
           0.0,
@@ -318,7 +315,6 @@
               }
             ],
             "enabled": true,
-            "id": 4,
             "name": "Ambient",
             "pos": [
               314.25555419921875,
@@ -345,7 +341,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 6,
         "name": "Lighting",
         "pos": [
           20.0,
@@ -373,7 +368,6 @@
         "children": [],
         "components": [],
         "enabled": true,
-        "id": 2,
         "name": "PlayerCam (2)",
         "pos": [
           3.8202247619628906,
@@ -406,7 +400,6 @@
         "children": [],
         "components": [],
         "enabled": true,
-        "id": 3,
         "name": "Player (3)",
         "pos": [
           20.0,
@@ -489,7 +482,6 @@
           }
         ],
         "enabled": true,
-        "id": 7,
         "name": "Map",
         "pos": [
           0.0,
@@ -519,7 +511,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 9,
             "name": "Coin",
             "pos": [
               10.0,
@@ -551,7 +542,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 11,
             "name": "Coin",
             "pos": [
               10.0,
@@ -583,7 +573,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 26,
             "name": "Coin",
             "pos": [
               10.0,
@@ -615,7 +604,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 27,
             "name": "Coin",
             "pos": [
               10.0,
@@ -647,7 +635,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 8,
             "name": "Coin",
             "pos": [
               10.0,
@@ -679,7 +666,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 10,
             "name": "Coin",
             "pos": [
               10.0,
@@ -711,7 +697,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 41,
             "name": "Coin",
             "pos": [
               10.0,
@@ -743,7 +728,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 42,
             "name": "Coin",
             "pos": [
               10.0,
@@ -775,7 +759,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 43,
             "name": "Coin",
             "pos": [
               10.0,
@@ -807,7 +790,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 44,
             "name": "Coin",
             "pos": [
               10.0,
@@ -839,7 +821,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 45,
             "name": "Coin",
             "pos": [
               10.0,
@@ -871,7 +852,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 46,
             "name": "Coin",
             "pos": [
               10.0,
@@ -903,7 +883,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 47,
             "name": "Coin",
             "pos": [
               10.0,
@@ -935,7 +914,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 48,
             "name": "Coin",
             "pos": [
               10.0,
@@ -967,7 +945,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 49,
             "name": "Coin",
             "pos": [
               10.0,
@@ -999,7 +976,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 50,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1031,7 +1007,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 51,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1063,7 +1038,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 52,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1095,7 +1069,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 62,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1127,7 +1100,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 63,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1159,7 +1131,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 64,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1191,7 +1162,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 65,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1223,7 +1193,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 66,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1255,7 +1224,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 67,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1287,7 +1255,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 68,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1319,7 +1286,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 73,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1351,7 +1317,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 74,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1383,7 +1348,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 75,
             "name": "Coin",
             "pos": [
               10.0,
@@ -1414,7 +1378,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 24,
         "name": "Static Coins",
         "pos": [
           0.0,
@@ -1459,7 +1422,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 54,
                 "name": "Coin (54)",
                 "pos": [
                   0.0,
@@ -1504,7 +1466,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 55,
                 "name": "Coin (54)",
                 "pos": [
                   0.0,
@@ -1549,7 +1510,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 56,
                 "name": "Coin (54)",
                 "pos": [
                   0.0,
@@ -1594,7 +1554,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 57,
                 "name": "Coin (54)",
                 "pos": [
                   0.0,
@@ -1639,7 +1598,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 58,
                 "name": "Coin (54)",
                 "pos": [
                   0.0,
@@ -1684,7 +1642,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 59,
                 "name": "Coin (54)",
                 "pos": [
                   0.0,
@@ -1729,7 +1686,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 60,
                 "name": "Coin (54)",
                 "pos": [
                   0.0,
@@ -1774,7 +1730,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 61,
                 "name": "Coin (54)",
                 "pos": [
                   0.0,
@@ -1873,7 +1828,6 @@
               }
             ],
             "enabled": true,
-            "id": 37,
             "name": "Platform (7)",
             "pos": [
               0.0,
@@ -1900,7 +1854,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 25,
         "name": "Void First",
         "pos": [
           -203.84361267089844,
@@ -1950,7 +1903,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 12,
                 "name": "Coin (20)",
                 "pos": [
                   30.0,
@@ -1995,7 +1947,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 15,
                 "name": "Coin (20)",
                 "pos": [
                   30.0,
@@ -2040,7 +1991,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 14,
                 "name": "Coin (20)",
                 "pos": [
                   30.0,
@@ -2157,7 +2107,6 @@
               }
             ],
             "enabled": true,
-            "id": 5,
             "name": "Bock Right",
             "pos": [
               545.86865234375,
@@ -2200,7 +2149,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 39,
                 "name": "Coin (20)",
                 "pos": [
                   30.0,
@@ -2245,7 +2193,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 77,
                 "name": "Coin (20)",
                 "pos": [
                   30.0,
@@ -2290,7 +2237,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 13,
                 "name": "Coin (20)",
                 "pos": [
                   30.0,
@@ -2407,7 +2353,6 @@
               }
             ],
             "enabled": true,
-            "id": 38,
             "name": "Bock Right",
             "pos": [
               514.3224487304688,
@@ -2434,7 +2379,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 29,
         "name": "Void Right",
         "pos": [
           -203.84361267089844,
@@ -2484,7 +2428,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 30,
                 "name": "Coin (30)",
                 "pos": [
                   0.0,
@@ -2529,7 +2472,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 33,
                 "name": "Coin (30)",
                 "pos": [
                   0.0,
@@ -2574,7 +2516,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 31,
                 "name": "Coin (30)",
                 "pos": [
                   0.0,
@@ -2619,7 +2560,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 32,
                 "name": "Coin (30)",
                 "pos": [
                   0.0,
@@ -2735,7 +2675,6 @@
               }
             ],
             "enabled": true,
-            "id": 28,
             "name": "Iso 0",
             "pos": [
               -626.77099609375,
@@ -2762,7 +2701,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 36,
         "name": "Void (8)",
         "pos": [
           -203.84361267089844,
@@ -2813,7 +2751,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 20,
                 "name": "Coin (20)",
                 "pos": [
                   30.0,
@@ -2858,7 +2795,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 19,
                 "name": "Coin (19)",
                 "pos": [
                   30.0,
@@ -2903,7 +2839,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 18,
                 "name": "Coin (18)",
                 "pos": [
                   30.0,
@@ -2948,7 +2883,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 17,
                 "name": "Coin (17)",
                 "pos": [
                   20.0,
@@ -2993,7 +2927,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 16,
                 "name": "Coin (16)",
                 "pos": [
                   30.0,
@@ -3038,7 +2971,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 40,
                 "name": "Coin (20)",
                 "pos": [
                   30.0,
@@ -3083,7 +3015,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 69,
                 "name": "Coin (16)",
                 "pos": [
                   30.0,
@@ -3128,7 +3059,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 70,
                 "name": "Coin (16)",
                 "pos": [
                   30.0,
@@ -3173,7 +3103,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 71,
                 "name": "Coin (16)",
                 "pos": [
                   30.0,
@@ -3218,7 +3147,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 72,
                 "name": "Coin (19)",
                 "pos": [
                   30.0,
@@ -3263,7 +3191,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 18,
                 "name": "Coin (18)",
                 "pos": [
                   30.0,
@@ -3356,7 +3283,6 @@
               }
             ],
             "enabled": true,
-            "id": 76,
             "name": "New Object",
             "pos": [
               -0.41100001335144043,
@@ -3383,7 +3309,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 22,
         "name": "Void (22)",
         "pos": [
           -203.84361267089844,
@@ -3418,7 +3343,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 21,
             "name": "Goal",
             "pos": [
               -60.0,
@@ -3451,7 +3375,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 53,
         "name": "Void Goal",
         "pos": [
           -203.84361267089844,
@@ -3483,7 +3406,6 @@
     ],
     "components": [],
     "enabled": true,
-    "id": 0,
     "name": "Scene",
     "pos": [
       0.0,
