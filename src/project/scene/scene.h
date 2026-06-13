@@ -75,7 +75,7 @@ namespace Project
 
       std::shared_ptr<Object> addObject(std::string &objJson, uint64_t parentUUID = 0);
       std::shared_ptr<Object> addObject(Object &parent);
-      std::shared_ptr<Object> addObject(Object &parent, std::shared_ptr<Object> obj, bool generateIDs = false);
+      std::shared_ptr<Object> addObject(Object &parent, std::shared_ptr<Object> obj, bool generateUUID = false);
 
       std::shared_ptr<Object> addPrefabInstance(uint64_t prefabUUID);
 
@@ -99,9 +99,8 @@ namespace Project
 
       void deserialize(const std::string &data);
 
-      uint16_t getFreeObjectId();
-
-      // hack, @TODO: get rid of IDs in the editor completely
-      void fixDuplicateObjectIds();
+      // Assigns the runtime object ids (uint16_t) for the whole tree.
+      // Build-time only: must be called before serializing objects to the runtime format.
+      void assignRuntimeIds();
   };
 }

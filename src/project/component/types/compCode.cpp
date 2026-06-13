@@ -83,7 +83,7 @@ namespace Project::Component::Code
       } else if(field.type == Utils::DataType::OBJECT_REF) {
         uint32_t uuid = static_cast<uint32_t>(Utils::parseU64(val));
         auto refObj = ctx.scene ? ctx.scene->getObjectByUUID(uuid) : nullptr;
-        uint16_t objId = refObj ? refObj->id : 0;
+        uint16_t objId = refObj ? refObj->runtimeId : 0;
         ctx.fileObj.write<uint32_t>(objId);
       } else if(field.type == Utils::DataType::PREFAB){
         uint64_t uuid = Utils::parseU64(val);

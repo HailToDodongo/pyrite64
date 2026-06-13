@@ -292,10 +292,6 @@ void Editor::ObjectInspector::draw() {
     if (ImTable::start("General", obj.get())) {
       ImTable::add("Name", obj->name);
 
-      int idProxy = obj->id;
-      ImTable::add("ID", idProxy);
-      obj->id = static_cast<uint16_t>(idProxy);
-
       //ImTable::add("UUID");
       //ImGui::Text("0x%16lX", obj->uuid);
 

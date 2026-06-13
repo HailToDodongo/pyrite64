@@ -64,7 +64,7 @@ namespace Project::Component::Constraint
   {
     Data &data = *static_cast<Data*>(entry.data.get());
     auto objRef = ctx.scene ? ctx.scene->getObjectByUUID(data.objectUUID.value) : nullptr;
-    uint16_t objId = objRef ? objRef->id : 0;
+    uint16_t objId = objRef ? objRef->runtimeId : 0;
 
     uint8_t flags = 0;
     if (data.usePos.resolve(obj)  )flags |= 1 << 0;

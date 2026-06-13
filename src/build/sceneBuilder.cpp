@@ -41,8 +41,8 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
   if(!obj.children.empty())objFlags |= P64::ObjectFlags::HAS_CHILDREN;
 
   ctx.fileObj.write<uint16_t>(objFlags); // @TODO type
-  ctx.fileObj.write<uint16_t>(obj.id);
-  ctx.fileObj.write<uint16_t>(obj.parent ? obj.parent->id : 0);
+  ctx.fileObj.write<uint16_t>(obj.runtimeId);
+  ctx.fileObj.write<uint16_t>(obj.parent ? obj.parent->runtimeId : 0);
   ctx.fileObj.write<uint16_t>(0); // padding
   ctx.fileObj.write(srcObj->pos.resolve(obj.propOverrides));
   ctx.fileObj.write(srcObj->scale.resolve(obj.propOverrides));
@@ -116,6 +116,10 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
 
   std::unique_ptr<Project::Scene> sc{new Project::Scene(scene.id, project.getPath())};
   ctx.scene = sc.get();
+
+  // Object ids only exist at runtime; assign them now so writeObject and component
+  // builds (which resolve object UUID -> runtime id) see a consistent id space.
+  sc->assignRuntimeIds();
 
   auto fsDataPath = fs::absolute(fs::path{project.getPath()} / "filesystem" / "p64");
 
