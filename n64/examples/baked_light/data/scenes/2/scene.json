@@ -137,7 +137,6 @@
           }
         ],
         "enabled": true,
-        "id": 1,
         "name": "Camera",
         "pos": [
           0.0,
@@ -182,7 +181,6 @@
           }
         ],
         "enabled": true,
-        "id": 3,
         "name": "Ambient Light",
         "pos": [
           -0.0,
@@ -250,7 +248,6 @@
           }
         ],
         "enabled": true,
-        "id": 2,
         "name": "Model",
         "pos": [
           95.70771026611328,
@@ -343,7 +340,6 @@
           }
         ],
         "enabled": true,
-        "id": 5,
         "name": "Light",
         "pos": [
           -133.01028442382813,
@@ -370,7 +366,6 @@
     ],
     "components": [],
     "enabled": true,
-    "id": 0,
     "name": "Scene",
     "pos": [
       0.0,

@@ -9,6 +9,7 @@
 #include "../../imgui/helper.h"
 #include "../../imgui/notification.h"
 #include "../../../context.h"
+#include "../../thumbnailCache.h"
 #include <algorithm>
 #include <filesystem>
 #include <unordered_set>
@@ -266,7 +267,7 @@ void Editor::AssetsBrowser::draw() {
   };
 
   auto drawGridButton = [&](const std::string &path, ImTextureRef icon, const char* iconTxt,
-    const std::string &label, bool selected, float alpha) {
+    const std::string &label, bool selected, float alpha, uint64_t scrubUUID = 0) {
     bool clicked = false;
     if(selected) {
       ImGui::PushStyleColor(ImGuiCol_Button, {0.5f,0.5f,0.7f,1});
@@ -281,8 +282,14 @@ void Editor::AssetsBrowser::draw() {
 
     if(icon._TexID)
     {
+      // For model thumbnails, hovering scrubs through the rendered angles.
+      ImVec2 uv0{0,0}, uv1{1,1};
+      if(scrubUUID && ctx.thumbnails) {
+        ImVec2 imgPos = ImGui::GetCursorScreenPos();
+        ctx.thumbnails->getScrubUV(imgPos, {imgPos.x + imageSize, imgPos.y + imageSize}, uv0, uv1);
+      }
       clicked = ImGui::ImageButton("##img", icon,
-        {imageSize, imageSize}, {0,0}, {1,1}, {0,0,0,0},
+        {imageSize, imageSize}, uv0, uv1, {0,0,0,0},
         {1,1,1, alpha}
       );
 
@@ -407,11 +414,18 @@ void Editor::AssetsBrowser::draw() {
 
     auto icon = ImTextureRef(nullptr);
     const char* iconTxt = ICON_MDI_FILE_OUTLINE;
+    uint64_t scrubUUID = 0;
     if (asset.texture) {
       icon = ImTextureRef(asset.texture->getGPUTex());
     } else {
       if (asset.type == FileType::MODEL_3D) {
-        iconTxt = ICON_MDI_CUBE_OUTLINE;
+        SDL_GPUTexture* thumb = ctx.thumbnails ? ctx.thumbnails->getModelTexture(asset.getUUID()) : nullptr;
+        if (thumb) {
+          icon = ImTextureRef(thumb);
+          scrubUUID = asset.getUUID();
+        } else {
+          iconTxt = ICON_MDI_CUBE_OUTLINE;
+        }
       } else if (asset.type == FileType::AUDIO) {
         iconTxt = ICON_MDI_MUSIC;
       } else if (asset.type == FileType::MUSIC_XM) {
@@ -434,7 +448,8 @@ void Editor::AssetsBrowser::draw() {
       iconTxt,
       asset.name,
       isSelected,
-      asset.conf.exclude ? 0.25f : 1.0f
+      asset.conf.exclude ? 0.25f : 1.0f,
+      scrubUUID
     );
     bool isDblClick = ImGui::IsMouseDoubleClicked(0) && ImGui::IsItemHovered();
 

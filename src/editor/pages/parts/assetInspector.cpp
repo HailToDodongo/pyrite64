@@ -9,6 +9,7 @@
 #include "../../imgui/helper.h"
 #include "../../../context.h"
 #include "../../../utils/textureFormats.h"
+#include "../../thumbnailCache.h"
 
 using FileType = Project::FileType;
 
@@ -130,6 +131,18 @@ void Editor::AssetInspector::draw() {
       ImGui::Text("%dx%dpx", asset->texture->getWidth(), asset->texture->getHeight());
     }
     if (asset->type == FileType::MODEL_3D) {
+      if (ctx.thumbnails) {
+        if (auto thumb = ctx.thumbnails->getModelTexture(asset->getUUID())) {
+          float w = ImGui::GetContentRegionAvail().x - 8_px;
+          if (w > 256_px)w = 256_px;
+          ImVec2 size{w, w};
+          ImVec2 rmin = ImGui::GetCursorScreenPos();
+          ImVec2 uv0, uv1;
+          ctx.thumbnails->getScrubUV(rmin, {rmin.x + size.x, rmin.y + size.y}, uv0, uv1);
+          ImGui::Image(ImTextureRef(thumb), size, uv0, uv1);
+        }
+      }
+
       uint32_t triCount = 0;
       for (auto &model : asset->model.t3dm.models) {
         triCount += model.triangles.size();

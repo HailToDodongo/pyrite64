@@ -4,6 +4,8 @@
 */
 #pragma once
 #include <SDL3/SDL.h>
+#include <cstdint>
+#include <vector>
 
 #include "glm/vec4.hpp"
 
@@ -50,5 +52,9 @@ namespace Renderer
 
       glm::u8vec4 readColor(uint32_t x, uint32_t y);
       uint32_t readObjectID(uint32_t x, uint32_t y);
+
+      // Downloads the whole color target as tightly-packed RGBA8 (size = width*height*4).
+      // Does a blocking GPU sync, so use sparingly (e.g. thumbnail generation).
+      std::vector<uint8_t> readColorImage();
   };
 }

@@ -19,6 +19,7 @@
 namespace Editor
 {
   class Scene;
+  class ThumbnailCache;
 }
 
 namespace Renderer { class Scene; }
@@ -30,6 +31,7 @@ struct Context
   Utils::Toolchain toolchain{};
   Project::Project *project{nullptr};
   Renderer::Scene *scene{nullptr};
+  Editor::ThumbnailCache *thumbnails{nullptr};
   SDL_Window* window{nullptr};
   SDL_GPUDevice *gpu{nullptr};
   std::unique_ptr<Editor::Scene> editorScene{nullptr};

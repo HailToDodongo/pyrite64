@@ -19,6 +19,7 @@
 #include "editor/imgui/theme.h"
 #include "editor/pages/launcher.h"
 #include "editor/pages/editorScene.h"
+#include "editor/thumbnailCache.h"
 #include "editor/imgui/notification.h"
 #include "renderer/scene.h"
 #include "renderer/shader.h"
@@ -282,6 +283,8 @@ int main(int argc, char** argv)
 
     Renderer::Scene scene{};
     ctx.scene = &scene;
+    Editor::ThumbnailCache thumbnailCache{};
+    ctx.thumbnails = &thumbnailCache;
     Editor::Launcher editorMain{ctx.gpu};
     ctx.editorScene = std::make_unique<Editor::Scene>();
 
