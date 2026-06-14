@@ -10,3 +10,4 @@ pyrite64
 pyrite64.exe
 *.dll
 preferences.json
+*.AppImage

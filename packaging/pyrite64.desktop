@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Pyrite64
+GenericName=N64 Game Editor
+Comment=Editor and engine for making Nintendo 64 games
+Exec=pyrite64
+Icon=pyrite64
+Terminal=false
+Categories=Development;Graphics;
+Keywords=N64;Nintendo64;gamedev;editor;tiny3d;libdragon;

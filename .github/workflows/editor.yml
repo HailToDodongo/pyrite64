@@ -57,7 +57,9 @@ jobs:
             LICENSE
 
   build-linux:
-    runs-on: ubuntu-latest
+    # Built on the oldest supported glibc (ubuntu-22.04 => glibc 2.35) 
+    # so the resulting AppImage runs on a wide range of distros
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
@@ -66,28 +68,29 @@ jobs:
           submodules: recursive
           lfs: true
 
+      # 22.04's apt cmake (3.22) and gcc (11) are too old: the project needs
+      # CMake >= 3.28 and C++23. Pull a modern cmake/ninja and gcc-13.
+      - name: Setup CMake + Ninja
+        uses: lukka/get-cmake@latest
+
       - name: Install dependencies
         run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build gcc g++ \
+          sudo apt-get install -y g++-13 \
             libx11-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxss-dev libxtst-dev
 #            libwayland-dev libwayland-client-dev libwayland-cursor-dev libwayland-egl-dev
 
-      - name: Configure CMake
+      - name: Build AppImage
+        env:
+          CC: gcc-13
+          CXX: g++-13
         run: |
-          cmake --preset linux-release
-
-      - name: Build
-        run: |
-          cmake --build --preset linux-release
+          ./scripts/build_appimage.sh
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v6
         with:
           name: pyrite64-linux
-          include-hidden-files: true
           path: |
-            pyrite64
-            data
-            n64
-            LICENSE
+            Pyrite64-x86_64.AppImage
