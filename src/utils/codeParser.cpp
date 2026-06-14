@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <regex>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -54,6 +55,21 @@ namespace
     size_t end = s.find_last_not_of(" \t\n\r\"");
     if (start == std::string::npos) return "";
     return s.substr(start, end - start + 1);
+  }
+
+  // Parses a "bit=name" comma separated list (e.g. "0=Fire, 1=Water") into (bit, name) pairs.
+  std::vector<std::pair<int, std::string>> parseBitmask(const std::string& meta) {
+    std::vector<std::pair<int, std::string>> result;
+    std::stringstream ss(meta);
+    std::string part;
+    while (std::getline(ss, part, ',')) {
+      auto eq = part.find('=');
+      if (eq == std::string::npos) continue;
+      try {
+        result.push_back({std::stoi(trim(part.substr(0, eq))), trim(part.substr(eq + 1))});
+      } catch (...) {}
+    }
+    return result;
   }
 
   std::unordered_map<std::string, std::string> parseAttributes(const std::string& attrText) {
@@ -131,6 +147,14 @@ Utils::CPP::Struct Utils::CPP::parseDataStruct(const std::string &sourceCode, co
         .attr = parseAttributes(fieldMatch[2]),
         .defaultValue = fieldMatch[6],
       };
+
+      // Pre-parse the bitmask attribute for unsigned int fields, so the editor doesn't re-parse each frame.
+      if (field.type == DataType::u8 || field.type == DataType::u16 || field.type == DataType::u32) {
+        auto bitmaskAttr = field.attr.find("P64::Bitmask");
+        if (bitmaskAttr != field.attr.end()) {
+          field.bitmask = parseBitmask(bitmaskAttr->second);
+        }
+      }
 
       if(field.type == DataType::string) {
         try

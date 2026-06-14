@@ -739,6 +739,43 @@ namespace ImTable
     if(disabled)ImGui::EndDisabled();
   }
 
+  // Renders the bit-select combo on a widened 32-bit mask. Implementation in helper.cpp,
+  // call the typed bitMaskCombo() wrapper below instead.
+  bool bitMaskComboImpl(
+    const char *label,
+    uint32_t &valueMask,
+    const std::vector<std::pair<int, std::string>> &bits,
+    const std::string &valueEmpty
+  );
+
+  /**
+   * Combo box for selecting multiple bits by name, given an explicit (bit, name) list.
+   * Works for uint8_t / uint16_t / uint32_t masks. Unlike addMultiSelectMask8 this renders
+   * only the combo widget (no table row or disabled handling) so it can be embedded inside
+   * e.g. addObjProp's edit function.
+   * @param label imgui label (use "##..." to hide it)
+   * @param value bitmask of selected bits, modified in place
+   * @param bits list of (bit-index, display-name) entries to offer
+   * @param valueEmpty text shown when no bit is set
+   * @return true if the mask changed this frame
+   */
+  template<typename T>
+  inline bool bitMaskCombo(
+    const char *label,
+    T &value,
+    const std::vector<std::pair<int, std::string>> &bits,
+    const std::string &valueEmpty = "<None>"
+  ) {
+    static_assert(
+      std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, uint32_t>,
+      "bitMaskCombo only supports uint8_t / uint16_t / uint32_t"
+    );
+    uint32_t mask = value;
+    bool changed = bitMaskComboImpl(label, mask, bits, valueEmpty);
+    if (changed) value = static_cast<T>(mask);
+    return changed;
+  }
+
   template<typename T>
   bool typedInput(T *value)
   {

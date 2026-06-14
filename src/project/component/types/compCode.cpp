@@ -182,6 +182,15 @@ namespace Project::Component::Code
               ImTable::addAssetVecComboBox("", prefabs, uuid, validationFunc);
             }
             ImGui::PopID();
+          } else if(!field.bitmask.empty()) {
+            ImTable::addObjProp<std::string>(name, prop, [&](std::string *val) -> bool {
+              uint32_t mask = val->empty() ? 0u : static_cast<uint32_t>(Utils::parseU64(*val));
+              if (ImTable::bitMaskCombo("##bitmask", mask, field.bitmask)) {
+                *val = std::to_string(mask);
+                return true;
+              }
+              return false;
+            }, nullptr);
           } else {
             ImTable::addObjProp(name, prop);
           }
