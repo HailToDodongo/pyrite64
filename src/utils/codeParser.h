@@ -5,6 +5,7 @@
 #pragma once
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "binaryFile.h"
@@ -17,6 +18,9 @@ namespace Utils::CPP
     std::string name;
     std::unordered_map<std::string, std::string> attr;
     std::string defaultValue;
+    // Parsed [[P64::Bitmask("0=Fire, 1=Water")]] entries as (bit-index, name) pairs.
+    // Only populated for unsigned integer fields that carry the attribute.
+    std::vector<std::pair<int, std::string>> bitmask;
   };
 
   struct Struct {

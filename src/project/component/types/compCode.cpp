@@ -16,6 +16,7 @@ namespace Project::Component::Code
   struct Data
   {
     uint64_t scriptUUID{0};
+    bool openScriptComboBox{true}; // Open the Script ComboBox when the component is added
     std::unordered_map<std::string, PropString> args{};
   };
 
@@ -41,6 +42,7 @@ namespace Project::Component::Code
   std::shared_ptr<void> deserialize(nlohmann::json &doc) {
     auto data = std::make_shared<Data>();
     data->scriptUUID = doc["script"].get<uint64_t>();
+    data->openScriptComboBox = false;
     if (doc.contains("args")) {
       auto &argsObj = doc["args"];
       for (auto& [key, val] : argsObj.items()) {
@@ -81,7 +83,7 @@ namespace Project::Component::Code
       } else if(field.type == Utils::DataType::OBJECT_REF) {
         uint32_t uuid = static_cast<uint32_t>(Utils::parseU64(val));
         auto refObj = ctx.scene ? ctx.scene->getObjectByUUID(uuid) : nullptr;
-        uint16_t objId = refObj ? refObj->id : 0;
+        uint16_t objId = refObj ? refObj->runtimeId : 0;
         ctx.fileObj.write<uint32_t>(objId);
       } else if(field.type == Utils::DataType::PREFAB){
         uint64_t uuid = Utils::parseU64(val);
@@ -101,7 +103,7 @@ namespace Project::Component::Code
 
     if (ImTable::start("Comp", &obj)) {
       ImTable::add("Name", entry.name);
-      ImTable::addAssetVecComboBox("Script", scriptList, data.scriptUUID);
+      ImTable::addAssetVecComboBox("Script", scriptList, data.scriptUUID, true);
 
       auto script = assets.getEntryByUUID(data.scriptUUID);
       if (script) {
@@ -180,11 +182,27 @@ namespace Project::Component::Code
               ImTable::addAssetVecComboBox("", prefabs, uuid, validationFunc);
             }
             ImGui::PopID();
+          } else if(!field.bitmask.empty()) {
+            ImTable::addObjProp<std::string>(name, prop, [&](std::string *val) -> bool {
+              uint32_t mask = val->empty() ? 0u : static_cast<uint32_t>(Utils::parseU64(*val));
+              if (ImTable::bitMaskCombo("##bitmask", mask, field.bitmask)) {
+                *val = std::to_string(mask);
+                return true;
+              }
+              return false;
+            }, nullptr);
           } else {
             ImTable::addObjProp(name, prop);
           }
         }
       }
+
+      // Need to open the Script ComboBox (the component is being added)
+      if (data.openScriptComboBox) {
+        ImTable::unfoldComboBox("##Script");
+        data.openScriptComboBox = false;
+      }
+
       ImTable::end();
     }
   }

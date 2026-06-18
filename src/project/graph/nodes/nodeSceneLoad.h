@@ -31,7 +31,7 @@ namespace Project::Graph::Node
 
         addIN<TypeLogic>("", ImFlow::ConnectionFilter::SameType(), PIN_STYLE_LOGIC);
         addIN<TypeValue>("", ImFlow::ConnectionFilter::SameType(), PIN_STYLE_VALUE);
-        addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
+        (void)addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
 
         valInputTypes.push_back(0);
         valInputTypes.push_back(1);

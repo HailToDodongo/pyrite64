@@ -97,7 +97,6 @@ namespace Project::Component::Audio2D
 
   void draw3D(Object& obj, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPURenderPass* pass)
   {
-    Data &data = *static_cast<Data*>(entry.data.get());
     glm::u8vec4 col{0xFF};
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected) {

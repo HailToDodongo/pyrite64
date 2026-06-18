@@ -41,8 +41,8 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
   if(!obj.children.empty())objFlags |= P64::ObjectFlags::HAS_CHILDREN;
 
   ctx.fileObj.write<uint16_t>(objFlags); // @TODO type
-  ctx.fileObj.write<uint16_t>(obj.id);
-  ctx.fileObj.write<uint16_t>(obj.parent ? obj.parent->id : 0);
+  ctx.fileObj.write<uint16_t>(obj.runtimeId);
+  ctx.fileObj.write<uint16_t>(obj.parent ? obj.parent->runtimeId : 0);
   ctx.fileObj.write<uint16_t>(0); // padding
   ctx.fileObj.write(srcObj->pos.resolve(obj.propOverrides));
   ctx.fileObj.write(srcObj->scale.resolve(obj.propOverrides));
@@ -57,7 +57,7 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
     ctx.fileObj.skip(2);
     ctx.fileObj.skip(2); // flags (@TODO)
 
-    if (comp.id >= 0 && comp.id < Project::Component::TABLE.size()) {
+    if (comp.id >= 0 && comp.id < (int)Project::Component::TABLE.size()) {
       Project::Component::TABLE[comp.id].funcBuild(obj, comp, ctx);
     } else {
       Utils::Logger::log("Component ID not found: " + std::to_string(comp.id), Utils::Logger::LEVEL_ERROR);
@@ -117,10 +117,13 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
   std::unique_ptr<Project::Scene> sc{new Project::Scene(scene.id, project.getPath())};
   ctx.scene = sc.get();
 
+  // Object ids only exist at runtime; assign them now so writeObject and component
+  // builds (which resolve object UUID -> runtime id) see a consistent id space.
+  sc->assignRuntimeIds();
+
   auto fsDataPath = fs::absolute(fs::path{project.getPath()} / "filesystem" / "p64");
 
   uint32_t sceneFlags = 0;
-  uint32_t objCountExpected = sc->objectsMap.size();
   uint32_t objCount = 0;
 
   if (sc->conf.doClearDepth.value)sceneFlags |= FLAG_CLR_DEPTH;
@@ -154,7 +157,7 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
   ctx.fileScene.write<float>(gravity.x);
   ctx.fileScene.write<float>(gravity.y);
   ctx.fileScene.write<float>(gravity.z);
-  ctx.fileScene.write<float>(std::max(sc->conf.physicsScale.value, 0.001f));
+  ctx.fileScene.write<float>(std::max(sc->conf.visualUnitsPerMeter.value, 0.001f));
 
   ctx.fileScene.write<uint8_t>(std::clamp(sc->conf.velocitySolverIterations.value, 1, 32));
   ctx.fileScene.write<uint8_t>(std::clamp(sc->conf.positionSolverIterations.value, 1, 32));
@@ -180,8 +183,7 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
     ctx.fileScene.write<float>(layer.fogMin.value);
     ctx.fileScene.write<float>(layer.fogMax.value);
     ctx.fileScene.write<uint8_t>(fogMode);
-
-    ctx.fileScene.write<uint8_t>(0); // padding
+    ctx.fileScene.write<uint8_t>(layer.lightMode.value);
     ctx.fileScene.write<uint8_t>(0); // padding
     ctx.fileScene.write<uint8_t>(0); // padding
   };

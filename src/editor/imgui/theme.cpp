@@ -46,7 +46,7 @@ namespace
       style.FontScaleDpi = 1.0f;
 
       style.FontSizeBase = 15.0f;
-      ImFont* font = io.Fonts->AddFontFromFileTTF("./data/Altinn-DINExp.ttf");
+      [[maybe_unused]] ImFont* font = io.Fonts->AddFontFromFileTTF("./data/Altinn-DINExp.ttf");
       IM_ASSERT(font != nullptr);
 
       static const ImWchar icons_ranges[] = { ICON_MIN_MDI, ICON_MAX_16_MDI, 0 };

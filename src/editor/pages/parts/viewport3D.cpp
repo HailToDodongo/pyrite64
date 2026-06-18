@@ -194,6 +194,7 @@ namespace
 }
 
 Editor::Viewport3D::Viewport3D()
+  : dummySkeleton{ctx.gpu}
 {
   if(spritesRefCount == 0) {
     sprites = std::make_shared<Renderer::Texture>(ctx.gpu, "data/img/icons/sprites.png");
@@ -205,6 +206,7 @@ Editor::Viewport3D::Viewport3D()
     onRenderPass(cmdBuff, renderScene);
   });
   ctx.scene->addCopyPass(passId, [this](SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass *copyPass) {
+    dummySkeleton.update(*copyPass);
     onCopyPass(cmdBuff, copyPass);
   });
   ctx.scene->addPostRenderCallback(passId, [this](Renderer::Scene& renderScene) {
@@ -311,8 +313,14 @@ void Editor::Viewport3D::renderScenePass(SDL_GPUCommandBuffer* cmdBuff, Renderer
     cmdBuff, targetFb.getTargetInfo(), targetFb.getTargetInfoCount(), &targetFb.getDepthTargetInfo()
   );
   renderScene.getPipeline("n64").bind(renderPass3D);
+
+  dummySkeleton.use(renderPass3D);
+
+  targetUni.screenSize = glm::vec2{(float)targetFb.getWidth(), (float)targetFb.getHeight()};
   SDL_PushGPUVertexUniformData(cmdBuff, 0, &targetUni, sizeof(targetUni));
   auto &rootObj = scene->getRootObject();
+
+  if(ctx.debugMode)SDL_PushGPUDebugGroup(cmdBuff, "3D Objects");
 
   bool hadDraw = false;
   iterateObjects(rootObj, [&](Project::Object &obj, Project::Component::Entry *comp) {
@@ -358,6 +366,8 @@ void Editor::Viewport3D::renderScenePass(SDL_GPUCommandBuffer* cmdBuff, Renderer
       def.funcDrawPost3D(obj, *comp, *this, cmdBuff, renderPass3D);
     }
   });
+
+  if(ctx.debugMode)SDL_PopGPUDebugGroup(cmdBuff);
 
   // Must draw grids, helper lines and sprites
   if (drawEditorHelpers) {
@@ -523,6 +533,23 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
 
 void Editor::Viewport3D::onCopyPass(SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass *copyPass) {
   //vertBuff->upload(*copyPass);
+
+  if(!ctx.project)return;
+  auto scene = ctx.project->getScenes().getLoadedScene();
+  if (!scene)return;
+
+  if(ctx.debugMode)SDL_PushGPUDebugGroup(cmdBuff, "Object Copy-Pass");
+
+  auto &rootObj = scene->getRootObject();
+  iterateObjects(rootObj, [&](Project::Object &obj, Project::Component::Entry *comp) {
+    if(!comp)return;
+    auto &def = Project::Component::TABLE[comp->id];
+    if(def.funcDrawCopyPass) {
+      def.funcDrawCopyPass(obj, *comp, *this, cmdBuff, copyPass);
+    }
+  });
+
+  if(ctx.debugMode)SDL_PopGPUDebugGroup(cmdBuff);
 }
 
 void Editor::Viewport3D::onPostRender(Renderer::Scene &renderScene) {

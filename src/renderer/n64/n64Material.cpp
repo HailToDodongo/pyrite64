@@ -49,7 +49,7 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Project::Asse
   part.material.flags = t3dMat.drawFlags.value;
   part.material.flags |= t3dMat.envColorSet.value ? UniformN64Material::FLAG_SET_ENV_COL : 0;
   part.material.flags |= t3dMat.primColorSet.value ? UniformN64Material::FLAG_SET_PRIM_COL : 0;
-  part.material.lightDir[0].w = t3dMat.alphaComp.value / 255.0f;
+  part.material.alphaClip = t3dMat.alphaComp.value / 255.0f;
 
   N64::CC::unpackMappedCC(cc, part.material.cc0Color, part.material.cc0Alpha, part.material.cc1Color, part.material.cc1Alpha);
 

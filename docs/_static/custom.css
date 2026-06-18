@@ -19,3 +19,157 @@ body .sidebar-brand-text {
 body h1 sup {
   font-size: 26px;
 }
+
+/* Inlined diagram SVGs, pick up the docs' fonts centrally
+   (titles in DIN like headings, labels in Noto like body text). */
+.cb-diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 1.2rem auto;
+}
+.cb-diagram--sm { max-width: 420px; }
+.cb-diagram--md { max-width: 580px; }
+.cb-diagram--lg { max-width: 700px; }
+.cb-diagram text { font-family: "Noto", Arial, sans-serif; }
+.cb-diagram .cb-title { font-family: "DIN", Helvetica, sans-serif; }
+
+/* ---------------------------------------------------------------------------
+   C++ API reference (Breathe -> Sphinx C++ domain) styling.
+   Renders each class member as a self-contained card with a header bar for the
+   signature and a padded body, instead of Furo's default nested list layout.
+   Theme-aware: reuses Furo's --color-api-* / --color-background-* variables.
+   --------------------------------------------------------------------------- */
+
+/* Each documented member becomes a bordered card. */
+dl.cpp.function,
+dl.cpp.member,
+dl.cpp.var,
+dl.cpp.type,
+dl.cpp.typedef,
+dl.cpp.enum,
+dl.cpp.enum-class,
+dl.cpp.enumerator,
+dl.cpp.friend {
+  border: 1px solid var(--color-background-border, #cfd4d8);
+  border-radius: 6px;
+  margin: 0 0 1rem 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--color-background-primary, transparent);
+}
+
+dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) dd {
+  margin: 0;
+
+  & > ul.simple {
+    margin: 0;
+  }
+
+  &.field-odd, &.field-even {
+    margin-left: 24px;
+  }
+}
+
+dl.cpp.struct > dt:first-child,
+dl.cpp.class > dt:first-child {
+  text-indent: 8px;
+}
+
+dl.cpp.type > dt:first-child,
+dl.cpp.var > dt:first-child,
+dl.cpp.enum-class > dt:first-child,
+dl.cpp.enumerator > dt:first-child,
+dl.cpp.function > dt:first-child {
+  text-indent: 0px;
+  padding-left: 8px;
+
+  dl {
+    text-indent: 20px;
+  }
+}
+
+dt.field-odd,dt.field-even  {
+  background: rgb(135 135 135 / 0.2);
+  padding: 4px 8px;
+  max-width: fit-content;
+  border-radius: 8px;
+  margin-bottom: 5px;
+}
+
+/* Signature line -> header bar of the card. */
+dl.cpp.function > dt.sig,
+dl.cpp.member > dt.sig,
+dl.cpp.var > dt.sig,
+dl.cpp.type > dt.sig,
+dl.cpp.typedef > dt.sig,
+dl.cpp.enum > dt.sig,
+dl.cpp.enum-class > dt.sig,
+dl.cpp.enumerator > dt.sig,
+dl.cpp.friend > dt.sig {
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  background: var(--color-api-background, var(--color-background-secondary, #f0f2f4));
+  border-left: none;
+  border-bottom: 1px solid var(--color-background-border, #cfd4d8);
+  border-radius: 0;
+}
+
+/* Description / fields -> padded card body. */
+dl.cpp.function > dd,
+dl.cpp.member > dd,
+dl.cpp.var > dd,
+dl.cpp.type > dd,
+dl.cpp.typedef > dd,
+dl.cpp.enum > dd,
+dl.cpp.enum-class > dd,
+dl.cpp.enumerator > dd,
+dl.cpp.friend > dd {
+  margin: 0;
+  padding: 0.75rem 0.95rem 0.25rem 0.95rem;
+}
+
+/* A member with no description (empty body) shouldn't keep a dangling border. */
+dl.cpp.function > dt.sig:last-child,
+dl.cpp.member > dt.sig:last-child,
+dl.cpp.var > dt.sig:last-child,
+dl.cpp.type > dt.sig:last-child,
+dl.cpp.typedef > dt.sig:last-child,
+dl.cpp.enum > dt.sig:last-child,
+dl.cpp.enumerator > dt.sig:last-child {
+  border-bottom: none;
+}
+
+/* "Public Functions" / "Public Members" section headings. */
+.breathe-sectiondef-title.rubric {
+  font-family: "DIN", Helvetica, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 1.8rem 0 0.9rem 0;
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--color-background-border, #cfd4d8);
+}
+
+/* The enclosing class/struct: drop Furo's heavy left rule, keep it airy. */
+dl.cpp.class > dt.sig,
+dl.cpp.struct > dt.sig {
+  border-left: none;
+  padding-left: 0;
+  font-size: 1.05rem;
+}
+dl.cpp.class > dd,
+dl.cpp.struct > dd {
+  border-left: none;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+/* Parameters / Returns field list: tidy, readable rows. */
+dl.cpp .field-list > dt {
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+dl.cpp .field-list > dd {
+  margin-left: 10px;
+}

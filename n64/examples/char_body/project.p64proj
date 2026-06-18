@@ -1,0 +1,17 @@
+{
+  "collLayer0": "Solid",
+  "collLayer1": "Player",
+  "collLayer2": "Objects",
+  "collLayer3": "",
+  "collLayer4": "",
+  "collLayer5": "",
+  "collLayer6": "",
+  "collLayer7": "",
+  "name": "Character Body",
+  "pathEmu": "ares",
+  "pathN64Inst": "",
+  "romName": "char_body",
+  "sceneIdLastOpened": 1,
+  "sceneIdOnBoot": 1,
+  "sceneIdOnReset": 1
+}

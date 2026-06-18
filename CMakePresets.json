@@ -32,6 +32,21 @@
       }
     },
     {
+      "name": "macos-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "arm64;x86_64",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "13.3"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
       "name": "debug-base",
       "hidden": true,
       "cacheVariables": {
@@ -64,6 +79,11 @@
       "name": "linux-release",
       "displayName": "Linux x86_64 Release",
       "inherits": ["gcc-base", "linux-base", "release-base"]
+    },
+    {
+      "name": "macos-release",
+      "displayName": "macOS Universal Release",
+      "inherits": ["macos-base", "release-base"]
     }
   ],
 
@@ -87,6 +107,11 @@
       "name": "linux-release",
       "configurePreset": "linux-release",
       "jobs": 0
+    },
+    {
+      "name": "macos-release",
+      "configurePreset": "macos-release",
+      "jobs": 0
     }
   ],
 
@@ -103,6 +128,13 @@
       "steps": [
         { "type": "configure", "name": "linux-release" },
         { "type": "build",     "name": "linux-release" }
+      ]
+    },
+    {
+      "name": "macos",
+      "steps": [
+        { "type": "configure", "name": "macos-release" },
+        { "type": "build",     "name": "macos-release" }
       ]
     }
   ]

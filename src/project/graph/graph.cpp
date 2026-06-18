@@ -20,6 +20,7 @@
 #include "nodes/nodeArg.h"
 #include "nodes/nodeSwitchCase.h"
 #include "nodes/nodeNote.h"
+#include "nodes/nodeObjRef.h"
 
 namespace
 {
@@ -83,6 +84,7 @@ namespace Project::Graph
     TABLE_ENTRY(Arg),
     TABLE_ENTRY(SwitchCase),
     TABLE_ENTRY(Note),
+    TABLE_ENTRY(ObjRef),
   });
 
   const std::vector<std::string> & Graph::getNodeNames()
@@ -94,6 +96,22 @@ namespace Project::Graph
       }
     }
     return names;
+  }
+
+  std::vector<ObjRefParam> Graph::getObjectRefs(const std::string &jsonData)
+  {
+    std::vector<ObjRefParam> out{};
+    auto data = nlohmann::json::parse(jsonData, nullptr, false);
+    if(!data.is_object() || !data.contains("nodes"))return out;
+
+    for(auto &node : data["nodes"]) {
+      if(!node.contains("objRefSlot"))continue;
+      out.push_back({
+        .slot = node.value<uint16_t>("objRefSlot", 0),
+        .name = node.value("objRefName", std::string{"Object"}),
+      });
+    }
+    return out;
   }
 
   std::shared_ptr<Node::Base> Graph::addNode(uint32_t type, const ImVec2 &pos)

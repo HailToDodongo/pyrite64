@@ -135,6 +135,32 @@ In the editor, you can now see the values showing up:
 ```{image} /_static/img/script_args.png
 :align: center
 ```
+
+### Bitmask Attribute
+
+For unsigned integer members (`uint8_t`, `uint16_t`, `uint32_t`) you can add a\
+`P64::Bitmask` attribute to edit them as a set of named flags instead of a plain number.\
+The attribute takes a comma-separated list of `bit=name` entries,\
+where `bit` is the bit index (`0` being the least significant bit):
+
+```cpp
+P64_DATA(
+  [[P64::Name("Elements"), P64::Bitmask("0=Fire, 1=Water, 2=Earth")]]
+  uint8_t elementFlags;
+);
+```
+
+In the editor this shows up as a select-box where you can toggle each named bit on or off.\
+The resulting value is the combined bitmask, so for the example above selecting\
+"Fire" and "Earth" stores `0b101` (`5`).
+
+You don't need to name every bit, only the ones you want to expose.\
+At runtime the member is just a regular integer, so you can test the bits as usual:
+
+```cpp
+if(data->elementFlags & (1 << 0)) { /* Fire is set */ }
+```
+
 \
 Since a script is just a regular C++ file, it is also possible to have global memory.\
 This can be useful to share data global across all instances of a script.

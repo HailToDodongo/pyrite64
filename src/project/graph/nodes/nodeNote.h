@@ -39,8 +39,8 @@ namespace Project::Graph::Node
         // Get node position (assume Base provides getPos())
         ImVec2 nodePos = getPos();
         // Convert to screen coordinates
-        ImVec2 screenPos = (nodePos + scroll) * scale;
-        ImVec2 screenSize = size * scale;
+        [[maybe_unused]] ImVec2 screenPos = (nodePos + scroll) * scale;
+        [[maybe_unused]] ImVec2 screenSize = size * scale;
         // Draw invisible button for resizing
         //ImGui::SetCursorPos(screenPos);
         ImGui::InvisibleButton("group_resize", size);

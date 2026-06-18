@@ -33,8 +33,8 @@ namespace Project::Graph::Node
         setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(90,191,93,255), ImColor(0,0,0,255), 3.5f));
 
         addIN<TypeLogic>("", ImFlow::ConnectionFilter::SameType(), PIN_STYLE_LOGIC);
-        addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
-        addOUT<TypeValue>("", PIN_STYLE_VALUE);
+        (void)addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
+        (void)addOUT<TypeValue>("", PIN_STYLE_VALUE);
       }
 
       void draw() override {

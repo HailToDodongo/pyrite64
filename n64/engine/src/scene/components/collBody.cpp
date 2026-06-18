@@ -2,7 +2,8 @@
 * @copyright 2025 - Max Bebök
 * @license MIT
 */
-#include "scene/object.h"
+#include "collision/gfxScale.h"
+
 #include "scene/components/collBody.h"
 
 #include "scene/scene.h"
@@ -49,9 +50,9 @@ namespace P64::Comp
     data->collider.setParentOffset(initData->offset);
 
     fm_vec3_t scaledHalfExtend = initData->halfExtend * obj.scale;
-    scaledHalfExtend.x = fabsf(scaledHalfExtend.x);
-    scaledHalfExtend.y = fabsf(scaledHalfExtend.y);
-    scaledHalfExtend.z = fabsf(scaledHalfExtend.z);
+    scaledHalfExtend.x = fabsf(scaledHalfExtend.x) * P64::Coll::getInvGfxScale();
+    scaledHalfExtend.y = fabsf(scaledHalfExtend.y) * P64::Coll::getInvGfxScale();
+    scaledHalfExtend.z = fabsf(scaledHalfExtend.z) * P64::Coll::getInvGfxScale();
 
     data->collider.setTrigger(initData->isTrigger);
     data->collider.setCollisionMask(initData->maskRead, initData->maskWrite);
@@ -99,9 +100,9 @@ namespace P64::Comp
   void CollBody::update(Object &obj, CollBody* data, float deltaTime)
   {
     fm_vec3_t scaledHalfExtend = data->orgScale * obj.scale;
-    scaledHalfExtend.x = fabsf(scaledHalfExtend.x);
-    scaledHalfExtend.y = fabsf(scaledHalfExtend.y);
-    scaledHalfExtend.z = fabsf(scaledHalfExtend.z);
+    scaledHalfExtend.x = fabsf(scaledHalfExtend.x) * Coll::getInvGfxScale();
+    scaledHalfExtend.y = fabsf(scaledHalfExtend.y) * Coll::getInvGfxScale();
+    scaledHalfExtend.z = fabsf(scaledHalfExtend.z) * Coll::getInvGfxScale();
 
     switch(data->collider.shapeType())
     {

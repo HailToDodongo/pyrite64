@@ -91,11 +91,11 @@
       }
     ],
     "name": "Nested Disabled",
-    "physicsScale": 16.0,
     "physicsTickRate": 11,
     "positionSolverIterations": 6,
     "renderPipeline": 0,
-    "velocitySolverIterations": 7
+    "velocitySolverIterations": 7,
+    "visualUnitsPerMeter": 100.0
   },
   "graph": {
     "children": [

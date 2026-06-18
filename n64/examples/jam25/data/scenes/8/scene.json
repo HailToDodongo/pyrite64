@@ -16,7 +16,7 @@
     "frameLimit": 0,
     "gravity": [
       0.0,
-      -9.8100004196167,
+      -1.5679999589920044,
       0.0
     ],
     "interpolatePhysicsTransforms": true,
@@ -35,6 +35,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "2D"
       }
     ],
@@ -53,6 +54,7 @@
         "fogColorMode": 1,
         "fogMax": 800.0,
         "fogMin": 200.0,
+        "lightMode": 0,
         "name": "3D Opaque"
       },
       {
@@ -69,6 +71,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "3D Transparent"
       }
     ],
@@ -87,15 +90,16 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "PTX Opaque"
       }
     ],
     "name": "Map-Paper",
-    "physicsScale": 16.0,
     "physicsTickRate": 50,
     "positionSolverIterations": 6,
     "renderPipeline": 0,
-    "velocitySolverIterations": 7
+    "velocitySolverIterations": 7,
+    "visualUnitsPerMeter": 100.0
   },
   "graph": {
     "children": [
@@ -246,6 +250,7 @@
                     1.0
                   ],
                   "index": 0,
+                  "size": 50.0,
                   "type": 0
                 },
                 "id": 2,
@@ -979,7 +984,7 @@
               }
             ],
             "enabled": true,
-            "id": 82,
+            "id": 110,
             "name": "Platform Gap",
             "pos": [
               -606.5125732421875,
@@ -1222,7 +1227,7 @@
               }
             ],
             "enabled": true,
-            "id": 9,
+            "id": 107,
             "name": "Platform Gap",
             "pos": [
               -847.7291259765625,
@@ -2283,7 +2288,7 @@
                   }
                 ],
                 "enabled": true,
-                "id": 19,
+                "id": 112,
                 "name": "Coin (14)",
                 "pos": [
                   0.0,
@@ -2328,7 +2333,7 @@
                   }
                 ],
                 "enabled": true,
-                "id": 36,
+                "id": 106,
                 "name": "Coin (15)",
                 "pos": [
                   10.0,
@@ -2373,7 +2378,7 @@
                   }
                 ],
                 "enabled": true,
-                "id": 17,
+                "id": 109,
                 "name": "Coin (16)",
                 "pos": [
                   10.0,
@@ -2418,7 +2423,7 @@
                   }
                 ],
                 "enabled": true,
-                "id": 18,
+                "id": 108,
                 "name": "Coin (17)",
                 "pos": [
                   20.0,
@@ -2682,7 +2687,7 @@
               }
             ],
             "enabled": true,
-            "id": 13,
+            "id": 111,
             "name": "Coin (19)",
             "pos": [
               0.0,
@@ -3559,7 +3564,7 @@
             "components": [
               {
                 "data": {
-                  "objectUUID": 349521444,
+                  "objectUUID": 0,
                   "type": 1,
                   "usePos": false,
                   "useRot": false,
@@ -3604,7 +3609,7 @@
             "components": [
               {
                 "data": {
-                  "objectUUID": 349521444,
+                  "objectUUID": 0,
                   "type": 1,
                   "usePos": false,
                   "useRot": false,
@@ -3649,7 +3654,7 @@
             "components": [
               {
                 "data": {
-                  "objectUUID": 349521444,
+                  "objectUUID": 0,
                   "type": 1,
                   "usePos": false,
                   "useRot": false,

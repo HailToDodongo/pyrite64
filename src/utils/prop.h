@@ -47,7 +47,7 @@ struct GenericValue
     else if constexpr (std::is_same_v<T, std::string>)return 9;
     else if constexpr (std::is_same_v<T,  glm::ivec2>)return 10;
     else if constexpr (std::is_same_v<T,  glm::vec2>)return 11;
-    else static_assert(false, "Unsupported type in GenericValue::get");
+    else static_assert(!sizeof(T*), "Unsupported type in GenericValue::get");
   }
 
   template<typename T>
@@ -78,7 +78,7 @@ struct GenericValue
     } else if constexpr (std::is_same_v<T, std::string>) {
       return valString;
     } else  {
-      static_assert(false, "Unsupported type in GenericValue::get");
+      static_assert(!sizeof(T*), "Unsupported type in GenericValue::get");
     }
   }
 

@@ -4,6 +4,7 @@
 */
 #include "hash.h"
 
+#include <limits>
 #include <random>
 
 namespace

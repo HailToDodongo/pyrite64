@@ -2,6 +2,7 @@
 * @copyright 2025 - Max Bebök
 * @license MIT
 */
+#include <limits>
 #include "../components.h"
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"

@@ -5,7 +5,7 @@
  */
 #include "collision/raycast.h"
 #include "scene/object.h"
-#include "collision/collider_shape.h"
+#include "collision/colliderShape.h"
 
 namespace P64::Coll {
 
@@ -79,16 +79,19 @@ namespace P64::Coll {
         float t1 = (local_box.min.v[i] - localRay.origin.v[i]) * ood;
         float t2 = (local_box.max.v[i] - localRay.origin.v[i]) * ood;
 
+        int face1 = i * 2; // Min face
+        int face2 = i * 2 + 1; // Max face
+
         if(t1 > t2) {
           std::swap(t1, t2);
-          hit_face = i * 2 + 1; // Max face
-        }
-        else {
-          hit_face = i * 2; // Min face
+          std::swap(face1, face2);
         }
 
-        tMin = t1 > tMin ? t1 : tMin;
-        tMax = t2 < tMax ? t2 : tMax;
+        if (t1 > tMin) {
+          tMin = t1;
+          hit_face = face1;
+        }
+        if (t2 < tMax) tMax = t2;
 
         if(tMin > tMax) return false; // No intersection
       }
@@ -96,9 +99,7 @@ namespace P64::Coll {
 
     if(tMin < 0.0f) {
       if(tMax < 0.0f || tMax > ray.maxDistance) return false;
-
-      tMin = tMax; // Ray starts inside box, clamp to exit point
-      hit_face = (hit_face & ~1) | 1; // Flip to opposite face
+      tMin = 0.0f; // Ray starts inside box; clamp to ray origin
     } else if(tMin > ray.maxDistance) {
       return false; // Intersection beyond max distance
     }

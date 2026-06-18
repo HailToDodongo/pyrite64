@@ -37,7 +37,7 @@ namespace P64::Comp
     auto &coll = SceneManager::getCurrent().getCollision();
 
     if (initData == nullptr) {
-      coll.removeRigidBody(&data->rigid_body);
+      coll.removeRigidBody(&data->rigidBody);
       // TODO: add collider to new collision scene
       data->~RigidBody();
       return;
@@ -52,13 +52,12 @@ namespace P64::Comp
 
     new (data) RigidBody();
 
-    data->rigid_body = Coll::RigidBody{};
-    data->rigid_body.init(&obj, initData->mass);
-    data->rigid_body.setKinematic(initData->isKinematic);
-    data->rigid_body.setHasGravity(initData->hasGravity);
-    data->rigid_body.setGravityScale(initData->gravityScalar);
-    data->rigid_body.setTimeScale(initData->timeScalar);
-    data->rigid_body.setAngularDamping(initData->angularDamping);
+    data->rigidBody.init(&obj, initData->mass);
+    data->rigidBody.setKinematic(initData->isKinematic);
+    data->rigidBody.setHasGravity(initData->hasGravity);
+    data->rigidBody.setGravityScale(initData->gravityScalar);
+    data->rigidBody.setTimeScale(initData->timeScalar);
+    data->rigidBody.setAngularDamping(initData->angularDamping);
     Coll::Constraint constraints = Coll::Constraint::None;
     if(initData->constrainPosX) constraints = constraints | Coll::Constraint::FreezePosX;
     if(initData->constrainPosY) constraints = constraints | Coll::Constraint::FreezePosY;
@@ -66,20 +65,20 @@ namespace P64::Comp
     if(initData->constrainRotX) constraints = constraints | Coll::Constraint::FreezeRotX;
     if(initData->constrainRotY) constraints = constraints | Coll::Constraint::FreezeRotY;
     if(initData->constrainRotZ) constraints = constraints | Coll::Constraint::FreezeRotZ;
-    data->rigid_body.setConstraints(constraints);
+    data->rigidBody.setConstraints(constraints);
 
     if(obj.isEnabled()) {
-      coll.addRigidBody(&data->rigid_body);
+      coll.addRigidBody(&data->rigidBody);
     }
   }
 
   void RigidBody::onEvent(Object &obj, RigidBody* data, const ObjectEvent &event)
   {
     if(event.type == EVENT_TYPE_DISABLE) {
-      return obj.getScene().getCollision().removeRigidBody(&data->rigid_body);
+      return obj.getScene().getCollision().removeRigidBody(&data->rigidBody);
     }
     if(event.type == EVENT_TYPE_ENABLE) {
-      return obj.getScene().getCollision().addRigidBody(&data->rigid_body);
+      return obj.getScene().getCollision().addRigidBody(&data->rigidBody);
     }
   }
 

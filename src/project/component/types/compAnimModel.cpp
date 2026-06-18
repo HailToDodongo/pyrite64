@@ -19,6 +19,8 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "../../../editor/pages/parts/assets/matInstanceEditor.h"
+#include "../../../renderer/animation.h"
+#include "../../../renderer/skeleton.h"
 #include "glm/gtx/matrix_decompose.hpp"
 
 #include "../shared/meshFilter.h"
@@ -29,8 +31,11 @@ namespace Project::Component::AnimModel
   {
     PROP_U64(model);
     PROP_S32(layerIdx);
+    PROP_STRING(previewAnimName);
 
     Shared::MaterialInstance material{};
+    std::shared_ptr<Renderer::Skeleton> skeleton{nullptr};
+    Renderer::Animation anim{};
 
     Renderer::Object obj3D{};
     Utils::AABB aabb{};
@@ -46,6 +51,7 @@ namespace Project::Component::AnimModel
     return Utils::JSON::Builder{}
       .set(data.model)
       .set(data.layerIdx)
+      .set(data.previewAnimName)
       .set("material", data.material.serialize())
       .doc;
   }
@@ -53,6 +59,7 @@ namespace Project::Component::AnimModel
   std::shared_ptr<void> deserialize(nlohmann::json &doc) {
     auto data = std::make_shared<Data>();
     Utils::JSON::readProp(doc, data->layerIdx);
+    Utils::JSON::readProp(doc, data->previewAnimName);
     Utils::JSON::readProp(doc, data->model);
 
     data->material.deserialize(
@@ -110,11 +117,40 @@ namespace Project::Component::AnimModel
           return ImGui::Combo("##", layer, layerNames.data(), layerNames.size());
         }, nullptr);
 
+      auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
+      if (asset && asset->mesh3D)
+      {
+          int selIdx = 0;
+          std::vector<const char*> animNames{};
+          animNames.push_back("<Default Pose>");
+          for(auto &anim : asset->model.t3dm.animations) {
+            if(selIdx == 0 && anim.name == data.previewAnimName.value) {
+              selIdx = animNames.size();
+            }
+            animNames.push_back(anim.name.c_str());
+          }
+
+          ImTable::add("Preview Anim.");
+
+          ImGui::Combo("##", &selIdx, animNames.data(), animNames.size());
+          if(selIdx >= 0 && selIdx < (int)animNames.size()) {
+            data.previewAnimName.value = animNames[selIdx];
+          }
+      }
+
 
       ImTable::end();
 
       Editor::MatInstanceEditor::draw(data.material, obj, data.model.value);
       ImGui::Dummy({0,4});
+    }
+  }
+
+  void drawCopyPass(Object& obj, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass* pass)
+  {
+    Data &data = *static_cast<Data*>(entry.data.get());
+    if(data.skeleton) {
+      data.skeleton->update(*pass);
     }
   }
 
@@ -129,6 +165,7 @@ namespace Project::Component::AnimModel
         }
         data.aabb = asset->mesh3D->getAABB();
         data.obj3D.setMesh(asset->mesh3D);
+        data.skeleton = std::make_shared<Renderer::Skeleton>(ctx.gpu, asset->model, asset->conf.baseScale);
       }
     }
 
@@ -154,6 +191,16 @@ namespace Project::Component::AnimModel
       return;
     }
 
+    for(auto &anim : asset->model.t3dm.animations)
+    {
+      if(anim.name == data.previewAnimName.value) {
+        float deltaTime = ImGui::GetIO().DeltaTime;
+        data.anim.update(anim, data.skeleton, deltaTime);
+        break;
+      }
+    }
+
+    data.skeleton->use(pass);
     data.obj3D.draw(pass, cmdBuff, {
       .partsIndices = {},
       .model = &asset->model,
@@ -173,8 +220,9 @@ namespace Project::Component::AnimModel
         aabbCol = {0xFF,0xAA,0x00,0xFF};
       }
 
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, aabbCol);
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, aabbCol);
+      auto rot = obj.rot.resolve(obj.propOverrides);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, aabbCol, rot);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, aabbCol, rot);
     }
   }
 

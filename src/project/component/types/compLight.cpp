@@ -43,6 +43,7 @@ namespace Project::Component::Light
     PROP_VEC4(color);
     PROP_S32(index);
     PROP_S32(type);
+    PROP_FLOAT(size);
   };
 
   std::shared_ptr<void> init(Object &obj) {
@@ -56,6 +57,7 @@ namespace Project::Component::Light
     builder.set(data.index);
     builder.set(data.type);
     builder.set(data.color);
+    builder.set(data.size);
     return builder.doc;
   }
 
@@ -64,6 +66,7 @@ namespace Project::Component::Light
     Utils::JSON::readProp(doc, data->index);
     Utils::JSON::readProp(doc, data->type);
     Utils::JSON::readProp(doc, data->color);
+    Utils::JSON::readProp(doc, data->size, 50.0f);
     return data;
   }
 
@@ -72,9 +75,10 @@ namespace Project::Component::Light
     Data &data = *static_cast<Data*>(entry.data.get());
     auto dir = rotToDir(obj) * 127.0f;
 
-    ctx.fileObj.writeRGBA(data.color.resolve(obj.propOverrides));
-    ctx.fileObj.write<uint8_t>(data.index.resolve(obj.propOverrides));
-    ctx.fileObj.write<uint8_t>(data.type.resolve(obj.propOverrides));
+    ctx.fileObj.writeRGBA(data.color.resolve(obj));
+    ctx.fileObj.write(data.size.resolve(obj));
+    ctx.fileObj.write<uint8_t>(data.index.resolve(obj));
+    ctx.fileObj.write<uint8_t>(data.type.resolve(obj));
 
     ctx.fileObj.write<int8_t>(dir.x);
     ctx.fileObj.write<int8_t>(dir.y);
@@ -85,10 +89,11 @@ namespace Project::Component::Light
   {
     Data &data = *static_cast<Data*>(entry.data.get());
     ctx.scene->addLight(Renderer::Light{
-      .color = data.color.resolve(obj.propOverrides),
-      .pos = glm::vec4{obj.pos.resolve(obj.propOverrides), 0.0f},
+      .color = data.color.resolve(obj),
+      .pos = glm::vec4{obj.pos.resolve(obj), 0.0f},
       .dir = rotToDir(obj),
-      .type = data.type.resolve(obj.propOverrides),
+      .size = data.size.resolve(obj),
+      .type = data.type.resolve(obj),
     });
   }
 
@@ -99,8 +104,12 @@ namespace Project::Component::Light
     {
       ImTable::add("Name", entry.name);
       ImTable::addComboBox("Type", data.type.value, LIGHT_TYPES, LIGHT_TYPE_COUNT);
-      ImTable::add("Index", data.index.value);
-      ImTable::addColor("Color", data.color.value, true);
+      ImTable::addProp("Index", data.index);
+      ImTable::addProp("Color", data.color);
+
+      if(data.type.value == LIGHT_TYPE_POINT) {
+        ImTable::addProp("Size", data.size);
+      }
 
       ImTable::end();
     }

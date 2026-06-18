@@ -10,6 +10,7 @@
 #include "../../../renderer/framebuffer.h"
 #include "../../../renderer/mesh.h"
 #include "../../../renderer/object.h"
+#include "../../../renderer/skeleton.h"
 #include "../../../project/component/components.h"
 #include "../../../utils/container.h"
 
@@ -19,6 +20,7 @@ namespace Editor
   {
     private:
       Renderer::UniformGlobal uniGlobal{};
+      Renderer::Skeleton dummySkeleton;
       Renderer::Framebuffer fb{};
       Renderer::UniformGlobal previewUniGlobal{};
       Renderer::Framebuffer fbPreview{};

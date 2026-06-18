@@ -10,12 +10,12 @@
 namespace
 {
   std::mutex mtx{};
-  constinit std::string buff{};
+  std::string buff{};
   std::atomic_bool logChanged{false};
   constexpr size_t MAX_BUFF_SIZE = 1024 * 100; // 100kb
 
   constinit Utils::Logger::LogOutputFunc outputFunc = nullptr;
-  constinit std::string logStripped{};
+  std::string logStripped{};
 }
 
 void Utils::Logger::setOutput(LogOutputFunc outFunc) {

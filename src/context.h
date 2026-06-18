@@ -4,6 +4,7 @@
 */
 #pragma once
 #include <algorithm>
+#include <atomic>
 #include <future>
 #include <vector>
 
@@ -19,6 +20,7 @@
 namespace Editor
 {
   class Scene;
+  class ThumbnailCache;
 }
 
 namespace Renderer { class Scene; }
@@ -26,9 +28,11 @@ namespace Renderer { class Scene; }
 struct Context
 {
   // Globals
+  bool debugMode{false};
   Utils::Toolchain toolchain{};
   Project::Project *project{nullptr};
   Renderer::Scene *scene{nullptr};
+  Editor::ThumbnailCache *thumbnails{nullptr};
   SDL_Window* window{nullptr};
   SDL_GPUDevice *gpu{nullptr};
   std::unique_ptr<Editor::Scene> editorScene{nullptr};

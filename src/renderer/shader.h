@@ -24,6 +24,7 @@ namespace Renderer
         uint32_t fragUboCount{0};
         uint32_t vertTexCount{0};
         uint32_t fragTexCount{0};
+        uint32_t vertSboCount{0};
       };
 
       Shader(SDL_GPUDevice* device, const Config &conf);

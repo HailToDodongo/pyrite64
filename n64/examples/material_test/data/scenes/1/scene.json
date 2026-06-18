@@ -14,6 +14,12 @@
     "fbWidth": 640,
     "filter": 0,
     "frameLimit": 0,
+    "gravity": [
+      0.0,
+      -9.8100004196167,
+      0.0
+    ],
+    "interpolatePhysicsTransforms": true,
     "layers2D": [
       {
         "blender": 0,
@@ -29,6 +35,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "2D"
       }
     ],
@@ -47,6 +54,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "3D Opaque"
       },
       {
@@ -63,6 +71,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "3D Transp."
       },
       {
@@ -79,6 +88,7 @@
         "fogColorMode": 2,
         "fogMax": 600.0,
         "fogMin": 300.0,
+        "lightMode": 0,
         "name": "New Layer"
       },
       {
@@ -95,6 +105,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "Additive"
       }
     ],
@@ -113,11 +124,16 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "PTX Opaque"
       }
     ],
     "name": "Materials",
-    "renderPipeline": 0
+    "physicsTickRate": 50,
+    "positionSolverIterations": 6,
+    "renderPipeline": 0,
+    "velocitySolverIterations": 7,
+    "visualUnitsPerMeter": 100.0
   },
   "graph": {
     "children": [
@@ -182,6 +198,7 @@
                 1.0
               ],
               "index": 0,
+              "size": 50.0,
               "type": 0
             },
             "id": 2,

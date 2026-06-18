@@ -38,4 +38,7 @@ namespace Utils::Proc
   ///        On WSL, converts the path to a Windows path and uses explorer.exe.
   /// @return true on success, false if WSL path conversion failed.
   bool openInFileBrowser(const std::string &path);
+
+  /// @brief Opens a web URL in the system's default browser.
+  void openURL(const std::string &url);
 }

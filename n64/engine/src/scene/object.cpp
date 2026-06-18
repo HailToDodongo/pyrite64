@@ -28,6 +28,14 @@ void P64::Object::setEnabled(bool isEnabled)
   }
 }
 
+void P64::Object::setVisible(bool isVisible)
+{
+  if (isVisible != this->isSelfVisible()) {
+    setFlag(ObjectFlags::SELF_HIDDEN, !isVisible);
+    SceneManager::getCurrent().needsObjStateUpdate = true;
+  }
+}
+
 void P64::Object::remove(bool keepChildren)
 {
   if(flags & ObjectFlags::PENDING_REMOVE)return;

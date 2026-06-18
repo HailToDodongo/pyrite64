@@ -4,7 +4,7 @@
  * @brief Expanding Polytope Algorithm (EPA) implementation for collision detection. (see epa.h)
  */
 #include "collision/epa.h"
-#include "collision/collision_scene.h"
+#include "collision/collisionScene.h"
 
 #include <cassert>
 
@@ -368,7 +368,7 @@ bool P64::Coll::epaSolve(
 
   SimplexTriangle *closest = nullptr;
   float projection = 0.0f;
-  float epaTolerance = EPA_CONVERGENCE_TOLERANCE * collisionSceneGetInstance()->getPhysicsScale();
+  float epaTolerance = EPA_CONVERGENCE_TOLERANCE;
 
   for(int i = 0; i < EPA_MAX_ITERATIONS; ++i) {
     closest = &closestFace(es);

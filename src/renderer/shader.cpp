@@ -50,7 +50,7 @@ Renderer::Shader::Shader(SDL_GPUDevice* device, const Config &conf)
     vertexInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
     vertexInfo.stage = SDL_GPU_SHADERSTAGE_VERTEX;
     vertexInfo.num_samplers = conf.vertTexCount;
-    vertexInfo.num_storage_buffers = 0;
+    vertexInfo.num_storage_buffers = conf.vertSboCount;
     vertexInfo.num_storage_textures = 0;
     vertexInfo.num_uniform_buffers = conf.vertUboCount;
     shaderVert = SDL_CreateGPUShader(device, &vertexInfo);
@@ -77,6 +77,7 @@ Renderer::Shader::Shader(SDL_GPUDevice* device, const Config &conf)
 
     SDL_ShaderCross_GraphicsShaderResourceInfo vertexResources{};
     vertexResources.num_samplers = conf.vertTexCount;
+    vertexResources.num_storage_buffers = conf.vertSboCount;
     vertexResources.num_storage_textures = 0;
     vertexResources.num_storage_buffers = 0;
     vertexResources.num_uniform_buffers = conf.vertUboCount;

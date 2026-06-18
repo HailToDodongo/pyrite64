@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   class="cb-diagram cb-diagram--md"
+   viewBox="0 0 578.43915 382.09869"
+   font-family="'Segoe UI', Helvetica, Arial, sans-serif"
+   version="1.1"
+   id="svg59"
+   sodipodi:docname="char_body_move_and_slide.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   width="578.43915"
+   height="382.09869"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview61"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     showgrid="false"
+     inkscape:zoom="2.6698638"
+     inkscape:cx="344.58687"
+     inkscape:cy="189.52278"
+     inkscape:window-width="1920"
+     inkscape:window-height="1031"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg59"
+     showguides="true">
+    <sodipodi:guide
+       position="290.37673,438.32512"
+       orientation="1,0"
+       id="guide2278"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
+  <defs
+     id="defs11">
+    <marker
+       style="overflow:visible"
+       id="marker1972"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path1970" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker1798"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path1796" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="TriangleStart"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+    <marker
+       id="msV"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#b6bdca"
+         id="path2" />
+    </marker>
+    <marker
+       id="msS"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#2ec66e"
+         id="path5" />
+    </marker>
+    <marker
+       id="msN"
+       markerWidth="10"
+       markerHeight="10"
+       refX="7"
+       refY="3.5"
+       orient="auto">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#4f93e6"
+         id="path8" />
+    </marker>
+  </defs>
+  <rect
+     x="0.46694249"
+     y="0.46694249"
+     width="577.50525"
+     height="381.16479"
+     rx="8.7633581"
+     fill="#1b1e26"
+     stroke="#3b414e"
+     id="rect13"
+     style="stroke-width:0.933885" />
+  <text
+     x="290.93088"
+     y="38.055012"
+     text-anchor="middle"
+     font-size="17px"
+     font-weight="600"
+     fill="#e9ebf1"
+     class="cb-title"
+     id="text15">Move &amp; slide - Wall contact</text>
+  <!-- wall -->
+  <rect
+     x="319.77405"
+     y="88.799591"
+     width="24"
+     height="214"
+     fill="#2a2f3a"
+     stroke="#8e97a6"
+     stroke-width="2"
+     id="rect17" />
+  <g
+     stroke="#5a6373"
+     stroke-width="1.4"
+     id="g31"
+     transform="translate(-50.225959,2.7995886)">
+    <line
+       x1="370"
+       y1="102"
+       x2="382"
+       y2="90"
+       id="line19" />
+    <line
+       x1="370"
+       y1="132"
+       x2="382"
+       y2="120"
+       id="line21" />
+    <line
+       x1="370"
+       y1="162"
+       x2="382"
+       y2="150"
+       id="line23" />
+    <line
+       x1="370"
+       y1="192"
+       x2="382"
+       y2="180"
+       id="line25" />
+    <line
+       x1="370"
+       y1="222"
+       x2="382"
+       y2="210"
+       id="line27" />
+    <line
+       x1="370"
+       y1="252"
+       x2="382"
+       y2="240"
+       id="line29" />
+  </g>
+  <!-- capsule (top-down = circle) at contact -->
+  <circle
+     cx="284.71664"
+     cy="217.61263"
+     r="34.365742"
+     fill="#9aa3b3"
+     fill-opacity="0.08"
+     stroke="#9aa3b3"
+     stroke-width="2.29105"
+     id="circle33" />
+  <circle
+     cx="284.71664"
+     cy="217.61263"
+     r="3.436574"
+     fill="#e9ebf1"
+     id="circle35"
+     style="stroke-width:1.14552" />
+  <!-- contact normal -->
+  <line
+     x1="319.31781"
+     y1="217.23479"
+     x2="297.49994"
+     y2="217.23479"
+     stroke="#4f93e6"
+     stroke-width="1.29734"
+     marker-end="url(#msN)"
+     id="line37"
+     style="marker-end:url(#marker1972)" />
+  <text
+     x="386.4715"
+     y="220.40924"
+     text-anchor="middle"
+     font-size="11.5px"
+     fill="#4f93e6"
+     id="text39">contact normal</text>
+  <!-- desired velocity (dashed, into the wall); label in open space at the tip -->
+  <line
+     x1="289.73849"
+     y1="215.35431"
+     x2="427.80698"
+     y2="122.73438"
+     stroke="#b6bdca"
+     stroke-width="1.97527"
+     stroke-dasharray="6, 4"
+     marker-end="url(#msV)"
+     id="line41"
+     style="marker-end:url(#marker1798)" />
+  <text
+     x="368.57153"
+     y="175.71776"
+     font-size="12px"
+     fill="#b6bdca"
+     id="text43">desired velocity</text>
+  <!-- blocked (normal) component -->
+  <line
+     x1="289.77405"
+     y1="122.79959"
+     x2="427.77405"
+     y2="122.79959"
+     stroke="#e05a4d"
+     stroke-width="1.6"
+     stroke-dasharray="4, 4"
+     id="line45" />
+  <text
+     x="388.55478"
+     y="115.93681"
+     text-anchor="middle"
+     font-size="11.5px"
+     fill="#e05a4d"
+     id="text47">blocked by wall</text>
+  <!-- slide (tangential) -->
+  <line
+     x1="284.59662"
+     y1="214.66238"
+     x2="284.59662"
+     y2="119.66239"
+     stroke="#2ec66e"
+     stroke-width="2.6"
+     marker-end="url(#msS)"
+     id="line49"
+     style="marker-end:url(#TriangleStart)" />
+  <text
+     x="279.56583"
+     y="158.53018"
+     text-anchor="end"
+     font-size="12.5px"
+     fill="#2ec66e"
+     font-weight="600"
+     id="text51">slide</text>
+  <text
+     text-anchor="middle"
+     font-size="12.5px"
+     fill="#c5cbd6"
+     id="text57"
+     x="-39.883743"
+     y="2.7995887"><tspan
+       x="290.11627"
+       y="352.79959"
+       id="tspan53">On a hit the body advances to contact, then projects the remaining motion onto the surface.</tspan><tspan
+       x="290.11627"
+       y="370.79959"
+       id="tspan55">The part going into the surface is dropped, so it slides along instead of stopping.</tspan></text>
+</svg>

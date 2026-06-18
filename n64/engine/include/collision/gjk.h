@@ -7,7 +7,7 @@
  */
 #pragma once
 
-#include "vec_math.h"
+#include "vecMath.h"
 
 namespace P64::Coll {
 

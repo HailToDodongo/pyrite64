@@ -4,8 +4,8 @@
  * @brief Functions to detect collisions between different shapes and objects and record them (see collide.h)
  */
 #include "collision/collide.h"
-#include "collision/collision_scene.h"
-#include "collision/contact_utils.h"
+#include "collision/collisionScene.h"
+#include "collision/contactUtils.h"
 #include "collision/gjk.h"
 #include "scene/scene.h"
 
@@ -915,7 +915,7 @@ namespace P64::Coll {
       }
 
       // Try to match new contact to an existing point by proximity
-      float MATCH_DIST_SQ = 0.02f * scene->getPhysicsScale() * scene->getPhysicsScale(); // 2cm threshold (scaled)
+      float MATCH_DIST_SQ = 0.02f; // 2cm threshold (scaled)
       int matchedIdx = -1;
       float bestDistSq = MATCH_DIST_SQ;
       for(int i = 0; i < existing->pointCount; ++i) {
@@ -967,7 +967,7 @@ namespace P64::Coll {
       }
 
       // Force all non-target points through current-frame revalidation.
-      const float revalidationSeparationLimit = -0.05f * scene->getPhysicsScale();
+      const float revalidationSeparationLimit = -0.05f;
       for(int i = 0; i < existing->pointCount; ++i) {
         ContactPoint &cp = existing->points[i];
         if(i == targetIdx) continue;
@@ -1093,7 +1093,7 @@ namespace P64::Coll {
     cc->respondsB = false;
 
     int newCount = resultCount < MAX_CONTACT_POINTS_PER_PAIR ? resultCount : MAX_CONTACT_POINTS_PER_PAIR;
-    float MATCH_DIST_SQ = 0.02f * scene->getPhysicsScale() * scene->getPhysicsScale();
+    float MATCH_DIST_SQ = 0.02f;
     bool oldClaimed[MAX_CONTACT_POINTS_PER_PAIR] = {};
 
     for(int i = 0; i < newCount; ++i) {
@@ -1146,7 +1146,9 @@ namespace P64::Coll {
   /// @param mesh Reference to the mesh collider.
   /// @param triangleIndex Index of the triangle within the mesh to test against.
   /// @return True if a collision is detected, false otherwise.
-  bool collideDetectObjectToTriangle(ColliderProxy *colliderProxyMeshSpace, RigidBody *rigidBody, const MeshCollider &mesh, int triangleIndex) {
+  bool collideDetectObjectToTriangle(ColliderProxy *colliderProxyMeshSpace, RigidBody *rigidBody, const MeshCollider &mesh, int triangleIndex, bool recordConstraints) {
+    if(rigidBody && !rigidBody->isEnabled()) return false;
+
     const bool isTriggerContact = colliderProxyMeshSpace->collider->isTrigger();
     const bool colliderRespondsToMesh = colliderProxyMeshSpace->collider->readsMeshCollider(&mesh);
 
@@ -1179,11 +1181,13 @@ namespace P64::Coll {
         for(int i = 0; i < satCount; ++i) {
           mesh.localResultToWorld(satResults[i]);
         }
-        collideCacheSatContactConstraint(
-            rigidBody, colliderProxyMeshSpace->collider, objectA,
-            const_cast<MeshCollider *>(&mesh), objectB,
-            satResults, satCount,
-            combinedFriction, combinedBounce, colliderRespondsToMesh, triangleIndex);
+        if(recordConstraints) {
+          collideCacheSatContactConstraint(
+              rigidBody, colliderProxyMeshSpace->collider, objectA,
+              const_cast<MeshCollider *>(&mesh), objectB,
+              satResults, satCount,
+              combinedFriction, combinedBounce, colliderRespondsToMesh, triangleIndex);
+        }
         return true;
       }
       return false;
@@ -1201,10 +1205,12 @@ namespace P64::Coll {
       if(analyticalSphereTriangle(*colliderProxyMeshSpace, sphere, v0, v1, v2, tri.normal, sphereResult)) {
         mesh.localResultToWorld(sphereResult);
 
-        collideCacheContactConstraint(
-            rigidBody, colliderProxyMeshSpace->collider, nullptr, objectA,
-            nullptr, nullptr, const_cast<MeshCollider *>(&mesh), objectB,
-            sphereResult, combinedFriction, combinedBounce, isTriggerContact, colliderRespondsToMesh, false, triangleIndex);
+        if(recordConstraints) {
+          collideCacheContactConstraint(
+              rigidBody, colliderProxyMeshSpace->collider, nullptr, objectA,
+              nullptr, nullptr, const_cast<MeshCollider *>(&mesh), objectB,
+              sphereResult, combinedFriction, combinedBounce, isTriggerContact, colliderRespondsToMesh, false, triangleIndex);
+        }
         return true;
       }
       return false;
@@ -1237,10 +1243,12 @@ namespace P64::Coll {
       dummyResult.contactA = colliderProxyMeshSpace->collider->worldCenter();
       dummyResult.contactB = triCenter;
 
-      collideCacheContactConstraint(
-          rigidBody, colliderProxyMeshSpace->collider, nullptr, objectA,
-          nullptr, nullptr, const_cast<MeshCollider *>(&mesh), objectB,
-          dummyResult, 0.0f, 0.0f, true, false, false, triangleIndex);
+      if(recordConstraints) {
+        collideCacheContactConstraint(
+            rigidBody, colliderProxyMeshSpace->collider, nullptr, objectA,
+            nullptr, nullptr, const_cast<MeshCollider *>(&mesh), objectB,
+            dummyResult, 0.0f, 0.0f, true, false, false, triangleIndex);
+      }
 
       return true;
     }
@@ -1256,10 +1264,12 @@ namespace P64::Coll {
     {
       mesh.localResultToWorld(epaResult);
 
-      collideCacheContactConstraint(
-          rigidBody, colliderProxyMeshSpace->collider, nullptr, objectA,
-          nullptr, nullptr, const_cast<MeshCollider *>(&mesh), objectB,
-          epaResult, combinedFriction, combinedBounce, isTriggerContact, colliderRespondsToMesh, false, triangleIndex);
+      if (recordConstraints) {
+        collideCacheContactConstraint(
+            rigidBody, colliderProxyMeshSpace->collider, nullptr, objectA,
+            nullptr, nullptr, const_cast<MeshCollider *>(&mesh), objectB,
+            epaResult, combinedFriction, combinedBounce, isTriggerContact, colliderRespondsToMesh, false, triangleIndex);
+      }
 
       return true;
     }
@@ -1272,7 +1282,8 @@ namespace P64::Coll {
   /// @param collider The collider to test against the mesh.
   /// @param rigidBody The rigid body associated with the collider.
   /// @param mesh The mesh collider to test against.
-  bool collideDetectObjectToMesh(Collider *collider, RigidBody *rigidBody, const MeshCollider &mesh) {
+  bool collideDetectObjectToMesh(Collider *collider, RigidBody *rigidBody, const MeshCollider &mesh, bool recordConstraints) {
+    if(rigidBody && !rigidBody->isEnabled()) return false;
 
     // Transform the collider's world AABB into the mesh's local space for tree query
     AABB queryAABB = mesh.hasTransform()
@@ -1327,9 +1338,9 @@ namespace P64::Coll {
       // If there is a collision between the collider and the current triangle and the collider is a Trigger
       // we can skip the rest of the candidates since triggers just need to report that a collision happened
       // and don't need detailed contact information for each triangle.
-      if(collideDetectObjectToTriangle(&colliderInMeshSpace, rigidBody, mesh, triIndex)) {
+      if(collideDetectObjectToTriangle(&colliderInMeshSpace, rigidBody, mesh, triIndex, recordConstraints)) {
         detected = true;
-        if(collider->isTrigger()) return true;
+        if(collider->isTrigger() || !recordConstraints) return true;
       }
     }
     return detected;
@@ -1341,13 +1352,15 @@ namespace P64::Coll {
   /// @param rbA The rigid body associated with the first collider.
   /// @param colliderB The second collider.
   /// @param rbB The rigid body associated with the second collider.
-  bool collideDetectObjectToObject(Collider *colliderA, RigidBody *rbA, Collider *colliderB, RigidBody *rbB) {
+  bool collideDetectObjectToObject(Collider *colliderA, RigidBody *rbA, Collider *colliderB, RigidBody *rbB, bool recordConstraints) {
     if(!colliderA || !colliderB) return false;
 
     CollisionScene *scene = collisionSceneGetInstance();
     const bool aReadsB = colliderA->readsCollider(colliderB);
     const bool bReadsA = colliderB->readsCollider(colliderA);
 
+    if(rbA && !rbA->isEnabled()) return false;
+    if(rbB && !rbB->isEnabled()) return false;
     if(rbA && rbB && rbA->isSleeping() && rbB->isSleeping() && !colliderA->isTrigger() && !colliderB->isTrigger()) return false;
 
     if(colliderA && colliderB) {
@@ -1467,14 +1480,16 @@ namespace P64::Coll {
       dummyResult.contactA = colliderA->worldCenter();
       dummyResult.contactB = colliderB->worldCenter();
 
-      collideCacheContactConstraint(
-        rbA, colliderA, nullptr, colliderA->ownerObject(),
-        rbB, colliderB, nullptr, colliderB->ownerObject(),
-        dummyResult,
-        0.0f, 0.0f,
-        true,
-        false, false
-      );
+      if (recordConstraints) {
+        collideCacheContactConstraint(
+          rbA, colliderA, nullptr, colliderA->ownerObject(),
+          rbB, colliderB, nullptr, colliderB->ownerObject(),
+          dummyResult,
+          0.0f, 0.0f,
+          true,
+          false, false
+        );
+      }
       return true;
     }
 
@@ -1498,11 +1513,14 @@ namespace P64::Coll {
     float combinedFriction = fmin(colliderA->friction(), colliderB->friction());
     float combinedBounce = fmaxf(colliderA->bounce(), colliderB->bounce());
 
-    // Cache the constraint
-    collideCacheContactConstraint(
-      rbA, colliderA, nullptr, colliderA->ownerObject(),
-      rbB, colliderB, nullptr, colliderB->ownerObject(),
-      result, combinedFriction, combinedBounce, false, aReadsB, bReadsA);
+    if (recordConstraints) {
+      // Cache the constraint
+      collideCacheContactConstraint(
+        rbA, colliderA, nullptr, colliderA->ownerObject(),
+        rbB, colliderB, nullptr, colliderB->ownerObject(),
+        result, combinedFriction, combinedBounce, false, aReadsB, bReadsA);
+    }
+
     return true;
   }
 

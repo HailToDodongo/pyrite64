@@ -1,3 +1,6 @@
 _build
 .venv
 __pycache__
+
+# Auto-generated C++ API pages (regenerated from the headers on every build).
+docs/manual/api/

@@ -1,0 +1,42 @@
+# Minimal Doxyfile: Doxygen is used ONLY as an XML backend for Breathe.
+# It does not generate its own HTML site; Sphinx/Breathe renders everything.
+# All unset options keep their Doxygen defaults.
+
+PROJECT_NAME      = "Pyrite64"
+
+# Public engine API headers (paths relative to this file / the docs/ dir).
+INPUT             = ../n64/engine/include
+RECURSIVE         = YES
+FILE_PATTERNS     = *.h *.hpp
+
+# Output: XML only, consumed by Breathe.
+OUTPUT_DIRECTORY  = _build/doxygen
+GENERATE_HTML     = NO
+GENERATE_LATEX    = NO
+GENERATE_XML      = YES
+XML_OUTPUT        = xml
+XML_PROGRAMLISTING = NO
+
+# Document everything, even members without a doc comment, so the API
+# reference is complete while comments are still being filled in.
+EXTRACT_ALL       = YES
+EXTRACT_PRIVATE   = NO
+EXTRACT_STATIC    = YES
+
+# Treat the first sentence / "@brief"-less comments as a brief description.
+JAVADOC_AUTOBRIEF = YES
+QT_AUTOBRIEF      = YES
+
+# Keep the build output quiet during Sphinx runs.
+QUIET             = YES
+WARN_IF_UNDOCUMENTED = NO
+
+# Teach Doxygen the project's custom comment tags so they don't warn.
+# @license renders as a small note; @TODO maps to the builtin @todo.
+ALIASES           = "license=@par License:^^" \
+                    "TODO=@todo"
+
+# Expand the engine's common macros so signatures parse cleanly.
+ENABLE_PREPROCESSING = YES
+MACRO_EXPANSION   = YES
+EXPAND_ONLY_PREDEF = NO

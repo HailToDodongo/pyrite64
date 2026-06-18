@@ -57,7 +57,8 @@ void Renderer::N64Mesh::fromT3DM(const Project::Assets::Model3D &model3d, Projec
           {vert.pos[0], vert.pos[1], vert.pos[2]},
           vert.norm,
           {r,g,b,a},
-          glm::ivec2(vert.s, vert.t)
+          glm::ivec2(vert.s, vert.t),
+          {(int16_t)vert.boneIndex, 0},
         });
         /*printf("v: %d,%d,%d norm: %d uv: %d,%d col: %08X\n",
           vert.pos[0], vert.pos[1], vert.pos[2],
@@ -87,6 +88,8 @@ void Renderer::N64Mesh::draw(
   const ObjectRef &ref
 ) {
   if (!scene)return;
+
+  uint32_t flagsGlobal = uniforms.mat.flags & LIGHT_MODE_ADD;
 
   auto drawPart = [&](MeshPart &part)
   {
@@ -147,24 +150,32 @@ void Renderer::N64Mesh::draw(
     uniforms.mat.colPrim = lastPrim;
     uniforms.mat.colEnv = lastEnv;
     uniforms.mat.blender.x = blender;
+    uniforms.mat.flags |= flagsGlobal;
 
     // @TODO: move out
-    float clip = uniforms.mat.lightDir[0].w;
+
+    uint32_t MAX_LIGHTS = uniforms.mat.lightColor.size();
+
     const auto &lights = scene->getLights();
     int lightIdx = 0;
     for (auto &light : lights) {
       if (light.type == 0) {
         uniforms.mat.ambientColor = light.color;
       } else {
-        if (lightIdx < 2)
+        if (lightIdx < (int)MAX_LIGHTS)
         {
-          uniforms.mat.lightDir[lightIdx] = glm::vec4(light.dir, 0.0f);
+          if(light.type == 2) {// point light
+            uniforms.mat.lightDir[lightIdx] = light.pos;
+            uniforms.mat.lightDir[lightIdx].w = light.size;
+          } else {
+            uniforms.mat.lightDir[lightIdx] = glm::vec4(light.dir, 0);
+          }
+
           uniforms.mat.lightColor[lightIdx] = light.color;
           ++lightIdx;
         }
       }
     }
-    uniforms.mat.lightDir[0].w = clip;
 
     if(ref.isCollision) {
       uniforms.mat.flags |= DRAW_SHADER_COLLISION;
@@ -173,8 +184,6 @@ void Renderer::N64Mesh::draw(
     }
 
     SDL_BindGPUFragmentSamplers(pass, 0, part.texBindings, 2);
-    SDL_BindGPUVertexSamplers(pass, 0, part.texBindings, 2); // needed?
-
     SDL_PushGPUVertexUniformData(cmdBuff, 1, &uniforms, sizeof(uniforms));
     SDL_PushGPUFragmentUniformData(cmdBuff, 0, &uniforms, sizeof(uniforms));
 

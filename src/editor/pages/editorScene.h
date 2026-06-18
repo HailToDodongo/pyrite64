@@ -39,7 +39,6 @@ namespace Editor
       MemoryDashboard memoryDashboard{};
       SceneGraph sceneGraph{};
 
-      bool dockSpaceInit{false};
       ImGuiID dockLeftID;
       ImGuiID dockRightID;
       ImGuiID dockBottomID;

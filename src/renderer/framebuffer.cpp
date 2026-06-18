@@ -5,6 +5,7 @@
 #include "framebuffer.h"
 #include "../context.h"
 #include <stdexcept>
+#include <cstring>
 
 SDL_GPUTextureFormat Renderer::getDepthStencilFormat()
 {
@@ -157,6 +158,47 @@ glm::u8vec4 Renderer::Framebuffer::readColor(uint32_t x, uint32_t y)
   //printf("Pixel: %02X %02X %02X %02X\n", res[0], res[1], res[2], res[3]);
   endGenericRead();
   return res;
+}
+
+std::vector<uint8_t> Renderer::Framebuffer::readColorImage()
+{
+  uint32_t w = texInfo.width;
+  uint32_t h = texInfo.height;
+  std::vector<uint8_t> out(static_cast<size_t>(w) * h * 4, 0);
+  if(w == 0 || h == 0 || !gpuTex)return out;
+
+  SDL_GPUTransferBufferCreateInfo tbci{};
+  tbci.size = (Uint32)out.size();
+  tbci.usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD;
+  SDL_GPUTransferBuffer* tb = SDL_CreateGPUTransferBuffer(ctx.gpu, &tbci);
+
+  SDL_GPUCommandBuffer* cmdBuff = SDL_AcquireGPUCommandBuffer(ctx.gpu);
+  SDL_GPUCopyPass* pass = SDL_BeginGPUCopyPass(cmdBuff);
+
+  SDL_GPUTextureRegion src{};
+  src.texture = gpuTex;
+  src.w = w;
+  src.h = h;
+  src.d = 1;
+
+  SDL_GPUTextureTransferInfo dst{};
+  dst.transfer_buffer = tb;
+  dst.pixels_per_row = w;
+  dst.rows_per_layer = h;
+
+  SDL_DownloadFromGPUTexture(pass, &src, &dst);
+  SDL_EndGPUCopyPass(pass);
+
+  SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdBuff);
+  SDL_WaitForGPUFences(ctx.gpu, true, &fence, 1);
+  SDL_ReleaseGPUFence(ctx.gpu, fence);
+
+  void* map = SDL_MapGPUTransferBuffer(ctx.gpu, tb, false);
+  std::memcpy(out.data(), map, out.size());
+  SDL_UnmapGPUTransferBuffer(ctx.gpu, tb);
+  SDL_ReleaseGPUTransferBuffer(ctx.gpu, tb);
+
+  return out;
 }
 
 uint32_t Renderer::Framebuffer::readObjectID(uint32_t x, uint32_t y) {

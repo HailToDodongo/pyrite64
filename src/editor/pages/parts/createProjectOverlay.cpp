@@ -34,7 +34,7 @@ namespace
     return safeName;
   }
 
-  std::string expandHomePath(const std::string &path)
+  [[maybe_unused]] std::string expandHomePath(const std::string &path)
   {
     const char* home = std::getenv("HOME");
     if (!home || !*home) return path;

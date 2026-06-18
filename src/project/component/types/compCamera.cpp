@@ -91,7 +91,6 @@ namespace Project::Component::Camera
 
   void update(Object &obj, Entry &entry)
   {
-    Data &data = *static_cast<Data*>(entry.data.get());
   }
 
   /**
@@ -155,7 +154,7 @@ namespace Project::Component::Camera
 
     if (ImTable::start("Comp", &obj))
     {
-      auto scene = ctx.project->getScenes().getLoadedScene();
+      [[maybe_unused]] auto scene = ctx.project->getScenes().getLoadedScene();
       assert(scene);
 
       ImTable::add("Name", entry.name);

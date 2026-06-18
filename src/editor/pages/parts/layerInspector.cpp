@@ -56,6 +56,12 @@ namespace
         };
         ImTable::addVecComboBox("Blending", blenders, layer.blender.value);
 
+        std::vector<ImTable::ComboEntry> lightModes{
+            {0, "Multiply (Default)"},
+            {1, "Add (Baked Light)"},
+          };
+        ImTable::addVecComboBox("Light-Mode", lightModes, layer.lightMode.value);
+
         ImTable::addProp("Fog", layer.fog);
         if(layer.fog.value)
         {

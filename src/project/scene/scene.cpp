@@ -56,6 +56,7 @@ nlohmann::json Project::SceneConf::serialize() const {
     b.set(layer.fogColor);
     b.set(layer.fogMin);
     b.set(layer.fogMax);
+    b.set(layer.lightMode);
   };
 
   Utils::JSON::Builder builder{};
@@ -72,7 +73,7 @@ nlohmann::json Project::SceneConf::serialize() const {
     .set(audioFreq)
     .set(physicsTickRate)
     .set(gravity)
-    .set(physicsScale)
+    .set(visualUnitsPerMeter)
     .set(velocitySolverIterations)
     .set(positionSolverIterations)
     .set(interpolatePhysicsTransforms)
@@ -91,7 +92,7 @@ Project::Scene::Scene(int id_, const std::string &projectPath)
 
   deserialize(Utils::FS::loadTextFile(scenePath + "/scene.json"));
 
-  root.id = 0;
+  root.runtimeId = 0;
   root.name = "Scene";
   root.uuid = Utils::Hash::sha256_64bit(root.name);
 }
@@ -115,14 +116,13 @@ std::shared_ptr<Project::Object> Project::Scene::addObject(Object &parent) {
   return addObject(parent, child, true);
 }
 
-std::shared_ptr<Project::Object> Project::Scene::addObject(Object&parent, std::shared_ptr<Object> obj, bool generateIDs) {
+std::shared_ptr<Project::Object> Project::Scene::addObject(Object&parent, std::shared_ptr<Object> obj, bool generateUUID) {
   parent.children.push_back(obj);
 
-  auto setChildUUIDs = [this, generateIDs](const std::shared_ptr<Object> &objChild, auto& setChildUIDsRef) -> void
+  auto setChildUUIDs = [this, generateUUID](const std::shared_ptr<Object> &objChild, auto& setChildUIDsRef) -> void
   {
-    if(generateIDs)
+    if(generateUUID)
     {
-      objChild->id = getFreeObjectId();
       objChild->uuid = Utils::Hash::randomU64();
     }
 
@@ -142,8 +142,7 @@ std::shared_ptr<Project::Object> Project::Scene::addPrefabInstance(uint64_t pref
   if (!prefab)return nullptr;
 
   auto obj = std::make_shared<Object>(root);
-  obj->id = getFreeObjectId();
-  obj->name += prefab->obj.name + " ("+std::to_string(obj->id)+")";
+  obj->name += prefab->obj.name;
   obj->uuid = Utils::Hash::randomU32();
   obj->pos = prefab->obj.pos;
   obj->rot = prefab->obj.rot;
@@ -327,7 +326,7 @@ void Project::Scene::deserialize(const std::string &data)
     Utils::JSON::readProp(docConf, conf.audioFreq, 32000);
     Utils::JSON::readProp(docConf, conf.physicsTickRate, 50);
     Utils::JSON::readProp(docConf, conf.gravity, glm::vec3{0.0f, -9.81f, 0.0f});
-    Utils::JSON::readProp(docConf, conf.physicsScale, 16.0f);
+    Utils::JSON::readProp(docConf, conf.visualUnitsPerMeter, 100.0f);
     Utils::JSON::readProp(docConf, conf.velocitySolverIterations, 7);
     Utils::JSON::readProp(docConf, conf.positionSolverIterations, 6);
     Utils::JSON::readProp(docConf, conf.interpolatePhysicsTransforms, true);
@@ -343,7 +342,7 @@ void Project::Scene::deserialize(const std::string &data)
       Utils::JSON::readProp(dom, layer.fogColor);
       Utils::JSON::readProp(dom, layer.fogMin, 0.0f);
       Utils::JSON::readProp(dom, layer.fogMax, 0.0f);
-
+      Utils::JSON::readProp(dom, layer.lightMode, 0);
 
       return layer;
     };
@@ -371,20 +370,25 @@ void Project::Scene::deserialize(const std::string &data)
   root.deserialize(this, docGraph);
 }
 
-uint16_t Project::Scene::getFreeObjectId()
+void Project::Scene::assignRuntimeIds()
 {
-  uint16_t objId = 1;
-
-  for(int i=0; i<0xFFFF; ++i) {
-    bool found = false;
-    for (auto &[uuid, obj] : objectsMap) {
-      if (obj->id == objId) {
-        found = true;
-        break;
-      }
+  // Pre-order traversal: parents get a lower id than their children, root stays 0.
+  // Ids are unique per scene and only valid for this build.
+  uint32_t nextId = 1;
+  auto assign = [&nextId](const std::shared_ptr<Object> &obj, auto &assignRef) -> void
+  {
+    if(nextId > 0xFFFF) {
+      Utils::Logger::log("Scene has more than 65535 objects, runtime ids overflow", Utils::Logger::LEVEL_ERROR);
+      return;
     }
-    if (!found)break;
-    ++objId;
+    obj->runtimeId = static_cast<uint16_t>(nextId++);
+    for(const auto &child : obj->children) {
+      assignRef(child, assignRef);
+    }
+  };
+
+  root.runtimeId = 0;
+  for(const auto &child : root.children) {
+    assign(child, assign);
   }
-  return objId;
 }

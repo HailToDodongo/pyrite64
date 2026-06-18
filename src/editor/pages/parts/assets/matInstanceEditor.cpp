@@ -18,9 +18,14 @@ void Editor::MatInstanceEditor::draw(
   auto t3dm = ctx.project->getAssets().getEntryByUUID(modelUUID);
   if(!t3dm || t3dm->model.materials.empty())return;
 
-  if(!ImGui::CollapsingSubHeader("Material Instance", ImGuiTreeNodeFlags_DefaultOpen)
-    || !ImTable::start("Mat", &obj)
-  ) {
+  ImGui::SetNextItemAllowOverlap();
+  const bool instOpen = ImGui::CollapsingSubHeader("Material Instance", ImGuiTreeNodeFlags_DefaultOpen);
+  {
+    const float helpSize = 19_px;
+    ImGui::SameLine(ImGui::GetContentRegionMax().x - helpSize - 4_px);
+    ImGui::HelpIcon("/manual/editor/materials/instance", "Open Docs", helpSize);
+  }
+  if(!instOpen || !ImTable::start("Mat", &obj)) {
     return;
   }
 

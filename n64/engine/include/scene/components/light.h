@@ -20,16 +20,17 @@ namespace P64::Comp
     struct InitData
     {
       color_t color;
+      float size;
       uint8_t index;
       uint8_t type;
       int8_t dir[3];
     };
 
     fm_vec3_t dir{};
+    float size{};
     color_t color{};
     uint8_t type{};
     uint8_t index{};
-
 
     static uint32_t getAllocSize([[maybe_unused]] InitData* initData)
     {
@@ -45,6 +46,7 @@ namespace P64::Comp
 
       new(data) Light();
       data->color = initData->color;
+      data->size = initData->size;
       data->type = initData->type;
       data->index = initData->index;
       data->dir = {
@@ -56,10 +58,12 @@ namespace P64::Comp
 
     static void update([[maybe_unused]] Object& obj, Light* data, float deltaTime) {
       auto &light = SceneManager::getCurrent().getLighting();
-      if (data->type == 0) {
-        light.addAmbientLight(data->color);
-      } else {
-        light.addDirLight(data->color, data->dir);
+      switch(data->type)
+      {
+        case 0: light.addAmbientLight(data->color); break;
+        case 1: light.addDirLight(data->color, data->dir); break;
+        case 2: light.addPointLight(data->color, obj.pos, data->size); break;
+        default: break;
       }
     }
 

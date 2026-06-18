@@ -19,7 +19,6 @@ namespace
   nlohmann::json serializeObj(const Project::Object &obj)
   {
     Builder builder{};
-    builder.set("id", obj.id);
     builder.set("name", obj.name);
     builder.set("uuid", obj.uuid);
 
@@ -107,7 +106,8 @@ void Project::Object::deserialize(Scene *scene, nlohmann::json &doc)
 {
   if(!doc.is_object())return;
 
-  id   = doc["id"];
+  // Note: a legacy "id" field may be present in older scenes; it is intentionally
+  // ignored. Runtime ids are assigned during build, never loaded from disk.
   name = doc["name"];
   uuid = doc["uuid"];
 

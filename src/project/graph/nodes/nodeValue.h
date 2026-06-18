@@ -26,7 +26,7 @@ namespace Project::Graph::Node
         setTitle(NAME);
         setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(0xFF, 0x99, 0x55, 0xFF), ImColor(0,0,0,255), 4.0f));
 
-        addOUT<TypeValue>("", PIN_STYLE_VALUE);
+        (void)addOUT<TypeValue>("", PIN_STYLE_VALUE);
       }
 
       void draw() override {

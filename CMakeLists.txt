@@ -134,6 +134,8 @@ add_executable(pyrite64 src/main.cpp
         src/editor/undoRedo.cpp
         src/editor/selectionUtils.h
         src/editor/selectionUtils.cpp
+        src/editor/thumbnailCache.h
+        src/editor/thumbnailCache.cpp
         src/editor/window.h
         src/editor/window.cpp
         src/editor/keymap.h
@@ -229,6 +231,7 @@ add_executable(pyrite64 src/main.cpp
         src/build/collisionBuilder.cpp
         src/project/component/types/compCollBody.cpp
         src/project/component/types/compRigidBody.cpp
+        src/project/component/types/compCharBody.cpp
         src/build/fontBuilder.cpp
         src/utils/prop.h
         src/project/scene/prefab.h
@@ -278,7 +281,19 @@ add_executable(pyrite64 src/main.cpp
         src/editor/pages/parts/assets/textureEditor.cpp
         src/editor/pages/parts/assets/matInstanceEditor.h
         src/editor/pages/parts/assets/matInstanceEditor.cpp
+        src/renderer/storageBuffer.cpp
+        src/renderer/skeleton.h
+        src/renderer/skeleton.cpp
+        src/renderer/animation.h
+        src/renderer/animation.cpp
 )
+
+# libdragon's C headers (e.g. surface_make in surface.h) use narrowing
+# conversions in braced initializers. GCC only warns, but Clang/AppleClang
+# treat this as a hard error, so relax it there to keep the macOS build working.
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(pyrite64 PRIVATE -Wno-narrowing)
+endif()
 
 target_include_directories(pyrite64 PRIVATE
     vendored
@@ -305,10 +320,15 @@ set(PYRITE_APP_NAME "pyrite64")
 set(PYRITE_GH_USER "HailToDodongo")
 set(PYRITE_GH_REPO "pyrite64")
 
+# Base URL of the published docs (GitHub Pages host is the lowercased user name).
+string(TOLOWER "${PYRITE_GH_USER}" PYRITE_GH_USER_LC)
+set(PYRITE_DOCS_URL "https://${PYRITE_GH_USER_LC}.github.io/${PYRITE_GH_REPO}/docs")
+
 target_compile_definitions(pyrite64 PRIVATE "PYRITE_ORG_NAME=\"${PYRITE_ORG_NAME}\"")
 target_compile_definitions(pyrite64 PRIVATE "PYRITE_APP_NAME=\"${PYRITE_APP_NAME}\"")
 target_compile_definitions(pyrite64 PRIVATE "PYRITE_GH_USER=\"${PYRITE_GH_USER}\"")
 target_compile_definitions(pyrite64 PRIVATE "PYRITE_GH_REPO=\"${PYRITE_GH_REPO}\"")
+target_compile_definitions(pyrite64 PRIVATE "PYRITE_DOCS_URL=\"${PYRITE_DOCS_URL}\"")
 target_compile_definitions(pyrite64 PRIVATE "PYRITE_VERSION=\"${PROJECT_VERSION}\"")
 
 target_compile_definitions(pyrite64 PRIVATE IMGUI_DEFINE_MATH_OPERATORS GLM_FORCE_QUAT_DATA_XYZW)

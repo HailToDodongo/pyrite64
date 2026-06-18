@@ -129,7 +129,7 @@ namespace Project::Component::CollMesh
       //ImGui::InputScalar("##UUID", ImGuiDataType_U64, &data.scriptUUID);
 
       int idx = modelList.size();
-      for (int i=0; i<modelList.size(); ++i) {
+      for (int i=0; i<(int)modelList.size(); ++i) {
         if (modelList[i].getUUID() == data.modelUUID.resolve(obj.propOverrides)) {
           idx = i;
           break;
@@ -139,7 +139,7 @@ namespace Project::Component::CollMesh
       auto getter = [](void*, int idx) -> const char*
       {
         auto &scriptList = ctx.project->getAssets().getTypeEntries(FileType::MODEL_3D);
-        if (idx < 0 || idx >= scriptList.size())return "<Select Model>";
+        if (idx < 0 || idx >= (int)scriptList.size())return "<Select Model>";
         return scriptList[idx].name.c_str();
       };
 
@@ -225,8 +225,9 @@ namespace Project::Component::CollMesh
         aabbCol = {0xFF,0xAA,0x00,0xFF};
       }
 
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, aabbCol);
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, aabbCol);
+      auto rot = obj.rot.resolve(obj.propOverrides);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, aabbCol, rot);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, aabbCol, rot);
     }
   }
 

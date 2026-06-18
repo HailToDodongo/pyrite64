@@ -4,6 +4,7 @@ layout (location = 0) in ivec4 inPosition;
 //layout (location = 1) in vec2 inNorm;
 layout (location = 1) in vec4 inColor;
 layout (location = 2) in ivec2 inUV;
+layout (location = 3) in ivec2 inBoneIdx;
 
 layout (location = 0) out vec4 v_color;
 layout (location = 1) out vec4 uv;
@@ -16,6 +17,10 @@ layout (location = 6) out flat vec4 cc_shade_flat;
 #include "./defines.h"
 #include "./ubo.glsl"
 
+layout(std430, set = 0, binding = 0) readonly buffer BoneMatrices {
+    mat4 boneMat[];
+};
+
 // set=3 in fragment shader
 layout(std140, set = 1, binding = 0) uniform UniformGlobal {
     mat4 projMat;
@@ -26,9 +31,6 @@ layout(std140, set = 1, binding = 0) uniform UniformGlobal {
 layout(std140, set = 1, binding = 1) uniform UniformObject {
   UBO_Material material;
 };
-
-layout(set = 2, binding = 0) uniform sampler2D tex0;
-layout(set = 2, binding = 1) uniform sampler2D tex1;
 
 #include "./utils.glsl"
 
@@ -53,10 +55,15 @@ mat3 calcNormalMax(in mat4 mat) {
 
 void main()
 {
-  mat4 matMV = quantizeMat4(cameraMat * material.modelMat);
+  mat4 matM = material.modelMat;
+  if(inBoneIdx.x >= 0) {
+    matM = matM * boneMat[inBoneIdx.x];
+  }
+
+  mat4 matMV = quantizeMat4(cameraMat * matM);
   mat4 matMVP = projMat * matMV;
 
-  mat3 matNormLight = calcNormalMax(material.modelMat);
+  mat3 matNormLight = calcNormalMax(matM);
   mat3 matNormScreen = calcNormalMax(matMV);
 
   vec2 uvPixel = (vec2(inUV) / float(1 << 5));
@@ -69,6 +76,7 @@ void main()
   vec3 normWorld = matNormLight * norm;
   vec3 normScreen = matNormScreen * norm;
 
+  vec4 posWorld = matM * vec4(vec3(inPosition), 1.0);
   gl_Position = matMVP * vec4(vec3(inPosition), 1.0);
   posScreen = gl_Position.xy / gl_Position.w;
 
@@ -76,9 +84,24 @@ void main()
 
   //vec4 lightTotal = vec4(linearToGamma(material.ambientColor.rgb), 0.0);
   vec4 lightTotal = material.ambientColor;
-  for(int i=0; i<2; ++i) {
-    float lightStren = max(dot(normWorld, material.lightDir[i].xyz), 0.0);
-    //vec4 colorNorm = vec4(linearToGamma(material.lightColor[i].rgb), 1.0);
+  for(int i=0; i<6; ++i) {
+    float pointLightSize = material.lightDir[i].w;
+    float lightStren = 0;
+
+    if(pointLightSize > 0.0) {
+      vec3 ptPos = material.lightDir[i].xyz;
+      vec3 toLight = ptPos - posWorld.xyz;
+      float dist = length(toLight);
+      toLight /= dist;
+
+      lightStren = (pointLightSize / dist) * 0.5;
+      lightStren *= lightStren;
+      lightStren = clamp(lightStren, 0.0, 1.0);
+      lightStren *= max(dot(normWorld, toLight), 0.0);
+    } else {
+      lightStren = max(dot(normWorld, material.lightDir[i].xyz), 0.0);
+    }
+
     vec4 colorNorm = material.lightColor[i];
     lightTotal += colorNorm * lightStren;
   }
@@ -86,10 +109,13 @@ void main()
   lightTotal = clamp(lightTotal, 0.0, 1.0);
 //  lightTotal.a = 1.0;
 
-  vec4 shadeWithLight = cc_shade * lightTotal;
+  vec4 addLight = clamp(cc_shade + lightTotal, 0.0, 1.0);
+  vec4 mulLight = cc_shade * lightTotal;
+
+  vec4 shadeWithLight = flagSelect(LIGHT_MODE_ADD, mulLight, addLight);
 
   cc_shade = flagSelect(T3D_FLAG_NO_LIGHT, shadeWithLight, cc_shade);
-  //cc_shade.rgb = shadeWithLight;
+  //cc_shade.rgb = lightTotal.rgb;
 
   cc_shade = clamp(cc_shade, 0.0, 1.0);
   // cc_shade.rgb = norm * 0.5 + 0.5; // TEST

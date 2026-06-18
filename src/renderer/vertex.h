@@ -11,10 +11,11 @@ namespace Renderer
 {
   struct Vertex
   {
-    /* 0x00 */ glm::i16vec3 pos{}; // 16.0 fixed point
-    /* 0x06 */ uint16_t norm{};    // 5,5,5 compressed normal
-    /* 0x08 */ glm::u8vec4 color{};   // RGBA8 color
-    /* 0x0C */ glm::i16vec2 uv{};  // 10.6 fixed point (pixel coords)
+    glm::i16vec3 pos{}; // 16.0 fixed point
+    uint16_t norm{};    // 5,5,5 compressed normal
+    glm::u8vec4 color{};   // RGBA8 color
+    glm::i16vec2 uv{};  // 10.6 fixed point (pixel coords)
+    glm::i16vec2 boneIdx{}; // bone index (-1 if unused), second entry is padding
   };
 
   struct LineVertex

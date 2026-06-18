@@ -15,7 +15,7 @@ namespace
   constinit bool isPickerOpen{false};
   std::mutex mtxResult{};
   constinit std::atomic_bool hasResult{false};
-  constinit std::string result{};
+  std::string result{};
 
   constinit std::vector<SDL_DialogFileFilter> filefilter{};
 

@@ -39,8 +39,8 @@ namespace Renderer
     uint32_t otherModeH;
     uint32_t flags;
 
-    glm::vec4 lightColor[2];
-    glm::vec4 lightDir[2]; // [0].w is alpha clip
+    std::array<glm::vec4, 6> lightColor;
+    std::array<glm::vec4, 6> lightDir;
     glm::vec4 colPrim;
     glm::vec4 colEnv;
     glm::vec4 ambientColor;
@@ -51,6 +51,7 @@ namespace Renderer
     glm::vec2 k_45;
 
     glm::u32vec2 blender;
+    float alphaClip;
   };
 
   struct UniformsObject

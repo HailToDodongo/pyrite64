@@ -23,7 +23,7 @@ namespace Project::Graph::Node
         setTitle(NAME);
         setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(0xEE, 0xEE, 0xEE, 0xFF), ImColor(0,0,0,255), 4.0f));
 
-        addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
+        (void)addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
         //addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
         //addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
       }

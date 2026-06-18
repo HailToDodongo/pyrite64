@@ -54,7 +54,6 @@ add_executable(n64_engine
         engine/include/script/globalScript.h
         engine/include/scene/event.h
         engine/src/scene/components/collMesh.cpp
-        engine/src/libdragon/rspq.h
         engine/include/renderer/drawLayer.h
         engine/src/renderer/drawLayer.cpp
         engine/src/renderer/pipelineDefault.cpp
@@ -85,6 +84,9 @@ add_executable(n64_engine
         engine/src/debug/overlay.cpp
         engine/include/collision/attach.h
         engine/src/collision/attach.cpp
+        engine/include/collision/characterBody.h
+        engine/src/collision/characterBody.cpp
+        engine/src/scene/components/charBody.cpp
         engine/src/scene/componentTable.cpp
         engine/src/scene/components/culling.cpp
         engine/include/renderer/material.h
@@ -98,11 +100,10 @@ add_executable(n64_engine
         engine/src/lib/matrixManager.cpp
         engine/src/renderer/hdr/postProcess.cpp
         engine/src/debug/debugText.cpp
-        engine/src/debug/menu.h
-        engine/src/debug/menu.cpp
         engine/src/debug/overlay/ovlAudio.cpp
         engine/src/debug/overlay/ovlMemory.cpp
         engine/src/debug/overlay/ovlCPU.cpp
         engine/src/debug/overlay/ovlColors.h
         engine/include/debug/debugMenu.h
+        engine/src/collision/characterBody.cpp
 )

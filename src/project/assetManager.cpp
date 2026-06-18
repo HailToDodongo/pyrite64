@@ -4,6 +4,7 @@
 */
 #include "assetManager.h"
 #include "../context.h"
+#include "../editor/thumbnailCache.h"
 #include <filesystem>
 #include <format>
 #include <chrono>
@@ -625,6 +626,9 @@ void Project::AssetManager::reloadAssetByUUID(uint64_t uuid) {
   auto asset = getEntryByUUID(uuid);
   if (!asset)return;
   reloadEntry(*asset, asset->path);
+
+  // The asset's visuals changed, so any cached thumbnail is now stale.
+  if (ctx.thumbnails)ctx.thumbnails->invalidate(uuid);
 }
 
 const std::shared_ptr<Renderer::Texture> & Project::AssetManager::getFallbackTexture()

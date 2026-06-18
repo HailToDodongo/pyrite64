@@ -3,7 +3,7 @@
 * @license MIT
 */
 #pragma once
-#include "mesh_collider.h"
+#include "meshCollider.h"
 
 namespace P64::Coll
 {

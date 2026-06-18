@@ -16,7 +16,7 @@
     "frameLimit": 1,
     "gravity": [
       0.0,
-      -9.8100004196167,
+      -1.5679999589920044,
       0.0
     ],
     "interpolatePhysicsTransforms": true,
@@ -35,6 +35,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "2D"
       }
     ],
@@ -53,6 +54,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "3D Opaque"
       },
       {
@@ -69,6 +71,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "3D Transp."
       }
     ],
@@ -87,15 +90,16 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "PTX Opaque"
       }
     ],
     "name": "Menu",
-    "physicsScale": 16.0,
     "physicsTickRate": 50,
     "positionSolverIterations": 6,
     "renderPipeline": 2,
-    "velocitySolverIterations": 7
+    "velocitySolverIterations": 7,
+    "visualUnitsPerMeter": 100.0
   },
   "graph": {
     "children": [
@@ -125,12 +129,13 @@
           {
             "data": {
               "color": [
-                0.0,
-                0.0,
-                0.0,
-                0.4745098054409027
+                1.0,
+                1.0,
+                1.0,
+                1.0
               ],
               "index": 0,
+              "size": 50.0,
               "type": 0
             },
             "id": 2,
@@ -163,6 +168,9 @@
             "data": {
               "asset": 632490924792972403,
               "autoRun": false,
+              "objRefs": {
+                "0": 2325492290
+              },
               "repeatable": true
             },
             "id": 9,
@@ -171,7 +179,6 @@
           }
         ],
         "enabled": true,
-        "id": 1,
         "name": "Cam",
         "pos": [
           10.0,
@@ -267,12 +274,11 @@
           }
         ],
         "enabled": true,
-        "id": 2,
         "name": "Skybox",
         "pos": [
-          -108.45944213867188,
+          -110.0,
           0.0,
-          -536.9998779296875
+          -540.0
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -362,7 +368,6 @@
           }
         ],
         "enabled": true,
-        "id": 3,
         "name": "Head",
         "pos": [
           0.0,
@@ -389,7 +394,6 @@
     ],
     "components": [],
     "enabled": true,
-    "id": 0,
     "name": "Scene",
     "pos": [
       0.0,

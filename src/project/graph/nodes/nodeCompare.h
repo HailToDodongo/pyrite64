@@ -40,8 +40,8 @@ namespace Project::Graph::Node
         addIN<TypeValue>("", ImFlow::ConnectionFilter::SameType(), PIN_STYLE_VALUE);
         addIN<TypeValue>("", ImFlow::ConnectionFilter::SameType(), PIN_STYLE_VALUE);
 
-        addOUT<TypeLogic>("True", PIN_STYLE_LOGIC);
-        addOUT<TypeLogic>("False", PIN_STYLE_LOGIC);
+        (void)addOUT<TypeLogic>("True", PIN_STYLE_LOGIC);
+        (void)addOUT<TypeLogic>("False", PIN_STYLE_LOGIC);
       }
 
       void draw() override {

@@ -42,7 +42,7 @@ namespace Project::Graph::Node
 
         if(ImGui::Button("Add")) {
           cases.push_back(0);
-          addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
+          (void)addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
         }
       }
 
@@ -54,8 +54,8 @@ namespace Project::Graph::Node
         if(!j.contains("cases"))return;
         cases = j["cases"].get<std::vector<uint32_t>>();
 
-        for(auto c : cases) {
-          addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
+        for([[maybe_unused]] auto c : cases) {
+          (void)addOUT<TypeLogic>("", PIN_STYLE_LOGIC);
         }
       }
 

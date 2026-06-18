@@ -18,8 +18,9 @@ Renderer::Scene::Scene()
     .name = "n64",
     .vertUboCount = 2,
     .fragUboCount = 1,
-    .vertTexCount = 2,
+    .vertTexCount = 0,
     .fragTexCount = 2,
+    .vertSboCount = 1,
   });
   shaderLines = std::make_unique<Shader>(ctx.gpu, Shader::Config{
     .name = "lines",
@@ -47,6 +48,7 @@ Renderer::Scene::Scene()
       {SDL_GPU_VERTEXELEMENTFORMAT_SHORT4     , offsetof(Renderer::Vertex, pos)},
       {SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM, offsetof(Renderer::Vertex, color)},
       {SDL_GPU_VERTEXELEMENTFORMAT_SHORT2    ,  offsetof(Renderer::Vertex, uv)},
+      {SDL_GPU_VERTEXELEMENTFORMAT_SHORT2    ,  offsetof(Renderer::Vertex, boneIdx)},
     }
   });
 

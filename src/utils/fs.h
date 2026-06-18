@@ -22,9 +22,10 @@ namespace Utils::FS
     fseek(file, 0, SEEK_SET);
 
     std::string content(size, '\0');
-    fread(content.data(), 1, size, file);
+    size_t read = fread(content.data(), 1, size, file);
     fclose(file);
 
+    content.resize(read);
     return content;
   }
 

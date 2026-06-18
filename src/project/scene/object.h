@@ -28,7 +28,9 @@ namespace Project
 
       std::string name{};
       uint32_t uuid{0};
-      uint16_t id{};
+      // Runtime-only object id. Assigned during the project build (Scene::assignRuntimeIds);
+      // it is never set, generated or persisted in the editor. Do not rely on it outside of build.
+      uint16_t runtimeId{};
 
       PROP_U64(uuidPrefab);
 

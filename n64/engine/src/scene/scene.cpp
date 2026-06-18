@@ -13,7 +13,7 @@
 #include <malloc.h>
 
 #include "scene/globalState.h"
-#include "collision/mesh_collider.h"
+#include "collision/meshCollider.h"
 #include "vi/swapChain.h"
 #include "lib/memory.h"
 #include "lib/logger.h"
@@ -122,7 +122,7 @@ P64::Scene::Scene(uint16_t sceneId, Scene** ref)
     conf.gravity,
     conf.velocitySolverIterations,
     conf.positionSolverIterations,
-    conf.physicsScale
+    conf.visualUnitsPerMeter
   );
   loadScene();
 
@@ -309,7 +309,7 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
 
       for (uint32_t i=0; i<obj->compCount; ++i)
       {
-        if(obj->flags & ObjectFlags::IS_CULLED)break;
+        if(obj->flags & (ObjectFlags::IS_CULLED | ObjectFlags::HIDDEN))break;
         const auto &compDef = COMP_TABLE[compRefs[i].type];
         if(compDef.draw)
         {
@@ -471,16 +471,23 @@ void P64::Scene::updateChildObjectStates(const Object* parent, Object& obj)
   }
 
   const auto wasEnabledBefore = obj.isEnabled();
-  obj.setFlag(ObjectFlags::PARENTS_ACTIVE, parent ? parent->isEnabled() : true);
-  if(!obj.performStateChange() && !parent) {
-    return; // without a parent, no cascading change can happen if the own state didn't change
-  }
+  const auto wasVisibleBefore = obj.isVisible();
 
-  if(wasEnabledBefore == obj.isEnabled()) {
+  obj.setFlag(ObjectFlags::PARENTS_ACTIVE, parent ? parent->isEnabled() : true);
+  obj.setFlag(ObjectFlags::PARENTS_HIDDEN, parent ? !parent->isVisible() : false);
+  obj.performStateChange();
+
+  const bool enabledChanged = wasEnabledBefore != obj.isEnabled();
+  const bool visibleChanged = wasVisibleBefore != obj.isVisible();
+
+  if(!enabledChanged && !visibleChanged) {
     return;
   }
 
-  sendEvent(obj.id, 0, obj.isEnabled() ? EVENT_TYPE_ENABLE : EVENT_TYPE_DISABLE, 0);
+  if (enabledChanged) {
+    sendEvent(obj.id, 0, obj.isEnabled() ? EVENT_TYPE_ENABLE : EVENT_TYPE_DISABLE, 0);
+  }
+
   iterObjectChildren(obj.id, [&](Object* child) {
     updateChildObjectStates(&obj, *child);
   });

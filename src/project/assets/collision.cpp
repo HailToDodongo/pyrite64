@@ -89,7 +89,7 @@ std::vector<int16_t> Project::Assets::Collision::createBVH(
   std::vector<BBox> aabbs;
   std::vector<BVec3> centers;
 
-  for(int i=0; i<indices.size(); i+=3) {
+  for(size_t i=0; i<indices.size(); i+=3) {
     auto &v0 = vertices[indices[i]];
     auto &v1 = vertices[indices[i+1]];
     auto &v2 = vertices[indices[i+2]];

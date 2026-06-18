@@ -53,7 +53,9 @@ bool Editor::PreferenceOverlay::draw()
 
   if (ImGui::CollapsingHeader("Keymap", ImGuiTreeNodeFlags_DefaultOpen)) {
     ImTable::start("Keymap");
-    if (ImTable::addComboBox("Preset", (int&)ctx.prefs.keymapPreset, { "Blender", "Industry Compatible" })) {
+    int keymapPreset = (int)ctx.prefs.keymapPreset;
+    if (ImTable::addComboBox("Preset", keymapPreset, { "Blender", "Industry Compatible" })) {
+      ctx.prefs.keymapPreset = (Editor::Input::KeymapPreset)keymapPreset;
       ctx.prefs.applyKeymapPreset();
     }
     ImTable::end();

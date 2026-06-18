@@ -27,8 +27,8 @@ namespace Project::Graph::Node
         valInputTypes.push_back(0);
         valInputTypes.push_back(1);
 
-        addOUT<TypeLogic>("True", PIN_STYLE_LOGIC);
-        addOUT<TypeLogic>("False", PIN_STYLE_LOGIC);
+        (void)addOUT<TypeLogic>("True", PIN_STYLE_LOGIC);
+        (void)addOUT<TypeLogic>("False", PIN_STYLE_LOGIC);
       }
 
       void draw() override {

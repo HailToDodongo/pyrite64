@@ -213,10 +213,14 @@ namespace Project::Component::Model
     // get draw layer
     auto &layers = ctx.project->getScenes().getLoadedScene()->conf.layers3D;
     auto layerIdx = data.layerIdx.resolve(obj);
-    if(layerIdx < layers.size()) {
+    if(layerIdx >= 0 && layerIdx < (int)layers.size()) {
       auto &layer = layers[layerIdx];
       data.obj3D.uniform.mat.blender.x = layer.blender.resolve(obj);
       data.obj3D.uniform.mat.blender.y = data.obj3D.uniform.mat.blender.x;
+      data.obj3D.uniform.mat.flags &= ~LIGHT_MODE_ADD;
+      if(layer.lightMode.value != 0) {
+        data.obj3D.uniform.mat.flags |= LIGHT_MODE_ADD;
+      }
     }
 
     if (!asset || !asset->mesh3D) {
@@ -252,8 +256,9 @@ namespace Project::Component::Model
         aabbCol = {0xFF,0xAA,0x00,0xFF};
       }
 
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, aabbCol);
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, aabbCol);
+      auto rot = obj.rot.resolve(obj.propOverrides);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, aabbCol, rot);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, aabbCol, rot);
     }
   }
 

@@ -16,7 +16,7 @@
     "frameLimit": 0,
     "gravity": [
       0.0,
-      -9.8100004196167,
+      -1.5679999589920044,
       0.0
     ],
     "interpolatePhysicsTransforms": true,
@@ -35,6 +35,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "2D"
       }
     ],
@@ -53,6 +54,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "3D Opaque"
       },
       {
@@ -69,6 +71,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "3D Transparent"
       },
       {
@@ -85,6 +88,7 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "3D Voids"
       }
     ],
@@ -103,15 +107,16 @@
         "fogColorMode": 0,
         "fogMax": 0.0,
         "fogMin": 0.0,
+        "lightMode": 0,
         "name": "PTX Opaque"
       }
     ],
     "name": "Test-Player",
-    "physicsScale": 16.0,
     "physicsTickRate": 50,
     "positionSolverIterations": 9,
     "renderPipeline": 0,
-    "velocitySolverIterations": 9
+    "velocitySolverIterations": 9,
+    "visualUnitsPerMeter": 100.0
   },
   "graph": {
     "children": [
@@ -129,6 +134,7 @@
                     0.9843137264251709
                   ],
                   "index": 0,
+                  "size": 50.0,
                   "type": 0
                 },
                 "id": 2,
@@ -137,7 +143,6 @@
               }
             ],
             "enabled": true,
-            "id": 4,
             "name": "Ambient",
             "pos": [
               18.34891128540039,
@@ -173,6 +178,7 @@
                     0.886274516582489
                   ],
                   "index": 0,
+                  "size": 50.0,
                   "type": 1
                 },
                 "id": 2,
@@ -181,7 +187,6 @@
               }
             ],
             "enabled": true,
-            "id": 5,
             "name": "Dir Light",
             "pos": [
               -39.96976089477539,
@@ -208,7 +213,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 3,
         "name": "Light",
         "pos": [
           0.0,
@@ -236,7 +240,6 @@
         "children": [],
         "components": [],
         "enabled": true,
-        "id": 12,
         "name": "Title-Card",
         "pos": [
           -253.67893981933594,
@@ -300,7 +303,6 @@
           }
         ],
         "enabled": true,
-        "id": 10,
         "name": "Camera",
         "pos": [
           -16.17977523803711,
@@ -390,7 +392,6 @@
           }
         ],
         "enabled": true,
-        "id": 2,
         "name": "Map",
         "pos": [
           0.0,
@@ -454,7 +455,6 @@
           }
         ],
         "enabled": true,
-        "id": 14,
         "name": "Loading Zone",
         "pos": [
           -295.2023010253906,
@@ -482,7 +482,6 @@
         "children": [],
         "components": [],
         "enabled": true,
-        "id": 50,
         "name": "Player",
         "pos": [
           0.0,
@@ -492,7 +491,7 @@
         "propOverrides": {
           "11272843812465326562": "1:1.000000,1.000000,1.000000",
           "13460160539698755218": "2:1.000000,1.000000,1.000000,0.368627",
-          "13911321452997764027": "1:91.142403,0.000000,431.787262",
+          "13911321452997764027": "1:91.479706,83.864731,430.000000",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
         "proportionalScale": false,
@@ -517,7 +516,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 30,
             "name": "Coin",
             "pos": [
               -60.339683532714844,
@@ -526,7 +524,7 @@
             ],
             "propOverrides": {
               "11272843812465326562": "1:1.000000,1.000000,1.000000",
-              "13911321452997764027": "1:-149.298981,14.217823,39.793598",
+              "13911321452997764027": "1:-150.000000,10.000000,40.000000",
               "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
             },
             "proportionalScale": false,
@@ -549,7 +547,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 31,
             "name": "Coin ",
             "pos": [
               -50.339683532714844,
@@ -581,7 +578,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 15,
             "name": "Coin",
             "pos": [
               -50.339683532714844,
@@ -613,7 +609,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 16,
             "name": "Coin",
             "pos": [
               -40.339683532714844,
@@ -645,7 +640,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 33,
             "name": "Coin (2) (3) (4)",
             "pos": [
               -10.339683532714844,
@@ -677,7 +671,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 35,
             "name": "Coin (2) (3) (5)",
             "pos": [
               -10.339683532714844,
@@ -709,7 +702,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 36,
             "name": "Coin (2) (3) (6)",
             "pos": [
               -10.339683532714844,
@@ -741,7 +733,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 17,
             "name": "Coin",
             "pos": [
               -40.339683532714844,
@@ -773,7 +764,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 34,
             "name": "Coin (2) (3)",
             "pos": [
               -20.339683532714844,
@@ -805,7 +795,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 18,
             "name": "Coin",
             "pos": [
               -40.339683532714844,
@@ -837,7 +826,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 74,
             "name": "Coin (2)",
             "pos": [
               -30.339683532714844,
@@ -869,7 +857,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 73,
             "name": "Coin (2) (4)",
             "pos": [
               -20.339683532714844,
@@ -901,7 +888,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 70,
             "name": "Coin (2) (3)",
             "pos": [
               -20.339683532714844,
@@ -932,7 +918,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 50,
         "name": "Coins",
         "pos": [
           -0.8931045532226563,
@@ -1011,7 +996,7 @@
                   ],
                   "isTrigger": false,
                   "maskRead": 0,
-                  "maskWrite": 8,
+                  "maskWrite": 9,
                   "offset": [
                     0.0,
                     0.0,
@@ -1025,7 +1010,6 @@
               }
             ],
             "enabled": true,
-            "id": 7,
             "name": "Platform (7)",
             "pos": [
               307.98779296875,
@@ -1052,7 +1036,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 8,
         "name": "Void (8)",
         "pos": [
           -203.84361267089844,
@@ -1153,7 +1136,6 @@
               }
             ],
             "enabled": true,
-            "id": 40,
             "name": "Platform",
             "pos": [
               -63.801048278808594,
@@ -1175,97 +1157,6 @@
             ],
             "selectable": true,
             "uuid": 1813848396,
-            "uuidPrefab": 0
-          },
-          {
-            "children": [],
-            "components": [
-              {
-                "data": {
-                  "culling": false,
-                  "layerIdx": 0,
-                  "material": {
-                    "depth": 0,
-                    "env": [
-                      1.0,
-                      1.0,
-                      1.0,
-                      1.0
-                    ],
-                    "fresnel": 0,
-                    "fresnelColor": [
-                      1.0,
-                      1.0,
-                      1.0,
-                      1.0
-                    ],
-                    "lighting": true,
-                    "prim": [
-                      1.0,
-                      1.0,
-                      1.0,
-                      1.0
-                    ],
-                    "setDepth": false,
-                    "setEnv": false,
-                    "setFresnel": false,
-                    "setLighting": false,
-                    "setPrim": false
-                  },
-                  "meshFilter": "model",
-                  "model": 244801699526709921
-                },
-                "id": 1,
-                "name": "Model",
-                "uuid": 17528814242325218933
-              },
-              {
-                "data": {
-                  "bounce": 0.0,
-                  "friction": 0.800000011920929,
-                  "halfExtend": [
-                    32.0,
-                    32.0,
-                    32.0
-                  ],
-                  "isTrigger": false,
-                  "maskRead": 0,
-                  "maskWrite": 8,
-                  "offset": [
-                    0.0,
-                    0.0,
-                    0.0
-                  ],
-                  "type": 0
-                },
-                "id": 5,
-                "name": "Collision-Body",
-                "uuid": 7581312690790611521
-              }
-            ],
-            "enabled": true,
-            "id": 48,
-            "name": "Platform (2)",
-            "pos": [
-              396.0946350097656,
-              110.21680450439453,
-              16.77037811279297
-            ],
-            "propOverrides": {},
-            "proportionalScale": false,
-            "rot": [
-              0.0,
-              0.0,
-              0.0,
-              1.0
-            ],
-            "scale": [
-              3.0,
-              3.0,
-              3.0
-            ],
-            "selectable": true,
-            "uuid": 1036434647,
             "uuidPrefab": 0
           },
           {
@@ -1335,7 +1226,6 @@
               }
             ],
             "enabled": true,
-            "id": 2,
             "name": "Platform (2) (2)",
             "pos": [
               199.13284301757813,
@@ -1362,7 +1252,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 53,
         "name": "Void (53)",
         "pos": [
           -203.84361267089844,
@@ -1372,7 +1261,7 @@
         "propOverrides": {
           "0": "9:2",
           "11272843812465326562": "1:2.000000,2.000000,2.000000",
-          "13911321452997764027": "1:-64.394371,42.185593,-81.970398",
+          "13911321452997764027": "1:-60.000000,40.000000,-80.000000",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
         "proportionalScale": false,
@@ -1410,7 +1299,6 @@
           }
         ],
         "enabled": true,
-        "id": 38,
         "name": "HUD",
         "pos": [
           0.0,
@@ -1432,6 +1320,96 @@
         ],
         "selectable": true,
         "uuid": 683084570,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "model",
+              "model": 244801699526709921
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 17528814242325218933
+          },
+          {
+            "data": {
+              "bounce": 0.0,
+              "friction": 0.800000011920929,
+              "halfExtend": [
+                32.0,
+                32.0,
+                32.0
+              ],
+              "isTrigger": false,
+              "maskRead": 0,
+              "maskWrite": 9,
+              "offset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "type": 0
+            },
+            "id": 5,
+            "name": "Collision-Body",
+            "uuid": 7581312690790611521
+          }
+        ],
+        "enabled": true,
+        "name": "Platform (2)",
+        "pos": [
+          130.0,
+          130.0,
+          260.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          3.0,
+          3.0,
+          3.0
+        ],
+        "selectable": true,
+        "uuid": 1036434647,
         "uuidPrefab": 0
       },
       {
@@ -1504,7 +1482,6 @@
           }
         ],
         "enabled": true,
-        "id": 6,
         "name": "Platform (6)",
         "pos": [
           -60.0,
@@ -1532,7 +1509,6 @@
         "children": [],
         "components": [],
         "enabled": true,
-        "id": 1,
         "name": "Goal (1)",
         "pos": [
           -60.0,
@@ -1616,7 +1592,6 @@
           }
         ],
         "enabled": true,
-        "id": 11,
         "name": "New Object",
         "pos": [
           30.408363342285156,
@@ -1696,7 +1671,6 @@
           }
         ],
         "enabled": true,
-        "id": 21,
         "name": "New Object",
         "pos": [
           100.0,
@@ -1776,7 +1750,6 @@
           }
         ],
         "enabled": true,
-        "id": 13,
         "name": "New Object",
         "pos": [
           -65.30561828613281,
@@ -1856,7 +1829,6 @@
           }
         ],
         "enabled": true,
-        "id": 19,
         "name": "New Object",
         "pos": [
           -61.53700637817383,
@@ -1936,7 +1908,6 @@
           }
         ],
         "enabled": true,
-        "id": 9,
         "name": "New Object",
         "pos": [
           -24.958757400512695,
@@ -2016,7 +1987,6 @@
           }
         ],
         "enabled": true,
-        "id": 20,
         "name": "New Object",
         "pos": [
           -27.43860626220703,
@@ -2096,7 +2066,6 @@
           }
         ],
         "enabled": true,
-        "id": 22,
         "name": "New Object",
         "pos": [
           -136.0672149658203,
@@ -2176,7 +2145,6 @@
           }
         ],
         "enabled": true,
-        "id": 23,
         "name": "New Object",
         "pos": [
           68.94217681884766,
@@ -2256,7 +2224,6 @@
           }
         ],
         "enabled": true,
-        "id": 24,
         "name": "New Object",
         "pos": [
           -20.0,
@@ -2336,7 +2303,6 @@
           }
         ],
         "enabled": true,
-        "id": 25,
         "name": "New Object",
         "pos": [
           -86.16902160644531,
@@ -2416,7 +2382,6 @@
           }
         ],
         "enabled": true,
-        "id": 26,
         "name": "New Object",
         "pos": [
           -90.99794006347656,
@@ -2443,7 +2408,6 @@
     ],
     "components": [],
     "enabled": true,
-    "id": 0,
     "name": "Scene",
     "pos": [
       0.0,

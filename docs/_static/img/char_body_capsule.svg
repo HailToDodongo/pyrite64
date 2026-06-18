@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   class="cb-diagram cb-diagram--sm"
+   viewBox="0 0 391.85358 407.15675"
+   font-family="'Segoe UI', Helvetica, Arial, sans-serif"
+   version="1.1"
+   id="svg86"
+   sodipodi:docname="char_body_capsule.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   width="391.85358"
+   height="407.15674"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview88"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     showgrid="false"
+     inkscape:zoom="1.3096848"
+     inkscape:cx="167.97935"
+     inkscape:cy="291.67323"
+     inkscape:window-width="1920"
+     inkscape:window-height="1031"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg86" />
+  <defs
+     id="defs14">
+    <marker
+       id="cbDimD"
+       markerWidth="9"
+       markerHeight="9"
+       refX="7"
+       refY="3.5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#b6bdca"
+         id="path2" />
+    </marker>
+    <marker
+       id="cbDimY"
+       markerWidth="9"
+       markerHeight="9"
+       refX="7"
+       refY="3.5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#e6b417"
+         id="path5" />
+    </marker>
+    <marker
+       id="cbDimB"
+       markerWidth="9"
+       markerHeight="9"
+       refX="7"
+       refY="3.5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#4f93e6"
+         id="path8" />
+    </marker>
+    <marker
+       id="cbDimV"
+       markerWidth="9"
+       markerHeight="9"
+       refX="7"
+       refY="3.5"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 8,3.5 0,7 Z"
+         fill="#a679f5"
+         id="path11" />
+    </marker>
+  </defs>
+  <rect
+     x="0.425024"
+     y="0.425024"
+     width="391.00354"
+     height="406.3067"
+     rx="8.1629133"
+     fill="#1b1e26"
+     stroke="#3b414e"
+     id="rect16"
+     style="stroke-width:0.850048" />
+  <text
+     x="203.41096"
+     y="30.763546"
+     text-anchor="middle"
+     font-size="17px"
+     font-weight="600"
+     fill="#e9ebf1"
+     class="cb-title"
+     id="text18">Character Body side-view</text>
+  <!-- ground + hatching -->
+  <line
+     x1="61.527084"
+     y1="330.76355"
+     x2="301.5271"
+     y2="330.76355"
+     stroke="#8e97a6"
+     stroke-width="2"
+     id="line20" />
+  <g
+     stroke="#5a6373"
+     stroke-width="1.5"
+     id="g30"
+     transform="translate(1.527085,0.76354253)">
+    <line
+       x1="72"
+       y1="330"
+       x2="60"
+       y2="344"
+       id="line22" />
+    <line
+       x1="92"
+       y1="330"
+       x2="80"
+       y2="344"
+       id="line24" />
+    <line
+       x1="112"
+       y1="330"
+       x2="100"
+       y2="344"
+       id="line26" />
+    <line
+       x1="132"
+       y1="330"
+       x2="120"
+       y2="344"
+       id="line28" />
+  </g>
+  <g
+     stroke="#5a6373"
+     stroke-width="1.5"
+     id="g30-5"
+     transform="translate(151.69352,1.7829184)">
+    <line
+       x1="72"
+       y1="330"
+       x2="60"
+       y2="344"
+       id="line22-6" />
+    <line
+       x1="92"
+       y1="330"
+       x2="80"
+       y2="344"
+       id="line24-2" />
+    <line
+       x1="112"
+       y1="330"
+       x2="100"
+       y2="344"
+       id="line26-9" />
+    <line
+       x1="132"
+       y1="330"
+       x2="120"
+       y2="344"
+       id="line28-1" />
+  </g>
+  <!-- capsule axis -->
+  <line
+     x1="171.52708"
+     y1="62.763546"
+     x2="171.52708"
+     y2="392.76355"
+     stroke="#5a6373"
+     stroke-width="1"
+     stroke-dasharray="3, 4"
+     id="line32" />
+  <!-- snap band (blue) -->
+  <rect
+     x="125.52708"
+     y="330.76355"
+     width="92"
+     height="44"
+     fill="#5a9bff"
+     fill-opacity="0.14"
+     id="rect34" />
+  <line
+     x1="125.52708"
+     y1="374.76355"
+     x2="217.52708"
+     y2="374.76355"
+     stroke="#4f93e6"
+     stroke-width="1.6"
+     stroke-dasharray="6, 4"
+     id="line36" />
+  <!-- step band (yellow) -->
+  <rect
+     x="125.52708"
+     y="296.76355"
+     width="92"
+     height="34"
+     fill="#ffcc00"
+     fill-opacity="0.22"
+     id="rect38" />
+  <!-- logical capsule -->
+  <rect
+     x="125.52708"
+     y="70.76355"
+     width="92"
+     height="260"
+     rx="46"
+     ry="46"
+     fill="#9aa3b3"
+     fill-opacity="0.08"
+     stroke="#9aa3b3"
+     stroke-width="2"
+     id="rect40" />
+  <!-- physics capsule (shortened from the bottom) -->
+  <rect
+     x="125.52708"
+     y="70.76355"
+     width="92"
+     height="226"
+     rx="46"
+     ry="46"
+     fill="none"
+     stroke="#2ec66e"
+     stroke-width="2"
+     stroke-dasharray="6, 4"
+     id="rect42" />
+  <!-- capsule center -->
+  <circle
+     cx="171.52708"
+     cy="200.76355"
+     r="3.5"
+     fill="#e9ebf1"
+     id="circle44" />
+  <text
+     x="135.56744"
+     y="192.52495"
+     font-size="12px"
+     fill="#e9ebf1"
+     id="text46">capsule center</text>
+  <!-- centerOffset: object origin (at the feet/ground) up to the capsule center -->
+  <line
+     x1="171.52708"
+     y1="326.76355"
+     x2="171.52708"
+     y2="206.76355"
+     stroke="#a679f5"
+     stroke-width="1.6"
+     marker-start="url(#cbDimV)"
+     marker-end="url(#cbDimV)"
+     id="line48" />
+  <text
+     x="-281.77823"
+     y="167.63107"
+     font-size="9.8668px"
+     fill="#a679f5"
+     font-weight="600"
+     id="text50"
+     transform="rotate(-90)"
+     style="stroke-width:0.789344"><tspan
+       sodipodi:role="line"
+       id="tspan541"
+       x="-281.77823"
+       y="167.63107"
+       style="stroke-width:0.789344">centerOffset</tspan></text>
+  <!-- object origin marker at the ground -->
+  <circle
+     cx="171.52708"
+     cy="330.76355"
+     r="4.8000002"
+     fill="#1b1e26"
+     stroke="#a679f5"
+     stroke-width="2"
+     id="circle52" />
+  <circle
+     cx="171.52708"
+     cy="330.76355"
+     r="1.7"
+     fill="#a679f5"
+     id="circle54" />
+  <line
+     x1="166.52708"
+     y1="333.76355"
+     x2="127.52708"
+     y2="352.76355"
+     stroke="#a679f5"
+     stroke-width="1"
+     id="line56" />
+  <text
+     x="123.52708"
+     y="356.76355"
+     text-anchor="end"
+     font-size="12px"
+     fill="#a679f5"
+     id="text58">object origin</text>
+  <!-- height dimension -->
+  <line
+     x1="97.527084"
+     y1="70.76355"
+     x2="97.527084"
+     y2="330.76355"
+     stroke="#b6bdca"
+     stroke-width="1.4"
+     marker-start="url(#cbDimD)"
+     marker-end="url(#cbDimD)"
+     id="line60" />
+  <text
+     transform="rotate(-90)"
+     x="-200.76355"
+     y="85.527084"
+     text-anchor="middle"
+     font-size="12.5px"
+     fill="#b6bdca"
+     id="text62">height</text>
+  <!-- radius dimension -->
+  <line
+     x1="171.52708"
+     y1="150.76355"
+     x2="217.52708"
+     y2="150.76355"
+     stroke="#b6bdca"
+     stroke-width="1.4"
+     marker-end="url(#cbDimD)"
+     id="line64" />
+  <text
+     x="194.52708"
+     y="142.76355"
+     text-anchor="middle"
+     font-size="12.5px"
+     fill="#b6bdca"
+     id="text66">radius</text>
+  <!-- step height dimension -->
+  <line
+     x1="249.52708"
+     y1="296.76355"
+     x2="249.52708"
+     y2="330.76355"
+     stroke="#e6b417"
+     stroke-width="1.4"
+     marker-start="url(#cbDimY)"
+     marker-end="url(#cbDimY)"
+     id="line68" />
+  <text
+     x="257.5271"
+     y="316.76355"
+     font-size="12.5px"
+     fill="#e6b417"
+     font-weight="600"
+     id="text70">stepHeight</text>
+  <!-- floor snap dimension -->
+  <line
+     x1="249.52708"
+     y1="330.76355"
+     x2="249.52708"
+     y2="374.76355"
+     stroke="#4f93e6"
+     stroke-width="1.4"
+     marker-start="url(#cbDimB)"
+     marker-end="url(#cbDimB)"
+     id="line72" />
+  <text
+     x="257.5271"
+     y="356.76355"
+     font-size="12.5px"
+     fill="#4f93e6"
+     font-weight="600"
+     id="text74">floorSnapDistance</text>
+  <!-- legend -->
+  <g
+     font-size="12px"
+     fill="#c5cbd6"
+     id="g84"
+     transform="translate(1.527085,0.76354253)" />
+</svg>

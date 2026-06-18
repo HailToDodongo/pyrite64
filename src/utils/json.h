@@ -76,7 +76,7 @@ namespace Utils::JSON
       val = el.value(prop.name, defValue);
     } else
     {
-      static_assert(false, "Unsupported type in Utils::JSON::readProp");
+      static_assert(!sizeof(PROP*), "Unsupported type in Utils::JSON::readProp");
     }
 
     prop.value = val;

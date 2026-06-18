@@ -8,4 +8,6 @@ Editor & Engine
   :maxdepth: 2
 
   editor/objLifecycle
+  editor/components
+  editor/collision
   editor/materials

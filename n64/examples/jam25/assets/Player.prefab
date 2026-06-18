@@ -57,34 +57,12 @@
               "texUUID": 2124280526347570565
             }
           },
-          "model": 1480057396441694021
+          "model": 1480057396441694021,
+          "previewAnimName": "<Default Pose>"
         },
         "id": 10,
         "name": "Model",
         "uuid": 2142405350790453093
-      },
-      {
-        "data": {
-          "bounce": 0.0,
-          "friction": 0.0,
-          "halfExtend": [
-            22.0,
-            22.0,
-            22.0
-          ],
-          "isTrigger": false,
-          "maskRead": 31,
-          "maskWrite": 1,
-          "offset": [
-            0.0,
-            24.0,
-            0.0
-          ],
-          "type": 1
-        },
-        "id": 5,
-        "name": "Collision-Body",
-        "uuid": 17911711743765564434
       },
       {
         "data": {
@@ -113,22 +91,54 @@
       },
       {
         "data": {
-          "angularDamping": 0.029999999329447746,
-          "constrainPosX": false,
-          "constrainPosY": false,
-          "constrainPosZ": false,
-          "constrainRotX": true,
-          "constrainRotY": true,
-          "constrainRotZ": true,
-          "gravityScalar": 5.0,
-          "hasGravity": true,
-          "isKinematic": false,
-          "mass": 50.0,
-          "timeScalar": 1.0
+          "centerOffset": [
+            0.0,
+            0.25,
+            0.0
+          ],
+          "collTypes": 255,
+          "floorMaxAngle": 1.1344640254974365,
+          "floorSnapDistance": 0.10000000149011612,
+          "followFloor": true,
+          "gravity": 8.0,
+          "height": 0.5,
+          "maxFallSpeed": 55.0,
+          "maxSlides": 4,
+          "radius": 0.17000000178813934,
+          "readMask": 1,
+          "stepHeight": 0.07999999821186066,
+          "up": [
+            0.0,
+            1.0,
+            0.0
+          ]
         },
-        "id": 11,
-        "name": "Rigid-Body",
-        "uuid": 11590953662040302348
+        "id": 12,
+        "name": "Character-Body",
+        "uuid": 3855746307429151189
+      },
+      {
+        "data": {
+          "bounce": 0.0,
+          "friction": 0.800000011920929,
+          "halfExtend": [
+            20.0,
+            20.0,
+            20.0
+          ],
+          "isTrigger": false,
+          "maskRead": 2,
+          "maskWrite": 6,
+          "offset": [
+            0.0,
+            20.0,
+            0.0
+          ],
+          "type": 1
+        },
+        "id": 5,
+        "name": "Collider",
+        "uuid": 8201453225663442880
       }
     ],
     "enabled": true,

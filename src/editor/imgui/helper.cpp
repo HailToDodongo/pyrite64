@@ -6,6 +6,7 @@
 
 #include "imgui_internal.h"
 #include "../../context.h"
+#include "../../utils/proc.h"
 
 namespace
 {
@@ -40,6 +41,36 @@ bool ImGui::IconButton(const char* label, const ImVec2 &labelSize, const ImVec4 
   return clicked;
 }
 
+bool ImGui::HelpIcon(const char* docPath, const char* tooltip, float glyphSize)
+{
+  const float btnWidth = glyphSize + 4_px;
+  const float rowHeight = GetFrameHeight();
+  const ImVec2 pos = GetCursorScreenPos();
+
+  PushID(docPath);
+  const bool clicked = InvisibleButton("##helpIcon", {btnWidth, rowHeight});
+  const bool hovered = IsItemHovered();
+  const bool held = IsItemActive();
+  PopID();
+
+  if (hovered) SetMouseCursor(ImGuiMouseCursor_Hand);
+
+  ImU32 col;
+  if (held)         col = GetColorU32(GetStyleColorVec4(ImGuiCol_DragDropTarget)); // pressed accent
+  else if (hovered) col = GetColorU32(ImGuiCol_Text, 1.0f);
+  else              col = GetColorU32(ImGuiCol_TextDisabled, 0.7f);
+
+  // vertically center the glyph within the row
+  const ImVec2 glyphPos{pos.x, pos.y + (rowHeight - glyphSize + 1.5_px) * 0.5f};
+  GetWindowDrawList()->AddText(GetFont(), glyphSize, glyphPos, col, ICON_MDI_HELP_CIRCLE_OUTLINE);
+
+  if (hovered && tooltip && tooltip[0]) SetTooltip("%s", tooltip);
+  if (clicked && docPath && docPath[0]) {
+    Utils::Proc::openURL(std::string{PYRITE_DOCS_URL} + docPath + ".html");
+  }
+  return clicked;
+}
+
 glm::vec3 tmpEuler;
 bool ImGui::rotationInput(glm::quat &quat) {
   if(!ctx.prefs.showRotAsEuler) return InputFloat4("##", glm::value_ptr(quat));
@@ -53,6 +84,48 @@ bool ImGui::rotationInput(glm::quat &quat) {
   return true;
 }
 
+bool ImTable::bitMaskComboImpl(
+  const char *label,
+  uint32_t &valueMask,
+  const std::vector<std::pair<int, std::string>> &bits,
+  const std::string &valueEmpty
+) {
+  std::string preview;
+  for (const auto &[bit, name] : bits) {
+    if (valueMask & (1u << bit)) {
+      if (!preview.empty()) preview += "  |  ";
+      preview += name;
+    }
+  }
+  bool isEmpty = preview.empty();
+  if (isEmpty) {
+    preview = valueEmpty;
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+  }
+
+  bool changed = false;
+  bool open = ImGui::BeginCombo(label, preview.c_str(), ImGuiComboFlags_None);
+  if (isEmpty) ImGui::PopStyleColor();
+
+  if (open) {
+    for (const auto &[bit, name] : bits) {
+      bool selected = (valueMask & (1u << bit)) != 0;
+      auto valText = std::string{selected
+        ? ICON_MDI_CHECKBOX_MARKED " "
+        : ICON_MDI_CHECKBOX_BLANK_OUTLINE " "
+      } + name + "##" + std::to_string(bit);
+
+      if (ImGui::Selectable(valText.c_str(), selected, ImGuiSelectableFlags_DontClosePopups)) {
+        if (selected) valueMask &= ~(1u << bit);
+        else          valueMask |=  (1u << bit);
+        changed = true;
+      }
+    }
+    ImGui::EndCombo();
+  }
+  return changed;
+}
+
 void ImTable::addMultiSelectMask8(
   const std::string &name,
   uint32_t &valueMask,
@@ -62,46 +135,18 @@ void ImTable::addMultiSelectMask8(
     add(name);
     bool disabled = isPrefabLocked();
     if (disabled) ImGui::BeginDisabled();
-    std::string labelHidden = "##" + name;
 
-    // Build preview string of selected options
-    std::string preview;
+    // map the fixed 8-slot array to (bit, name) pairs, skipping unnamed slots
+    std::vector<std::pair<int, std::string>> bits;
     for (int i = 0; i < 8; ++i) {
-        if (valueMask & (1 << i)) {
-            if (!preview.empty()) preview += "  |  ";
-            preview += values[i].empty() ? "??" : values[i];
-        }
-    }
-    bool isEmpty = preview.empty();
-    if (isEmpty) {
-      preview = valueEmpty;
-      ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+        if (!values[i].empty()) bits.push_back({i, values[i]});
     }
 
-    auto open = ImGui::BeginCombo(labelHidden.c_str(), preview.c_str(), ImGuiComboFlags_None);
-    if(isEmpty) ImGui::PopStyleColor();
-
-    if (open) {
-        for (int i = 0; i < 8; ++i) {
-            if (values[i].empty()) continue;
-            bool selected = (valueMask & (1 << i)) != 0;
-            auto valText = std::string{selected
-              ? ICON_MDI_CHECKBOX_MARKED " "
-              : ICON_MDI_CHECKBOX_BLANK_OUTLINE " "
-            } + values[i] + "##" + std::to_string(i);
-
-            if (ImGui::Selectable(valText.c_str(), selected, ImGuiSelectableFlags_DontClosePopups)) {
-                selected = !selected;
-                if (selected) {
-                    valueMask |= (1 << i);
-                } else {
-                    valueMask &= ~(1 << i);
-                }
-                Editor::UndoRedo::getHistory().markChanged("Edit " + name);
-            }
-        }
-        ImGui::EndCombo();
+    std::string labelHidden = "##" + name;
+    if (bitMaskCombo(labelHidden.c_str(), valueMask, bits, valueEmpty)) {
+        Editor::UndoRedo::getHistory().markChanged("Edit " + name);
     }
+
     if (disabled) ImGui::EndDisabled();
 }
 

@@ -5,6 +5,7 @@
 #pragma once
 #include <array>
 #include <memory>
+#include <SDL3/SDL_gpu.h>
 
 #include "json.hpp"
 #include "IconsMaterialDesignIcons.h"
@@ -35,6 +36,7 @@ namespace Project::Component
 
   typedef void(*FuncCompDraw)(Object&, Entry &entry);
   typedef void(*FuncCompDraw3D)(Object&, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPURenderPass* pass);
+  typedef void(*FuncCompCopyPass)(Object&, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass* pass);
   typedef std::shared_ptr<void>(*FuncCompInit)(Object&);
   typedef nlohmann::json(*FuncCompSerial)(const Entry &entry);
   typedef std::shared_ptr<void>(*FuncCompDeserial)(nlohmann::json &doc);
@@ -47,11 +49,13 @@ namespace Project::Component
     int prio{};
     const char* icon{};
     const char* name{};
+    const char* docSlug{}; // docs page path relative to PYRITE_DOCS_URL
     FuncCompInit funcInit{};
     FuncCompDraw funcUpdate{};
     FuncCompDraw funcDraw{};
     FuncCompDraw3D funcDraw3D{};
     FuncCompDraw3D funcDrawPost3D{};
+    FuncCompCopyPass funcDrawCopyPass{};
     FuncCompSerial funcSerialize{};
     FuncCompDeserial funcDeserialize{};
     FuncCompBuild funcBuild{};
@@ -65,6 +69,7 @@ namespace Project::Component
       void update(Object& obj, Entry &entry); \
       void draw(Object& obj, Entry &entry); \
       void draw3D(Object&, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPURenderPass* pass); \
+      void drawCopyPass(Object&, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass* pass); \
       nlohmann::json serialize(const Entry &entry); \
       std::shared_ptr<void> deserialize(nlohmann::json &doc); \
       void build(Object&, Entry &entry, Build::SceneCtx &ctx); \
@@ -83,6 +88,7 @@ namespace Project::Component
   MAKE_COMP(Culling)
   MAKE_COMP(NodeGraph)
   MAKE_COMP(AnimModel)
+  MAKE_COMP(CharBody)
 
   namespace Camera
   {
@@ -111,6 +117,7 @@ namespace Project::Component
       .id = 0,
       .icon = ICON_MDI_SCRIPT " ",
       .name = "Code",
+      .docSlug = "/manual/editor/components/code",
       .funcInit = Code::init,
       .funcDraw = Code::draw,
       .funcSerialize = Code::serialize,
@@ -122,6 +129,7 @@ namespace Project::Component
       .id = 1,
       .icon = ICON_MDI_CUBE_OUTLINE " ",
       .name = "Model (Static)",
+      .docSlug = "/manual/editor/components/model",
       .funcInit = Model::init,
       .funcDraw = Model::draw,
       .funcDraw3D = Model::draw3D,
@@ -134,6 +142,7 @@ namespace Project::Component
       .id = 2,
       .icon = ICON_MDI_LIGHTBULB_ON_OUTLINE " ",
       .name = "Light",
+      .docSlug = "/manual/editor/components/light",
       .funcInit = Light::init,
       .funcUpdate = Light::update,
       .funcDraw = Light::draw,
@@ -147,6 +156,7 @@ namespace Project::Component
       .id = 3,
       .icon = ICON_MDI_VIDEO_VINTAGE " ",
       .name = "Camera",
+      .docSlug = "/manual/editor/components/camera",
       .funcInit = Camera::init,
       .funcUpdate = Camera::update,
       .funcDraw = Camera::draw,
@@ -160,6 +170,7 @@ namespace Project::Component
       .id = 4,
       .icon = ICON_MDI_LANDSLIDE_OUTLINE " ",
       .name = "Collision-Mesh",
+      .docSlug = "/manual/editor/components/collMesh",
       .funcInit = CollMesh::init,
       .funcDraw = CollMesh::draw,
       .funcDrawPost3D = CollMesh::draw3D,
@@ -172,6 +183,7 @@ namespace Project::Component
       .id = 5,
       .icon = ICON_MDI_CYLINDER " ",
       .name = "Collider",
+      .docSlug = "/manual/editor/components/collBody",
       .funcInit = CollBody::init,
       .funcDraw = CollBody::draw,
       .funcDrawPost3D = CollBody::draw3D,
@@ -184,6 +196,7 @@ namespace Project::Component
       .id = 6,
       .icon = ICON_MDI_MUSIC " ",
       .name = "Audio (2D)",
+      .docSlug = "/manual/editor/components/audio2d",
       .funcInit = Audio2D::init,
       .funcDraw = Audio2D::draw,
       .funcDrawPost3D = Audio2D::draw3D,
@@ -197,6 +210,7 @@ namespace Project::Component
       .prio = -2, // constraint must come before culling and any drawing
       .icon = ICON_MDI_LINK " ",
       .name = "Constraint",
+      .docSlug = "/manual/editor/components/constraint",
       .funcInit = Constraint::init,
       .funcDraw = Constraint::draw,
       .funcDrawPost3D = Constraint::draw3D,
@@ -210,6 +224,7 @@ namespace Project::Component
       .prio = -1, // culling must come before any models
       .icon = ICON_MDI_EYE_OFF_OUTLINE " ",
       .name = "Culling",
+      .docSlug = "/manual/editor/components/culling",
       .funcInit = Culling::init,
       .funcDraw = Culling::draw,
       .funcDrawPost3D = Culling::draw3D,
@@ -222,6 +237,7 @@ namespace Project::Component
       .id = 9,
       .icon = ICON_MDI_GRAPH_OUTLINE " ",
       .name = "Node Graph",
+      .docSlug = "/manual/editor/components/nodeGraph",
       .funcInit = NodeGraph::init,
       .funcDraw = NodeGraph::draw,
       .funcDraw3D = NodeGraph::draw3D,
@@ -234,9 +250,11 @@ namespace Project::Component
       .id = 10,
       .icon = ICON_MDI_HUMAN " ",
       .name = "Model (Animated)",
+      .docSlug = "/manual/editor/components/animModel",
       .funcInit = AnimModel::init,
       .funcDraw = AnimModel::draw,
       .funcDraw3D = AnimModel::draw3D,
+      .funcDrawCopyPass = AnimModel::drawCopyPass,
       .funcSerialize = AnimModel::serialize,
       .funcDeserialize = AnimModel::deserialize,
       .funcBuild = AnimModel::build,
@@ -246,12 +264,26 @@ namespace Project::Component
       .id = 11,
       .icon = ICON_MDI_CYLINDER " ",
       .name = "Rigid-Body",
+      .docSlug = "/manual/editor/components/rigidBody",
       .funcInit = RigidBody::init,
       .funcDraw = RigidBody::draw,
       .funcDrawPost3D = RigidBody::draw3D,
       .funcSerialize = RigidBody::serialize,
       .funcDeserialize = RigidBody::deserialize,
       .funcBuild = RigidBody::build,
+      .funcGetAABB = nullptr
+    },
+    CompInfo{
+      .id = 12,
+      .icon = ICON_MDI_RUN " ",
+      .name = "Character-Body",
+      .docSlug = "/manual/editor/components/charBody",
+      .funcInit = CharBody::init,
+      .funcDraw = CharBody::draw,
+      .funcDrawPost3D = CharBody::draw3D,
+      .funcSerialize = CharBody::serialize,
+      .funcDeserialize = CharBody::deserialize,
+      .funcBuild = CharBody::build,
       .funcGetAABB = nullptr
     },
   };

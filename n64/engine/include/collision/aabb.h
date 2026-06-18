@@ -5,7 +5,7 @@
  */
 #pragma once
 
-#include "vec_math.h"
+#include "vecMath.h"
 #include <cmath>
 #include "collision/raycast.h"
 

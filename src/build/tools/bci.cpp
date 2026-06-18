@@ -115,10 +115,10 @@ bool Build::BCI::convertPNG(const std::string &pathInPNG, const std::string &pat
     fwrite(&high, 1, 1, pFile);
     fwrite(&low, 1, 1, pFile);
   };
-  auto writeU8 = [pFile](uint8_t val) {
+  [[maybe_unused]] auto writeU8 = [pFile](uint8_t val) {
     fwrite(&val, 1, 1, pFile);
   };
-  auto writeU32 = [pFile](uint32_t val) {
+  [[maybe_unused]] auto writeU32 = [pFile](uint32_t val) {
     uint8_t b0 = (val >> 24) & 0xFF;
     uint8_t b1 = (val >> 16) & 0xFF;
     uint8_t b2 = (val >> 8) & 0xFF;

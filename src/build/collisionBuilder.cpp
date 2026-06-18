@@ -78,7 +78,7 @@ namespace
     std::vector<glm::i16vec3> normals{};
     std::vector<uint16_t> indices{};
 
-    for(int i=0; i<data->nodes_count; ++i)
+    for(size_t i=0; i<data->nodes_count; ++i)
     {
       auto node = &data->nodes[i];
       if(!node->mesh || (node->name && std::string(node->name).starts_with("fast64_f3d_material_library"))) {
@@ -95,7 +95,7 @@ namespace
       auto nodeMat = parseNodeMatrix(node, {1.0f, 1.0f, 1.0f});
       auto mesh = node->mesh;
 
-      for(int j = 0; j < mesh->primitives_count; j++)
+      for(size_t j = 0; j < mesh->primitives_count; j++)
       {
         int baseIndex = vertices.size();
         assert(baseIndex < 0x10000);
@@ -109,13 +109,13 @@ namespace
           auto basePtr = ((uint8_t*)acc->buffer_view->buffer->data) + acc->buffer_view->offset + acc->offset;
           auto elemSize = Gltf::getDataSize(acc->component_type);
 
-          for(int k = 0; k < acc->count; k++) {
+          for(size_t k = 0; k < acc->count; k++) {
             indices.push_back(baseIndex + Gltf::readAsU32(basePtr, acc->component_type));
             basePtr += elemSize;
           }
         }
 
-        for(int k = 0; k < prim->attributes_count; k++)
+        for(size_t k = 0; k < prim->attributes_count; k++)
         {
           auto attr = &prim->attributes[k];
           auto acc = attr->data;
@@ -123,7 +123,7 @@ namespace
 
           if(attr->type == cgltf_attribute_type_position) {
             assert(attr->data->type == cgltf_type_vec3);
-            for(int l = 0; l < acc->count; l++) {
+            for(size_t l = 0; l < acc->count; l++) {
               auto vert = Gltf::readAsVec3(basePtr, attr->data->type, acc->component_type);
               vert = nodeMat * vert;
 
@@ -146,7 +146,7 @@ namespace
     } // nodes
 
     // generate normals
-    for(int v=0; v<indices.size(); v+=3) {
+    for(size_t v=0; v<indices.size(); v+=3) {
       Vec3 edge1 = verticesFloat[indices[v+1]] - verticesFloat[indices[v]];
       Vec3 edge2 = verticesFloat[indices[v+2]] - verticesFloat[indices[v]];
       Vec3 edge3 = verticesFloat[indices[v+2]] - verticesFloat[indices[v]];

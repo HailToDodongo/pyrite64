@@ -64,8 +64,8 @@ void Renderer::VertBuffer::setData(char* verts, uint32_t vertsSize, const std::v
   SDL_memcpy(data, verts, currVertByteSize);
   SDL_UnmapGPUTransferBuffer(gpuDevice, bufferTrans);
 
-  data = (Vertex*)SDL_MapGPUTransferBuffer(gpuDevice, bufferIdxTrans, false);
-  SDL_memcpy(data, indices.data(), currIdxByteSize);
+  auto idxData = (uint16_t*)SDL_MapGPUTransferBuffer(gpuDevice, bufferIdxTrans, false);
+  SDL_memcpy(idxData, indices.data(), currIdxByteSize);
   SDL_UnmapGPUTransferBuffer(gpuDevice, bufferIdxTrans);
 
   needsUpload = true;

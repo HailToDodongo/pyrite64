@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   class="cb-diagram cb-diagram--md"
+   viewBox="0 0 363.09595 307.55612"
+   font-family="'Segoe UI', Helvetica, Arial, sans-serif"
+   version="1.1"
+   id="svg1177"
+   sodipodi:docname="char_body_crease.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   width="363.09595"
+   height="307.55612"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1179"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     showgrid="false"
+     inkscape:zoom="1.8878788"
+     inkscape:cx="101.70144"
+     inkscape:cy="163.14607"
+     inkscape:window-width="1920"
+     inkscape:window-height="1031"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1177" />
+  <defs
+     id="defs1125">
+    <marker
+       style="overflow:visible"
+       id="TriangleStart"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+    <marker
+       id="crD"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#b6bdca"
+         id="path1116" />
+    </marker>
+    <marker
+       id="crG"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#2ec66e"
+         id="path1119" />
+    </marker>
+    <marker
+       id="crR"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#e05a4d"
+         fill-opacity="0.6"
+         id="path1122" />
+    </marker>
+    <marker
+       id="crR-5"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#e05a4d"
+         fill-opacity="0.6"
+         id="path1122-3" />
+    </marker>
+    <marker
+       id="crR-5-6"
+       markerWidth="11"
+       markerHeight="11"
+       refX="8"
+       refY="4"
+       orient="auto">
+      <path
+         d="M 0,0 9,4 0,8 Z"
+         fill="#e05a4d"
+         fill-opacity="0.6"
+         id="path1122-3-2" />
+    </marker>
+  </defs>
+  <rect
+     x="0.31736949"
+     y="0.31736949"
+     width="362.46121"
+     height="306.92139"
+     rx="5.5001707"
+     fill="#1b1e26"
+     stroke="#3b414e"
+     id="rect1127"
+     style="stroke-width:0.634739" />
+  <g
+     id="g3436"
+     transform="translate(-148.26474,-27.989439)">
+    <g
+       stroke="#5a6373"
+       stroke-width="1.5"
+       id="g30"
+       transform="rotate(-47.111774,157.13498,-8.4601263)">
+      <line
+         x1="72"
+         y1="330"
+         x2="60"
+         y2="344"
+         id="line22" />
+      <line
+         x1="92"
+         y1="330"
+         x2="80"
+         y2="344"
+         id="line24" />
+      <line
+         x1="112"
+         y1="330"
+         x2="100"
+         y2="344"
+         id="line26" />
+      <line
+         x1="132"
+         y1="330"
+         x2="120"
+         y2="344"
+         id="line28" />
+    </g>
+    <g
+       stroke="#5a6373"
+       stroke-width="1.5"
+       id="g30-2"
+       transform="rotate(-48.303525,120.23161,-88.829017)">
+      <line
+         x1="72"
+         y1="330"
+         x2="60"
+         y2="344"
+         id="line22-7" />
+      <line
+         x1="92"
+         y1="330"
+         x2="80"
+         y2="344"
+         id="line24-0" />
+      <line
+         x1="112"
+         y1="330"
+         x2="100"
+         y2="344"
+         id="line26-9" />
+      <line
+         x1="132"
+         y1="330"
+         x2="120"
+         y2="344"
+         id="line28-3" />
+    </g>
+  </g>
+  <g
+     id="g3436-2"
+     transform="matrix(-1,0,0,1,512.02414,-28.804896)">
+    <g
+       stroke="#5a6373"
+       stroke-width="1.5"
+       id="g30-3"
+       transform="rotate(-47.111774,157.13498,-8.4601263)">
+      <line
+         x1="72"
+         y1="330"
+         x2="60"
+         y2="344"
+         id="line22-75" />
+      <line
+         x1="92"
+         y1="330"
+         x2="80"
+         y2="344"
+         id="line24-9" />
+      <line
+         x1="112"
+         y1="330"
+         x2="100"
+         y2="344"
+         id="line26-2" />
+      <line
+         x1="132"
+         y1="330"
+         x2="120"
+         y2="344"
+         id="line28-2" />
+    </g>
+    <g
+       stroke="#5a6373"
+       stroke-width="1.5"
+       id="g30-2-8"
+       transform="rotate(-48.303525,120.23161,-88.829017)">
+      <line
+         x1="72"
+         y1="330"
+         x2="60"
+         y2="344"
+         id="line22-7-9" />
+      <line
+         x1="92"
+         y1="330"
+         x2="80"
+         y2="344"
+         id="line24-0-7" />
+      <line
+         x1="112"
+         y1="330"
+         x2="100"
+         y2="344"
+         id="line26-9-3" />
+      <line
+         x1="132"
+         y1="330"
+         x2="120"
+         y2="344"
+         id="line28-3-6" />
+    </g>
+  </g>
+  <text
+     x="181.73526"
+     y="38.07719"
+     text-anchor="middle"
+     font-size="17px"
+     font-weight="600"
+     fill="#e9ebf1"
+     class="cb-title"
+     id="text1129">V-Corner / Crease handling (top view)</text>
+  <!-- the two walls meeting at the vertex -->
+  <line
+     x1="181.73526"
+     y1="272.01056"
+     x2="41.735264"
+     y2="122.01056"
+     stroke="#8e97a6"
+     stroke-width="5"
+     id="line1131"
+     style="stroke-linecap:round;stroke-linejoin:bevel" />
+  <line
+     x1="181.73526"
+     y1="272.01056"
+     x2="321.73529"
+     y2="122.01056"
+     stroke="#8e97a6"
+     stroke-width="5"
+     id="line1133"
+     style="stroke-linecap:round" />
+  <!-- crease: the line where the walls meet -->
+  <line
+     x1="181.73526"
+     y1="272.01056"
+     x2="181.73526"
+     y2="92.010559"
+     stroke="#2ec66e"
+     stroke-width="1.4"
+     stroke-dasharray="5, 5"
+     stroke-opacity="0.65"
+     id="line1145" />
+  <text
+     x="189.73526"
+     y="104.01056"
+     font-size="11.5px"
+     fill="#2ec66e"
+     id="text1147">crease (walls meet)</text>
+  <!-- capsule (top-down) -->
+  <circle
+     cx="181.73526"
+     cy="185.24229"
+     r="27"
+     fill="#9aa3b3"
+     fill-opacity="0.08"
+     stroke="#9aa3b3"
+     stroke-width="2"
+     id="circle1149" />
+  <!-- desired input into the corner -->
+  <!-- WITHOUT fix: naive slides point into the opposite wall -> ping-pong -->
+  <line
+     x1="181.69252"
+     y1="185.29216"
+     x2="140.79866"
+     y2="221.67024"
+     stroke="#e05a4d"
+     stroke-width="1.93148"
+     stroke-opacity="0.6"
+     stroke-dasharray="5, 4"
+     marker-end="url(#crR)"
+     id="line1157" />
+  <line
+     x1="141.36429"
+     y1="222.90115"
+     x2="218.74844"
+     y2="223.36227"
+     stroke="#e05a4d"
+     stroke-width="2.20722"
+     stroke-opacity="0.6"
+     stroke-dasharray="5, 4"
+     marker-end="url(#crR-5)"
+     id="line1157-5"
+     style="marker-end:url(#crR-5)" />
+  <line
+     x1="217.96371"
+     y1="224.1579"
+     x2="151.62082"
+     y2="240.28369"
+     stroke="#e05a4d"
+     stroke-width="2.07846"
+     stroke-opacity="0.6"
+     stroke-dasharray="5, 4"
+     marker-end="url(#crR-5-6)"
+     id="line1157-5-9"
+     style="marker-end:url(#crR-5-6)" />
+  <text
+     x="47.735268"
+     y="272.01056"
+     font-size="12px"
+     fill="#e05a4d"
+     fill-opacity="0.85"
+     font-weight="600"
+     id="text1161">without fix:</text>
+  <text
+     x="47.735268"
+     y="289.01056"
+     font-size="12px"
+     fill="#e05a4d"
+     fill-opacity="0.85"
+     id="text1163">ping-pongs between walls each frame</text>
+  <!-- WITH fix: motion projected onto the crease -->
+  <line
+     x1="181.73526"
+     y1="188.49055"
+     x2="181.73526"
+     y2="256.36121"
+     stroke="#2ec66e"
+     stroke-width="2.97799"
+     marker-end="url(#crG)"
+     id="line1165"
+     style="marker-end:url(#TriangleStart)" />
+  <circle
+     cx="181.73526"
+     cy="185.67894"
+     r="3"
+     fill="#e9ebf1"
+     id="circle1151" />
+</svg>

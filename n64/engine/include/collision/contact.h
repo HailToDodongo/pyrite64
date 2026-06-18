@@ -5,7 +5,7 @@
  */
 #pragma once
 
-#include "vec_math.h"
+#include "vecMath.h"
 #include <cstddef>
 #include <cstdint>
 #include <functional>

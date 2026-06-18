@@ -140,7 +140,14 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
   {
     auto label = "Material: " + entry.first;
     ImGui::PushID(label.c_str());
-    if (ImGui::CollapsingHeader(label.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+    ImGui::SetNextItemAllowOverlap();
+    const bool matOpen = ImGui::CollapsingHeader(label.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
+    {
+      const float helpSize = 19_px;
+      ImGui::SameLine(ImGui::GetContentRegionMax().x - helpSize - 4_px);
+      ImGui::HelpIcon("/manual/editor/materials", "Open Docs", helpSize);
+    }
+    if (matOpen)
     {
       auto &mat = entry.second;
 

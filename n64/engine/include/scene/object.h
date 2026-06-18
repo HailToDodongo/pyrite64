@@ -129,6 +129,29 @@ namespace P64
        */
       void setEnabled(bool isEnabled);
 
+      /**
+       * Check if the object itself is visible (not considering parent/group state).
+       * @return true if visible
+       */
+      [[nodiscard]] bool isSelfVisible() const {
+        return !(flags & ObjectFlags::SELF_HIDDEN);
+      }
+
+      /**
+       * Check if the object is visible, considering parent/group state.
+       * @return true if visible
+       */
+      [[nodiscard]] bool isVisible() const {
+        return !(flags & ObjectFlags::HIDDEN);
+      }
+
+      /**
+       * Changes the state of the object to be visible or hidden.
+       * Prefer this over changing flags directly, so that children properly inherit visibility from parents.
+       * @param isVisible true to show, false to hide
+       */
+      void setVisible(bool isVisible);
+
       [[nodiscard]] bool hasChildren() const {
         return (flags & ObjectFlags::HAS_CHILDREN);
       }
