@@ -391,7 +391,7 @@ namespace Project::Graph
     uint64_t startUuid = 0;
     for(auto *node : nodeVec) if(node->isEntry()) { startUuid = node->uuid; break; }
     nodeCtx.flowEnd = (repeatable && startUuid)
-      ? ("coro_yield(); goto NODE_" + Utils::toHex64(startUuid) + ";")
+      ? ("coro_yield(); inst->time += P64::VI::SwapChain::getDeltaTime(); goto NODE_" + Utils::toHex64(startUuid) + ";")
       : std::string{"return;"};
 
     source += R"(#include <script/nodeGraph.h>)" "\n";

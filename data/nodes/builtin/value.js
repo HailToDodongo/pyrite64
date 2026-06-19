@@ -287,7 +287,7 @@ node({
   color: typeColor("f32"),
   rounding: 4.0,
   category: "Easing",
-  inputs: [valueIn("t", "f32")],
+  inputs: [valueIn("in", "f32"), valueIn("scale", "f32", 1.0)],
   outputs: [valueOut("f32")],
   props: {
     ease: Enum({
@@ -298,8 +298,10 @@ node({
   },
   title: "Ease {ease}",
   value(n, ctx) {
-    return lambda("float t = fminf(fmaxf(" + ctx.inputExpr(0) + ", 0.0f), 1.0f); return " +
-                  _easeExpr(n.ease.value) + ";");
+    return lambda(`
+      float t = fminf(fmaxf(${ctx.inputExpr(0)}, 0.0f), 1.0f); 
+      return ${_easeExpr(n.ease.value)} * ${ctx.inputExpr(1)};
+    `);
   },
 });
 
@@ -336,6 +338,25 @@ node({
 });
 
 node({
+  id: "core.quatRotAxisZYX",
+  name: icon("rotate-3d-variant") + " Rotate Quat ZYX",
+  color: typeColor("quat"),
+  rounding: 4.0,
+  category: "Quat Math",
+  inputs: [valueIn("Quat", "quat"), valueIn("X", "f32"), valueIn("Y", "f32"), valueIn("Z", "f32")],
+  outputs: [valueOut("quat")],
+  value(n, ctx) {
+    return lambda(`
+      fm_quat_t t_e;
+      fm_quat_from_euler_zyx(&t_e, ${ctx.inputExpr(1)}, ${ctx.inputExpr(2)}, ${ctx.inputExpr(3)});
+      fm_quat_t q = (${ctx.inputExpr(0)}) * t_e;
+      fm_quat_norm(&q, &q);
+      return q;
+    `);
+  },
+});
+
+node({
   id: "core.quatLerp",
   name: icon("vector-polyline") + " Quat Lerp",
   color: typeColor("quat"),
@@ -364,7 +385,7 @@ function _wave(id, label, ic, expr) {
       // wave is in [-1,1]; "0..1" remaps it to a unipolar range
       var w = (n.range.index === 1) ? "((" + expr + ") * 0.5f + 0.5f)" : "(" + expr + ")";
       // phase in cycles
-      return lambda("float p = P64::VI::SwapChain::getGlobalTime() * " + ctx.inputExpr(0) + " + " + ctx.inputExpr(2) +
+      return lambda("float p = inst->time * " + ctx.inputExpr(0) + " + " + ctx.inputExpr(2) +
                     "; return " + ctx.inputExpr(1) + " * " + w + ";");
     },
   });

@@ -15,8 +15,6 @@ namespace P64::VI::SwapChain
 
   void setVBlank(bool enabled);
   float getDeltaTime();
-  // Seconds elapsed since init(), accumulated from per-frame delta time.
-  float getGlobalTime();
   float getFPS();
 
   void nextFrame();

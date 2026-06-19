@@ -33,7 +33,8 @@ node({
   inputs: [logicIn()],
   outputs: [logicOut()],
   build(n, ctx) {
-    ctx.line("coro_yield();"); // resume next frame
+    ctx.line("coro_yield();") // resume next frame
+       .line("inst->time += P64::VI::SwapChain::getDeltaTime();"); // advance local time (frozen while waiting)
   },
 });
 
@@ -98,5 +99,38 @@ node({
       .line("} else {")
         .jump(1)
       .line("}");
+  },
+});
+
+// Fires the True path once each time the input value turns around (a peak or valley),
+// i.e. when the sign of its change flips. Otherwise takes the False path.
+node({
+  id: "core.onExtremum",
+  name: icon("chart-bell-curve") + " On Extremum",
+  color: typeColor("f32"),
+  rounding: 4.0,
+  category: "Flow",
+  inputs: [logicIn(), valueIn("Value", "f32")],
+  outputs: [logicOut("True"), logicOut("False")],
+  build(n, ctx) {
+    const inited = ctx.globalVar("uint8_t", 0);
+    const prevVal = ctx.globalVar("float", 0);
+    const prevDir = ctx.globalVar("int8_t", 0); // -1/0/+1: last movement direction
+
+    ctx.localVar("float", "t_v", ctx.inputExpr(0))
+       .localVar("int8_t", "t_dir", prevDir)
+       .line("if(" + inited + ") {")
+       .line("  float t_d = t_v - " + prevVal + ";")
+       .line("  if(t_d > 0.0f) t_dir = 1; else if(t_d < 0.0f) t_dir = -1;") // flat keeps last dir
+       .line("}")
+       .localVar("bool", "t_turn", "(" + prevDir + " != 0 && t_dir != 0 && t_dir != " + prevDir + ")")
+       .setVar(prevVal, "t_v")
+       .setVar(prevDir, "t_dir")
+       .setVar(inited, 1)
+       .line("if(t_turn) {")
+       .jump(0)
+       .line("} else {")
+       .jump(1)
+       .line("}");
   },
 });

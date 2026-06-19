@@ -73,13 +73,13 @@ The editor ships with a set of nodes, grouped by category in the create menu:
 
 | Category | Nodes |
 |----------|-------|
-| **Flow** | **Start** (entry point), **Wait** (pause for a number of seconds), **Wait Frame** (pause until the next frame), **Repeat** (loop a number of times), **If-Else** (branch on a value), **Switch-Case** (branch on one of several values). |
+| **Flow** | **Start** (entry point), **Wait** (pause for a number of seconds), **Wait Frame** (pause until the next frame), **Repeat** (loop a number of times), **If-Else** (branch on a value), **Switch-Case** (branch on one of several values), **On Extremum** (takes the **True** path once each time a monitored float turns around, i.e. at a peak or valley; **False** otherwise). |
 | **Value** | **Int**, **UInt**, **Float**, **Vec3**, **Quat** (typed constants), **Argument** (a value passed into the graph), **Delta Time** (seconds since the last frame), **Compare** (compare two values and branch). |
 | **Math** | **Add**, **Subtract**, **Multiply**, **Divide** (scalar floats), **Int Mod**, **Float Mod**, **Sin**, **Cos**, **Tan**, **Map Range** (remap a float from one range to another). |
 | **Vector Math** | **Add**, **Subtract**, **Multiply**, **Divide** (component-wise), **Dot**, **Cross**, **Length**, **Distance**, **Normalize**, **Lerp**, **Negate**, **Component** (extract X/Y/Z), **Sin/Cos/Tan** (component-wise). |
 | **Quat Math** | **Rotate Axis** (quaternion from an axis + angle in radians), **Quat Lerp**. |
 | **Easing** | **Ease** (easing curve over t; input is clamped to 0..1, output 0..1). |
-| **Wave** | **Sin Wave**, **Cos Wave**, **Square Wave**, **Saw Wave**, **Triangle Wave**: oscillators driven by the global clock. Each takes a **Speed** (cycles per second), **Amplitude**, and **Offset** (a phase shift in cycles); output is `Amplitude * wave(time * Speed + Offset)`. A **Range** option picks the base wave shape, `-1..1` (bipolar) or `0..1` (unipolar), before Amplitude is applied. Use **Offset** to desync waves that share the clock. |
+| **Wave** | **Sin Wave**, **Cos Wave**, **Square Wave**, **Saw Wave**, **Triangle Wave**: oscillators driven by the graph's own clock (see below). Each takes a **Speed** (cycles per second), **Amplitude**, and **Offset** (a phase shift in cycles); output is `Amplitude * wave(time * Speed + Offset)`. A **Range** option picks the base wave shape, `-1..1` (bipolar) or `0..1` (unipolar), before Amplitude is applied. Use **Offset** to desync waves that share the clock. |
 | **Object** | **Send Event** (message another object), **Delete Object**, **Get/Set Position**, **Get/Set Rotation** (a quaternion), **Set Rotation Euler** (X/Y/Z angles in ZYX order), **Original Position** / **Original Rotation** (the object's transform captured when the graph was initialized). **Set Position** has an **Op** (Set / Add / Subtract); the two Set Rotation nodes have Set / Add, where Add composes the rotation and renormalizes. |
 | **Scene** | **Load Scene**. |
 | **Logic** | **Function** (call a registered user function). |
@@ -92,6 +92,13 @@ the node while nothing is wired into it, so you can type a constant directly. Co
 value wire and the wire takes over and the field disappears; disconnect it and the field
 returns. Some nodes also expose other typed-in properties (a scene picker, a dropdown)
 that behave the same way.
+
+```{note}
+**Graph clock:** each graph instance keeps its own elapsed time, used by the **Wave**
+nodes. It advances while the graph is running but is frozen whenever the graph waits
+(a **Wait** / sleep does not advance it), so waves stay continuous across pauses instead
+of jumping ahead.
+```
 
 (nodegraph-variables)=
 ## Variables

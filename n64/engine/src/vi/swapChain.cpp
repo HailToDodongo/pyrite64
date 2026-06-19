@@ -24,7 +24,6 @@ namespace {
   constinit surface_t *frameBuffers = nullptr;
 
   constinit uint64_t lastTicks{};
-  constinit float globalTime{};
   constinit P64::RingBuffer<float, 6> lastDeltaTimes{};
   constinit float avgDeltaTime{};
   constinit float avgFps{};
@@ -86,7 +85,6 @@ void P64::VI::SwapChain::init()
   fbIdxForVI.push(0); // ...and make VI render the first buffer
 
   lastTicks = get_ticks() - TICKS_FROM_MS(16);
-  globalTime = 0.0;
   avgDeltaTime = 1.0f / 60.0f;
   lastDeltaTimes.fill(avgDeltaTime);
 
@@ -111,11 +109,6 @@ void P64::VI::SwapChain::setVBlank(bool enabled)
 float P64::VI::SwapChain::getDeltaTime()
 {
   return avgDeltaTime;
-}
-
-float P64::VI::SwapChain::getGlobalTime()
-{
-  return globalTime;
 }
 
 float P64::VI::SwapChain::getFPS()
@@ -158,7 +151,6 @@ void P64::VI::SwapChain::nextFrame()
   }
 
   lastTicks = newTicks;
-  globalTime += newDelta;
   lastDeltaTimes.push(newDelta);
   avgDeltaTime = lastDeltaTimes.average();
 
