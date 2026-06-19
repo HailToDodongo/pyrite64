@@ -25,6 +25,9 @@ The editor is a canvas of nodes connected by wires.
   to create a node already connected to it. The menu then lists only nodes with a pin
   that can accept the wire (compatible types or an automatic conversion).
 - **Connect nodes:** drag from an output pin to a compatible input pin.
+- **Route a wire:** click anywhere on a connection to drop a draggable point, then move it to
+  bend the wire around nodes. Drag a point to reposition it, double-click a point to remove it.
+  A wire with no points keeps its automatic route.
 - **Edit a node:** its properties are shown directly on the node.
 - **Select multiple:** drag a box on empty canvas to select every node inside it.
 - **Duplicate or remove:** right-click a node.

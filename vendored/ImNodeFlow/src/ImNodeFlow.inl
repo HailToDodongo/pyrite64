@@ -54,8 +54,8 @@ namespace ImFlow
         }
     }
 
-    // Sample the smart_bezier path into a polyline (shared by gradient + flow renderers).
-    inline void build_link_polyline(const ImVec2& p1, const ImVec2& p2, std::vector<ImVec2>& pts)
+    // Sample the automatic smart route into a polyline (used when a link has no waypoints).
+    inline void build_smart_polyline(const ImVec2& p1, const ImVec2& p2, std::vector<ImVec2>& pts)
     {
         pts.clear();
 
@@ -97,7 +97,45 @@ namespace ImFlow
         }
     }
 
-    inline void smart_bezier_gradient(const ImVec2& p1, const ImVec2& p2, ImU32 c1, ImU32 c2, float thickness)
+    inline void build_link_polyline(const ImVec2& p1, const ImVec2& p2, const std::vector<ImVec2>& mids, std::vector<ImVec2>& pts)
+    {
+        if (mids.empty()) { build_smart_polyline(p1, p2, pts); return; }
+
+        // Smooth Catmull-Rom spline through start, the waypoints, and end (the curve passes
+        // through every control point, so dragging a waypoint pulls the wire to it).
+        pts.clear();
+        std::vector<ImVec2> cp;
+        cp.reserve(mids.size() + 2);
+        cp.push_back(p1);
+        for (const auto& m : mids) cp.push_back(m);
+        cp.push_back(p2);
+
+        auto cr = [](const ImVec2& P0, const ImVec2& P1, const ImVec2& P2, const ImVec2& P3, float t) {
+            float t2 = t * t, t3 = t2 * t;
+            return ImVec2(
+                0.5f * ((2*P1.x) + (-P0.x + P2.x)*t + (2*P0.x - 5*P1.x + 4*P2.x - P3.x)*t2 + (-P0.x + 3*P1.x - 3*P2.x + P3.x)*t3),
+                0.5f * ((2*P1.y) + (-P0.y + P2.y)*t + (2*P0.y - 5*P1.y + 4*P2.y - P3.y)*t2 + (-P0.y + 3*P1.y - 3*P2.y + P3.y)*t3));
+        };
+
+        const int SEG = 16;
+        int n = (int)cp.size();
+        pts.push_back(cp[0]);
+        for (int i = 0; i + 1 < n; ++i) {
+            const ImVec2& P0 = cp[i > 0 ? i - 1 : 0];
+            const ImVec2& P1 = cp[i];
+            const ImVec2& P2 = cp[i + 1];
+            const ImVec2& P3 = cp[i + 2 < n ? i + 2 : n - 1];
+            for (int s = 1; s <= SEG; ++s) pts.push_back(cr(P0, P1, P2, P3, (float)s / SEG));
+        }
+    }
+
+    inline void draw_link_solid(const std::vector<ImVec2>& pts, ImU32 color, float thickness)
+    {
+        if (pts.size() < 2) return;
+        ImGui::GetWindowDrawList()->AddPolyline(pts.data(), (int)pts.size(), color, 0, thickness);
+    }
+
+    inline void draw_link_gradient(const std::vector<ImVec2>& pts, ImU32 c1, ImU32 c2, float thickness)
     {
         ImDrawList* dl = ImGui::GetWindowDrawList();
 
@@ -108,9 +146,6 @@ namespace ImFlow
                 ca.z + (cb.z - ca.z) * t, ca.w + (cb.w - ca.w) * t));
         };
 
-        std::vector<ImVec2> pts;
-        build_link_polyline(p1, p2, pts);
-
         int n = (int)pts.size();
         for(int i = 0; i + 1 < n; ++i) {
             float t = (n <= 1) ? 0.f : (float)i / (float)(n - 1);
@@ -118,12 +153,10 @@ namespace ImFlow
         }
     }
 
-    inline void smart_bezier_flow(const ImVec2& p1, const ImVec2& p2, ImU32 color, float thickness, float phase)
+    inline void draw_link_flow(const std::vector<ImVec2>& pts, ImU32 color, float thickness, float phase)
     {
         ImDrawList* dl = ImGui::GetWindowDrawList();
 
-        std::vector<ImVec2> pts;
-        build_link_polyline(p1, p2, pts);
         int n = (int)pts.size();
         if(n < 2) return;
 
@@ -176,17 +209,21 @@ namespace ImFlow
         }
     }
 
-    inline bool smart_bezier_collider(const ImVec2& p, const ImVec2& p1, const ImVec2& p2, float radius)
+    inline bool polyline_collider(const ImVec2& p, const std::vector<ImVec2>& pts, float radius)
     {
-        float distance = sqrt(pow((p2.x - p1.x), 2.f) + pow((p2.y - p1.y), 2.f));
-        float delta = distance * 0.45f;
-        if (p2.x < p1.x) delta += 0.2f * (p1.x - p2.x);
-        // float vert = (p2.x < p1.x - 20.f) ? 0.062f * distance * (p2.y - p1.y) * 0.005f : 0.f;
-        float vert = 0.f;
-        ImVec2 p22 = p2 - ImVec2(delta, vert);
-        if (p2.x < p1.x - 50.f) delta *= -1.f;
-        ImVec2 p11 = p1 + ImVec2(delta, vert);
-        return ImProjectOnCubicBezier(p, p1, p11, p22, p2).Distance < radius;
+        // Nearest distance from "p" to any segment of the (already routed) polyline. This
+        // matches whatever was actually drawn, so hovering is correct for every route shape.
+        float r2 = radius * radius;
+        for(int i = 0; i + 1 < (int)pts.size(); ++i) {
+            ImVec2 a = pts[i], b = pts[i + 1];
+            ImVec2 ab(b.x - a.x, b.y - a.y), ap(p.x - a.x, p.y - a.y);
+            float len2 = ab.x * ab.x + ab.y * ab.y;
+            float t = len2 > 0.f ? (ap.x * ab.x + ap.y * ab.y) / len2 : 0.f;
+            t = t < 0.f ? 0.f : (t > 1.f ? 1.f : t);
+            float dx = p.x - (a.x + ab.x * t), dy = p.y - (a.y + ab.y * t);
+            if(dx * dx + dy * dy <= r2) return true;
+        }
+        return false;
     }
 
     // -----------------------------------------------------------------------------------------------------------------

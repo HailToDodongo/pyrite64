@@ -170,6 +170,19 @@ namespace Project::Graph
         if(pinA && pinB) {
           // Force past the type filter to preserve a saved link.
           pinA->createLink(pinB, true);
+
+          // Restore editable routing waypoints (the just-created link is the newest one).
+          if(savedLink.contains("points")) {
+            auto &links = graph.getLinks();
+            if(!links.empty()) {
+              if(auto lk = links.back().lock()) {
+                lk->waypoints().clear();
+                for(const auto &p : savedLink["points"]) {
+                  lk->waypoints().push_back(ImVec2(p[0].get<float>(), p[1].get<float>()));
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -227,6 +240,13 @@ namespace Project::Graph
             jLink["srcPort"] = leftIndex;
             jLink["dst"] = ((Node::Base*)rightNode)->uuid;
             jLink["dstPort"] = rightIndex;
+
+            const auto &wps = link->waypoints();
+            if(!wps.empty()) {
+              auto jPts = nlohmann::json::array();
+              for(const auto &w : wps) jPts.push_back({w.x, w.y});
+              jLink["points"] = jPts;
+            }
             data["links"].push_back(jLink);
           }
         }

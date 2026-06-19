@@ -1,5 +1,6 @@
 #include "ImNodeFlow.h"
 #include <algorithm>
+#include <cfloat>
 
 namespace ImFlow {
     // -----------------------------------------------------------------------------------------------------------------
@@ -8,40 +9,129 @@ namespace ImFlow {
     void Link::update() {
         ImVec2 start = m_left->pinPoint();
         ImVec2 end = m_right->pinPoint();
+        ImVec2 mouse = ImGui::GetMousePos();
         float thickness = m_left->getStyle()->extra.link_thickness;
-        bool mouseClickState = m_inf->getSingleUseClick();
+
+        // Waypoints are stored in grid space; route + interact in screen space.
+        std::vector<ImVec2> mids;
+        mids.reserve(m_waypoints.size());
+        for (const auto& w : m_waypoints) mids.push_back(m_inf->grid2screen(w));
+
+        std::vector<ImVec2> pts;
+        build_link_polyline(start, end, mids, pts);
 
         if (!ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             m_selected = false;
 
-        if (smart_bezier_collider(ImGui::GetMousePos(), start, end, 2.5)) {
+        const float handleR = 5.0f;          // drawn handle radius (screen px)
+        const float grabR2  = (handleR + 3.0f) * (handleR + 3.0f);
+        bool canInteract = !m_inf->getDisabled() && !m_inf->getDraggedLink()
+                           && !m_inf->isNodeDragged() && !m_inf->getDragOut();
+
+        // Hovered waypoint handle (if any).
+        int hoveredWp = -1;
+        for (int i = 0; i < (int)mids.size(); ++i) {
+            float dx = mouse.x - mids[i].x, dy = mouse.y - mids[i].y;
+            if (dx * dx + dy * dy <= grabR2) { hoveredWp = i; break; }
+        }
+
+        // Drive an active waypoint drag, or begin one / remove a handle.
+        if (m_draggedWaypoint >= 0) {
+            if (m_draggedWaypoint < (int)m_waypoints.size())
+                m_waypoints[m_draggedWaypoint] = m_inf->screen2grid(mouse);
+            if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+                m_draggedWaypoint = -1;
+                m_inf->setDraggedLink(nullptr);
+            }
+        } else if (hoveredWp >= 0 && canInteract && m_inf->getSingleUseClick()) {
+            if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+                m_waypoints.erase(m_waypoints.begin() + hoveredWp);
+            } else {
+                m_draggedWaypoint = hoveredWp;
+                m_selected = true;
+                m_inf->setDraggedLink(this);
+            }
+            m_inf->consumeSingleUseClick();
+        }
+
+        // Body hover (off the handles). A click on the body inserts a new waypoint there.
+        bool onBody = (hoveredWp < 0) && (m_draggedWaypoint < 0) && polyline_collider(mouse, pts, 5.0f);
+        if (onBody) {
             m_hovered = true;
             thickness = m_left->getStyle()->extra.link_hovered_thickness;
-            if (mouseClickState) {
+            if (canInteract && m_inf->getSingleUseClick()) {
                 m_inf->consumeSingleUseClick();
                 m_selected = true;
+                int seg = nearestControlSegment(mouse, start, mids, end);
+                m_waypoints.insert(m_waypoints.begin() + seg, m_inf->screen2grid(mouse));
+                m_draggedWaypoint = seg;
+                m_inf->setDraggedLink(this);
             }
-        } else { m_hovered = false; }
+        } else {
+            m_hovered = false;
+        }
 
+        if (m_hovered || hoveredWp >= 0 || m_draggedWaypoint >= 0)
+            m_inf->hoveredLink(this);
+
+        // Draw: optional selection underlay, then the link itself.
         if (m_selected)
-            smart_bezier(start, end, m_left->getStyle()->extra.outline_color,
-                         thickness + m_left->getStyle()->extra.link_selected_outline_thickness);
+            draw_link_solid(pts, m_left->getStyle()->extra.outline_color,
+                            thickness + m_left->getStyle()->extra.link_selected_outline_thickness);
 
         if (m_left->getStyle()->extra.animated) {
             // Control-flow link: dashes flow from source to destination.
-            const float speed = -16.0f; // pixels / second
-            float phase = (float)ImGui::GetTime() * speed;
-            smart_bezier_flow(start, end, m_left->getStyle()->color, thickness, phase);
+            float phase = (float)ImGui::GetTime() * -16.0f; // pixels / second
+            draw_link_flow(pts, m_left->getStyle()->color, thickness, phase);
         } else {
             // Fade source colour -> destination colour, so a converted link reads as a transition.
-            smart_bezier_gradient(start, end, m_left->getStyle()->color, m_right->getStyle()->color, thickness);
+            draw_link_gradient(pts, m_left->getStyle()->color, m_right->getStyle()->color, thickness);
+        }
+
+        // Waypoint handles, only while the link is in focus.
+        if (m_hovered || m_selected || hoveredWp >= 0 || m_draggedWaypoint >= 0) {
+            ImDrawList* dl = ImGui::GetWindowDrawList();
+            for (int i = 0; i < (int)mids.size(); ++i) {
+                bool active = (i == hoveredWp) || (i == m_draggedWaypoint);
+                float r = active ? handleR + 1.0f : handleR;
+                dl->AddCircleFilled(mids[i], r, m_left->getStyle()->color, 12);
+                dl->AddCircle(mids[i], r, IM_COL32(255, 255, 255, 200), 12, 1.5f);
+            }
         }
 
         if (m_selected && ImGui::IsKeyPressed(ImGuiKey_Delete, false))
             m_right->deleteLink(this);
     }
 
+    int Link::nearestControlSegment(const ImVec2& p, const ImVec2& start, const std::vector<ImVec2>& mids, const ImVec2& end) {
+        // Control points in order: start, waypoints..., end. Returns the segment index the
+        // click is closest to, which is also the insertion index into the waypoint list.
+        std::vector<ImVec2> cp;
+        cp.reserve(mids.size() + 2);
+        cp.push_back(start);
+        for (const auto& m : mids) cp.push_back(m);
+        cp.push_back(end);
+
+        int best = 0;
+        float bestD2 = FLT_MAX;
+        for (int i = 0; i + 1 < (int)cp.size(); ++i) {
+            ImVec2 a = cp[i], b = cp[i + 1];
+            ImVec2 ab(b.x - a.x, b.y - a.y), ap(p.x - a.x, p.y - a.y);
+            float len2 = ab.x * ab.x + ab.y * ab.y;
+            float t = len2 > 0.f ? (ap.x * ab.x + ap.y * ab.y) / len2 : 0.f;
+            t = t < 0.f ? 0.f : (t > 1.f ? 1.f : t);
+            float dx = p.x - (a.x + ab.x * t), dy = p.y - (a.y + ab.y * t);
+            float d2 = dx * dx + dy * dy;
+            if (d2 < bestD2) { bestD2 = d2; best = i; }
+        }
+        return best;
+    }
+
     Link::~Link() {
+        if (m_inf) {
+            if (m_inf->getDraggedLink() == this) m_inf->setDraggedLink(nullptr);
+            if (m_inf->getHoveredLink() == this) m_inf->hoveredLink(nullptr);
+        }
         m_left->deleteLink(this);
     }
 
@@ -303,7 +393,10 @@ namespace ImFlow {
         draw_list->ChannelsMerge();
 
         // Box (rubber-band) selection: drag on empty canvas to select nodes in the rect.
+        // (m_hoveredLink / m_draggedLink hold last frame's link state, so a click that lands
+        // on a link edits the link instead of starting a box-select.)
         if (!m_disabled && !m_dragOut && !m_draggingNode && !m_hovering && !m_boxSelecting
+            && !m_hoveredLink && !m_draggedLink
             && ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && on_free_space()) {
             m_boxSelecting = true;
             m_boxSelectStart = ImGui::GetMousePos();
@@ -327,7 +420,9 @@ namespace ImFlow {
 
         for (auto &node: m_nodes) { node.second->updatePublicStatus(); }
 
-        // Update and draw links
+        // Update and draw links. m_hoveredLink is recomputed here each frame; box-select
+        // (above) reads the value left from the previous frame.
+        m_hoveredLink = nullptr;
         for (auto &l: m_links) {
 		if(!l.expired()){
 			l.lock()->m_inf = this;

@@ -32,40 +32,27 @@ namespace ImFlow
     inline static void smart_bezier(const ImVec2& p1, const ImVec2& p2, ImU32 color, float thickness);
 
     /**
-     * @brief <BR>Draw a smart_bezier whose colour fades from c1 (at p1) to c2 (at p2)
-     * @param p1 Starting point
-     * @param p2 Ending point
-     * @param c1 Colour at the start
-     * @param c2 Colour at the end
-     * @param thickness Thickness of the curve
+     * @brief <BR>Sample a link's routed path into a polyline (shared by all renderers + the collider)
+     * @details With no waypoints this is the automatic smart route; with waypoints the path
+     *          is a smooth Catmull-Rom spline through p1, the (screen-space) waypoints, and p2.
+     * @param p1 Starting point (output pin)
+     * @param p2 Ending point (input pin)
+     * @param mids Intermediate waypoints in screen space (may be empty)
+     * @param pts Output polyline
      */
-    inline static void smart_bezier_gradient(const ImVec2& p1, const ImVec2& p2, ImU32 c1, ImU32 c2, float thickness);
+    inline static void build_link_polyline(const ImVec2& p1, const ImVec2& p2, const std::vector<ImVec2>& mids, std::vector<ImVec2>& pts);
 
-    /**
-     * @brief <BR>Draw a smart_bezier as an animated, flowing dashed line
-     * @details Follows the exact same curve as smart_bezier, but renders it as a dashed
-     *          stroke whose dashes travel from p1 (source) towards p2 (destination).
-     * @param p1 Starting point (control-flow source)
-     * @param p2 Ending point (control-flow destination)
-     * @param color Color of the dashes
-     * @param thickness Thickness of the dashes
-     * @param phase Arc-length offset (in pixels) of the dash pattern; animate over time
-     */
-    inline static void smart_bezier_flow(const ImVec2& p1, const ImVec2& p2, ImU32 color, float thickness, float phase);
+    /** @brief <BR>Stroke a prebuilt link polyline with a single colour */
+    inline static void draw_link_solid(const std::vector<ImVec2>& pts, ImU32 color, float thickness);
 
-    /**
-     * @brief <BR>Collider checker for smart_bezier
-     * @details Projects the point "p" orthogonally onto the bezier curve and
-     *          checks if the distance is less than the given radius.
-     * @param p Point to be tested
-     * @param p1 Starting point of smart_bezier
-     * @param p2 Ending point of smart_bezier
-     * @param radius Lateral width of the hit box
-     * @return [TRUE] if "p" is inside the collider
-     *
-     * Intended to be used in union with smart_bezier();
-     */
-    inline static bool smart_bezier_collider(const ImVec2& p, const ImVec2& p1, const ImVec2& p2, float radius);
+    /** @brief <BR>Stroke a prebuilt link polyline fading from c1 (start) to c2 (end) */
+    inline static void draw_link_gradient(const std::vector<ImVec2>& pts, ImU32 c1, ImU32 c2, float thickness);
+
+    /** @brief <BR>Stroke a prebuilt link polyline as an animated dashed line (dashes flow with "phase") */
+    inline static void draw_link_flow(const std::vector<ImVec2>& pts, ImU32 color, float thickness, float phase);
+
+    /** @brief <BR>True if "p" is within "radius" of the prebuilt link polyline */
+    inline static bool polyline_collider(const ImVec2& p, const std::vector<ImVec2>& pts, float radius);
 
     // -----------------------------------------------------------------------------------------------------------------
     // CLASSES PRE-DEFINITIONS
@@ -249,12 +236,27 @@ namespace ImFlow
          * @return [TRUE] If the link is selected in the current frame
          */
         [[nodiscard]] bool isSelected() const { return m_selected; }
-    
+
+        /**
+         * @brief <BR>Editable routing waypoints, in grid coordinates
+         * @details Empty means the link uses its automatic route. Each point bends the wire;
+         *          click the link to add one, drag to move, double-click to remove.
+         */
+        std::vector<ImVec2>& waypoints() { return m_waypoints; }
+        [[nodiscard]] const std::vector<ImVec2>& waypoints() const { return m_waypoints; }
+
         Pin* m_left;
         Pin* m_right;
         ImNodeFlow* m_inf;
         bool m_hovered = false;
         bool m_selected = false;
+        std::vector<ImVec2> m_waypoints;
+        int m_draggedWaypoint = -1;
+
+    private:
+        // Index of the control segment (start, waypoints..., end) nearest to "p"; also the
+        // insertion index for a new waypoint.
+        static int nearestControlSegment(const ImVec2& p, const ImVec2& start, const std::vector<ImVec2>& mids, const ImVec2& end);
     };
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -509,6 +511,15 @@ namespace ImFlow
          */
         void hoveredNode(BaseNode* hovering) { m_hoveredNode = hovering; }
 
+        /// @brief Link whose waypoint is currently being dragged (null when none).
+        [[nodiscard]] Link* getDraggedLink() const { return m_draggedLink; }
+        void setDraggedLink(Link* l) { m_draggedLink = l; }
+        /// @brief Link hovered this frame (its body or a waypoint handle); null when none.
+        [[nodiscard]] Link* getHoveredLink() const { return m_hoveredLink; }
+        void hoveredLink(Link* l) { m_hoveredLink = l; }
+        /// @brief Pin currently being dragged out into a new link (null when none).
+        [[nodiscard]] Pin* getDragOut() const { return m_dragOut; }
+
         /**
          * @brief <BR>Convert coordinates from screen to grid
          * @param p Point in screen coordinates to be converted
@@ -567,6 +578,9 @@ namespace ImFlow
         Pin* m_hovering = nullptr;
         Pin* m_dragOut = nullptr;
 	bool m_disabled = false;
+
+        Link* m_draggedLink = nullptr; // link with a waypoint being dragged
+        Link* m_hoveredLink = nullptr; // link hovered this frame (body or handle)
 
         bool m_boxSelecting = false;
         ImVec2 m_boxSelectStart;
