@@ -97,9 +97,32 @@ namespace ImFlow
         }
     }
 
-    inline void build_link_polyline(const ImVec2& p1, const ImVec2& p2, const std::vector<ImVec2>& mids, std::vector<ImVec2>& pts)
+    // Facing-aware cubic, used when an endpoint is mirrored so the wire leaves/arrives on the
+    // side the pin actually points to (otherwise the smart route bulges the wrong way).
+    inline void build_facing_polyline(const ImVec2& p1, const ImVec2& p2, float outDir, float inDir, std::vector<ImVec2>& pts)
     {
-        if (mids.empty()) { build_smart_polyline(p1, p2, pts); return; }
+        pts.clear();
+        float distance = sqrtf((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y));
+        float d = fmaxf(45.0f, distance * 0.5f);
+        ImVec2 c1 = p1 + ImVec2(outDir * d, 0.f);
+        ImVec2 c2 = p2 + ImVec2(inDir * d, 0.f);
+
+        auto cubic = [](const ImVec2& a, const ImVec2& b, const ImVec2& c, const ImVec2& dd, float t) {
+            float u = 1.f - t, w0 = u*u*u, w1 = 3*u*u*t, w2 = 3*u*t*t, w3 = t*t*t;
+            return ImVec2(w0*a.x + w1*b.x + w2*c.x + w3*dd.x, w0*a.y + w1*b.y + w2*c.y + w3*dd.y);
+        };
+        const int SEG = 24;
+        for (int i = 0; i <= SEG; ++i) pts.push_back(cubic(p1, c1, c2, p2, (float)i / SEG));
+    }
+
+    inline void build_link_polyline(const ImVec2& p1, const ImVec2& p2, const std::vector<ImVec2>& mids, std::vector<ImVec2>& pts, float outDir, float inDir)
+    {
+        if (mids.empty()) {
+            // Default facings (output right, input left) keep the original smart route.
+            if (outDir > 0.f && inDir < 0.f) build_smart_polyline(p1, p2, pts);
+            else                             build_facing_polyline(p1, p2, outDir, inDir, pts);
+            return;
+        }
 
         // Smooth Catmull-Rom spline through start, the waypoints, and end (the curve passes
         // through every control point, so dragging a waypoint pulls the wire to it).
@@ -411,20 +434,38 @@ namespace ImFlow
     // -----------------------------------------------------------------------------------------------------------------
     // PIN
 
+    // Triangle socket (3-gon), drawn so it can point left or right. Used for the logic pins
+    // of a mirrored node, where the default right-pointing n-gon would face the wrong way.
+    inline void draw_socket_triangle(ImDrawList* dl, const ImVec2& c, float r, ImU32 col, float thickness, bool pointLeft)
+    {
+        float dir = pointLeft ? -1.0f : 1.0f;
+        ImVec2 v0(c.x + dir * r,         c.y);
+        ImVec2 v1(c.x - dir * 0.5f * r,  c.y + 0.8660254f * r);
+        ImVec2 v2(c.x - dir * 0.5f * r,  c.y - 0.8660254f * r);
+        if (thickness <= 0.0f) dl->AddTriangleFilled(v0, v1, v2, col);
+        else                   dl->AddTriangle(v0, v1, v2, col, thickness);
+    }
+
     inline void Pin::drawSocket()
     {
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         ImVec2 tl = pinPoint() - ImVec2(m_style->socket_radius, m_style->socket_radius);
         ImVec2 br = pinPoint() + ImVec2(m_style->socket_radius, m_style->socket_radius);
 
+        // Mirrored node + triangle (logic) pin: draw the arrow pointing the other way.
+        bool flipTri = (m_style->socket_shape == 3) && m_parent && m_parent->isMirrored();
+
         if (isConnected())
-            draw_list->AddCircleFilled(pinPoint(), m_style->socket_connected_radius, m_style->color, m_style->socket_shape);
+        {
+            if (flipTri) draw_socket_triangle(draw_list, pinPoint(), m_style->socket_connected_radius, m_style->color, -1.0f, true);
+            else         draw_list->AddCircleFilled(pinPoint(), m_style->socket_connected_radius, m_style->color, m_style->socket_shape);
+        }
         else
         {
-            if (ImGui::IsItemHovered() || ImGui::IsMouseHoveringRect(tl, br))
-                draw_list->AddCircle(pinPoint(), m_style->socket_hovered_radius, m_style->color, m_style->socket_shape, m_style->socket_thickness);
-            else
-                draw_list->AddCircle(pinPoint(), m_style->socket_radius, m_style->color, m_style->socket_shape, m_style->socket_thickness);
+            float r = (ImGui::IsItemHovered() || ImGui::IsMouseHoveringRect(tl, br))
+                      ? m_style->socket_hovered_radius : m_style->socket_radius;
+            if (flipTri) draw_socket_triangle(draw_list, pinPoint(), r, m_style->color, m_style->socket_thickness, true);
+            else         draw_list->AddCircle(pinPoint(), r, m_style->color, m_style->socket_shape, m_style->socket_thickness);
         }
 
         if (ImGui::IsMouseHoveringRect(tl, br))

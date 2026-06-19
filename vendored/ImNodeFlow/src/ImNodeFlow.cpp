@@ -17,8 +17,14 @@ namespace ImFlow {
         mids.reserve(m_waypoints.size());
         for (const auto& w : m_waypoints) mids.push_back(m_inf->grid2screen(w));
 
+        // A pin on a mirrored node faces the opposite way, so the wire must leave/arrive there.
+        bool leftMir = m_left->getParent() && m_left->getParent()->isMirrored();
+        bool rightMir = m_right->getParent() && m_right->getParent()->isMirrored();
+        float outDir = leftMir ? -1.0f : 1.0f;
+        float inDir = rightMir ? 1.0f : -1.0f;
+
         std::vector<ImVec2> pts;
-        build_link_polyline(start, end, mids, pts);
+        build_link_polyline(start, end, mids, pts, outDir, inDir);
 
         if (!ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             m_selected = false;
@@ -166,72 +172,87 @@ namespace ImFlow {
         float headerH = ImGui::GetItemRectSize().y;
         float titleW = ImGui::GetItemRectSize().x;
 
-        // Inputs
-        if (!m_ins.empty()) {
-            ImGui::BeginGroup();
+        // Mirror the node when its logic input is fed from a node to our right, so the
+        // control wire doesn't have to wrap back around. Node centres are compared (those
+        // don't move when mirrored, so the decision is stable).
+        m_mirrored = false;
+        {
+            float myCenterX = m_pos.x + m_size.x * 0.5f;
             for (auto &p: m_ins) {
-                p->setPos(ImGui::GetCursorPos());
-                p->update();
-            }
-            for (auto &p: m_dynamicIns) {
-                if (p.first == 1) {
-                    p.second->setPos(ImGui::GetCursorPos());
-                    p.second->update();
-                    p.first = 0;
+                if (p->getStyle()->socket_shape != 3) continue; // logic (triangle) inputs only
+                for (auto &wl: p->getLinks()) {
+                    if (auto l = wl.lock()) {
+                        BaseNode* src = l->left() ? l->left()->getParent() : nullptr;
+                        if (src && src->getPos().x + src->getSize().x * 0.5f > myCenterX)
+                            m_mirrored = true;
+                        break;
+                    }
                 }
+                break; // the first logic input decides
+            }
+        }
+
+        // A node renders as [left column] [content] [right column]. Normally that's
+        // inputs | content | outputs; when mirrored the two pin columns swap sides.
+        float nodeW = titleW > m_size.x ? titleW : m_size.x; // full node width (incl. drawBottom)
+
+        // Left column: pins flow flush against the node's left edge.
+        auto drawLeftColumn = [&](std::vector<std::shared_ptr<Pin>>& statics,
+                                  std::vector<std::pair<int, std::shared_ptr<Pin>>>& dyn, bool isInput) {
+            ImGui::BeginGroup();
+            for (auto &p: statics) { p->setPos(ImGui::GetCursorPos()); p->update(); }
+            for (auto &p: dyn) {
+                if (isInput && p.first != 1) continue;
+                p.second->setPos(ImGui::GetCursorPos());
+                p.second->update();
+                if (isInput) p.first = 0; else p.first -= 1;
             }
             ImGui::EndGroup();
+        };
+
+        // Right column: pins are right-aligned to the node's right edge.
+        auto drawRightColumn = [&](std::vector<std::shared_ptr<Pin>>& statics,
+                                   std::vector<std::pair<int, std::shared_ptr<Pin>>>& dyn, bool isInput) {
+            float maxW = 0.0f;
+            for (auto &p: statics) maxW = std::max(maxW, p->calcWidth());
+            for (auto &p: dyn) maxW = std::max(maxW, p.second->calcWidth());
+            auto place = [&](Pin* pin) {
+                // FIXME: This looks horrible (inherited from the original output layout)
+                if ((m_pos + ImVec2(nodeW, 0) + m_inf->getGrid().scroll()).x <
+                    ImGui::GetCursorPos().x + ImGui::GetWindowPos().x + maxW)
+                    pin->setPos(ImGui::GetCursorPos() + ImGui::GetWindowPos() + ImVec2(maxW - pin->calcWidth(), 0.f));
+                else
+                    pin->setPos(ImVec2((m_pos + ImVec2(nodeW - pin->calcWidth(), 0) + m_inf->getGrid().scroll()).x,
+                                       ImGui::GetCursorPos().y + ImGui::GetWindowPos().y));
+            };
+            ImGui::BeginGroup();
+            for (auto &p: statics) { place(p.get()); p->update(); }
+            for (auto &p: dyn) {
+                if (isInput && p.first != 1) continue;
+                place(p.second.get());
+                p.second->update();
+                if (isInput) p.first = 0; else p.first -= 1;
+            }
+            ImGui::EndGroup();
+        };
+
+        std::vector<std::shared_ptr<Pin>>& leftStatics = m_mirrored ? m_outs : m_ins;
+        auto& leftDyn  = m_mirrored ? m_dynamicOuts : m_dynamicIns;
+        std::vector<std::shared_ptr<Pin>>& rightStatics = m_mirrored ? m_ins : m_outs;
+        auto& rightDyn = m_mirrored ? m_dynamicIns : m_dynamicOuts;
+
+        if (!leftStatics.empty()) {
+            drawLeftColumn(leftStatics, leftDyn, !m_mirrored);
             ImGui::SameLine();
         }
 
-        // Content
         ImGui::BeginGroup();
         draw();
         ImGui::Dummy(ImVec2(0.f, 0.f));
         ImGui::EndGroup();
         ImGui::SameLine();
 
-        // Outputs
-        float maxW = 0.0f;
-        for (auto &p: m_outs) {
-            float w = p->calcWidth();
-            if (w > maxW)
-                maxW = w;
-        }
-        for (auto &p: m_dynamicOuts) {
-            float w = p.second->calcWidth();
-            if (w > maxW)
-                maxW = w;
-        }
-        // Align outputs to the full node width (incl. drawBottom), from last frame's
-        // m_size, so a wide bottom prop pushes them to the real right edge.
-        float nodeW = titleW > m_size.x ? titleW : m_size.x;
-        ImGui::BeginGroup();
-        for (auto &p: m_outs) {
-            // FIXME: This looks horrible
-            if ((m_pos + ImVec2(nodeW, 0) + m_inf->getGrid().scroll()).x <
-                ImGui::GetCursorPos().x + ImGui::GetWindowPos().x + maxW)
-                p->setPos(ImGui::GetCursorPos() + ImGui::GetWindowPos() + ImVec2(maxW - p->calcWidth(), 0.f));
-            else
-                p->setPos(ImVec2((m_pos + ImVec2(nodeW - p->calcWidth(), 0) + m_inf->getGrid().scroll()).x,
-                                 ImGui::GetCursorPos().y + ImGui::GetWindowPos().y));
-            p->update();
-        }
-        for (auto &p: m_dynamicOuts) {
-            // FIXME: This looks horrible
-            if ((m_pos + ImVec2(nodeW, 0) + m_inf->getGrid().scroll()).x <
-                ImGui::GetCursorPos().x + ImGui::GetWindowPos().x + maxW)
-                p.second->setPos(
-                        ImGui::GetCursorPos() + ImGui::GetWindowPos() + ImVec2(maxW - p.second->calcWidth(), 0.f));
-            else
-                p.second->setPos(
-                        ImVec2((m_pos + ImVec2(nodeW - p.second->calcWidth(), 0) + m_inf->getGrid().scroll()).x,
-                               ImGui::GetCursorPos().y + ImGui::GetWindowPos().y));
-            p.second->update();
-            p.first -= 1;
-        }
-
-        ImGui::EndGroup();
+        drawRightColumn(rightStatics, rightDyn, m_mirrored);
 
         // Full-width content under the pin rows, flush with the node's left edge.
         drawBottom();

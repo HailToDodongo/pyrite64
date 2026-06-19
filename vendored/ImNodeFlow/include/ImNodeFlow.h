@@ -39,8 +39,10 @@ namespace ImFlow
      * @param p2 Ending point (input pin)
      * @param mids Intermediate waypoints in screen space (may be empty)
      * @param pts Output polyline
+     * @param outDir Horizontal facing of the output pin (+1 exits right, -1 exits left when mirrored)
+     * @param inDir Horizontal facing of the input pin (-1 enters from the left, +1 from the right when mirrored)
      */
-    inline static void build_link_polyline(const ImVec2& p1, const ImVec2& p2, const std::vector<ImVec2>& mids, std::vector<ImVec2>& pts);
+    inline static void build_link_polyline(const ImVec2& p1, const ImVec2& p2, const std::vector<ImVec2>& mids, std::vector<ImVec2>& pts, float outDir = 1.0f, float inDir = -1.0f);
 
     /** @brief <BR>Stroke a prebuilt link polyline with a single colour */
     inline static void draw_link_solid(const std::vector<ImVec2>& pts, ImU32 color, float thickness);
@@ -929,7 +931,14 @@ namespace ImFlow
          * @brief <BR>Update the isSelected status of the node
          */
         void updatePublicStatus() { m_selected = m_selectedNext; }
-    
+
+        /**
+         * @brief <BR>Mirrored layout status
+         * @return [TRUE] if the node draws inputs on the right and outputs on the left
+         *         (used when its logic flows in from a node on the right)
+         */
+        [[nodiscard]] bool isMirrored() const { return m_mirrored; }
+
         NodeUID m_uid = 0;
         std::string m_title;
         ImVec2 m_pos, m_posTarget;
@@ -940,6 +949,7 @@ namespace ImFlow
         bool m_dragged = false;
         bool m_destroyed = false;
 	bool m_indestructable = false;
+        bool m_mirrored = false;
 
         std::vector<std::shared_ptr<Pin>> m_ins;
         std::vector<std::pair<int, std::shared_ptr<Pin>>> m_dynamicIns;
@@ -1221,9 +1231,15 @@ namespace ImFlow
          * @brief <BR>Get pin's link attachment point (socket)
          * @return Grid coordinates to the attachment point between the link and the pin's socket
          */
-        ImVec2 pinPoint() override { return m_pos + ImVec2(-m_style->extra.socket_padding, m_size.y / 2); }
+        ImVec2 pinPoint() override {
+            // Mirrored node: the input socket sits on the node's right edge instead of the left.
+            float pad = m_style->extra.socket_padding;
+            if (m_parent && m_parent->isMirrored())
+                return m_pos + ImVec2(m_size.x + pad, m_size.y / 2);
+            return m_pos + ImVec2(-pad, m_size.y / 2);
+        }
 
-    
+
 	std::vector<std::shared_ptr<Link>> m_links;
         std::function<bool(Pin*, Pin*)> m_filter;
         bool m_allowSelfConnection = false;
@@ -1294,7 +1310,13 @@ namespace ImFlow
          * @brief <BR>Get pin's link attachment point (socket)
          * @return Grid coordinates to the attachment point between the link and the pin's socket
          */
-        ImVec2 pinPoint() override { return m_pos + ImVec2(m_size.x + m_style->extra.socket_padding, m_size.y / 2); }
+        ImVec2 pinPoint() override {
+            // Mirrored node: the output socket sits on the node's left edge instead of the right.
+            float pad = m_style->extra.socket_padding;
+            if (m_parent && m_parent->isMirrored())
+                return m_pos + ImVec2(-pad, m_size.y / 2);
+            return m_pos + ImVec2(m_size.x + pad, m_size.y / 2);
+        }
 
         /**
          * @brief <BR>Get pin's data type (aka: \<T>)
