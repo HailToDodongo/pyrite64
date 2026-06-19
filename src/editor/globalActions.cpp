@@ -10,6 +10,7 @@
 #include "../utils/logger.h"
 #include "../context.h"
 #include "../build/projectBuilder.h"
+#include "../project/graph/nodeRegistry.h"
 #include "../utils/fs.h"
 #include "../utils/json.h"
 #include "../utils/proc.h"
@@ -27,6 +28,8 @@ namespace Editor::Actions
        UndoRedo::getHistory().clear();
        try {
          ctx.project = new Project::Project(path);
+         // Load this project's custom node definitions (<project>/nodes/*.js).
+         Project::Graph::Node::reloadSpecs(ctx.project->getPath() + "/nodes");
          if(ctx.project && !ctx.project->getScenes().getEntries().empty()) {
            ctx.project->getScenes().loadScene(ctx.project->conf.sceneIdLastOpened);
          }

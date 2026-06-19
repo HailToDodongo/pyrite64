@@ -7,6 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(QJS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(QJS_BUILD_CLI_STATIC OFF CACHE BOOL "" FORCE)
+set(QJS_BUILD_LIBC OFF CACHE BOOL "" FORCE)
+add_subdirectory(vendored/quickjs-ng EXCLUDE_FROM_ALL)
+
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
     message(FATAL_ERROR
         "In-source builds are disabled.\n"
@@ -251,7 +256,15 @@ add_executable(pyrite64 src/main.cpp
         src/project/component/shared/materialInstance.cpp
         src/project/component/shared/meshFilter.cpp
         src/project/graph/nodes/baseNode.h
-        src/project/graph/nodes/nodeWait.h
+        src/project/graph/nodes/nodeSpec.h
+        src/project/graph/nodes/scriptNode.h
+        src/project/graph/nodes/scriptNode.cpp
+        src/project/graph/nodeRegistry.h
+        src/project/graph/nodeRegistry.cpp
+        src/project/graph/jsNodeHost.h
+        src/project/graph/jsNodeHost.cpp
+        src/project/graph/valueTypes.h
+        src/project/graph/valueTypes.cpp
         src/project/graph/graph.h
         src/project/graph/graph.cpp
         src/build/nodeGraphBuilder.cpp
@@ -308,6 +321,7 @@ target_include_directories(pyrite64 PRIVATE
     vendored/tiny3d/tools/gltf_importer/src/lib
     vendored/libdragon
     vendored/SDL_shadercross/include
+    vendored/quickjs-ng
     src/n64
     n64
 )
@@ -340,6 +354,7 @@ target_link_libraries(pyrite64 PRIVATE
     SDL3::SDL3
     SDL3_image::SDL3_image
     glm::glm
+    qjs
 )
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")

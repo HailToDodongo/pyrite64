@@ -25,9 +25,9 @@
 [submodule "vendored/tiny-regex-c"]
 	path = vendored/tiny-regex-c
 	url = https://github.com/kokke/tiny-regex-c.git
-[submodule "vendored/ImNodeFlow"]
-	path = vendored/ImNodeFlow
-	url = https://github.com/HailToDodongo/ImNodeFlow.git
 [submodule "vendored/SDL_shadercross"]
 	path = vendored/SDL_shadercross
 	url = https://github.com/libsdl-org/SDL_shadercross.git
+[submodule "vendored/quickjs-ng"]
+	path = vendored/quickjs-ng
+	url = https://github.com/quickjs-ng/quickjs.git

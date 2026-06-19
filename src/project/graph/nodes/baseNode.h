@@ -4,10 +4,12 @@
 */
 #pragma once
 
+#include <functional>
 #include "ImNodeFlow.h"
 #include "json.hpp"
 #include "IconsMaterialDesignIcons.h"
 #include "../../../utils/string.h"
+#include "../valueTypes.h"
 #include "imgui/misc/cpp/imgui_stdlib.h"
 
 namespace Project::Graph
@@ -25,6 +27,47 @@ namespace Project::Graph
     std::vector<VarDef> vars{};
     std::vector<uint64_t> *outUUIDs{nullptr};
     std::vector<uint64_t> *inValUUIDs{nullptr};
+    // Dead-end output: "return;", or for a repeatable graph yield + goto Start.
+    std::string flowEnd{"return;"};
+    // Value-input type ids / inline-field literals (value-pin order).
+    std::vector<std::string> *inValTypes{nullptr};
+    std::vector<std::string> *inValFallbacks{nullptr};
+
+    // Back-propagation resolvers, set by Graph::build.
+    std::function<std::string(uint64_t)> valueResolver{};
+    std::function<std::string(uint64_t)> valueTypeResolver{};
+    // Graph variables (Set/Get nodes): lvalue expression and type id by name.
+    std::function<std::string(const std::string&)> varLValue{};
+    std::function<std::string(const std::string&)> varTypeOf{};
+
+    bool hasValueInput(size_t i) const {
+      return inValUUIDs && i < inValUUIDs->size() && (*inValUUIDs)[i] != 0;
+    }
+
+    std::string inputType(size_t i) const {
+      return (inValTypes && i < inValTypes->size()) ? (*inValTypes)[i] : std::string{};
+    }
+    std::string inputCType(size_t i) const {
+      return Node::cTypeOf(inputType(i));
+    }
+
+    // Resolves value input 'i' to a C++ expression (converted to its type). When
+    // unconnected: 'fallback', else its inline-field literal, else a typed zero.
+    std::string inputExpr(size_t i, const std::string &fallback = "") {
+      if(hasValueInput(i) && valueResolver) {
+        uint64_t producer = (*inValUUIDs)[i];
+        std::string expr = valueResolver(producer);
+        std::string from = valueTypeResolver ? valueTypeResolver(producer) : std::string{};
+        return Node::convertExpr(from, inputType(i), expr);
+      }
+      if(!fallback.empty())return fallback;
+
+      if(inValFallbacks && i < inValFallbacks->size() && !(*inValFallbacks)[i].empty()) {
+        return (*inValFallbacks)[i];
+      }
+      std::string t = inputType(i);
+      return t.empty() ? std::string{"0"} : (Node::cTypeOf(t) + "{}");
+    }
 
     inline std::string toStr(auto value)
     {
@@ -48,13 +91,13 @@ namespace Project::Graph
 
     BuildCtx& setVar(const std::string &varName, auto value)
     {
-      source += "    " + varName + " = " + std::to_string(value) + ";\n";
+      source += "    " + varName + " = " + toStr(value) + ";\n";
       return *this;
     }
 
     BuildCtx& incrVar(const std::string &varName, auto value)
     {
-      source += "    " + varName + " += " + std::to_string(value) + ";\n";
+      source += "    " + varName + " += " + toStr(value) + ";\n";
       return *this;
     }
 
@@ -70,16 +113,20 @@ namespace Project::Graph
       return varName;
     }
 
+    // Declares a persistent variable once; duplicate names are ignored.
+    BuildCtx& declareVar(const std::string &type, const std::string &name, auto initVal) {
+      for(const auto &v : vars) if(v.name == name) return *this;
+      vars.push_back(VarDef{type, name, toStr(initVal)});
+      return *this;
+    }
+
     BuildCtx& jump(uint32_t outIndex) {
-      if(outUUIDs && outIndex < outUUIDs->size()) {
-        auto uuidOut = (*outUUIDs)[outIndex];
-        if(uuidOut) {
-          source += "    goto NODE_" + Utils::toHex64(uuidOut) + ";\n";
-        } else {
-          source += "    return;\n";
-        }
+      // An unconnected (or out-of-range) output ends this execution path (flowEnd).
+      uint64_t uuidOut = (outUUIDs && outIndex < outUUIDs->size()) ? (*outUUIDs)[outIndex] : 0;
+      if(uuidOut) {
+        source += "    goto NODE_" + Utils::toHex64(uuidOut) + ";\n";
       } else {
-        source += "    static_assert(false, \"Missing output UUID for jump\");\n";
+        source += "    " + flowEnd + "\n";
       }
       return *this;
     }
@@ -103,11 +150,60 @@ namespace Project::Graph::Node
   {
     public:
       uint64_t uuid{};
-      uint32_t type{};
-      std::vector<uint8_t> valInputTypes{};
+      // Per-pin value-type ids in pin order, logic pins use Node::LOGIC_TYPE.
+      std::vector<std::string> inTypes{};
+      std::vector<std::string> outTypes{};
+
+      // Whether the input pin at overall index 'i' is a value pin.
+      bool isValueInput(size_t i) const {
+        return i < inTypes.size() && inTypes[i] != "logic";
+      }
+
+      // Type ids of value inputs only, in value-pin order.
+      std::vector<std::string> valueInputTypes() const {
+        std::vector<std::string> out{};
+        for(const auto &t : inTypes) if(t != "logic") out.push_back(t);
+        return out;
+      }
+
+      // Type id of this node's first value output (its back-propagated value).
+      std::string firstValueOutType() const {
+        for(const auto &t : outTypes) if(t != "logic") return t;
+        return {};
+      }
+
+      // Value-type id of an output pin (by pointer); empty if not found.
+      std::string outPinType(const ImFlow::Pin* p) {
+        auto &outs = getOuts();
+        for(size_t i = 0; i < outs.size(); ++i) {
+          if(outs[i].get() == p) return i < outTypes.size() ? outTypes[i] : std::string{};
+        }
+        return {};
+      }
+
+      // Value-type id of an input pin (by pointer); empty if not found.
+      std::string inPinType(const ImFlow::Pin* p) {
+        auto &ins = getIns();
+        for(size_t i = 0; i < ins.size(); ++i) {
+          if(ins[i].get() == p) return i < inTypes.size() ? inTypes[i] : std::string{};
+        }
+        return {};
+      }
 
       virtual void serialize(nlohmann::json &j) = 0;
       virtual void deserialize(nlohmann::json &j) = 0;
       virtual void build(BuildCtx &ctx) = 0;
+      // Resolve dynamic pin types from the building graph before codegen (no-op by default).
+      virtual void prepareBuild(BuildCtx &ctx) { (void)ctx; }
+
+      // Stable type identifier (e.g. "core.wait"), used for (de)serialization.
+      virtual std::string typeId() const { return {}; }
+      // Whether this is the graph entry node (emitted first during build).
+      virtual bool isEntry() const { return false; }
+      // Value-pin expression (pull-based); empty for logic-only nodes.
+      virtual std::string value(BuildCtx &ctx) { (void)ctx; return {}; }
+
+      // Inline-field literal of each value input (value-pin order).
+      virtual std::vector<std::string> valueInputLiterals() { return {}; }
   };
 }

@@ -34,8 +34,8 @@ namespace P64::NodeGraph
       Object *object{};
       uint32_t args[2]{};
       uint16_t objRefs[MAX_OBJ_REFS]{};
+      void* vars{};
       uint16_t asset{};
-      uint8_t repeatable{};
 
       Instance() = default;
       ~Instance();

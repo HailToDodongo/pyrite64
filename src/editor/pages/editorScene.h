@@ -46,6 +46,13 @@ namespace Editor
       uint64_t pendingNodeEditorCloseUUID{0};
       bool pendingNodeEditorClosePopup{false};
 
+      // Deferred until a project loads (Scene is constructed before the project opens).
+      std::vector<uint64_t> pendingRestoreModels{};
+      std::vector<uint64_t> pendingRestoreGraphs{};
+      bool windowsRestored{false};
+
+      void restoreWindows();
+
     public:
       Scene();
       ~Scene();

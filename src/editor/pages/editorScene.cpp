@@ -48,9 +48,10 @@ Editor::Scene::Scene()
   {
     auto json = Utils::JSON::loadFile(Utils::Proc::getAppDataPath() / "editorScene.json");
     if(json.contains("winModels")) {
-      for(const auto& assetUUID : json["winModels"]) {
-        openModelEditor(assetUUID.get<uint64_t>());
-      }
+      for(const auto& assetUUID : json["winModels"]) pendingRestoreModels.push_back(assetUUID.get<uint64_t>());
+    }
+    if(json.contains("winGraphs")) {
+      for(const auto& assetUUID : json["winGraphs"]) pendingRestoreGraphs.push_back(assetUUID.get<uint64_t>());
     }
   } catch(const std::exception& e) {}
 }
@@ -58,14 +59,37 @@ Editor::Scene::Scene()
 Editor::Scene::~Scene()
 {
   nlohmann::json conf{};
-  conf["winModels"] = nlohmann::json::array();
-  for(const auto& [assetUUID, _] : modelEditors) {
-    conf["winModels"].push_back(assetUUID);
+
+  // If restore never ran (no project loaded), keep the saved lists untouched.
+  if(windowsRestored) {
+    conf["winModels"] = nlohmann::json::array();
+    for(const auto& [assetUUID, _] : modelEditors) conf["winModels"].push_back(assetUUID);
+
+    conf["winGraphs"] = nlohmann::json::array();
+    for(const auto& nodeEditor : nodeEditors) {
+      if(nodeEditor && nodeEditor->getAssetUUID() != 0) conf["winGraphs"].push_back(nodeEditor->getAssetUUID());
+    }
+  } else {
+    conf["winModels"] = pendingRestoreModels;
+    conf["winGraphs"] = pendingRestoreGraphs;
   }
 
   Utils::FS::saveTextFile(Utils::Proc::getAppDataPath() / "editorScene.json", conf.dump(2));
 
   Editor::Actions::registerAction(Editor::Actions::Type::OPEN_NODE_GRAPH, nullptr);
+}
+
+void Editor::Scene::restoreWindows()
+{
+  windowsRestored = true;
+  for(auto uuid : pendingRestoreModels) openModelEditor(uuid);
+  for(auto uuid : pendingRestoreGraphs) {
+    if(ctx.project->getAssets().getEntryByUUID(uuid)) {
+      nodeEditors.push_back(std::make_shared<NodeEditor>(uuid));
+    }
+  }
+  pendingRestoreModels.clear();
+  pendingRestoreGraphs.clear();
 }
 
 void Editor::Scene::openModelEditor(uint64_t assetUUID)
@@ -80,6 +104,8 @@ void Editor::Scene::openModelEditor(uint64_t assetUUID)
 
 void Editor::Scene::draw()
 {
+  if(!windowsRestored && ctx.project) restoreWindows();
+
   float HEIGHT_TOP_BAR = 28_px;
   float HEIGHT_STATUS_BAR = 24_px;
 

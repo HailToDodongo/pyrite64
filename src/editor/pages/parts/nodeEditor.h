@@ -18,6 +18,14 @@ namespace Editor
       std::string trackedDirtyState{};
       bool dirty{false};
       bool isInit{false};
+      bool showVarsPanel{true};
+      std::string nodeMenuSearch{};
+      int nodeMenuFocusFrames{0};
+
+      void drawVariablesPanel();
+      void syncVariablePins();
+      void drawCreateMenu(ImFlow::Pin* pin);
+      void resetView();
 
     public:
       NodeEditor(uint64_t assetUUID);

@@ -22,6 +22,8 @@ namespace P64::NodeGraph
     GraphFunc func;
     uint32_t _padding;
     uint16_t stackSize;
+    uint16_t _pad2;
+    uint32_t varBytes; // size of the per-instance variable blob
   };
 
   void* load(const char* path)
@@ -38,7 +40,6 @@ void P64::NodeGraph::Instance::load(uint16_t assetIdx)
 {
   asset = assetIdx;
   graphDef = (GraphDef*)AssetManager::getByIndex(asset);
-  debugf("Stack-size: %d %d\n", asset, graphDef->stackSize);
   corot = coro_create(graphDef->func, this, graphDef->stackSize*2);
 }
 
@@ -50,7 +51,7 @@ P64::NodeGraph::Instance::~Instance()
   }
 }
 
-bool P64::NodeGraph::Instance::update(float deltaTime) {
+bool P64::NodeGraph::Instance::update([[maybe_unused]] float dt) {
   //debugf("Instance::update: %p\n", corot);
   if(!corot)return false;
 
@@ -64,7 +65,6 @@ bool P64::NodeGraph::Instance::update(float deltaTime) {
   {
     coro_destroy(corot);
     corot = nullptr;
-    if(repeatable)load(asset);
     return false;
   }
   return true;

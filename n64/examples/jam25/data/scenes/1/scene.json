@@ -491,7 +491,7 @@
         "propOverrides": {
           "11272843812465326562": "1:1.000000,1.000000,1.000000",
           "13460160539698755218": "2:1.000000,1.000000,1.000000,0.368627",
-          "13911321452997764027": "1:91.479706,83.864731,430.000000",
+          "13911321452997764027": "1:74.861908,4.833891,415.353027",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
         "proportionalScale": false,
@@ -509,6 +509,98 @@
         "selectable": true,
         "uuid": 2566546752,
         "uuidPrefab": 3372488998
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "",
+              "model": 14061694646240479583
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 17528814242325218933
+          },
+          {
+            "data": {
+              "maskRead": 0,
+              "maskWrite": 8,
+              "meshFilter": "",
+              "modelUUID": 14061694646240479583
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 3907054344854827222
+          },
+          {
+            "data": {
+              "asset": 11893390873308017345,
+              "autoRun": true,
+              "objRefs": {},
+              "varDefaults": {
+                "speed": 4.0,
+                "timer": 4.0
+              }
+            },
+            "id": 9,
+            "name": "Node Graph",
+            "uuid": 1520357154097024818
+          }
+        ],
+        "enabled": true,
+        "name": "Platform",
+        "pos": [
+          -30.0,
+          50.0,
+          269.98651123046875
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 338917100,
+        "uuidPrefab": 0
       },
       {
         "children": [
@@ -1391,9 +1483,9 @@
         "enabled": true,
         "name": "Platform (2)",
         "pos": [
+          407.4170837402344,
           130.0,
-          130.0,
-          260.0
+          58.23176574707031
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -1594,9 +1686,9 @@
         "enabled": true,
         "name": "New Object",
         "pos": [
-          30.408363342285156,
-          71.31510162353516,
-          328.38177490234375
+          170.88037109375,
+          71.31511688232422,
+          291.1807861328125
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -2403,6 +2495,98 @@
         ],
         "selectable": true,
         "uuid": 487645623,
+        "uuidPrefab": 0
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "lighting": true,
+                "prim": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "",
+              "model": 14061694646240479583
+            },
+            "id": 1,
+            "name": "Model",
+            "uuid": 17528814242325218933
+          },
+          {
+            "data": {
+              "maskRead": 0,
+              "maskWrite": 8,
+              "meshFilter": "",
+              "modelUUID": 14061694646240479583
+            },
+            "id": 4,
+            "name": "Collision-Mesh",
+            "uuid": 3907054344854827222
+          },
+          {
+            "data": {
+              "asset": 11893390873308017345,
+              "autoRun": true,
+              "objRefs": {},
+              "varDefaults": {
+                "speed": 0.20000000298023224,
+                "timer": 4.0
+              }
+            },
+            "id": 9,
+            "name": "Node Graph",
+            "uuid": 1520357154097024818
+          }
+        ],
+        "enabled": true,
+        "name": "Platform",
+        "pos": [
+          110.0,
+          50.0,
+          270.0
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "selectable": true,
+        "uuid": 2113304686,
         "uuidPrefab": 0
       }
     ],

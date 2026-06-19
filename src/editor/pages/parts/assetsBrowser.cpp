@@ -8,6 +8,7 @@
 #include "imgui_internal.h"
 #include "../../imgui/helper.h"
 #include "../../imgui/notification.h"
+#include "../../actions.h"
 #include "../../../context.h"
 #include "../../thumbnailCache.h"
 #include <algorithm>
@@ -458,8 +459,10 @@ void Editor::AssetsBrowser::draw() {
       ImGui::makeTabVisible("Asset");
     }
     if (isDblClick) {
-      if (!Utils::Proc::openFile(asset.path))
-      {
+      if (asset.type == FileType::NODE_GRAPH) {
+        // Node graphs open in the built-in graph editor, not an external text editor.
+        Editor::Actions::call(Editor::Actions::Type::OPEN_NODE_GRAPH, std::to_string(asset.getUUID()));
+      } else if (!Utils::Proc::openFile(asset.path)) {
         Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File. This may be due to WSL path conversion failure.");
       }
     }

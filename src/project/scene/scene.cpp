@@ -12,7 +12,7 @@
 
 #define __LIBDRAGON_N64SYS_H 1
 #define PhysicalAddr(a) (uint64_t)(a)
-#include "../graph/nodes/nodeObjDel.h"
+#include "../graph/nodes/baseNode.h"
 #include "include/rdpq_macros.h"
 #include "include/rdpq_mode.h"
 
