@@ -457,6 +457,8 @@ int main(int argc, char** argv)
 
       if(ctx.wantsProjectClose)
       {
+        // Remember this project's open windows before tearing it down (covers app exit too).
+        if(ctx.editorScene) ctx.editorScene->onProjectClosing();
         Editor::UndoRedo::getHistory().clear();
         delete ctx.project;
         ctx.project = nullptr;

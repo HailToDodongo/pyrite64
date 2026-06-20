@@ -24,6 +24,8 @@ namespace Editor::Actions
   {
     registerAction(Type::PROJECT_OPEN, [](const std::string &path) {
        Utils::Logger::log("Open Project: " + path);
+       // Remember the outgoing project's open windows before it is torn down.
+       if(ctx.editorScene && ctx.project) ctx.editorScene->onProjectClosing();
        delete ctx.project;
        UndoRedo::getHistory().clear();
        try {
