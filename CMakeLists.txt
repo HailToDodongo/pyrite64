@@ -173,6 +173,8 @@ add_executable(pyrite64 src/main.cpp
         src/editor/pages/parts/sceneInspector.cpp
         src/build/projectBuilder.h
         src/build/projectBuilder.cpp
+        src/build/romMetaBuilder.h
+        src/build/romMetaBuilder.cpp
         src/utils/fs.h
         src/utils/string.h
         src/utils/proc.h

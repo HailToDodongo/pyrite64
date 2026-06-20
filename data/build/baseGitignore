@@ -6,6 +6,7 @@ filesystem
 
 # Auto-generated files
 Makefile
+metadata
 
 # Pyrite64 files
 assets/p64

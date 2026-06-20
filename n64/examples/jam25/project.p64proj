@@ -8,9 +8,52 @@
   "collLayer6": "",
   "collLayer7": "",
   "editorVersion": "0.8.0",
+  "metadata": {
+    "enabled": true,
+    "langs": [
+      {
+        "ageRating": 0,
+        "author": "Max Bebök (HailToDodongo)",
+        "boxBack": 0,
+        "boxBottom": 0,
+        "boxFront": 13908194957252055199,
+        "boxLeft": 0,
+        "boxRight": 0,
+        "boxTop": 0,
+        "cartBack": 0,
+        "cartFront": 13908194957252055199,
+        "lang": "",
+        "longDesc": "Entry for the 2025 N64Brew Gamejam,\nand example project in Pyrite64",
+        "name": "Cathode Quest 64",
+        "osiLicense": "MIT",
+        "releaseDate": "2025-02-02",
+        "screenshots": [
+          15156507319343130028,
+          15057329411845743761,
+          14422345846972119908,
+          17841880217344052398
+        ],
+        "shortDesc": "Cathode Quest 64",
+        "website": "https://github.com/HailToDodongo/pyrite64"
+      }
+    ]
+  },
   "name": "Cathode Quest 64",
   "pathEmu": "ares",
   "pathN64Inst": "",
+  "romHeader": {
+    "category": 0,
+    "controllers": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "region": 0,
+    "regionFree": true,
+    "rtc": false,
+    "saveType": 3
+  },
   "romName": "gj25_cathode_quest",
   "sceneIdLastOpened": 1,
   "sceneIdOnBoot": 10,

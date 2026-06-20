@@ -58,6 +58,7 @@ $(BUILD_DIR)/$(ROM_NAME).dfs: $(assets_conv)
 $(BUILD_DIR)/$(ROM_NAME).elf: $(src:%.cpp=$(BUILD_DIR)/%.o) $(ENGINE_DIR)/build/engine.a
 
 $(ROM_NAME).z64: N64_ROM_TITLE="{{PROJECT_NAME}}"
+{{ROM_HEADER_FLAGS}}
 $(ROM_NAME).z64: $(BUILD_DIR)/$(ROM_NAME).dfs
 
 clean:
