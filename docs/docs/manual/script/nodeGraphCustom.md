@@ -111,6 +111,10 @@ valueType("u8", { name: "Byte", cType: "uint8_t", color: [200, 200, 90], default
 convert("u8", "i32", "(int32_t)({})");
 ```
 
+If a custom `cType` lives in your own header, have the nodes that emit it pull the header
+in with `ctx.include("<user/myType.h>")` during code generation (see the `ctx` table
+below) the generated file then includes it.
+
 ## Properties
 
 Properties are values edited directly on the node. Declare them in `props`, keyed by
@@ -182,6 +186,7 @@ methods to append C++ to the graph's generated `run()` function.
 | `ctx.setVar(name, value)` | `<name> = <value>;` |
 | `ctx.incrVar(name, value)` | `<name> += <value>;` |
 | `ctx.jump(outIndex)` | Continue execution at the node wired to output `outIndex`. |
+| `ctx.include(path)` | Add an `#include` to the generated file (e.g. for a custom value type's header). `path` is the text after `#include `, so pass the delimiters: `ctx.include("<user/myType.h>")` or `ctx.include('"local.h"')`. Duplicates (including the engine's own includes) are ignored. |
 | `ctx.inputExpr(valueIndex, fallback)` | A C++ expression for the value wired into value input `valueIndex`, converted to that input's declared type. When nothing is connected it yields the optional `fallback`, otherwise the input's inline field value (scalar inputs), or a typed zero (e.g. `fm_vec3_t{}`). |
 | `ctx.hasValueInput(valueIndex)` | Whether value input `valueIndex` is connected. |
 | `ctx.inputType(valueIndex)` | The type id of value input `valueIndex`. |
@@ -259,6 +264,34 @@ write a `build` that assigns `n.res()`, for example
 `ctx.globalVar("int32_t", n.res(), 0)`. Declare the global with the C++ type of the
 node's value output so back-propagation reads it back at the right type. Consumers then
 read it automatically.
+
+### A flow node that also returns a value
+
+`build` and `value` aren't either/or: a node can run as part of the control flow **and**
+expose a result. Give it both a logic output and a value output, and in `build` stash the
+result in `n.res()` (the node's persistent result variable). Do **not** add a `value`
+function: with none, anything reading the value output back-propagates to `n.res()`. This
+is the right shape for a side-effecting call whose return you want to use later (a dialog
+that returns the chosen option, a spawn that returns an id, ...):
+
+```js
+node({
+  id: "game.dialog",
+  name: icon("message-text-outline") + " Dialog",
+  inputs:  [logicIn()],
+  outputs: [logicOut(), valueOut("i32")], // continues the flow + yields a result
+  props: { msg: Str({ label: "Message" }) },
+  build(n, ctx) {
+    ctx.include("<user/systems/dialog.h>");
+    ctx.globalVar("int32_t", n.res(), 0);                          // declared once, up top
+    ctx.setVar(n.res(), `User::Dialog::showMessage("${n.msg}"_hash)`); // assigned in the flow
+  },
+});
+```
+
+Declare the result global with a default and assign it inside `build` (not via
+`ctx.globalVar(type, n.res(), expr)`), so the side-effecting call runs when the flow
+reaches the node, not once at the top of the graph.
 
 ## Helpers
 

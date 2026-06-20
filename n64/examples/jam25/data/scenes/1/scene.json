@@ -569,7 +569,8 @@
               "autoRun": true,
               "objRefs": {},
               "varDefaults": {
-                "speed": 4.0,
+                "height": 50.0,
+                "speed": 0.699999988079071,
                 "timer": 4.0
               }
             },
@@ -581,7 +582,7 @@
         "enabled": true,
         "name": "Platform",
         "pos": [
-          -30.0,
+          -30.000003814697266,
           50.0,
           269.98651123046875
         ],
@@ -2556,7 +2557,8 @@
               "autoRun": true,
               "objRefs": {},
               "varDefaults": {
-                "speed": 0.20000000298023224,
+                "height": 44.0,
+                "speed": 0.5,
                 "timer": 4.0
               }
             },

@@ -128,6 +128,10 @@ namespace
     if(g_buildCtx && argc >= 1) { int32_t i = 0; JS_ToInt32(c, &i, argv[0]); g_buildCtx->jump((uint32_t)i); }
     return JS_DupValue(c, self);
   }
+  JSValue js_include(JSContext* c, JSValueConst self, int argc, JSValueConst* argv) {
+    if(g_buildCtx && argc >= 1) g_buildCtx->include(jsStr(c, argv[0]));
+    return JS_DupValue(c, self);
+  }
   JSValue js_input_expr(JSContext* c, JSValueConst, int argc, JSValueConst* argv) {
     if(!g_buildCtx || argc < 1) return JS_NewString(c, "0");
     int32_t i = 0; JS_ToInt32(c, &i, argv[0]);
@@ -461,6 +465,7 @@ namespace Project::Graph::Js
     setFn(g_jctx, g_ctxObj, "globalVar",     js_global_var, 3);
     setFn(g_jctx, g_ctxObj, "declareVar",    js_declare_var, 3);
     setFn(g_jctx, g_ctxObj, "jump",          js_jump, 1);
+    setFn(g_jctx, g_ctxObj, "include",       js_include, 1);
     setFn(g_jctx, g_ctxObj, "inputExpr",     js_input_expr, 2);
     setFn(g_jctx, g_ctxObj, "hasValueInput", js_has_value_input, 1);
 

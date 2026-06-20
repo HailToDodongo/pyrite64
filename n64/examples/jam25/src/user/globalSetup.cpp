@@ -47,23 +47,6 @@ namespace P64::GlobalScript::C4F4D286D6CBAAAA
     User::ctx.controlledId = 1;
     User::Marker::init();
 
-    NodeGraph::registerFunction("ShowMessage"_crc32, User::Dialog::showMessage);
-
-    NodeGraph::registerFunction("FadeIn"_crc32, [](uint32_t val) {
-      User::ScreenFade::fadeIn(0, (float)val * (1.0f / 1000.0f));
-      return 1;
-    });
-
-    NodeGraph::registerFunction("FadeOut"_crc32, [](uint32_t val) {
-      User::ScreenFade::fadeOut(0, (float)val * (1.0f / 1000.0f));
-      return 1;
-    });
-
-    NodeGraph::registerFunction("SetBars"_crc32, [](uint32_t val) {
-      User::ctx.forceBars = val != 0;
-      return 1;
-    });
-
     // generate bayer matrix
     for(uint32_t y = 0; y < ditherDim; ++y)
     {

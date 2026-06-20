@@ -10,6 +10,7 @@
 #include <functional>
 #include <memory>
 #include <unordered_set>
+#include <algorithm>
 
 #include "nodeRegistry.h"
 #include "nodes/scriptNode.h"
@@ -433,22 +434,12 @@ namespace Project::Graph
       ? ("coro_yield(); inst->time += P64::VI::SwapChain::getDeltaTime(); goto NODE_" + Utils::toHex64(startUuid) + ";")
       : std::string{"return;"};
 
-    source += R"(#include <script/nodeGraph.h>)" "\n";
-    source += R"(#include <scene/object.h>)" "\n";
-    source += R"(#include <scene/scene.h>)" "\n";
-    source += R"(#include <vi/swapChain.h>)" "\n"; // Delta Time node reads the global frame delta
-    source += R"(#include <lib/logger.h>)" "\n";
-    source += "\n";
-
-    source += "namespace P64::NodeGraph::G" + Utils::toHex64(uuid) + " {\n";
-    source += R"(void run(void* arg) {)" "\n";
-
-    source += R"(  P64::NodeGraph::Instance* inst = (P64::NodeGraph::Instance*)arg; )" "\n";
-
     auto nodeLabel = [&](uint64_t uuid) {
       return "NODE_" + Utils::toHex64(uuid);
     };
 
+    // Run codegen first (building the body into nodeCtx.source), so nodes have a chance to
+    // request extra includes via ctx.include() before the include block is written.
     for(const auto &node : nodeVec)
     {
       nodeCtx.outUUIDs = &nodeOutgoingMap[node->uuid];
@@ -469,6 +460,24 @@ namespace Project::Graph
 
       nodeCtx.source += "  }\n";
     }
+
+    static const std::vector<std::string> baseIncludes = {
+      "<script/nodeGraph.h>", "<scene/object.h>", "<scene/scene.h>",
+      "<vi/swapChain.h>", // Delta Time node reads the global frame delta
+      "<lib/logger.h>",
+    };
+    for(const auto &inc : baseIncludes) source += "#include " + inc + "\n";
+    // Node-requested includes (e.g. custom value-type headers), skipping the base ones.
+    for(const auto &inc : nodeCtx.includes) {
+      if(std::find(baseIncludes.begin(), baseIncludes.end(), inc) == baseIncludes.end())
+        source += "#include " + inc + "\n";
+    }
+    source += "\n";
+
+    source += "namespace P64::NodeGraph::G" + Utils::toHex64(uuid) + " {\n";
+    source += R"(void run(void* arg) {)" "\n";
+
+    source += R"(  P64::NodeGraph::Instance* inst = (P64::NodeGraph::Instance*)arg; )" "\n";
 
     source += "\n// ==== GLOBAL VARS ==== //\n";
     for(auto &globalVar : nodeCtx.vars) {

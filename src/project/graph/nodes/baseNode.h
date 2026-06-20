@@ -5,6 +5,7 @@
 #pragma once
 
 #include <functional>
+#include <algorithm>
 #include "ImNodeFlow.h"
 #include "json.hpp"
 #include "IconsMaterialDesignIcons.h"
@@ -25,6 +26,9 @@ namespace Project::Graph
 
     std::string source{};
     std::vector<VarDef> vars{};
+    // Extra #include directives a node needs (e.g. for a custom value type's C++ header).
+    // Each entry is the text after "#include ", e.g. "<myType.h>".
+    std::vector<std::string> includes{};
     std::vector<uint64_t> *outUUIDs{nullptr};
     std::vector<uint64_t> *inValUUIDs{nullptr};
     // Dead-end output: "return;", or for a repeatable graph yield + goto Start.
@@ -133,6 +137,12 @@ namespace Project::Graph
 
     BuildCtx& line(const std::string &str) {
       source += "    " + str + "\n";
+      return *this;
+    }
+
+    BuildCtx& include(const std::string &path) {
+      if(std::find(includes.begin(), includes.end(), path) == includes.end())
+        includes.push_back(path);
       return *this;
     }
   };

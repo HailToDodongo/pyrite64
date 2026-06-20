@@ -28,8 +28,7 @@ namespace Editor::Actions
        UndoRedo::getHistory().clear();
        try {
          ctx.project = new Project::Project(path);
-         // Load this project's custom node definitions (<project>/nodes/*.js).
-         Project::Graph::Node::reloadSpecs(ctx.project->getPath() + "/nodes");
+         // Custom node definitions (<project>/nodes/*.js) are loaded by the Project ctor.
          if(ctx.project && !ctx.project->getScenes().getEntries().empty()) {
            ctx.project->getScenes().loadScene(ctx.project->conf.sceneIdLastOpened);
          }

@@ -49,6 +49,8 @@ namespace P64::NodeGraph
 
   typedef int(*UserFunc)(uint32_t);
 
+  [[deprecated("Use custom JS nodes instead")]]
   void registerFunction(uint32_t strCRC32, UserFunc fn);
+
   UserFunc getFunction(uint64_t uuid);
 }

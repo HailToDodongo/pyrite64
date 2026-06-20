@@ -107,7 +107,6 @@
         "children": [],
         "components": [],
         "enabled": true,
-        "id": 1,
         "name": "Title-Card",
         "pos": [
           -223.67893981933594,
@@ -212,7 +211,6 @@
           }
         ],
         "enabled": true,
-        "id": 2,
         "name": "Skybox",
         "pos": [
           881.8087768554688,
@@ -259,7 +257,6 @@
               }
             ],
             "enabled": true,
-            "id": 5,
             "name": "Ambient",
             "pos": [
               837.1200561523438,
@@ -286,7 +283,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 4,
         "name": "Lighting",
         "pos": [
           687.2054443359375,
@@ -365,7 +361,6 @@
           }
         ],
         "enabled": true,
-        "id": 3,
         "name": "Static Map",
         "pos": [
           0.0,
@@ -464,7 +459,6 @@
               }
             ],
             "enabled": true,
-            "id": 12,
             "name": "Box",
             "pos": [
               630.0,
@@ -494,7 +488,6 @@
                 "children": [],
                 "components": [],
                 "enabled": true,
-                "id": 9,
                 "name": "Coin (19)",
                 "pos": [
                   0.0,
@@ -591,32 +584,14 @@
                 "id": 8,
                 "name": "Culling",
                 "uuid": 8859718526900346609
-              },
-              {
-                "data": {
-                  "args": {
-                    "axisX": "1",
-                    "axisY": "0",
-                    "axisZ": "0",
-                    "radius": "1",
-                    "speed": "0.5",
-                    "texExpPack": "13383390974258263293",
-                    "type": "0"
-                  },
-                  "script": 14292327376580313433
-                },
-                "id": 0,
-                "name": "Code",
-                "uuid": 12795128468772524066
               }
             ],
             "enabled": true,
-            "id": 6,
             "name": "Platform Gap",
             "pos": [
-              -386.4417419433594,
+              -390.0,
               0.0,
-              10.080581665039063
+              10.0
             ],
             "propOverrides": {},
             "proportionalScale": false,
@@ -708,7 +683,6 @@
               }
             ],
             "enabled": true,
-            "id": 7,
             "name": "Map (9)",
             "pos": [
               14.739311218261719,
@@ -805,7 +779,6 @@
               }
             ],
             "enabled": true,
-            "id": 59,
             "name": "Box",
             "pos": [
               629.7677001953125,
@@ -835,7 +808,6 @@
                 "children": [],
                 "components": [],
                 "enabled": true,
-                "id": 93,
                 "name": "Coin (19)",
                 "pos": [
                   0.0,
@@ -867,7 +839,6 @@
                 "children": [],
                 "components": [],
                 "enabled": true,
-                "id": 103,
                 "name": "Coin (19)",
                 "pos": [
                   0.0,
@@ -967,29 +938,29 @@
               },
               {
                 "data": {
-                  "args": {
-                    "axisX": "0",
-                    "axisY": "0",
-                    "axisZ": "1",
-                    "radius": "1",
-                    "speed": "0.5",
-                    "texExpPack": "13383390974258263293",
-                    "type": "0"
-                  },
-                  "script": 14292327376580313433
+                  "asset": 2097926650889483589,
+                  "autoRun": true,
+                  "objRefs": {},
+                  "varDefaults": {
+                    "direction": [
+                      1.0,
+                      0.0,
+                      0.0
+                    ],
+                    "speed": 0.699999988079071
+                  }
                 },
-                "id": 0,
-                "name": "Code",
-                "uuid": 12795128468772524066
+                "id": 9,
+                "name": "Node Graph",
+                "uuid": 9489437334184677320
               }
             ],
             "enabled": true,
-            "id": 110,
             "name": "Platform Gap",
             "pos": [
-              -606.5125732421875,
+              -610.0,
               0.0,
-              10.080581665039063
+              10.0
             ],
             "propOverrides": {},
             "proportionalScale": false,
@@ -1014,7 +985,6 @@
                 "children": [],
                 "components": [],
                 "enabled": true,
-                "id": 94,
                 "name": "Coin (19)",
                 "pos": [
                   0.0,
@@ -1046,7 +1016,6 @@
                 "children": [],
                 "components": [],
                 "enabled": true,
-                "id": 97,
                 "name": "Coin (19)",
                 "pos": [
                   0.0,
@@ -1078,7 +1047,6 @@
                 "children": [],
                 "components": [],
                 "enabled": true,
-                "id": 98,
                 "name": "Coin (19)",
                 "pos": [
                   0.0,
@@ -1110,7 +1078,6 @@
                 "children": [],
                 "components": [],
                 "enabled": true,
-                "id": 99,
                 "name": "Coin (19)",
                 "pos": [
                   0.0,
@@ -1210,24 +1177,24 @@
               },
               {
                 "data": {
-                  "args": {
-                    "axisX": "1",
-                    "axisY": "0",
-                    "axisZ": "0",
-                    "radius": "1",
-                    "speed": "0.4",
-                    "texExpPack": "13383390974258263293",
-                    "type": "0"
-                  },
-                  "script": 14292327376580313433
+                  "asset": 2097926650889483589,
+                  "autoRun": true,
+                  "objRefs": {},
+                  "varDefaults": {
+                    "direction": [
+                      0.0,
+                      1.0,
+                      0.0
+                    ],
+                    "speed": 0.75
+                  }
                 },
-                "id": 0,
-                "name": "Code",
-                "uuid": 12795128468772524066
+                "id": 9,
+                "name": "Node Graph",
+                "uuid": 16749668679226441882
               }
             ],
             "enabled": true,
-            "id": 107,
             "name": "Platform Gap",
             "pos": [
               -847.7291259765625,
@@ -1257,7 +1224,6 @@
                 "children": [],
                 "components": [],
                 "enabled": true,
-                "id": 96,
                 "name": "Coin (19)",
                 "pos": [
                   0.0,
@@ -1289,7 +1255,6 @@
                 "children": [],
                 "components": [],
                 "enabled": true,
-                "id": 100,
                 "name": "Coin (19)",
                 "pos": [
                   0.0,
@@ -1321,7 +1286,6 @@
                 "children": [],
                 "components": [],
                 "enabled": true,
-                "id": 101,
                 "name": "Coin (19)",
                 "pos": [
                   0.0,
@@ -1353,7 +1317,6 @@
                 "children": [],
                 "components": [],
                 "enabled": true,
-                "id": 102,
                 "name": "Coin (19)",
                 "pos": [
                   0.0,
@@ -1453,24 +1416,24 @@
               },
               {
                 "data": {
-                  "args": {
-                    "axisX": "1",
-                    "axisY": "0",
-                    "axisZ": "0",
-                    "radius": "1",
-                    "speed": "-0.5",
-                    "texExpPack": "13383390974258263293",
-                    "type": "0"
-                  },
-                  "script": 14292327376580313433
+                  "asset": 2097926650889483589,
+                  "autoRun": true,
+                  "objRefs": {},
+                  "varDefaults": {
+                    "direction": [
+                      0.0,
+                      0.0,
+                      1.0
+                    ],
+                    "speed": 0.6000000238418579
+                  }
                 },
-                "id": 0,
-                "name": "Code",
-                "uuid": 12795128468772524066
+                "id": 9,
+                "name": "Node Graph",
+                "uuid": 3962833741886261608
               }
             ],
             "enabled": true,
-            "id": 95,
             "name": "Platform Gap",
             "pos": [
               -851.125,
@@ -1497,7 +1460,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 11,
         "name": "MapParts",
         "pos": [
           0.0,
@@ -1525,7 +1487,6 @@
         "children": [],
         "components": [],
         "enabled": true,
-        "id": 8,
         "name": "PlayerCam (3)",
         "pos": [
           13.82022476196289,
@@ -1558,7 +1519,6 @@
         "children": [],
         "components": [],
         "enabled": true,
-        "id": 23,
         "name": "Player (6)",
         "pos": [
           30.0,
@@ -1567,7 +1527,7 @@
         ],
         "propOverrides": {
           "11272843812465326562": "1:1.000000,1.000000,1.000000",
-          "13911321452997764027": "1:635.696167,82.543579,11.090084",
+          "13911321452997764027": "1:632.971802,68.394539,10.596632",
           "9467563534403475754": "0:0.000000,0.000000,0.000000,1.000000"
         },
         "proportionalScale": false,
@@ -1607,7 +1567,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 49,
                 "name": "Coin (5)",
                 "pos": [
                   0.0,
@@ -1652,7 +1611,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 50,
                 "name": "Coin (5)",
                 "pos": [
                   0.0,
@@ -1697,7 +1655,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 52,
                 "name": "Coin (5)",
                 "pos": [
                   0.0,
@@ -1742,7 +1699,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 53,
                 "name": "Coin (5)",
                 "pos": [
                   0.0,
@@ -1787,7 +1743,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 20,
                 "name": "Coin (5)",
                 "pos": [
                   0.0,
@@ -1832,7 +1787,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 21,
                 "name": "Coin (5)",
                 "pos": [
                   0.0,
@@ -1877,7 +1831,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 22,
                 "name": "Coin (5)",
                 "pos": [
                   0.0,
@@ -1922,7 +1875,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 25,
                 "name": "Coin (5)",
                 "pos": [
                   0.0,
@@ -1967,7 +1919,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 63,
                 "name": "Coin (5)",
                 "pos": [
                   0.0,
@@ -2012,7 +1963,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 64,
                 "name": "Coin (5)",
                 "pos": [
                   0.0,
@@ -2057,7 +2007,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 65,
                 "name": "Coin (5)",
                 "pos": [
                   0.0,
@@ -2102,7 +2051,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 66,
                 "name": "Coin (5)",
                 "pos": [
                   0.0,
@@ -2211,7 +2159,6 @@
               }
             ],
             "enabled": true,
-            "id": 24,
             "name": "Seesaw",
             "pos": [
               -2.6933135986328125,
@@ -2238,7 +2185,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 58,
         "name": "Void Seesaw",
         "pos": [
           -203.84361267089844,
@@ -2288,7 +2234,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 112,
                 "name": "Coin (14)",
                 "pos": [
                   0.0,
@@ -2333,7 +2278,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 106,
                 "name": "Coin (15)",
                 "pos": [
                   10.0,
@@ -2378,7 +2322,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 109,
                 "name": "Coin (16)",
                 "pos": [
                   10.0,
@@ -2423,7 +2366,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 108,
                 "name": "Coin (17)",
                 "pos": [
                   20.0,
@@ -2535,7 +2477,6 @@
               }
             ],
             "enabled": true,
-            "id": 14,
             "name": "CylinderRot 1",
             "pos": [
               -0.1903076171875,
@@ -2562,7 +2503,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 16,
         "name": "Void - Cylinder",
         "pos": [
           -203.84361267089844,
@@ -2597,7 +2537,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 29,
             "name": "Coin (19)",
             "pos": [
               0.0,
@@ -2642,7 +2581,6 @@
               }
             ],
             "enabled": true,
-            "id": 10,
             "name": "Coin (19)",
             "pos": [
               0.0,
@@ -2687,7 +2625,6 @@
               }
             ],
             "enabled": true,
-            "id": 111,
             "name": "Coin (19)",
             "pos": [
               0.0,
@@ -2732,7 +2669,6 @@
               }
             ],
             "enabled": true,
-            "id": 26,
             "name": "Coin (19)",
             "pos": [
               0.0,
@@ -2777,7 +2713,6 @@
               }
             ],
             "enabled": true,
-            "id": 57,
             "name": "Coin (19)",
             "pos": [
               0.0,
@@ -2877,7 +2812,6 @@
           }
         ],
         "enabled": true,
-        "id": 28,
         "name": "Platform Gap (26)",
         "pos": [
           -850.0,
@@ -2907,7 +2841,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 30,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -2939,7 +2872,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 31,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -2971,7 +2903,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 32,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3003,7 +2934,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 33,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3035,7 +2965,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 34,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3067,7 +2996,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 35,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3099,7 +3027,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 39,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3131,7 +3058,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 40,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3163,7 +3089,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 41,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3195,7 +3120,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 42,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3227,7 +3151,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 43,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3259,7 +3182,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 44,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3291,7 +3213,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 46,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3323,7 +3244,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 45,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3355,7 +3275,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 47,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3387,7 +3306,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 68,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3421,7 +3339,6 @@
             "children": [],
             "components": [],
             "enabled": false,
-            "id": 69,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3455,7 +3372,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 70,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -3488,7 +3404,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 27,
         "name": "Static Coins",
         "pos": [
           0.0,
@@ -3531,7 +3446,6 @@
               }
             ],
             "enabled": true,
-            "id": 36,
             "name": "Coin (14)",
             "pos": [
               0.0,
@@ -3576,7 +3490,6 @@
               }
             ],
             "enabled": true,
-            "id": 17,
             "name": "Coin (15)",
             "pos": [
               10.0,
@@ -3621,7 +3534,6 @@
               }
             ],
             "enabled": true,
-            "id": 18,
             "name": "Coin (16)",
             "pos": [
               10.0,
@@ -3666,7 +3578,6 @@
               }
             ],
             "enabled": true,
-            "id": 13,
             "name": "Coin (17)",
             "pos": [
               20.0,
@@ -3778,7 +3689,6 @@
           }
         ],
         "enabled": true,
-        "id": 15,
         "name": "CylinderRot 0",
         "pos": [
           386.0936279296875,
@@ -3877,7 +3787,6 @@
               }
             ],
             "enabled": true,
-            "id": 38,
             "name": "Center Piece",
             "pos": [
               -0.5739326477050781,
@@ -3904,7 +3813,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 37,
         "name": "Void Center",
         "pos": [
           -203.84361267089844,
@@ -3952,7 +3860,6 @@
               }
             ],
             "enabled": true,
-            "id": 51,
             "name": "Coin (14)",
             "pos": [
               0.0,
@@ -3997,7 +3904,6 @@
               }
             ],
             "enabled": true,
-            "id": 54,
             "name": "Coin (15)",
             "pos": [
               10.0,
@@ -4042,7 +3948,6 @@
               }
             ],
             "enabled": true,
-            "id": 55,
             "name": "Coin (16)",
             "pos": [
               10.0,
@@ -4087,7 +3992,6 @@
               }
             ],
             "enabled": true,
-            "id": 56,
             "name": "Coin (17)",
             "pos": [
               20.0,
@@ -4199,7 +4103,6 @@
           }
         ],
         "enabled": true,
-        "id": 48,
         "name": "CylinderRot 0",
         "pos": [
           -0.0,
@@ -4227,7 +4130,6 @@
         "children": [],
         "components": [],
         "enabled": true,
-        "id": 60,
         "name": "Goal (60)",
         "pos": [
           -60.0,
@@ -4332,7 +4234,6 @@
           }
         ],
         "enabled": true,
-        "id": 61,
         "name": "Platform (6)",
         "pos": [
           0.0,
@@ -4362,7 +4263,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 82,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -4394,7 +4294,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 105,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -4477,7 +4376,6 @@
           }
         ],
         "enabled": true,
-        "id": 62,
         "name": "Platform (6)",
         "pos": [
           530.0,
@@ -4520,7 +4418,6 @@
               }
             ],
             "enabled": true,
-            "id": 76,
             "name": "Coin (14)",
             "pos": [
               0.0,
@@ -4565,7 +4462,6 @@
               }
             ],
             "enabled": true,
-            "id": 77,
             "name": "Coin (15)",
             "pos": [
               10.0,
@@ -4610,7 +4506,6 @@
               }
             ],
             "enabled": true,
-            "id": 78,
             "name": "Coin (16)",
             "pos": [
               10.0,
@@ -4655,7 +4550,6 @@
               }
             ],
             "enabled": true,
-            "id": 79,
             "name": "Coin (17)",
             "pos": [
               20.0,
@@ -4700,7 +4594,6 @@
               }
             ],
             "enabled": true,
-            "id": 89,
             "name": "Coin (17)",
             "pos": [
               20.0,
@@ -4745,7 +4638,6 @@
               }
             ],
             "enabled": true,
-            "id": 90,
             "name": "Coin (17)",
             "pos": [
               20.0,
@@ -4862,7 +4754,6 @@
           }
         ],
         "enabled": true,
-        "id": 75,
         "name": "CylinderRot Top 0",
         "pos": [
           -247.5,
@@ -4905,7 +4796,6 @@
               }
             ],
             "enabled": true,
-            "id": 72,
             "name": "Coin (14)",
             "pos": [
               0.0,
@@ -4950,7 +4840,6 @@
               }
             ],
             "enabled": true,
-            "id": 19,
             "name": "Coin (15)",
             "pos": [
               10.0,
@@ -4995,7 +4884,6 @@
               }
             ],
             "enabled": true,
-            "id": 73,
             "name": "Coin (16)",
             "pos": [
               10.0,
@@ -5040,7 +4928,6 @@
               }
             ],
             "enabled": true,
-            "id": 74,
             "name": "Coin (17)",
             "pos": [
               20.0,
@@ -5152,7 +5039,6 @@
           }
         ],
         "enabled": true,
-        "id": 71,
         "name": "CylinderRot Top 1",
         "pos": [
           -247.5,
@@ -5233,26 +5119,6 @@
               },
               {
                 "data": {
-                  "args": {
-                    "axisX": "0",
-                    "axisY": "1",
-                    "axisZ": "0",
-                    "coinAmount": "",
-                    "name": "",
-                    "radius": "420",
-                    "speed": "1",
-                    "texBg": "0",
-                    "texGrad": "0",
-                    "type": "1"
-                  },
-                  "script": 14292327376580313433
-                },
-                "id": 0,
-                "name": "Code",
-                "uuid": 10469320593810992953
-              },
-              {
-                "data": {
                   "halfExtend": [
                     70.0,
                     30.0,
@@ -5268,14 +5134,27 @@
                 "id": 8,
                 "name": "Culling",
                 "uuid": 18132675770173719008
+              },
+              {
+                "data": {
+                  "asset": 11893390873308017345,
+                  "autoRun": true,
+                  "objRefs": {},
+                  "varDefaults": {
+                    "height": 290.0,
+                    "speed": 0.09000000357627869
+                  }
+                },
+                "id": 9,
+                "name": "Node Graph",
+                "uuid": 12471533918226382185
               }
             ],
             "enabled": true,
-            "id": 67,
             "name": "Platform (6)",
             "pos": [
               10.0,
-              397.22698974609375,
+              201.7376251220703,
               -1210.0
             ],
             "propOverrides": {},
@@ -5356,7 +5235,7 @@
                     "axisZ": "0",
                     "coinAmount": "",
                     "name": "",
-                    "radius": "400",
+                    "radius": "440",
                     "speed": "1000",
                     "texBg": "0",
                     "texGrad": "0",
@@ -5388,7 +5267,6 @@
               }
             ],
             "enabled": true,
-            "id": 80,
             "name": "Platform (6)",
             "pos": [
               10.0,
@@ -5415,7 +5293,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 81,
         "name": "Void - Platfor Up",
         "pos": [
           -203.84361267089844,
@@ -5465,7 +5342,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 84,
                 "name": "Coin (14)",
                 "pos": [
                   0.0,
@@ -5510,7 +5386,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 85,
                 "name": "Coin (15)",
                 "pos": [
                   10.0,
@@ -5555,7 +5430,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 86,
                 "name": "Coin (16)",
                 "pos": [
                   10.0,
@@ -5600,7 +5474,6 @@
                   }
                 ],
                 "enabled": true,
-                "id": 87,
                 "name": "Coin (17)",
                 "pos": [
                   20.0,
@@ -5712,7 +5585,6 @@
               }
             ],
             "enabled": true,
-            "id": 83,
             "name": "CylinderRot 0",
             "pos": [
               336.24017333984375,
@@ -5739,7 +5611,6 @@
         ],
         "components": [],
         "enabled": true,
-        "id": 88,
         "name": "Void (88)",
         "pos": [
           -203.84361267089844,
@@ -5774,7 +5645,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 92,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -5806,7 +5676,6 @@
             "children": [],
             "components": [],
             "enabled": true,
-            "id": 104,
             "name": "Coin (30)",
             "pos": [
               0.0,
@@ -5889,7 +5758,6 @@
           }
         ],
         "enabled": true,
-        "id": 91,
         "name": "Platform (6)",
         "pos": [
           -540.1019287109375,
@@ -5916,7 +5784,6 @@
     ],
     "components": [],
     "enabled": true,
-    "id": 0,
     "name": "Scene",
     "pos": [
       0.0,

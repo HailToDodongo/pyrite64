@@ -14,6 +14,7 @@
 #include "../utils/json.h"
 #include "../utils/jsonBuilder.h"
 #include "../context.h"
+#include "graph/nodeRegistry.h"
 
 namespace
 {
@@ -118,6 +119,10 @@ Project::Project::Project(const std::string &p64projPath)
 
   deserialize(configJSON);
   savedState = conf.serialize();
+
+  // Load the graph node definitions for this project (builtins + <project>/nodes/*.js).
+  // Done here so every entry point (editor and CLI build) gets the same set.
+  ::Project::Graph::Node::reloadSpecs(path + "/nodes");
 
   //auto t = SDL_GetTicksNS();
   if(copyChangedEngineFiles("n64/engine", f / "engine") > 0)
