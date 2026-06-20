@@ -2,7 +2,12 @@
 
 A node graph is a visual way to script object behavior, an alternative to writing an
 {doc}`object-script <objScript>` in C++. You build the logic by placing nodes and
-wiring them together; the editor turns the graph into C++ that runs at game time.
+wiring them together.
+The editor turns the graph into C++ that runs at game time.
+
+```{image} /_static/img/editor_graph_example.png
+:align: center
+```
 
 ## Creating a graph
 
@@ -20,8 +25,8 @@ The same graph asset can be reused on any number of objects.
 The editor is a canvas of nodes connected by wires.
 
 - **Add a node:** right-click an empty spot to open the create menu, grouped by
-  category. A search box at the top is focused immediately, type to filter all nodes
-  into a flat list. You can also drag a wire out of a pin and release it on empty space
+  category.<br>A search box at the top is focused immediately, type to filter all nodes
+  into a flat list.<br>You can also drag a wire out of a pin and release it on empty space
   to create a node already connected to it. The menu then lists only nodes with a pin
   that can accept the wire (compatible types or an automatic conversion).
 - **Connect nodes:** drag from an output pin to a compatible input pin.
@@ -48,7 +53,7 @@ Changes are saved with the graph asset.
 
 There are two kinds of wire, and telling them apart is the key to reading a graph.
 
-**Logic** wires (grey, drawn as an animated dashed line) define the order things happen.
+**Logic** wires (grey, drawn as an animated dashed line) define the order things happen.\
 Execution begins at the **Start** node and follows the logic wires from one node to the
 next, the dashes flow in the direction control travels. A node runs, then hands control
 to whatever its logic output connects to.
@@ -81,25 +86,25 @@ The editor ships with a set of nodes, grouped by category in the create menu:
 
 | Category | Nodes |
 |----------|-------|
-| **Flow** | **Start** (entry point), **Wait** (pause for a number of seconds), **Wait Frame** (pause until the next frame), **Repeat** (loop a number of times), **If-Else** (branch on a value), **Switch-Case** (branch on one of several values), **On Extremum** (takes the **True** path once each time a monitored float turns around, i.e. at a peak or valley; **False** otherwise). |
-| **Value** | **Int**, **UInt**, **Float**, **Vec3**, **Quat** (typed constants), **Argument** (a value passed into the graph), **Delta Time** (seconds since the last frame), **Compare** (compare two values and branch). |
-| **Math** | **Add**, **Subtract**, **Multiply**, **Divide** (scalar floats), **Int Mod**, **Float Mod**, **Sin**, **Cos**, **Tan**, **Map Range** (remap a float from one range to another). |
-| **Vector Math** | **Add**, **Subtract**, **Multiply**, **Divide** (component-wise), **Dot**, **Cross**, **Length**, **Distance**, **Normalize**, **Lerp**, **Negate**, **Component** (extract X/Y/Z), **Sin/Cos/Tan** (component-wise). |
-| **Quat Math** | **Rotate Axis** (quaternion from an axis + angle in radians), **Quat Lerp**. |
-| **Easing** | **Ease** (easing curve over t; input is clamped to 0..1, output 0..1). |
-| **Wave** | **Sin Wave**, **Cos Wave**, **Square Wave**, **Saw Wave**, **Triangle Wave**: oscillators driven by the graph's own clock (see below). Each takes a **Speed** (cycles per second), **Amplitude**, and **Offset** (a phase shift in cycles); output is `Amplitude * wave(time * Speed + Offset)`. A **Range** option picks the base wave shape, `-1..1` (bipolar) or `0..1` (unipolar), before Amplitude is applied. Use **Offset** to desync waves that share the clock. |
-| **Object** | **Send Event** (message another object), **Delete Object**, **Get/Set Position**, **Get/Set Rotation** (a quaternion), **Set Rotation Euler** (X/Y/Z angles in ZYX order), **Original Position** / **Original Rotation** (the object's transform captured when the graph was initialized). **Set Position** has an **Op** (Set / Add / Subtract); the two Set Rotation nodes have Set / Add, where Add composes the rotation and renormalizes. |
-| **Scene** | **Load Scene**. |
-| **Logic** | **Function** (call a registered user function). |
-| **Variables** | **Get Var** (read a variable) and **Set Var** (write it): read or write a {ref}`graph variable <nodegraph-variables>`. Pick the variable from a dropdown; the value pins take that variable's type. **Set Var** has an **Op** (Set / Add / Subtract) and outputs the resulting value, so it also covers incrementing a counter. |
-| **Debug** | **Log Int/UInt/Float/Vec3/Quat/Object**: print a value through the engine log. Each has a text field whose contents are printed before the value (a label). |
-| **Other** | **Note** (a comment box). |
+| **Flow** | • **Start** (entry point)<br>• **Wait** (pause for a number of seconds)<br>• **Wait Frame** (pause until the next frame)<br>• **Repeat** (loop a number of times)<br>• **If-Else** (branch on a value)<br>• **Switch-Case** (branch on one of several values)<br>• **On Extremum** (takes the **True** path once each time a monitored float turns around, i.e. at a peak or valley, and **False** otherwise) |
+| **Value** | • **Int**<br>• **UInt**<br>• **Float**<br>• **Vec3**<br>• **Quat** (the above are typed constants)<br>• **Argument** (a value passed into the graph)<br>• **Delta Time** (seconds since the last frame)<br>• **Compare** (compare two values and branch) |
+| **Math** | • **Add**<br>• **Subtract**<br>• **Multiply**<br>• **Divide** (scalar floats)<br>• **Int Mod**<br>• **Float Mod**<br>• **Sin**<br>• **Cos**<br>• **Tan**<br>• **Map Range** (remap a float from one range to another) |
+| **Vector Math** | • **Add**<br>• **Subtract**<br>• **Multiply**<br>• **Divide** (component-wise)<br>• **Dot**<br>• **Cross**<br>• **Length**<br>• **Distance**<br>• **Normalize**<br>• **Lerp**<br>• **Negate**<br>• **Component** (extract X/Y/Z)<br>• **Sin/Cos/Tan** (component-wise) |
+| **Quat Math** | • **Rotate Axis** (quaternion from an axis + angle in radians)<br>• **Quat Lerp** |
+| **Easing** | • **Ease** (easing curve over t, with the input clamped to 0..1 and the output in 0..1) |
+| **Wave** | • **Sin Wave**<br>• **Cos Wave**<br>• **Square Wave**<br>• **Saw Wave**<br>• **Triangle Wave**<br>Oscillators driven by the graph's own clock (see below). Each takes a **Speed** (cycles per second), **Amplitude**, and **Offset** (a phase shift in cycles). The output is `Amplitude * wave(time * Speed + Offset)`. A **Range** option picks the base wave shape, `-1..1` (bipolar) or `0..1` (unipolar), before Amplitude is applied. Use **Offset** to desync waves that share the clock. |
+| **Object** | • **Send Event** (message another object)<br>• **Delete Object**<br>• **Get/Set Position**<br>• **Get/Set Rotation** (a quaternion)<br>• **Set Rotation Euler** (X/Y/Z angles in ZYX order)<br>• **Original Position** / **Original Rotation** (the object's transform captured when the graph was initialized)<br>**Set Position** has an **Op** (Set / Add / Subtract). The two Set Rotation nodes have Set / Add, where Add composes the rotation and renormalizes. |
+| **Scene** | • **Load Scene** |
+| **Logic** | • **Function** (call a registered user function) |
+| **Variables** | • **Get Var** (read a variable)<br>• **Set Var** (write it)<br>Read or write a {ref}`graph variable <nodegraph-variables>`. Pick the variable from a dropdown, and the value pins take that variable's type. **Set Var** has an **Op** (Set / Add / Subtract) and outputs the resulting value, so it also covers incrementing a counter. |
+| **Debug** | • **Log Int / UInt / Float / Vec3 / Quat / Object**: print a value through the engine log. Each has a text field whose contents are printed before the value (a label). |
+| **Other** | • **Note** (a comment box) |
 
 Every scalar value input (a number: int, uint or float) shows a small editable field on
 the node while nothing is wired into it, so you can type a constant directly. Connect a
-value wire and the wire takes over and the field disappears; disconnect it and the field
-returns. Some nodes also expose other typed-in properties (a scene picker, a dropdown)
-that behave the same way.
+value wire and the wire takes over and the field disappears.
+Disconnect it and the field returns. Some nodes also expose other typed-in properties (a
+scene picker, a dropdown) that behave the same way.
 
 ```{note}
 **Graph clock:** each graph instance keeps its own elapsed time, used by the **Wave**
@@ -131,7 +136,7 @@ variable, set its target per object on the component, and read it with **Get Var
 
 ```{note}
 The older standalone **Object** node is deprecated in favour of Object variables and is
-hidden from the create menu; existing graphs that use it still work.
+hidden from the create menu. Existing graphs that use it still work.
 ```
 
 ## Extending the editor

@@ -1,59 +1,62 @@
 # Custom Graph Nodes
 
-The nodes available in the {doc}`Node Graph <nodeGraph>` editor are not
-hardcoded. Each one is defined by a small JavaScript file that declares what the node
-looks like, the pins and properties it has, and how it generates C++ code. The builtin
-nodes are written the same way, and you can add your own.
+The nodes available in the {doc}`Node Graph <nodeGraph>` editor are not hardcoded.\
+Each one is defined by a small JavaScript file that declares what the node looks like,\
+the pins and properties it has, and how it generates C++ code.\ 
+The builtin nodes are written the same way, and you can add your own.
 
-Custom nodes live in a `nodes/` folder inside your project (`<project>/nodes/*.js`).
-They are loaded when the project opens, and the editor watches the folder: saving a
-file reloads its nodes immediately, with no restart.
+Custom nodes live in a `nodes/` folder inside your project (`<project>/nodes/*.js`).\
+They are loaded when the project opens, and the editor watches the folder:\
+saving a file reloads its nodes immediately, with no restart.
 
 ## A first node
 
-Create `nodes/playSound.js` in your project:
+Create `nodes/logMessage.js` in your project:
 
 ```js
 node({
-  id: "game.playSound",
-  name: icon("volume-high") + " Play Sound",
+  id: "game.logMessage",
+  name: icon("message-text-outline") + " Log Value",
   color: [120, 120, 200],
-  category: "Audio",
-  inputs:  [logicIn()],
+  category: "Test",
+  inputs:  [logicIn(), valueIn("x", "f32")],
   outputs: [logicOut()],
   props: {
-    sound:  Str({ label: "Asset" }),
-    volume: Float({ default: 1.0 }),
+    text: Str({ label: "Text" }),
   },
   build(n, ctx) {
-    ctx.line(`P64::Audio::play("${n.sound}"_hash, ${n.volume}f);`);
+    ctx.line(`P64::Log::info("${n.text}: %f", ${ctx.inputExpr(0)});`);
   },
 });
 ```
 
-Save it, and "Play Sound" appears in the create menu under an "Audio" group. When a
-graph using it is built, the `build` function runs and emits the C++ line into the
+Save it, and "Log Value" appears in the create menu under a "Debug" group.\
+When a graph using it is built, the `build` function runs and emits the C++ line into the
 generated source.
 
-## Anatomy of a node
+## Setup of a node
 
 A node is registered by calling `node({ ... })` with these fields:
 
-| Field | Description |
-|-------|-------------|
-| `id` | Stable unique identifier, e.g. `"game.playSound"`. Saved into graphs, so do not change it once in use. |
-| `name` | Label shown in the create menu and as the node title. Usually `icon("...") + " Name"`. |
-| `color` | Title-bar color as `[r, g, b]` or `[r, g, b, a]` (0 to 255), or a named `Color` (e.g. `Color.orange`). |
-| `category` | Optional group name in the create menu. |
-| `rounding` | Optional corner rounding of the node box. |
-| `entry` | Set `true` for a start node (emitted first, no inputs). Normally omitted. |
-| `hidden` | Set `true` to keep the node out of the create menu (e.g. a deprecated node); it still loads in graphs that use it. |
-| `inputs` | Array of input pins (see [Pins](#pins)). |
-| `outputs` | Array of output pins. |
-| `props` | Object of editable properties keyed by name (see [Properties](#properties)). |
-| `title` | Optional dynamic title template (see [Dynamic titles](#dynamic-titles)). |
-| `build` | Function emitting the node's logic-flow code (see [Generating code](#generating-code)). |
-| `value` | Function returning the node's value expression, for pure value nodes. |
+| Field      | Description                                                                                                        |
+|------------|--------------------------------------------------------------------------------------------------------------------|
+| `id`       | Stable unique identifier, e.g. `"game.logMessage"`.<br>Saved into graphs, so do not change it once in use.         |
+| `name`     | Label shown in the create menu and as the node title. Usually `icon("...") + " Name"`.                             |
+| `color`    | Title-bar color as `[r, g, b]` or `[r, g, b, a]` (0 to 255), or a named `Color` (e.g. `Color.orange`).             |
+| `category` | Optional group name in the create menu.                                                                            |
+| `rounding` | Optional corner rounding of the node box.                                                                          |
+| `entry`    | Set `true` for a start node (emitted first, no inputs). Normally omitted.                                          |
+| `hidden`   | Set `true` to keep the node out of the create menu (e.g. a deprecated node). It still loads in graphs that use it. |
+| `inputs`   | Array of input pins (see [Pins](#pins)).                                                                           |
+| `outputs`  | Array of output pins.                                                                                              |
+| `props`    | Object of editable properties keyed by name (see [Properties](#properties)).                                       |
+| `title`    | Optional dynamic title template (see [Dynamic titles](#dynamic-titles)).                                           |
+| `build`    | Function emitting the node's logic-flow code (see [Generating code](#generating-code)).                            |
+| `value`    | Function returning the node's value expression, for pure value nodes.                                              |
+
+All IDs of internal nodes start with `core.`,\
+to avoid collisions with those or potentially nodes from other people you wish to use,\
+it is recommended to prefix your own nodes with the games name.
 
 ## Pins
 
@@ -95,15 +98,15 @@ conversion when they differ but are convertible.
 | `quat` | Quaternion (rotation) | `fm_quat_t` |
 | `objref` | An object reference | `uint16_t` |
 
-The three numeric types (`u32`, `i32`, `f32`) convert freely into one another. The
-vector and object types are isolated: an object reference cannot be wired into an
+The three numeric types (`u32`, `i32`, `f32`) convert freely into one another.\
+The vector and object types are isolated: an object reference cannot be wired into an
 arithmetic input, even though it is stored as an integer.
 
-The type table lives in `data/nodes/_types.js` and is itself data-driven. A new type is
-one `valueType(id, { name, cType, color, default, size })` line, and
+The type table lives in `data/nodes/_types.js` and is itself data-driven.\
+A new type is one `valueType(id, { name, cType, color, default, size })` line, and
 `convert(from, to, tmpl)` declares an allowed conversion (with `{}` standing for the
 source expression). `size` is the storage size in bytes when the type is used as a
-graph {ref}`variable <nodegraph-variables>` (default 4; keep it a multiple of 4 for
+graph {ref}`variable <nodegraph-variables>` (default 4, and best kept a multiple of 4 for
 alignment):
 
 ```js
@@ -113,7 +116,8 @@ convert("u8", "i32", "(int32_t)({})");
 
 If a custom `cType` lives in your own header, have the nodes that emit it pull the header
 in with `ctx.include("<user/myType.h>")` during code generation (see the `ctx` table
-below) the generated file then includes it.
+below).
+The generated file then includes it.
 
 ## Properties
 
@@ -138,8 +142,8 @@ props: {
 
 Every property type accepts an options object: `label` (text beside the widget),
 `width` (widget width in pixels), `default` (initial value),
-`hideIfInputConnected` (a value-input pin index; the widget hides while that pin is
-connected, so a fed-in value takes over, e.g. **Load Scene**'s scene picker), and
+`hideIfInputConnected` (a value-input pin index, hiding the widget while that pin is
+connected so a fed-in value takes over, e.g. **Load Scene**'s scene picker), and
 `compact` (render the field at text-line height so it lines up with its paired input
 pin). `Enum` additionally takes `values` (the list of options) and an optional parallel
 `icons` array.
@@ -155,7 +159,7 @@ by name:
 
 ```js
 n.count          // the stored number
-n.sound          // the stored string
+n.text           // the stored string
 ```
 
 Enum properties resolve to an object so you can use either the chosen option or its
@@ -320,12 +324,12 @@ title: "{op.icon} Compare",
 ## Notes
 
 - `build` and `value` run only when a graph is built, never every frame. They produce
-  text; they cannot draw the node or access the editor.
+  text, and cannot draw the node or access the editor.
 - Scripts run in a sandbox with no file system or OS access.
 - If a node file has an error, it is reported in the editor log and the affected nodes
-  are skipped; the rest keep working.
+  are skipped. The rest keep working.
 - A graph referencing a node whose definition is missing keeps the node as a
-  placeholder so no data is lost; it reappears intact once the definition is available.
+  placeholder so no data is lost. It reappears intact once the definition is available.
 
 ## See also
 

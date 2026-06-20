@@ -7,6 +7,8 @@
 Attaches a visual node-graph script to the object, an alternative to a
 {doc}`Code <code>` component for behavior authored as a graph instead of C++.
 
+For the full docs on how to create and use graphs, check out the {doc}`Node Graph Editor <../../script/nodeGraph>`.
+
 ## Options
 
 | Option | Description |
