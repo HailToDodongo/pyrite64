@@ -187,6 +187,24 @@ node({
 });
 
 node({
+  id: "core.objSetRotEulerVec",
+  name: icon("rotate-3d-variant") + " Set Rot Euler-Vector",
+  color: Color.orange,
+  rounding: 4.0,
+  category: "Object",
+  inputs: [logicIn(), valueIn("XYZ", "vec3")],
+  outputs: [logicOut()],
+  props: { op: _rotOpEnum() },
+  title: "{op} Euler (ZYX)",
+  build(n, ctx) {
+    ctx.line("fm_quat_t t_e;");
+    ctx.line("fm_vec3_t tmp = " + ctx.inputExpr(0) + ";");
+    ctx.line("fm_quat_from_euler_zyx(&t_e, tmp.x, tmp.y, tmp.z);");
+    _setRot(ctx, n.op.index, "t_e");
+  },
+});
+
+node({
   id: "core.func",
   name: icon("function") + " Function",
   color: Color.green,

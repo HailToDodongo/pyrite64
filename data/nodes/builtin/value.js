@@ -4,6 +4,19 @@
 function _flit(v) { var s = "" + v; if (!/[.eE]/.test(s)) s += ".0"; return s + "f"; }
 
 node({
+  id: "core.constRad",
+  name: icon("numeric") + " Radians",
+  color: typeColor("f32"),
+  rounding: 4.0,
+  category: "Value",
+  outputs: [valueOut("f32")],
+  props: { value: Float({ width: 50, label: "Degree" }) },
+  value(n, ctx) { 
+    return (n.value * (Math.PI / 180)).toFixed(4) + "f";
+  }
+});
+
+node({
   id: "core.value",
   name: icon("numeric") + " Int",
   color: typeColor("i32"),
@@ -116,6 +129,17 @@ node({
   value(n, ctx) { return "fmodf(" + ctx.inputExpr(0) + ", " + ctx.inputExpr(1) + ")"; },
 });
 
+node({
+  id: "core.negate",
+  name: icon("minus-box-outline") + " Negate",
+  color: typeColor("f32"),
+  rounding: 4.0,
+  category: "Math",
+  inputs: [valueIn("A", "f32")],
+  outputs: [valueOut("f32")],
+  value(n, ctx) { return "-" + ctx.inputExpr(0); },
+});
+
 _mathOp("core.vadd", "plus",     "Add",      "+", "vec3", "Vector Math");
 _mathOp("core.vsub", "minus",    "Subtract", "-", "vec3", "Vector Math");
 _mathOp("core.vmul", "close",    "Multiply", "*", "vec3", "Vector Math");
@@ -190,6 +214,34 @@ node({
   },
 });
 
+
+node({
+  id: "core.vecSwap",
+  name: icon("swap-vertical") + " Swap",
+  color: typeColor("vec3"),
+  rounding: 4.0,
+  category: "Vector Math",
+  inputs: [valueIn("", "vec3")],
+  outputs: [valueOut("vec3")],
+  props: { op: Enum(
+    { values: ["ZXY", "YZX", "XZY", "Rand"],
+      label: "Type", width: 60
+    }
+  )},
+  value(n, ctx) {
+    switch(n.op.value) {
+      case "ZXY": return lambda(_vtmp(ctx.inputExpr(0), "a") + "return fm_vec3_t{a.z, a.x, a.y};");
+      case "YZX": return lambda(_vtmp(ctx.inputExpr(0), "a") + "return fm_vec3_t{a.y, a.z, a.x};");
+      case "XZY": return lambda(_vtmp(ctx.inputExpr(0), "a") + "return fm_vec3_t{a.x, a.z, a.y};");
+      case "Rand": return lambda(_vtmp(ctx.inputExpr(0), "a") + `
+        if(rand() & 1)std::swap(a.x, a.y);
+        if(rand() & 1)std::swap(a.z, a.y);
+        if(rand() & 1)std::swap(a.x, a.z);
+        return a;
+      `);
+    }
+  },
+});
 node({
   id: "core.vlerp",
   name: icon("vector-polyline") + " Lerp",
