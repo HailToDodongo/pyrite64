@@ -26,6 +26,7 @@ namespace Editor
       void syncVariablePins();
       void drawCreateMenu(ImFlow::Pin* pin);
       void resetView();
+      void addGroup();
 
     public:
       NodeEditor(uint64_t assetUUID);

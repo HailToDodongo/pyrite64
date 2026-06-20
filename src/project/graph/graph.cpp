@@ -186,6 +186,15 @@ namespace Project::Graph
         }
       }
     }
+
+    graph.getGroups().clear();
+    if(nodeData.contains("groups")) {
+      for(auto &jg : nodeData["groups"]) {
+        ImVec2 pos(jg["pos"][0].get<float>(), jg["pos"][1].get<float>());
+        ImVec2 size(jg["size"][0].get<float>(), jg["size"][1].get<float>());
+        graph.addGroup(jg.value("title", std::string{}), pos, size);
+      }
+    }
     return true;
   }
 
@@ -251,6 +260,16 @@ namespace Project::Graph
           }
         }
       }
+    }
+
+    data["groups"] = nlohmann::json::array();
+    for(const auto &g : graph.getGroups()) {
+      if(g->isDestroyed())continue;
+      data["groups"].push_back({
+        {"title", g->getTitle()},
+        {"pos",  {g->getPos().x, g->getPos().y}},
+        {"size", {g->getSize().x, g->getSize().y}},
+      });
     }
 
     return data.dump(2);

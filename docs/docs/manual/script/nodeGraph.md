@@ -33,6 +33,11 @@ The editor is a canvas of nodes connected by wires.
 - **Duplicate or remove:** right-click a node.
 - **Reset View:** the **Tools** section of the left panel has a **Reset View** button that
   frames all nodes in the canvas.
+- **Group nodes:** **Tools > Add Group** drops a titled outline box. Drag its title bar to
+  move it (any node inside moves with it), drag the bottom-right corner to resize, and
+  double-click the title to rename. Grouping is soft and visual only: a node belongs to a
+  group just by sitting inside it, dragging a node out detaches it, and deleting the group
+  (select it and press Delete) leaves the nodes in place.
 - **Repeat:** the checkbox above the variables panel makes the graph loop. When any
   flow path ends, the graph waits a frame and restarts at **Start** (the same as wiring
   a **Wait Frame** back to the beginning). With it off, a finished path just ends.

@@ -262,6 +262,41 @@ namespace ImFlow
     };
 
     // -----------------------------------------------------------------------------------------------------------------
+    // GROUP
+
+    /**
+     * @brief A visual grouping box (outline + title) drawn behind the nodes.
+     * @details Purely cosmetic and soft: a node is "in" a group only by being geometrically
+     *          inside it. Dragging the group moves the nodes it currently contains; dragging a
+     *          node out simply detaches it; deleting the group leaves its nodes free-standing.
+     */
+    class NodeGroup
+    {
+    public:
+        NodeGroup(std::string title, const ImVec2& pos, const ImVec2& size)
+            : m_title(std::move(title)), m_pos(pos), m_size(size) {}
+
+        [[nodiscard]] const std::string& getTitle() const { return m_title; }
+        void setTitle(const std::string& t) { m_title = t; }
+        [[nodiscard]] const ImVec2& getPos() const { return m_pos; }
+        void setPos(const ImVec2& p) { m_pos = p; }
+        [[nodiscard]] const ImVec2& getSize() const { return m_size; }
+        void setSize(const ImVec2& s) { m_size = s; }
+        [[nodiscard]] bool isDestroyed() const { return m_destroyed; }
+        void destroy() { m_destroyed = true; }
+
+        std::string m_title;
+        ImVec2 m_pos;   // grid coordinates (top-left)
+        ImVec2 m_size;  // grid size
+        bool m_destroyed = false;
+
+        // transient interaction state
+        bool m_dragging = false;
+        bool m_resizing = false;
+        std::vector<BaseNode*> m_held; // nodes captured when a drag starts
+    };
+
+    // -----------------------------------------------------------------------------------------------------------------
     // HANDLER
 
     /**
@@ -470,6 +505,17 @@ namespace ImFlow
         const std::vector<std::weak_ptr<Link>>& getLinks() { return m_links; }
 
         /**
+         * @brief <BR>Add a visual group box
+         * @return Shared pointer to the created group
+         */
+        std::shared_ptr<NodeGroup> addGroup(const std::string& title, const ImVec2& pos, const ImVec2& size);
+
+        /// @brief Editor's list of group boxes.
+        std::vector<std::shared_ptr<NodeGroup>>& getGroups() { return m_groups; }
+        /// @brief Group hovered (title bar / resize handle) this frame, or null.
+        [[nodiscard]] NodeGroup* getHoveredGroup() const { return m_hoveredGroup; }
+
+        /**
          * @brief <BR>Get zooming viewport
          * @return Const reference to editor's internal viewport for zoom support
          */
@@ -548,6 +594,11 @@ namespace ImFlow
          */
         bool on_free_space();
 
+        /// @brief Draw the group boxes (called behind the nodes).
+        void drawGroups();
+        /// @brief Handle group hover/drag/resize/rename/delete (called after the nodes).
+        void updateGroups();
+
         /**
          * @brief <BR>Get recursion blacklist for nodes
          * @return Reference to blacklist
@@ -583,6 +634,14 @@ namespace ImFlow
 
         Link* m_draggedLink = nullptr; // link with a waypoint being dragged
         Link* m_hoveredLink = nullptr; // link hovered this frame (body or handle)
+
+        std::vector<std::shared_ptr<NodeGroup>> m_groups;
+        NodeGroup* m_activeGroup = nullptr;  // group being dragged/resized
+        NodeGroup* m_hoveredGroup = nullptr; // group hovered this frame
+        NodeGroup* m_selectedGroup = nullptr;
+        NodeGroup* m_editingGroup = nullptr; // group whose title is being renamed
+        char m_editGroupBuf[64]{};
+        int m_editGroupFocusFrames = 0;
 
         bool m_boxSelecting = false;
         ImVec2 m_boxSelectStart;

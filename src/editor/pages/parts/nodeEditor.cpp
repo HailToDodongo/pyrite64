@@ -313,11 +313,23 @@ void Editor::NodeEditor::resetView()
   graph.graph.setScroll({canvas.x / (2.0f * scale) - center.x, canvas.y / (2.0f * scale) - center.y});
 }
 
+void Editor::NodeEditor::addGroup()
+{
+  // Place a new group centred in the current view.
+  ImVec2 canvas = graph.graph.getGrid().size();
+  float scale = graph.graph.getScale();
+  ImVec2 scroll = graph.graph.getScroll();
+  ImVec2 center{canvas.x / (2.0f * scale) - scroll.x, canvas.y / (2.0f * scale) - scroll.y};
+  ImVec2 size{125.0f, 60.0f};
+  graph.graph.addGroup("Group", {center.x - size.x * 0.5f, center.y - size.y * 0.5f}, size);
+}
+
 void Editor::NodeEditor::drawVariablesPanel()
 {
   ImGui::TextUnformatted("Tools");
   ImGui::Separator();
     if(ImGui::Button(ICON_MDI_FIT_TO_PAGE_OUTLINE " Reset View", ImVec2(-FLT_MIN, 0))) resetView();
+    if(ImGui::Button(ICON_MDI_SHAPE_RECTANGLE_PLUS " Add Group", ImVec2(-FLT_MIN, 0))) addGroup();
   ImGui::Spacing();
 
   ImGui::TextUnformatted("Settings");

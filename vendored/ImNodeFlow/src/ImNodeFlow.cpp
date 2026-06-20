@@ -1,6 +1,7 @@
 #include "ImNodeFlow.h"
 #include <algorithm>
 #include <cfloat>
+#include <cstring>
 
 namespace ImFlow {
     // -----------------------------------------------------------------------------------------------------------------
@@ -366,6 +367,130 @@ namespace ImFlow {
         m_links.push_back(link);
     }
 
+    std::shared_ptr<NodeGroup> ImNodeFlow::addGroup(const std::string& title, const ImVec2& pos, const ImVec2& size) {
+        auto g = std::make_shared<NodeGroup>(title, pos, size);
+        m_groups.push_back(g);
+        return g;
+    }
+
+    namespace { constexpr float GRP_HEADER_H = 26.0f, GRP_HANDLE = 16.0f, GRP_MIN_W = 80.0f, GRP_MIN_H = 60.0f; }
+
+    void ImNodeFlow::drawGroups() {
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        for (auto& g : m_groups) {
+            ImVec2 tl = grid2screen(g->m_pos);
+            ImVec2 br = grid2screen(g->m_pos + g->m_size);
+            bool sel = (g.get() == m_selectedGroup) || (g.get() == m_hoveredGroup);
+            ImU32 outline = sel ? IM_COL32(0xFF, 0x99, 0x55, 0xFF) : IM_COL32(0xAA, 0xAA, 0xAA, 0xC0);
+
+            dl->AddRect(tl, br, outline, 4.0f, 0, sel ? 2.0f : 1.5f);
+
+            // Header strip (faint) so the title reads against the grid.
+            ImVec2 hbr = grid2screen(g->m_pos + ImVec2(g->m_size.x, GRP_HEADER_H));
+            dl->AddRectFilled(tl, hbr, IM_COL32(0xAA, 0xAA, 0xAA, 0x22), 4.0f, ImDrawFlags_RoundCornersTop);
+            dl->AddLine(ImVec2(tl.x, hbr.y), ImVec2(hbr.x, hbr.y), outline, 1.0f);
+
+            if (g.get() != m_editingGroup)
+                dl->AddText(grid2screen(g->m_pos + ImVec2(8.0f, 5.0f)), IM_COL32(0xEE, 0xEE, 0xEE, 0xFF), g->m_title.c_str());
+
+            // Resize grip (bottom-right corner).
+            ImVec2 hTL = grid2screen(g->m_pos + g->m_size - ImVec2(GRP_HANDLE, GRP_HANDLE));
+            dl->AddTriangleFilled(ImVec2(br.x, hTL.y), br, ImVec2(hTL.x, br.y), outline);
+        }
+    }
+
+    void ImNodeFlow::updateGroups() {
+        m_hoveredGroup = nullptr;
+
+        // Drive an in-progress drag/resize.
+        if (m_activeGroup) {
+            ImVec2 d = ImGui::GetIO().MouseDelta;
+            if (m_activeGroup->m_resizing) {
+                m_activeGroup->m_size.x = fmaxf(GRP_MIN_W, m_activeGroup->m_size.x + d.x);
+                m_activeGroup->m_size.y = fmaxf(GRP_MIN_H, m_activeGroup->m_size.y + d.y);
+            } else if (m_activeGroup->m_dragging) {
+                m_activeGroup->m_pos = m_activeGroup->m_pos + d;
+                for (auto* n : m_activeGroup->m_held) n->setPos(n->getPos() + d);
+            }
+            if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+                m_activeGroup->m_dragging = m_activeGroup->m_resizing = false;
+                m_activeGroup->m_held.clear();
+                m_activeGroup = nullptr;
+            }
+            return;
+        }
+
+        bool busy = m_draggingNode || m_hovering || m_hoveredNode || m_dragOut
+                    || m_draggedLink || m_hoveredLink || m_boxSelecting || m_editingGroup;
+
+        // Hover + begin interaction, top-most group first.
+        for (auto it = m_groups.rbegin(); it != m_groups.rend(); ++it) {
+            NodeGroup* g = it->get();
+            ImVec2 tl = grid2screen(g->m_pos);
+            ImVec2 hbr = grid2screen(g->m_pos + ImVec2(g->m_size.x, GRP_HEADER_H));
+            ImVec2 handleTL = grid2screen(g->m_pos + g->m_size - ImVec2(GRP_HANDLE, GRP_HANDLE));
+            ImVec2 br = grid2screen(g->m_pos + g->m_size);
+
+            bool onHeader = ImGui::IsMouseHoveringRect(tl, hbr);
+            bool onHandle = ImGui::IsMouseHoveringRect(handleTL, br);
+            if (busy || (!onHeader && !onHandle)) continue;
+
+            m_hoveredGroup = g;
+            if (onHeader && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+                m_editingGroup = g;
+                m_selectedGroup = g;
+                m_editGroupFocusFrames = 2;
+                strncpy(m_editGroupBuf, g->m_title.c_str(), sizeof(m_editGroupBuf) - 1);
+                m_editGroupBuf[sizeof(m_editGroupBuf) - 1] = '\0';
+                consumeSingleUseClick();
+            } else if (getSingleUseClick()) {
+                m_selectedGroup = g;
+                m_activeGroup = g;
+                if (onHandle) {
+                    g->m_resizing = true;
+                } else {
+                    g->m_dragging = true;
+                    g->m_held.clear();
+                    for (auto& n : m_nodes) {
+                        ImVec2 c = n.second->getPos() + n.second->getSize() * 0.5f;
+                        if (c.x >= g->m_pos.x && c.x <= g->m_pos.x + g->m_size.x &&
+                            c.y >= g->m_pos.y && c.y <= g->m_pos.y + g->m_size.y)
+                            g->m_held.push_back(n.second.get());
+                    }
+                }
+                consumeSingleUseClick();
+            }
+            break;
+        }
+
+        // Deselect when a click misses every group.
+        if (!m_hoveredGroup && !m_editingGroup && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            m_selectedGroup = nullptr;
+
+        // Delete the selected group (soft: contained nodes stay where they are).
+        if (m_selectedGroup && !m_editingGroup && ImGui::IsWindowFocused()
+            && ImGui::IsKeyPressed(ImGuiKey_Delete) && !ImGui::IsAnyItemActive()) {
+            m_selectedGroup->destroy();
+            m_selectedGroup = nullptr;
+        }
+
+        // Inline rename field, drawn on top in canvas space.
+        if (m_editingGroup) {
+            ImGui::SetCursorScreenPos(grid2screen(m_editingGroup->m_pos + ImVec2(6.0f, 3.0f)));
+            ImGui::SetNextItemWidth(fmaxf(60.0f, m_editingGroup->m_size.x - 12.0f));
+            if (m_editGroupFocusFrames > 0) { --m_editGroupFocusFrames; ImGui::SetKeyboardFocusHere(); }
+            bool enter = ImGui::InputText("##groupRename", m_editGroupBuf, sizeof(m_editGroupBuf),
+                                          ImGuiInputTextFlags_EnterReturnsTrue);
+            if (enter || ImGui::IsItemDeactivated()) {
+                m_editingGroup->m_title = m_editGroupBuf;
+                m_editingGroup = nullptr;
+            }
+        }
+
+        m_groups.erase(std::remove_if(m_groups.begin(), m_groups.end(),
+                       [](const std::shared_ptr<NodeGroup>& g){ return g->isDestroyed(); }), m_groups.end());
+    }
+
     void ImNodeFlow::update(bool disabled) {
         // Updating looping stuff
         m_hovering = nullptr;
@@ -405,6 +530,8 @@ namespace ImFlow {
         // Update and draw nodes
         // TODO: I don't like this
         draw_list->ChannelsSplit(2);
+        draw_list->ChannelsSetCurrent(0);
+        drawGroups(); // behind the node backgrounds
         for (auto &node: m_nodes) {
 		node.second->m_inf = this;
 		node.second->update();
@@ -413,11 +540,14 @@ namespace ImFlow {
 	destroyDestroyedNodes();
         draw_list->ChannelsMerge();
 
+        // Group boxes: hover/drag/resize/rename, now that node hover state is known.
+        updateGroups();
+
         // Box (rubber-band) selection: drag on empty canvas to select nodes in the rect.
         // (m_hoveredLink / m_draggedLink hold last frame's link state, so a click that lands
         // on a link edits the link instead of starting a box-select.)
         if (!m_disabled && !m_dragOut && !m_draggingNode && !m_hovering && !m_boxSelecting
-            && !m_hoveredLink && !m_draggedLink
+            && !m_hoveredLink && !m_draggedLink && !m_hoveredGroup && !m_activeGroup
             && ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && on_free_space()) {
             m_boxSelecting = true;
             m_boxSelectStart = ImGui::GetMousePos();
