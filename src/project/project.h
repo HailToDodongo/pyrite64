@@ -17,6 +17,9 @@ namespace Project
     std::string pathEmu{};
     std::string pathN64Inst{};
 
+    // Editor version this project was last saved with (empty for pre-versioning projects).
+    std::string editorVersion{};
+
     uint32_t sceneIdOnBoot{1};
     uint32_t sceneIdOnReset{1};
     uint32_t sceneIdLastOpened{1};
@@ -33,6 +36,7 @@ namespace Project
       std::string pathConfig;
       bool dirty{false};
       std::string savedState{};
+      bool openedFromNewerVersion{false};
 
       AssetManager assets{this};
       SceneManager scenes{this};
@@ -54,6 +58,6 @@ namespace Project
       SceneManager& getScenes() { return scenes; }
       [[nodiscard]] const std::string &getPath() const { return path; }
       [[nodiscard]] const std::string &getConfigPath() const { return pathConfig; }
-
+      [[nodiscard]] bool wasSavedWithNewerVersion() const { return openedFromNewerVersion; }
   };
 }

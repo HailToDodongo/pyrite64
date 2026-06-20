@@ -13,6 +13,7 @@
 #include "../utils/hash.h"
 #include "../utils/json.h"
 #include "../utils/jsonBuilder.h"
+#include "../utils/string.h"
 #include "../context.h"
 #include "graph/nodeRegistry.h"
 
@@ -64,6 +65,7 @@ std::string Project::ProjectConf::serialize() const {
     .set("romName", romName)
     .set("pathEmu", pathEmu)
     .set("pathN64Inst", pathN64Inst)
+    .set("editorVersion", editorVersion)
     .set("sceneIdOnBoot", sceneIdOnBoot)
     .set("sceneIdOnReset", sceneIdOnReset)
     .set("sceneIdLastOpened", sceneIdLastOpened)
@@ -83,6 +85,7 @@ void Project::Project::deserialize(const nlohmann::json &doc) {
   conf.romName = doc.value("romName", "pyrite64");
   conf.pathEmu = doc.value("pathEmu", "ares");
   conf.pathN64Inst = doc.value("pathN64Inst", "");
+  conf.editorVersion = doc.value("editorVersion", "");
   conf.sceneIdOnBoot = doc.value("sceneIdOnBoot", 1);
   conf.sceneIdOnReset = doc.value("sceneIdOnReset", 1);
   conf.sceneIdLastOpened = doc.value("sceneIdLastOpened", 1);
@@ -120,6 +123,22 @@ Project::Project::Project(const std::string &p64projPath)
   deserialize(configJSON);
   savedState = conf.serialize();
 
+  int verCmp = conf.editorVersion.empty() ? -1 : Utils::compareSemVer(conf.editorVersion, PYRITE_VERSION);
+  if (verCmp < 0) {
+    printf("Project saved with older editor version (%s < %s), forcing clean\n",
+      conf.editorVersion.empty() ? "none" : conf.editorVersion.c_str(), PYRITE_VERSION);
+    Build::cleanProject(*this, {
+      .code = true,
+      .assets = true,
+      .engine = true,
+      .engineSrc = true,
+    });
+  } else if (verCmp > 0) {
+    openedFromNewerVersion = true;
+    printf("Warning: project saved with newer editor version (%s > %s)\n",
+      conf.editorVersion.c_str(), PYRITE_VERSION);
+  }
+
   // Load the graph node definitions for this project (builtins + <project>/nodes/*.js).
   // Done here so every entry point (editor and CLI build) gets the same set.
   ::Project::Graph::Node::reloadSpecs(path + "/nodes");
@@ -144,6 +163,8 @@ Project::Project::Project(const std::string &p64projPath)
 
 void Project::Project::saveConfig()
 {
+  conf.editorVersion = PYRITE_VERSION;
+  openedFromNewerVersion = false;
   auto serializedConfig = conf.serialize();
   Utils::FS::saveTextFile(pathConfig, serializedConfig);
   savedState = serializedConfig;
