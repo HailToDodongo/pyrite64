@@ -62,6 +62,8 @@ namespace
       setF("PopupRounding", style.PopupRounding);
       setF("ScrollbarRounding", style.ScrollbarRounding);
       setF("PopupBorderSize", style.PopupBorderSize);
+      setF("WindowBorderSize", style.WindowBorderSize);
+      setF("FrameBorderSize", style.FrameBorderSize);
       setV("WindowPadding", style.WindowPadding);
       setV("FramePadding", style.FramePadding);
       setV("ItemSpacing", style.ItemSpacing);

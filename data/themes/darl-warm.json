@@ -1,0 +1,78 @@
+{
+  "name": "Dark - Warm",
+  "colors": {
+    "WindowBg": [0.110, 0.055, 0.045, 1.00],
+    "MenuBarBg": [0.082, 0.039, 0.031, 1.00],
+    "PopupBg": [0.180, 0.090, 0.075, 1.00],
+    "ModalWindowDimBg": [0.10, 0.02, 0.00, 0.60],
+
+    "Header": [0.180, 0.090, 0.072, 1.00],
+    "HeaderHovered": [0.290, 0.140, 0.110, 1.00],
+    "HeaderActive": [0.360, 0.180, 0.140, 1.00],
+
+    "Button": [0.200, 0.095, 0.078, 1.00],
+    "ButtonHovered": [0.300, 0.150, 0.115, 1.00],
+    "ButtonActive": [0.430, 0.210, 0.150, 1.00],
+
+    "FrameBg": [0.155, 0.075, 0.060, 1.00],
+    "FrameBgHovered": [0.225, 0.110, 0.085, 1.00],
+    "FrameBgActive": [0.290, 0.140, 0.110, 1.00],
+
+    "Tab": [0.140, 0.068, 0.055, 1.00],
+    "TabHovered": [0.290, 0.140, 0.110, 1.00],
+    "TabSelected": [0.200, 0.095, 0.078, 1.00],
+    "TabDimmed": [0.090, 0.043, 0.035, 1.00],
+    "TabDimmedSelected": [0.155, 0.075, 0.060, 1.00],
+    "TabSelectedOverline": [1.000, 0.560, 0.230, 1.00],
+    "DragDropTarget": [1.000, 0.560, 0.230, 1.00],
+
+    "TitleBg": [0.082, 0.039, 0.031, 1.00],
+    "TitleBgActive": [0.140, 0.068, 0.055, 1.00],
+    "TitleBgCollapsed": [0.060, 0.030, 0.024, 1.00],
+
+    "Border": [0.300, 0.150, 0.120, 0.50],
+    "BorderShadow": [0.00, 0.00, 0.00, 0.00],
+
+    "Text": [0.953, 0.878, 0.839, 1.00],
+    "TextDisabled": [0.541, 0.439, 0.408, 1.00],
+
+    "CheckMark": [1.000, 0.620, 0.300, 1.00],
+    "SliderGrab": [1.000, 0.620, 0.300, 1.00],
+    "SliderGrabActive": [1.000, 0.760, 0.480, 1.00],
+    "ResizeGrip": [1.000, 0.620, 0.300, 0.50],
+    "ResizeGripHovered": [1.000, 0.620, 0.300, 0.75],
+    "ResizeGripActive": [1.000, 0.760, 0.480, 1.00],
+
+    "ScrollbarBg": [0.075, 0.036, 0.029, 1.00],
+    "ScrollbarGrab": [0.290, 0.140, 0.110, 1.00],
+    "ScrollbarGrabHovered": [0.400, 0.195, 0.150, 1.00],
+    "ScrollbarGrabActive": [0.500, 0.250, 0.190, 1.00],
+
+    "TableHeaderBg": [0.180, 0.090, 0.072, 1.00],
+    "TableBorderStrong": [0.290, 0.140, 0.110, 1.00],
+    "TableBorderLight": [0.200, 0.100, 0.080, 1.00],
+    "TableRowBgAlt": [1.00, 1.00, 1.00, 0.03]
+  },
+  "style": {
+    "TabBarOverlineSize": 2.0,
+    "WindowRounding": 3.0,
+    "FrameRounding": 3.0,
+    "GrabRounding": 3.0,
+    "TabRounding": 0.0,
+    "PopupRounding": 3.0,
+    "ScrollbarRounding": 3.0,
+    "PopupBorderSize": 0.0,
+    "WindowPadding": [10, 10],
+    "FramePadding": [6, 4],
+    "ItemSpacing": [8, 6]
+  },
+  "custom": {
+    "iconActive": [0.950, 0.860, 0.820, 1.00],
+    "iconInactive": [0.520, 0.430, 0.400, 1.00],
+    "assetIcon": [0.820, 0.640, 0.540, 1.00],
+    "nodeBackground": [0.090, 0.045, 0.037, 1.00],
+    "nodeGrid": [1.000, 0.620, 0.300, 0.10],
+    "nodeBody": [0.200, 0.095, 0.078, 1.00],
+    "logBackground": [0.075, 0.036, 0.029, 1.00]
+  }
+}
