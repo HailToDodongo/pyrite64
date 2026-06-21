@@ -80,7 +80,8 @@ namespace ImGui
     if(IconButton(
       state ? labelOn : labelOff,
       labelSize,
-      state ? ImVec4{1,1,1,1} : ImVec4{0.6f,0.6f,0.6f,1}
+      state ? ImGui::Theme::getColor("iconActive", ImVec4{1,1,1,1})
+            : ImGui::Theme::getColor("iconInactive", ImVec4{0.6f,0.6f,0.6f,1})
     )) {
       Editor::UndoRedo::getHistory().markChanged("Toggle Property");
       state = !state;

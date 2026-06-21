@@ -240,6 +240,20 @@ bool Editor::NodeEditor::draw(ImGuiID defDockId)
 
     ImGui::BeginChild("graphCanvas", ImVec2(0, 0), false);
     graph.graph.setSize(ImGui::GetContentRegionAvail());
+
+    // Keep the canvas background/grid in sync with the active theme (applied each
+    // frame so live theme switches take effect). config().color drives the actual fill.
+    auto &gridStyle = graph.graph.getStyle();
+    gridStyle.colors.background = ImGui::Theme::getColorU32("nodeBackground", IM_COL32(33, 41, 45, 255));
+    gridStyle.colors.grid = ImGui::Theme::getColorU32("nodeGrid", IM_COL32(200, 200, 200, 40));
+    graph.graph.getGrid().config().color = gridStyle.colors.background;
+
+    // Theme each node's body background (header color stays per node-type).
+    ImU32 nodeBody = ImGui::Theme::getColorU32("nodeBody", IM_COL32(55, 64, 75, 255));
+    for(auto &[uid, node] : graph.graph.getNodes()) {
+      if(node && node->getStyle()) node->getStyle()->bg = nodeBody;
+    }
+
     graph.graph.update();
     ImGui::EndChild();
 

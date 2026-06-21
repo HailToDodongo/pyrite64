@@ -63,7 +63,7 @@ void Editor::LogWindow::draw()
   ImGui::PushFont(ImGui::Theme::getFontMono(), 16_px);
 
   ImGui::PushID("LOG");
-  ImGui::PushStyleColor(ImGuiCol_FrameBg, {0.05f, 0.05f, 0.06f, 1.0f});
+  ImGui::PushStyleColor(ImGuiCol_FrameBg, ImGui::Theme::getColor("logBackground", {0.05f, 0.05f, 0.06f, 1.0f}));
 
   const char* child_window_name = NULL;
   ImFormatStringToTempBuffer(&child_window_name, NULL, "Log/LOG_43838E2B/%08X", ImGui::GetID(""));

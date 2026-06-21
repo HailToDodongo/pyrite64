@@ -421,6 +421,20 @@ void Editor::Scene::draw()
         if(ImGui::MenuItem(ICON_MDI_MAGNIFY_MINUS "Zoom Out")) {
           ImGui::Theme::changeZoom(-1);
         }
+        if(ImGui::BeginMenu(ICON_MDI_PALETTE " Theme"))
+        {
+          for(const auto &theme : ImGui::Theme::getThemes())
+          {
+            bool selected = theme.id == ImGui::Theme::getCurrentTheme();
+            if(ImGui::MenuItem(theme.name.c_str(), nullptr, selected))
+            {
+              ImGui::Theme::setTheme(theme.id);
+              ctx.prefs.themeName = theme.id;
+              ctx.prefs.save();
+            }
+          }
+          ImGui::EndMenu();
+        }
         if(ImGui::MenuItem("Reset Layout"))ImGui::DockBuilderRemoveNode(dockSpaceID);
         ImGui::EndMenu();
       }

@@ -290,6 +290,7 @@ int main(int argc, char** argv)
     ctx.editorScene = std::make_unique<Editor::Scene>();
 
     ctx.prefs.load();
+    ImGui::Theme::setTheme(ctx.prefs.themeName);
     if(!CLI::getProjectPath().empty())
     {
       if(!Editor::Actions::call(Editor::Actions::Type::PROJECT_OPEN, CLI::getProjectPath())) {

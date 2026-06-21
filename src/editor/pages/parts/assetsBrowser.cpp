@@ -296,7 +296,9 @@ void Editor::AssetsBrowser::draw() {
 
     } else {
       ImGui::PushFont(nullptr, 40_px);
+      ImGui::PushStyleColor(ImGuiCol_Text, ImGui::Theme::getColor("assetIcon", ImGui::GetStyleColorVec4(ImGuiCol_Text)));
       clicked = ImGui::Button(iconTxt, textBtnSize);
+      ImGui::PopStyleColor();
       ImGui::PopFont();
     }
 

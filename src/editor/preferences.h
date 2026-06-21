@@ -3,6 +3,7 @@
 * @license MIT
 */
 #pragma once
+#include <string>
 #include "keymap.h"
 
 namespace Editor
@@ -11,6 +12,7 @@ namespace Editor
   {
     Input::KeymapPreset keymapPreset{Input::KeymapPreset::Blender};
     Input::Keymap keymap{};
+    std::string themeName{"dark"};
     float zoomSpeed = 1.0f;
     float moveSpeed = 120.0f;
     float panSpeed = 30.0f;

@@ -17,7 +17,7 @@ namespace
     return Utils::Proc::getAppDataPath() / "preferences.json";
   }
 
-  constexpr Editor::Preferences DEF{};
+  const Editor::Preferences DEF{};
 }
 
 void Editor::Preferences::load()
@@ -28,6 +28,7 @@ void Editor::Preferences::load()
     if (doc.contains("keymap")) keymap.deserialize(doc["keymap"], keymapPreset);
     else applyKeymapPreset();
 
+    themeName = doc.value("themeName", DEF.themeName);
     zoomSpeed = doc.value("zoomSpeed", DEF.zoomSpeed);
     moveSpeed = doc.value("moveSpeed", DEF.moveSpeed);
     panSpeed = doc.value("panSpeed", DEF.panSpeed);
@@ -48,6 +49,7 @@ void Editor::Preferences::save()
   std::string json = Utils::JSON::Builder{}
     .set("keymapPreset", (uint32_t)keymapPreset)
     .set("keymap", keymap.serialize(keymapPreset))
+    .set("themeName", themeName)
     .set("zoomSpeed", zoomSpeed)
     .set("moveSpeed", moveSpeed)
     .set("panSpeed", panSpeed)
