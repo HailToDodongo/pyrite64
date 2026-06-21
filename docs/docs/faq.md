@@ -52,7 +52,7 @@ Pyrite64 itself is licensed under the [MIT License](https://github.com/HailToDod
 and I put no restrictions on what you can do with games.\
 The SDKs used, namely libdragon and tiny3d, have similar licenses.\
 Pyrite64 does **NOT** use any proprietary SDKs.\
-So in general, it should be safe to sell games made with Pyrite64 if you wish.\
+So in general, it should be safe to sell games made with Pyrite64 if you wish.
 
 ## Can I put games on a physical cartridge?
 
