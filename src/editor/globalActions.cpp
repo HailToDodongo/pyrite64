@@ -39,6 +39,23 @@ namespace Editor::Actions
              "This project was saved with a newer editor version (" + ctx.project->conf.editorVersion +
              ", current is v" PYRITE_VERSION ").\nIt was opened anyway, but things may break.");
          }
+         // Remember this project in the launcher's recent list (normalized absolute path).
+         if(ctx.project) {
+           // Resolve the metadata cart/box art image to a file path for the launcher card.
+           std::string cardImage{};
+           const auto &meta = ctx.project->conf.metadata;
+           if(meta.enabled && !meta.langs.empty()) {
+             const auto &lang = meta.langs.front();
+             uint64_t imgUUID = lang.cartFront ? lang.cartFront : lang.boxFront;
+             if(imgUUID) {
+               if(auto *e = ctx.project->getAssets().getEntryByUUID(imgUUID)) {
+                 cardImage = fs::absolute(e->path).string();
+               }
+             }
+           }
+           ctx.prefs.addRecentProject(fs::absolute(path).string(), ctx.project->conf.name, cardImage);
+           ctx.prefs.save();
+         }
        } catch (const std::exception &e) {
          auto error = "Failed to open project:\n" + std::string(e.what());
          //error += "\n" + std::to_string(std::stacktrace::current());
