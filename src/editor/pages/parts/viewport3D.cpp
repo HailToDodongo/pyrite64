@@ -33,7 +33,6 @@ namespace
     ImGuizmo::OPERATION::SCALE
   };
   constinit bool isTransWorld = true;
-  constinit bool overRotGizmo = false;
 
   // A toggleable "connected" button (like in toolbars)
   bool ConnectedToggleButton(const char* text, bool active, bool first, bool last, ImVec2 size = ImVec2(20, 20))
@@ -164,10 +163,31 @@ namespace
       obj->addPropOverride(prop);
     }
   }
+
+  struct CamRef { uint64_t uuid; std::string name; };
+
+  // Collect all scene objects (incl. prefab instances) carrying a Camera component.
+  void collectCameras(Project::Object &parent, std::vector<CamRef> &out)
+  {
+    for (auto &child : parent.children) {
+      auto srcObj = child.get();
+      if (child->isPrefabInstance()) {
+        auto prefab = ctx.project->getAssets().getPrefabByUUID(child->uuidPrefab.value);
+        if (prefab) srcObj = &prefab->obj;
+      }
+      for (auto &comp : srcObj->components) {
+        if (comp.id == 3) { // Camera
+          out.push_back({child->uuid, child->name.empty() ? "Camera" : child->name});
+          break;
+        }
+      }
+      collectCameras(*child, out);
+    }
+  }
 }
 
-Editor::Viewport3D::Viewport3D()
-  : dummySkeleton{ctx.gpu}
+Editor::Viewport3D::Viewport3D(uint32_t winId_)
+  : dummySkeleton{ctx.gpu}, winId{winId_}
 {
   if(spritesRefCount == 0) {
     sprites = std::make_shared<Renderer::Texture>(ctx.gpu, "data/img/icons/sprites.png");
@@ -199,14 +219,45 @@ Editor::Viewport3D::Viewport3D()
   objSprites.setMesh(meshSprites);
 }
 
-Editor::Viewport3D::~Viewport3D() {
+void Editor::Viewport3D::detach() {
+  if(detached)return;
+  detached = true;
   ctx.scene->removeRenderPass(passId);
   ctx.scene->removeCopyPass(passId);
   ctx.scene->removePostRenderCallback(passId);
+}
+
+Editor::Viewport3D::~Viewport3D() {
+  detach();
 
   if(--spritesRefCount == 0) {
     sprites = nullptr;
   }
+}
+
+nlohmann::json Editor::Viewport3D::saveState() const
+{
+  // Note: the camera transform is intentionally not persisted, each viewport opens
+  // with the default view so a stale orientation can't carry over between sessions.
+  return {
+    {"winId", winId},
+    {"showGrid", showGrid},
+    {"showCollMesh", showCollMesh},
+    {"showCollObj", showCollObj},
+    {"showIcons", showIcons},
+    {"boundCam", boundCameraUUID},
+    {"camRes", useCameraRes},
+  };
+}
+
+void Editor::Viewport3D::loadState(const nlohmann::json &j)
+{
+  showGrid = j.value("showGrid", showGrid);
+  showCollMesh = j.value("showCollMesh", showCollMesh);
+  showCollObj = j.value("showCollObj", showCollObj);
+  showIcons = j.value("showIcons", showIcons);
+  boundCameraUUID = j.value("boundCam", (uint64_t)0);
+  useCameraRes = j.value("camRes", false);
 }
 
 bool Editor::Viewport3D::alignFocusedObjectToCamera()
@@ -296,6 +347,8 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
 
   bool hadDraw = false;
   iterateObjects(rootObj, [&](Project::Object &obj, Project::Component::Entry *comp) {
+    // Don't draw the camera we are looking through: its icon/frustum sits on the lens.
+    if(boundCameraUUID && obj.uuid == boundCameraUUID) { hadDraw = false; return; }
     if(!comp)
     {
       if(!hadDraw) {
@@ -322,6 +375,7 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
 
   iterateObjects(rootObj, [&](Project::Object &obj, Project::Component::Entry *comp) {
     if(!comp)return;
+    if(boundCameraUUID && obj.uuid == boundCameraUUID)return;
     auto &def = Project::Component::TABLE[comp->id];
 
     // @TODO: use flag in component
@@ -338,35 +392,41 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
   meshLines->recreate(renderScene);
   meshSprites->recreate(renderScene);
 
-  if(ctx.debugMode)SDL_PushGPUDebugGroup(cmdBuff, "3D Lines");
-  renderScene.getPipeline("lines").bind(renderPass3D);
-
-  if(showGrid)objGrid.draw(renderPass3D, cmdBuff);
-  objLines.draw(renderPass3D, cmdBuff);
-
-  // hack to get thicker lines with AA, just draw again with a 1px offset in screen-space
-  if(ctx.prefs.renderFactorAA > 1.0f) {
-    auto oldMat = uniGlobal.projMat[2];
-    uniGlobal.projMat[2][0] += 1.0f / uniGlobal.screenSize.x;
-    uniGlobal.projMat[2][1] -= 1.0f / uniGlobal.screenSize.y;
-    SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
+  if(!cleanPreview)
+  {
+    if(ctx.debugMode)SDL_PushGPUDebugGroup(cmdBuff, "3D Lines");
+    renderScene.getPipeline("lines").bind(renderPass3D);
 
     if(showGrid)objGrid.draw(renderPass3D, cmdBuff);
     objLines.draw(renderPass3D, cmdBuff);
 
-    uniGlobal.projMat[2] = oldMat;
-    SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
+    // hack to get thicker lines with AA, just draw again with a 1px offset in screen-space
+    if(ctx.prefs.renderFactorAA > 1.0f) {
+      auto oldMat = uniGlobal.projMat[2];
+      uniGlobal.projMat[2][0] += 1.0f / uniGlobal.screenSize.x;
+      uniGlobal.projMat[2][1] -= 1.0f / uniGlobal.screenSize.y;
+      SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
+
+      if(showGrid)objGrid.draw(renderPass3D, cmdBuff);
+      objLines.draw(renderPass3D, cmdBuff);
+
+      uniGlobal.projMat[2] = oldMat;
+      SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
+    }
+    if(ctx.debugMode)SDL_PopGPUDebugGroup(cmdBuff);
   }
-  if(ctx.debugMode)SDL_PopGPUDebugGroup(cmdBuff);
 
-  if(ctx.debugMode)SDL_PushGPUDebugGroup(cmdBuff, "3D Sprites");
+  if(iconsVisible)
+  {
+    if(ctx.debugMode)SDL_PushGPUDebugGroup(cmdBuff, "3D Sprites");
 
-  renderScene.getPipeline("sprites").bind(renderPass3D);
+    renderScene.getPipeline("sprites").bind(renderPass3D);
 
-  sprites->bind(renderPass3D);
-  objSprites.draw(renderPass3D, cmdBuff);
+    sprites->bind(renderPass3D);
+    objSprites.draw(renderPass3D, cmdBuff);
 
-  if(ctx.debugMode)SDL_PopGPUDebugGroup(cmdBuff);
+    if(ctx.debugMode)SDL_PopGPUDebugGroup(cmdBuff);
+  }
 
   SDL_EndGPURenderPass(renderPass3D);
 }
@@ -395,8 +455,8 @@ void Editor::Viewport3D::onCopyPass(SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPa
 void Editor::Viewport3D::onPostRender(Renderer::Scene &renderScene) {
   if (pickedObjID.isRequested()) {
     pickedObjID.setResult(fb.readObjectID(
-      mousePosClick.x * ctx.prefs.renderFactorAA,
-      mousePosClick.y * ctx.prefs.renderFactorAA
+      mousePosClick.x * fbScale,
+      mousePosClick.y * fbScale
     ));
   }
 }
@@ -449,18 +509,67 @@ void Editor::Viewport3D::draw()
 
   float BAR_HEIGHT = 26_px;
 
-  auto currSize = ImGui::GetContentRegionAvail();
+  auto availSize = ImGui::GetContentRegionAvail();
 
   auto currPos = ImGui::GetWindowPos();
-  if (currSize.x < 64_px)currSize.x = 64_px;
-  if (currSize.y < 64_px)currSize.y = 64_px;
-  currSize.y -= BAR_HEIGHT;
+  if (availSize.x < 64_px)availSize.x = 64_px;
+  if (availSize.y < 64_px)availSize.y = 64_px;
+  availSize.y -= BAR_HEIGHT;
 
-  currSize.x = floorf(currSize.x);
-  currSize.y = floorf(currSize.y);
+  availSize.x = floorf(availSize.x);
+  availSize.y = floorf(availSize.y);
 
-  // Since we can't use MSAA directly, just render at higher res here
-  auto renderSize = currSize * ctx.prefs.renderFactorAA;
+  // Resolve the bound scene camera (if any): mirror its transform + aspect onto the editor view.
+  bool camLocked = false;
+  Project::Component::Camera::View camView{};
+  if (boundCameraUUID) {
+    if (auto camObj = scene->getObjectByUUID(boundCameraUUID)) {
+      auto srcObj = camObj.get();
+      if (camObj->isPrefabInstance()) {
+        auto prefab = ctx.project->getAssets().getPrefabByUUID(camObj->uuidPrefab.value);
+        if (prefab) srcObj = &prefab->obj;
+      }
+      for (auto &comp : srcObj->components) {
+        if (comp.id == 3) {
+          camView = Project::Component::Camera::getView(*camObj, comp);
+          camera.pos = camObj->pos.resolve(camObj->propOverrides);
+          camera.rot = glm::normalize(camObj->rot.resolve(camObj->propOverrides));
+          camera.fov = camView.fov;
+          camera.velocity = {0,0,0};
+          camera.zoomSpeed = 0.0f;
+          camLocked = true;
+          break;
+        }
+      }
+      if (!camLocked) boundCameraUUID = 0; // object lost its camera component
+    } else {
+      boundCameraUUID = 0; // bound object no longer exists
+    }
+  }
+  if(!camLocked) camera.fov = 70.0f; // restore the editor default when free-flying
+
+  // Displayed image size; letterboxed to the camera aspect when locked, otherwise fills the area.
+  ImVec2 viewSize = availSize;
+  float offX = 0.0f, offY = 0.0f;
+  if (camLocked) {
+    float aspect = camView.aspect > 0.0f ? camView.aspect : 4.0f/3.0f;
+    if (availSize.x / availSize.y > aspect) viewSize.x = floorf(availSize.y * aspect);
+    else                                    viewSize.y = floorf(availSize.x / aspect);
+    offX = floorf((availSize.x - viewSize.x) * 0.5f);
+    offY = floorf((availSize.y - viewSize.y) * 0.5f);
+  }
+  auto currSize = viewSize;
+
+  // Free-res renders at the displayed pixel density; camera-res renders at the cart resolution.
+  float aa = ctx.prefs.renderFactorAA;
+  ImVec2 renderSize = (camLocked && useCameraRes)
+    ? ImVec2(camView.resX * aa, camView.resY * aa)
+    : viewSize * aa;
+  fbScale = renderSize.x / viewSize.x;
+
+  // Camera-resolution mode is a clean preview: only the rendered image, no editor overlays.
+  cleanPreview = camLocked && useCameraRes;
+  iconsVisible = showIcons && !cleanPreview;
 
   fb.resize((int)renderSize.x, (int)renderSize.y);
   camera.screenSize = {renderSize.x, renderSize.y};
@@ -473,8 +582,8 @@ void Editor::Viewport3D::draw()
   // mouse pos
   ImVec2 screenPos = ImGui::GetCursorScreenPos();
   mousePos = {ImGui::GetMousePos().x, ImGui::GetMousePos().y};
-  mousePos.x -= screenPos.x;
-  mousePos.y -= vpOffsetY;
+  mousePos.x -= (screenPos.x + offX);
+  mousePos.y -= vpOffsetY; // already includes the letterbox offset (set at image placement)
 
   if (!ctx.prefs.mouseWheelModifiesSpeed) moveSpeedModifier = 1.0f;
   float moveSpeed = (ctx.prefs.moveSpeed * moveSpeedModifier) * deltaTime;
@@ -483,6 +592,15 @@ void Editor::Viewport3D::draw()
   bool mouseHeldRight = ImGui::IsMouseDown(ImGuiMouseButton_Right);
   bool mouseHeldMiddle = ImGui::IsMouseDown(ImGuiMouseButton_Middle);
   bool newMouseDown = mouseHeldLeft || mouseHeldMiddle || mouseHeldRight;
+
+  // Capture camera control in the viewport where the drag started, so a second open
+  // viewport doesn't move in lockstep from the same global mouse/keyboard state.
+  bool anyMouseClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left)
+    || ImGui::IsMouseClicked(ImGuiMouseButton_Right)
+    || ImGui::IsMouseClicked(ImGuiMouseButton_Middle);
+  if (!newMouseDown) inputActive = false;
+  else if (anyMouseClicked && isMouseHover) inputActive = true;
+
   bool isCameraFlying = false;
   bool isAltDown = ImGui::GetIO().KeyAlt;
   bool isShiftDown = ImGui::GetIO().KeyShift;
@@ -575,13 +693,13 @@ void Editor::Viewport3D::draw()
       obj = nullptr;
     }
 
-    isCameraFlying = mouseHeldRight;
+    isCameraFlying = mouseHeldRight && inputActive;
 
     if (deletedSelection) {
       hasSelection = false;
     }
 
-    if (newMouseDown) {
+    if (newMouseDown && !camLocked && inputActive) {
       glm::vec3 moveDir = {0,0,0};
       if (ImGui::IsKeyDown(ctx.prefs.keymap.moveForward))moveDir.z = -moveSpeed;
       if (ImGui::IsKeyDown(ctx.prefs.keymap.moveBack))moveDir.z = moveSpeed;
@@ -599,12 +717,12 @@ void Editor::Viewport3D::draw()
         if (ImGui::IsKeyDown(ctx.prefs.keymap.gizmoTranslate))gizmoOp = 0;
         if (ImGui::IsKeyDown(ctx.prefs.keymap.gizmoRotate))gizmoOp = 1;
         if (ImGui::IsKeyDown(ctx.prefs.keymap.gizmoScale))gizmoOp = 2;
-        if (ImGui::IsKeyPressed(ctx.prefs.keymap.focusObject))camera.focusSelection(ctx);
+        if (!camLocked && ImGui::IsKeyPressed(ctx.prefs.keymap.focusObject))camera.focusSelection(ctx);
       }
     }
   }
 
-  if ((isMouseHover || isCameraFlying) && !overRotGizmo) {
+  if ((isMouseHover || isCameraFlying) && !overRotGizmo && !camLocked) {
     //multitouch trackpads don't generate touch or pinch events on windows
     //instead, we have to rely on the fact that trackpads move in fractional amounts
     glm::vec2 wheel = glm::vec2(io.MouseWheelH, io.MouseWheel);
@@ -668,24 +786,69 @@ void Editor::Viewport3D::draw()
   ImGui::SameLine();
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 12_px);
 
-  if(ConnectedToggleButton(ICON_MDI_GRID, showGrid, true, true, ImVec2(32_px, 24_px))) {
+  // Overlay toggles (grid / collision / icons) are all forced off in clean-preview mode.
+  ImGui::BeginDisabled(cleanPreview);
+
+  if(ConnectedToggleButton(ICON_MDI_GRID, showGrid && !cleanPreview, true, true, ImVec2(32_px, 24_px))) {
     showGrid = !showGrid;
   }
   ImGui::SetItemTooltip("%s Grid", showGrid ? "Hide" : "Show");
 
   ImGui::SameLine();
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4_px);
-  if(ConnectedToggleButton(ICON_MDI_LANDSLIDE_OUTLINE, showCollMesh, true, true, ImVec2(32_px, 24_px))) {
+  if(ConnectedToggleButton(ICON_MDI_LANDSLIDE_OUTLINE, showCollMesh && !cleanPreview, true, true, ImVec2(32_px, 24_px))) {
     showCollMesh = !showCollMesh;
   }
   ImGui::SetItemTooltip("%s Collision Mesh", showCollMesh ? "Hide" : "Show");
 
   ImGui::SameLine();
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4_px);
-  if(ConnectedToggleButton(ICON_MDI_CYLINDER, showCollObj, true, true, ImVec2(32_px,24_px))) {
+  if(ConnectedToggleButton(ICON_MDI_CYLINDER, showCollObj && !cleanPreview, true, true, ImVec2(32_px,24_px))) {
     showCollObj = !showCollObj;
   }
   ImGui::SetItemTooltip("%s Collision Bodies", showCollObj ? "Hide" : "Show");
+
+  ImGui::SameLine();
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4_px);
+  if(ConnectedToggleButton(ICON_MDI_IMAGE_OUTLINE, showIcons && !cleanPreview, true, true, ImVec2(32_px, 24_px))) {
+    showIcons = !showIcons;
+  }
+  ImGui::SetItemTooltip(cleanPreview ? "Overlays hidden (camera resolution)" : (showIcons ? "Hide Icons" : "Show Icons"));
+
+  ImGui::EndDisabled();
+
+  // Camera select + resolution toggle: mirror the editor view onto a scene camera.
+  ImGui::SameLine();
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 12_px);
+  {
+    std::vector<CamRef> cams;
+    collectCameras(scene->getRootObject(), cams);
+
+    std::string preview = "Free Camera";
+    for (auto &c : cams) if (c.uuid == boundCameraUUID) preview = c.name;
+    if (boundCameraUUID && preview == "Free Camera") preview = "Camera";
+
+    ImGui::SetNextItemWidth(150_px);
+    if (ImGui::BeginCombo("##camsel", preview.c_str())) {
+      if (ImGui::Selectable("Free Camera", boundCameraUUID == 0)) boundCameraUUID = 0;
+      for (auto &c : cams) {
+        ImGui::PushID((int)(c.uuid & 0xFFFFFFFF));
+        if (ImGui::Selectable(c.name.c_str(), c.uuid == boundCameraUUID)) boundCameraUUID = c.uuid;
+        ImGui::PopID();
+      }
+      ImGui::EndCombo();
+    }
+    ImGui::SetItemTooltip("Mirror the editor view onto a scene camera");
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 6_px);
+    ImGui::BeginDisabled(boundCameraUUID == 0);
+    if (ConnectedToggleButton(ICON_MDI_ASPECT_RATIO, useCameraRes && boundCameraUUID, true, true, ImVec2(32_px, 24_px))) {
+      useCameraRes = !useCameraRes;
+    }
+    ImGui::SetItemTooltip("Resolution: %s", useCameraRes ? "Camera" : "Free (editor)");
+    ImGui::EndDisabled();
+  }
 
   ImGui::SameLine();
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 12_px);
@@ -695,17 +858,19 @@ void Editor::Viewport3D::draw()
   ImGui::SetCursorPosY(currPos.y + BAR_HEIGHT);
 
   auto dragDelta = mousePos - mousePosStart;
-  if (isMouseDown) {
+  if (isMouseDown && inputActive) {
     ImGui::ClearActiveID();
-    if (isAltDown && mouseHeldLeft) {
-      camera.stopMoveDelta();
-      camera.orbitDelta(dragDelta);
-    } else if (mouseHeldMiddle) {
-      camera.stopRotateDelta();
-      camera.moveDelta(-dragDelta * 3.0f);
-    } else if (mouseHeldRight) {
-      camera.stopMoveDelta();
-      camera.lookDelta(dragDelta);
+    if (!camLocked) {
+      if (isAltDown && mouseHeldLeft) {
+        camera.stopMoveDelta();
+        camera.orbitDelta(dragDelta);
+      } else if (mouseHeldMiddle) {
+        camera.stopRotateDelta();
+        camera.moveDelta(-dragDelta * 3.0f);
+      } else if (mouseHeldRight) {
+        camera.stopMoveDelta();
+        camera.lookDelta(dragDelta);
+      }
     }
   } else {
     camera.stopRotateDelta();
@@ -715,17 +880,14 @@ void Editor::Viewport3D::draw()
   if (!newMouseDown)isMouseDown = false;
 
   currPos = ImGui::GetCursorScreenPos();
-  currPos.x = floorf(currPos.x);
-  currPos.y = floorf(currPos.y);
+  currPos.x = floorf(currPos.x + offX);
+  currPos.y = floorf(currPos.y + offY);
   ImGui::SetCursorScreenPos(currPos);
 
   vpOffsetY = currPos.y;
 
   auto tex = fb.getTexture();
-  ImGui::Image(ImTextureID(tex), {
-    (float)fb.getWidth() / ctx.prefs.renderFactorAA,
-    (float)fb.getHeight() / ctx.prefs.renderFactorAA
-  });
+  ImGui::Image(ImTextureID(tex), viewSize);
 
   if (ImGui::BeginDragDropTarget())
   {
@@ -770,6 +932,8 @@ void Editor::Viewport3D::draw()
 
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
+  // Per-viewport gizmo id so multiple open viewports keep independent gizmo state.
+  ImGuizmo::PushID((int)winId);
   ImGuizmo::SetDrawlist(draw_list);
   ImGuizmo::SetRect(currPos.x, currPos.y, currSize.x, currSize.y);
 
@@ -990,11 +1154,27 @@ void Editor::Viewport3D::draw()
     UndoRedo::getHistory().markChanged("Transform Object");
     gizmoTransformActive = false;
   }
+  ImGuizmo::PopID();
 
-  glm::vec3 posOffset = camera.pos - camera.pivot;
-  float camDist = glm::length(posOffset);
-  if (ImViewGuizmo::Rotate(posOffset, camera.rot, gizPos, camDist)) {
-    camera.pos = camera.pivot + posOffset;
+  if (camLocked) {
+    overRotGizmo = false;
+  } else {
+    gizPos = {currPos.x + viewSize.x - 50_px, currPos.y + 54_px};
+    if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) viewGizmoOwned = false;
+    bool eligible = isMouseHover || viewGizmoOwned;
+
+    glm::vec3 posOffset = camera.pos - camera.pivot;
+    float camDist = glm::length(posOffset);
+    if (eligible) {
+      if (ImViewGuizmo::Rotate(posOffset, camera.rot, gizPos, camDist)) {
+        camera.pos = camera.pivot + posOffset;
+      }
+      if (ImViewGuizmo::IsUsing()) viewGizmoOwned = true;
+    } else {
+      glm::vec3 dummyPos = posOffset;
+      glm::quat dummyRot = camera.rot;
+      ImViewGuizmo::Rotate(dummyPos, dummyRot, gizPos, camDist);
+    }
+    overRotGizmo = eligible && ImViewGuizmo::IsOver();
   }
-  overRotGizmo = ImViewGuizmo::IsOver();
 }

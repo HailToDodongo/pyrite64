@@ -88,6 +88,17 @@ namespace Project::Component::Camera
   {
   }
 
+  View getView(Object &obj, Entry &entry)
+  {
+    Data &data = *static_cast<Data*>(entry.data.get());
+    auto size = data.vpSize.resolve(obj);
+    float aspect = data.aspect.resolve(obj);
+    if (aspect <= 0.0f) {
+      aspect = size.y != 0 ? (float)size.x / (float)size.y : 4.0f / 3.0f;
+    }
+    return View{size.x, size.y, aspect, data.fov.resolve(obj)};
+  }
+
   void draw(Object &obj, Entry &entry) {
     Data &data = *static_cast<Data*>(entry.data.get());
 

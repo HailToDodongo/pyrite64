@@ -89,6 +89,13 @@ namespace Project::Component
   MAKE_COMP(AnimModel)
   MAKE_COMP(CharBody)
 
+  namespace Camera
+  {
+    // Resolved view parameters of a camera component, used by the editor viewport to mirror it.
+    struct View { int resX{320}; int resY{240}; float aspect{4.0f/3.0f}; float fov{65.0f}; };
+    View getView(Object &obj, Entry &entry);
+  }
+
   constexpr std::array TABLE{
     CompInfo{
       .id = 0,

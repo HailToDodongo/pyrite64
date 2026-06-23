@@ -7,6 +7,7 @@ Editor & Engine
 .. toctree::
   :maxdepth: 2
 
+  editor/windows
   editor/objLifecycle
   editor/components
   editor/collision

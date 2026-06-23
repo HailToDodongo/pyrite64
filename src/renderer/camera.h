@@ -31,6 +31,7 @@ namespace Renderer
       glm::vec3 pivotBase{};
       bool isMoving{false};
       bool isOrtho{false};
+      float fov{70.0f};
 
       Camera();
 

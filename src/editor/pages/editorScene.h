@@ -23,7 +23,16 @@ namespace Editor
   class Scene
   {
     private:
-      Viewport3D viewport3d{};
+      std::vector<std::shared_ptr<Viewport3D>> viewports{};
+      // Closed viewports are kept alive here until the next frame: their framebuffer texture
+      // is still referenced by this frame's ImGui draw list, which renders after draw() returns.
+      std::vector<std::shared_ptr<Viewport3D>> viewportsPendingClose{};
+      uint32_t nextViewportWinId{0};
+      std::shared_ptr<Viewport3D> hoveredViewport{};
+      bool wantNewViewport{false};
+      bool wantResetLayout{false};
+
+      void addViewport();
 
       // Editors
       std::vector<std::shared_ptr<NodeEditor>> nodeEditors{};

@@ -13,7 +13,6 @@ namespace
   constexpr glm::vec3 WORLD_UP{0,1,0};
   constexpr glm::vec3 WORLD_FORWARD{0,0,-1};
   constexpr float ORTHO_SIZE = 310.0f;
-  constexpr float FOV = 70.0f;
 }
 
 Renderer::Camera::Camera() {
@@ -50,7 +49,7 @@ void Renderer::Camera::apply(UniformGlobal &uniGlobal)
   float aspect = screenSize.x / screenSize.y;
   float near = 10.0f;
   float far = 10'000.0f;
-  float fov = glm::radians(FOV);
+  float fovRad = glm::radians(fov);
 
   if(isOrtho)
   {
@@ -66,7 +65,7 @@ void Renderer::Camera::apply(UniformGlobal &uniGlobal)
   } else
   {
     uniGlobal.spriteSize = {7000, 7000};
-    uniGlobal.projMat = glm::perspective(fov, aspect, near, far);
+    uniGlobal.projMat = glm::perspective(fovRad, aspect, near, far);
   }
   uniGlobal.spriteSize *= ctx.prefs.renderFactorAA;
 
@@ -181,7 +180,7 @@ void Renderer::Camera::focusSelection(Context &ctx) {
                 glm::abs(glm::dot(fwd, glm::vec3(0, h.y, 0))) +
                 glm::abs(glm::dot(fwd, glm::vec3(0, 0, h.z)));
 
-  float fov = glm::radians(FOV);
-  float dist = 1.1f * depth + (height) / tanf(fov * 0.5f);
+  float fovRad = glm::radians(fov);
+  float dist = 1.1f * depth + (height) / tanf(fovRad * 0.5f);
   focus(aabb.getCenter(), dist);
 }

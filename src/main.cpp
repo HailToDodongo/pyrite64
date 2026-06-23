@@ -305,6 +305,12 @@ int main(int argc, char** argv)
 
       auto frameStart = SDL_GetTicksNS();
 
+      // force default theme for the launcher (i'm lazy)
+      std::string desiredTheme = ctx.project ? ctx.prefs.themeName : std::string("dark");
+      if(desiredTheme != ImGui::Theme::getCurrentTheme()) {
+        ImGui::Theme::setTheme(desiredTheme);
+      }
+
       ImGui::Theme::update();
 
       //printf("Frame Start | Time: %.2fms\n", ImGui::GetIO().DeltaTime * 1000.0f);

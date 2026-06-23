@@ -4,6 +4,8 @@
 */
 #pragma once
 #include <memory>
+#include <string>
+#include "json.hpp"
 
 #include "../../../renderer/camera.h"
 #include "../../../renderer/vertBuffer.h"
@@ -23,6 +25,7 @@ namespace Editor
       Renderer::Framebuffer fb{};
       Renderer::Camera camera{};
       uint32_t passId{};
+      bool detached{false};
 
       bool isMouseHover{false};
       bool isMouseDown{false};
@@ -51,17 +54,43 @@ namespace Editor
       bool showGrid{true};
       bool showCollMesh{false};
       bool showCollObj{true};
+      bool showIcons{true};
+      bool iconsVisible{true}; 
+      bool cleanPreview{false};
+
+      // Mirror the editor view onto a scene camera (0 = free fly).
+      uint64_t boundCameraUUID{0};
+      bool useCameraRes{false};
+      float fbScale{1.0f}; // framebuffer pixels per displayed pixel (used for object picking)
 
       int gizmoOp{0};
       bool gizmoTransformActive{false};
+      bool overRotGizmo{false};
+      bool inputActive{false};    // this viewport captured the camera drag (started inside it)
+      bool viewGizmoOwned{false}; // this viewport owns the active orientation-cube drag
 
       void onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::Scene& renderScene);
       void onCopyPass(SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass *copyPass);
       void onPostRender(Renderer::Scene& renderScene);
 
     public:
-      Viewport3D();
+      uint32_t winId{0};
+
+      explicit Viewport3D(uint32_t winId = 0);
       ~Viewport3D();
+
+      void detach();
+
+      // Stable per-instance ImGui window title; the "###" id keeps docking state across renames.
+      std::string getWindowTitle() const {
+        if (winId == 0) return "3D-Viewport";
+        return "3D-Viewport " + std::to_string(winId + 1) + "###vp" + std::to_string(winId);
+      }
+
+      bool isViewHovered() const { return isMouseHover; }
+
+      nlohmann::json saveState() const;
+      void loadState(const nlohmann::json &j);
 
       std::shared_ptr<Renderer::Mesh> getLines() {
         return meshLines;

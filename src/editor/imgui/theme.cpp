@@ -85,22 +85,55 @@ namespace
     4.0f
   };
 
+  constexpr const char* DEFAULT_UI_FONT = "./data/Altinn-DINExp.ttf";
+
   constinit ImFont* fontMono{nullptr};
   constinit bool needsUpdate{true};
   constinit int zoomLevel{4};
+  std::string loadedFontPath{}; // UI font currently built into the atlas
+
+  std::string themeUiFont()
+  {
+    if(auto it = currentThemeJson.find("font"); it != currentThemeJson.end() && it->is_string()) {
+      auto f = it->get<std::string>();
+      if(!f.empty()) return "./data/" + f;
+    }
+    return DEFAULT_UI_FONT;
+  }
+
+  bool themeFontPixel()
+  {
+    return currentThemeJson.is_object() && currentThemeJson.value("fontPixel", false);
+  }
 
   void loadFonts(float contentScale = 1.0f)
   {
     ImGuiStyle& style = ImGui::GetStyle();
+    std::string uiFont = themeUiFont();
+    bool pixelFont = themeFontPixel();
 
-    if(!fontMono)
+    // Rebuild the atlas on first use or when the theme switches to a different UI font.
+    if(!fontMono || uiFont != loadedFontPath)
     {
       ImGuiIO& io = ImGui::GetIO();
-      style.ScaleAllSizes(1.0f);
-      style.FontScaleDpi = 1.0f;
+      io.Fonts->Clear();
+      fontMono = nullptr;
 
+      style.FontScaleDpi = 1.0f;
       style.FontSizeBase = 15.0f;
-      [[maybe_unused]] ImFont* font = io.Fonts->AddFontFromFileTTF("./data/Altinn-DINExp.ttf");
+
+      ImFontConfig uiCfg;
+      if(pixelFont) {
+        uiCfg.OversampleH = 1;
+        uiCfg.OversampleV = 1;
+        uiCfg.PixelSnapH = true;
+      }
+      ImFont* font = io.Fonts->AddFontFromFileTTF(uiFont.c_str(), 0.0f, pixelFont ? &uiCfg : nullptr);
+      if(!font && uiFont != DEFAULT_UI_FONT) { // theme font missing -> fall back
+        printf("Theme font '%s' not found, using default\n", uiFont.c_str());
+        uiFont = DEFAULT_UI_FONT;
+        font = io.Fonts->AddFontFromFileTTF(uiFont.c_str());
+      }
       IM_ASSERT(font != nullptr);
 
       static const ImWchar icons_ranges[] = { ICON_MIN_MDI, ICON_MAX_16_MDI, 0 };
@@ -113,9 +146,14 @@ namespace
 
       fontMono = io.Fonts->AddFontFromFileTTF("./data/GoogleSansCode.ttf", 16);
       IM_ASSERT(fontMono != nullptr);
+
+      loadedFontPath = uiFont;
     }
 
-    style.FontSizeBase = 15.0f * contentScale;
+    float size = 15.0f * contentScale;
+    // Snap to a whole pixel so a pixel font lands on the grid instead of between pixels.
+    if(pixelFont) size = (float)(int)(size + 0.5f);
+    style.FontSizeBase = size;
   }
 }
 
