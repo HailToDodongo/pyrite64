@@ -607,7 +607,10 @@ void Editor::Viewport3D::draw()
   if(isShiftDown)moveSpeed *= 4.0f;
 
   bool hasSelection = !ctx.getSelectedObjectUUIDs().empty();
+  // Query under this viewport's gizmo id, else IsUsing()/IsOver() read the wrong id
+  ImGuizmo::PushID((int)winId);
   bool overGizmo = hasSelection && ImGuizmo::IsOver();
+  ImGuizmo::PopID();
 
   bool leftClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
   bool leftDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
@@ -1153,6 +1156,13 @@ void Editor::Viewport3D::draw()
   if (gizmoTransformActive && (!ImGuizmo::IsUsing() || !obj)) {
     UndoRedo::getHistory().markChanged("Transform Object");
     gizmoTransformActive = false;
+  }
+
+  // The over-gizmo check at the top lags a frame (ImGuizmo computes hover during Manipulate),
+  // so grabbing a handle can still cause a box-select. Cancel it the moment the gizmo grabs.
+  if (ImGuizmo::IsUsing()) {
+    selectionPending = false;
+    selectionDragging = false;
   }
   ImGuizmo::PopID();
 
