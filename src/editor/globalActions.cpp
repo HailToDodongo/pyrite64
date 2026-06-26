@@ -4,6 +4,7 @@
 */
 #include "actions.h"
 
+#include <cstdlib>
 #include <unordered_set>
 #include "../project/project.h"
 #include "../editor/imgui/notification.h"
@@ -17,6 +18,24 @@
 #include "undoRedo.h"
 #include "pages/editorScene.h"
 //#include <stacktrace>
+
+namespace
+{
+  std::string getProcessPath()
+  {
+    const char *path = std::getenv("PATH");
+    return path ? std::string{path} : std::string{};
+  }
+
+  void restoreProcessPath(const std::string &path)
+  {
+    #if defined(_WIN32)
+      _putenv_s("PATH", path.c_str());
+    #else
+      setenv("PATH", path.c_str(), 1);
+    #endif
+  }
+}
 
 namespace Editor::Actions
 {
@@ -145,12 +164,13 @@ namespace Editor::Actions
 
       ctx.futureBuildRun = std::async(std::launch::async, [] (std::string configPath, std::string runCmd)
       {
-        auto oldPATH = std::getenv("PATH");
+        auto oldPATH = getProcessPath();
         bool result = false;
         try {
           result = Build::buildProject(configPath);
         } catch (const std::exception &e)
         {
+          restoreProcessPath(oldPATH);
           auto error = "Build failed with exception:\n" + std::string(e.what());
           //error += "\n" + std::to_string(std::stacktrace::current());
           Utils::Logger::log(error, Utils::Logger::LEVEL_ERROR);
@@ -158,11 +178,7 @@ namespace Editor::Actions
           return;
         }
 
-        #if defined(_WIN32)
-          _putenv_s("PATH", oldPATH);
-        #else 
-          setenv("PATH", oldPATH, 1);
-        #endif
+        restoreProcessPath(oldPATH);
         
         if(!result) {
           Editor::Noti::add(Editor::Noti::Type::ERROR, "Build failed!");
