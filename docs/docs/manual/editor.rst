@@ -10,5 +10,6 @@ Editor & Engine
   editor/windows
   editor/objLifecycle
   editor/components
+  editor/prefabs
   editor/collision
   editor/materials
