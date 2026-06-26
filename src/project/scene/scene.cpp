@@ -4,6 +4,7 @@
 */
 #include "scene.h"
 #include "object.h"
+#include <functional>
 #include "../../utils/json.h"
 #include "../../context.h"
 #include "../../utils/hash.h"
@@ -247,6 +248,31 @@ uint32_t Project::Scene::createPrefabFromObject(uint32_t uuid)
 
   Prefab prefab{};
   prefab.uuid.value = Utils::Hash::randomU64();
+
+  // Scene objects are world-positioned, the engine has no transform hierarchy. Re-base
+  // the subtree so each descendant's transform is relative to its parent. Otherwise
+  // expanding the prefab at an instance's transform would double-count world positions
+  // and place nested objects far away.
+  std::function<void(Object&, glm::vec3, glm::quat, glm::vec3)> rebase =
+    [&](Object &node, glm::vec3 pPos, glm::quat pRot, glm::vec3 pScale) {
+      glm::quat pRotInv = glm::inverse(pRot);
+      for(auto &child : node.children) {
+        glm::vec3 &cp = child->pos.resolve(child->propOverrides);
+        glm::quat &cr = child->rot.resolve(child->propOverrides);
+        glm::vec3 &cs = child->scale.resolve(child->propOverrides);
+        glm::vec3 cwPos = cp, cwScale = cs;
+        glm::quat cwRot = cr;
+        cp = (pRotInv * (cwPos - pPos)) / pScale;
+        cr = pRotInv * cwRot;
+        cs = cwScale / pScale;
+        rebase(*child, cwPos, cwRot, cwScale);
+      }
+    };
+  rebase(*obj,
+    obj->pos.resolve(obj->propOverrides),
+    obj->rot.resolve(obj->propOverrides),
+    obj->scale.resolve(obj->propOverrides));
+
   auto prefabJson = prefab.serialize(*obj);
 
   std::string name = obj->name;
@@ -262,7 +288,101 @@ uint32_t Project::Scene::createPrefabFromObject(uint32_t uuid)
   );
 
   ctx.project->getAssets().reload();
+
+  // Convert the source object into a thin instance of the new prefab, so its content
+  // now comes from the prefab definition (single source of truth) and the inspector
+  // shows it as a prefab instance. Its placement is kept via transform overrides.
+  std::function<void(Object&)> unregister = [&](Object &o) {
+    for(auto &child : o.children) unregister(*child);
+    ctx.removeObjectSelection(o.uuid);
+    objectsMap.erase(o.uuid);
+  };
+  for(auto &child : obj->children) unregister(*child);
+
+  obj->children.clear();
+  obj->components.clear();
+  obj->propOverrides.clear();
+  obj->uuidPrefab.value = prefab.uuid.value;
+  obj->addPropOverride(obj->pos);
+  obj->addPropOverride(obj->rot);
+  obj->addPropOverride(obj->scale);
   return 0;
+}
+
+void Project::Scene::unpackPrefabInstance(uint32_t uuid)
+{
+  auto inst = getObjectByUUID(uuid);
+  if(!inst || !inst->isPrefabInstance())return;
+  auto prefab = ctx.project->getAssets().getPrefabByUUID(inst->uuidPrefab.value);
+  if(!prefab)return;
+  auto &def = prefab->obj;
+
+  // The instance keeps its uuid, placement and root-level component overrides (same
+  // component uuids resolve), so it just gains the prefab root's components.
+  glm::vec3 wPos = inst->pos.resolve(inst->propOverrides);
+  glm::quat wRot = inst->rot.resolve(inst->propOverrides);
+  glm::vec3 wScale = inst->scale.resolve(inst->propOverrides);
+
+  auto cloneComponents = [](Object &dst, const Object &src) {
+    for(const auto &comp : src.components) {
+      auto &cdef = Component::TABLE[comp.id];
+      auto data = cdef.funcSerialize(comp);
+      dst.components.push_back(Component::Entry{
+        .id = comp.id, .uuid = comp.uuid, .name = comp.name,
+        .data = cdef.funcDeserialize(data)
+      });
+    }
+  };
+  cloneComponents(*inst, def);
+
+  // Materialize the prefab's child tree with composed world transforms. Scene objects
+  // are world-positioned, so each node bakes its world transform. Nested prefab
+  // instances stay thin (keep uuidPrefab + their prefab-authored overrides).
+  std::function<void(Object&, std::shared_ptr<Object>, glm::vec3, glm::quat, glm::vec3)> build =
+    [&](Object &defNode, const std::shared_ptr<Object> &parent,
+        glm::vec3 pPos, glm::quat pRot, glm::vec3 pScale)
+  {
+    auto child = std::make_shared<Object>(*parent);
+    child->name = defNode.name;
+    child->uuid = Utils::Hash::randomU64();
+    child->enabled = defNode.enabled;
+    child->selectable = defNode.selectable;
+
+    glm::vec3 lpos = defNode.pos.resolve(defNode.propOverrides);
+    glm::quat lrot = defNode.rot.resolve(defNode.propOverrides);
+    glm::vec3 lscale = defNode.scale.resolve(defNode.propOverrides);
+    glm::vec3 cwPos = pPos + pRot * (pScale * lpos);
+    glm::quat cwRot = pRot * lrot;
+    glm::vec3 cwScale = pScale * lscale;
+    child->pos.value = cwPos;
+    child->rot.value = cwRot;
+    child->scale.value = cwScale;
+
+    if(defNode.isPrefabInstance()) {
+      // Stays a prefab instance, now placed in world space.
+      child->uuidPrefab.value = defNode.uuidPrefab.value;
+      child->propOverrides = defNode.propOverrides; // prefab-authored overrides
+      child->addPropOverride(child->pos);
+      child->addPropOverride(child->rot);
+      child->addPropOverride(child->scale);
+    } else {
+      cloneComponents(*child, defNode);
+    }
+
+    addObject(*parent, child);
+
+    if(!defNode.isPrefabInstance()) {
+      for(const auto &gc : defNode.children) {
+        build(*gc, child, cwPos, cwRot, cwScale);
+      }
+    }
+  };
+
+  for(const auto &defChild : def.children) {
+    build(*defChild, inst, wPos, wRot, wScale);
+  }
+
+  inst->uuidPrefab.value = 0;
 }
 
 std::string Project::Scene::serialize(bool minify) {
@@ -370,7 +490,7 @@ void Project::Scene::deserialize(const std::string &data)
   root.deserialize(this, docGraph);
 }
 
-void Project::Scene::assignRuntimeIds()
+uint32_t Project::Scene::assignRuntimeIds()
 {
   // Pre-order traversal: parents get a lower id than their children, root stays 0.
   // Ids are unique per scene and only valid for this build.
@@ -391,4 +511,5 @@ void Project::Scene::assignRuntimeIds()
   for(const auto &child : root.children) {
     assign(child, assign);
   }
+  return nextId; // first free id, used as the base for expanded prefab-instance children
 }

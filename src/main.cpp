@@ -457,6 +457,8 @@ int main(int argc, char** argv)
       ImGui::Render();
       scene.draw();
 
+      ctx.runDeferredActions();
+
       if (closeRequested) {
         done = confirmCloseWithUnsavedChanges();
         if(done)ctx.wantsProjectClose = true;

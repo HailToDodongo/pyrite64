@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <optional>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
@@ -259,8 +260,8 @@ void Editor::ObjectInspector::draw() {
             bool createdOverride = false;
             glm::vec3 resolvedBefore = (selObj->*prop).resolve(selObj->propOverrides);
             if (selObj->isPrefabInstance()
-                && !selObj->isPrefabEdit
-                && selObj->propOverrides.find((selObj->*prop).id) == selObj->propOverrides.end()) {
+                && !ctx.isPrefabEditing(selObj->uuid)
+                && !selObj->hasPropOverride(selObj->*prop)) {
               selObj->addPropOverride(selObj->*prop);
               createdOverride = true;
             }
@@ -280,8 +281,8 @@ void Editor::ObjectInspector::draw() {
             bool createdOverride = false;
             glm::quat resolvedBefore = (selObj->*prop).resolve(selObj->propOverrides);
             if (selObj->isPrefabInstance()
-                && !selObj->isPrefabEdit
-                && selObj->propOverrides.find((selObj->*prop).id) == selObj->propOverrides.end()) {
+                && !ctx.isPrefabEditing(selObj->uuid)
+                && !selObj->hasPropOverride(selObj->*prop)) {
               selObj->addPropOverride(selObj->*prop);
               createdOverride = true;
             }
@@ -406,26 +407,45 @@ void Editor::ObjectInspector::draw() {
     isPrefabInst = true;
   }
 
+  // When a nested prefab object is selected (selSubPath), the inspector shows that node
+  // instead of the root instance, rendered through the same path below. The guards stay
+  // alive in 'nested' so its edits keep authoring to the right override owner.
+  Editor::SelectionUtils::NestedTarget nested;
+  if(isPrefabInst) Editor::SelectionUtils::resolveNestedTarget(nested, obj.get(), prefab.get());
 
-  //if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen))
+  // The inspected target: the nested node when one is selected, else the root object.
+  Project::Object* tableObj = nested.isNested ? nested.node : obj.get();    // backs the override map
+  Project::Object* xfSrc    = nested.isNested ? nested.node : srcObj;       // transform property source
+  Project::Object* compSrc  = nested.isNested ? nested.nodeSrc : srcObj;    // component source
+  // A nested override authors via the active cascade (Path), the root and a direct
+  // definition edit author via a fresh component layer (Dispatch).
+  bool compViaPath = nested.isNested && !nested.directDefEdit;
+
+
   {
-    if (ImTable::start("General", obj.get())) {
-      ImTable::add("Name", obj->name);
+    if (ImTable::start("General", tableObj)) {
+      if(nested.isNested) {
+        // A nested node's name belongs to the prefab definition, so it is read-only here.
+        ImTable::add("Name");
+        ImGui::TextUnformatted(nested.node->name.c_str());
+      } else {
+        ImTable::add("Name", obj->name);
 
-      //ImTable::add("UUID");
-      //ImGui::Text("0x%16lX", obj->uuid);
+        if(isPrefabInst) {
+          ImTable::add("Prefab");
 
-      if(isPrefabInst) {
-        ImTable::add("Prefab");
+          bool editing = ctx.isPrefabEditing(obj->uuid);
+          auto name = std::string{ICON_MDI_PENCIL " "};
+          name += editing ? ("Back to Instance") : ("Edit '" + srcObj->name + "'");
 
-        auto name = std::string{ICON_MDI_PENCIL " "};
-        name += obj->isPrefabEdit ? ("Back to Instance") : ("Edit '" + srcObj->name + "'");
-
-        if(ImGui::Button(name.c_str())) {
-          if (obj->isPrefabEdit) {
-            ctx.project->getAssets().markPrefabDirty(prefab->uuid.value);
+          if(ImGui::Button(name.c_str())) {
+            if (editing) {
+              ctx.project->getAssets().markPrefabDirty(prefab->uuid.value);
+              ctx.prefabEditUUID = 0;
+            } else {
+              ctx.prefabEditUUID = obj->uuid;
+            }
           }
-          obj->isPrefabEdit = !obj->isPrefabEdit;
         }
       }
 
@@ -435,11 +455,11 @@ void Editor::ObjectInspector::draw() {
 
   if(ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
   {
-    if(ImTable::start("Transform", obj.get()))
+    if(ImTable::start("Transform", tableObj))
     {
-      ImTable::addObjProp("Pos", srcObj->pos);
+      ImTable::addObjProp("Pos", xfSrc->pos);
 
-      if(srcObj->proportionalScale)
+      if(xfSrc->proportionalScale)
       {
         std::function<bool(glm::vec3*)> cb = [](glm::vec3 *val) -> bool {
           glm::vec3 scale = *val;
@@ -464,24 +484,24 @@ void Editor::ObjectInspector::draw() {
           *val = scale * ratio;
           return ratio != 1.0f;
         };
-        ImTable::addObjProp("Scale", srcObj->scale, cb, nullptr);
+        ImTable::addObjProp("Scale", xfSrc->scale, cb, nullptr);
       } else {
-        ImTable::addObjProp("Scale", srcObj->scale);
+        ImTable::addObjProp("Scale", xfSrc->scale);
       }
 
       // icon to toggle between proportional and independent scale
       ImGui::SameLine();
       ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 32_px);
-      if(ImGui::IconButton(srcObj->proportionalScale ? ICON_MDI_LINK_VARIANT : ICON_MDI_LINK_VARIANT_OFF, {24_px, 24_px})) {
+      if(ImGui::IconButton(xfSrc->proportionalScale ? ICON_MDI_LINK_VARIANT : ICON_MDI_LINK_VARIANT_OFF, {24_px, 24_px})) {
         ImGui::ClearActiveID();
-        srcObj->proportionalScale = !srcObj->proportionalScale;
+        xfSrc->proportionalScale = !xfSrc->proportionalScale;
       }
-      ImGui::SetItemTooltip(srcObj->proportionalScale
+      ImGui::SetItemTooltip(xfSrc->proportionalScale
         ? "Change to Independent Scale"
         : "Change to Proportional Scale"
       );
 
-      ImTable::addObjProp("Rot", srcObj->rot);
+      ImTable::addObjProp("Rot", xfSrc->rot);
 
       // icon to toggle between quaternion and euler
       ImGui::SameLine();
@@ -503,7 +523,9 @@ void Editor::ObjectInspector::draw() {
   uint64_t compDelUUID = 0;
   Project::Component::Entry *compCopy = nullptr;
 
-  auto drawComp = [&](Project::Object* obj, Project::Component::Entry &comp, bool isInstance)
+  // viaPath: resolve component props through the active nested cascade (Path) rather than
+  // a fresh component layer (Dispatch). True only for a nested override target.
+  auto drawComp = [&](Project::Object* obj, Project::Component::Entry &comp, bool isInstance, bool viaPath)
   {
     ImTable::PrefabEditScope prefabScope(isInstance);
     ImGui::PushID(&comp);
@@ -543,23 +565,28 @@ void Editor::ObjectInspector::draw() {
         }
       }
 
+      std::optional<PropScope::Dispatch> dispatch;
+      std::optional<PropScope::Path> compPath;
+      if(viaPath) compPath.emplace(comp.uuid);
+      else        dispatch.emplace(obj->propOverrides, comp.uuid);
       def.funcDraw(*obj, comp);
     }
     ImGui::PopID();
   };
 
-  for (auto &comp : srcObj->components) {
-    drawComp(obj.get(), comp, false);
+  for (auto &comp : compSrc->components) {
+    drawComp(tableObj, comp, false, compViaPath);
   }
 
-  if(isPrefabInst && !obj->isPrefabEdit) {
+  // Components added directly to a scene instance (not nested, not in edit mode).
+  if(!nested.isNested && isPrefabInst && !ctx.isPrefabEditing(obj->uuid)) {
     for (auto &comp : obj->components) {
-      drawComp(obj.get(), comp, true);
+      drawComp(obj.get(), comp, true, false);
     }
     srcObj = obj.get();
   }
 
-  if (isPrefabInst && obj->isPrefabEdit && prefab) {
+  if (isPrefabInst && ctx.isPrefabEditing(obj->uuid) && prefab) {
     ctx.project->getAssets().markPrefabDirty(prefab->uuid.value);
   }
 
@@ -575,28 +602,32 @@ void Editor::ObjectInspector::draw() {
     srcObj->removeComponent(compDelUUID);
   }
 
-  const char* addLabel = ICON_MDI_PLUS_BOX_OUTLINE " Add Component";
-  ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 4_px);
-  ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(addLabel).x) * 0.5f - 4_px);
-  if (ImGui::Button(addLabel)) {
-    ImGui::OpenPopup("CompSelect");
-  }
-
-  const ImVec2 contentMin = ImGui::GetWindowPos() + ImGui::GetWindowContentRegionMin();
-  const ImVec2 contentMax = ImGui::GetWindowPos() + ImGui::GetWindowContentRegionMax();
-
-  ImRect panelDropRect{contentMin, contentMax};
-  handleScriptComponentDropTarget(srcObj, panelDropRect, true);
-
-  if (ImGui::BeginPopupContextItem("CompSelect"))
+  // Adding components targets the root object, not a nested def node.
+  if(!nested.isNested)
   {
-    for (auto &comp : Project::Component::TABLE_SORTED_BY_NAME) {
-      auto name = std::string{comp.icon} + " " + comp.name;
-      if(ImGui::MenuItem(name.c_str())) {
-        UndoRedo::getHistory().markChanged("Add Component");
-        srcObj->addComponent(comp.id);
-      }
+    const char* addLabel = ICON_MDI_PLUS_BOX_OUTLINE " Add Component";
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 4_px);
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(addLabel).x) * 0.5f - 4_px);
+    if (ImGui::Button(addLabel)) {
+      ImGui::OpenPopup("CompSelect");
     }
-    ImGui::EndPopup();
+
+    const ImVec2 contentMin = ImGui::GetWindowPos() + ImGui::GetWindowContentRegionMin();
+    const ImVec2 contentMax = ImGui::GetWindowPos() + ImGui::GetWindowContentRegionMax();
+
+    ImRect panelDropRect{contentMin, contentMax};
+    handleScriptComponentDropTarget(srcObj, panelDropRect, true);
+
+    if (ImGui::BeginPopupContextItem("CompSelect"))
+    {
+      for (auto &comp : Project::Component::TABLE_SORTED_BY_NAME) {
+        auto name = std::string{comp.icon} + " " + comp.name;
+        if(ImGui::MenuItem(name.c_str())) {
+          UndoRedo::getHistory().markChanged("Add Component");
+          srcObj->addComponent(comp.id);
+        }
+      }
+      ImGui::EndPopup();
+    }
   }
 }

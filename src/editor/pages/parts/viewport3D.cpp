@@ -23,6 +23,7 @@
 #include "../../selectionUtils.h"
 
 #include "../../../utils/logger.h"
+#include <memory>
 namespace
 {
   constinit uint32_t nextPassId{0};
@@ -110,19 +111,137 @@ namespace
   std::shared_ptr<Renderer::Texture> sprites{};
   uint32_t spritesRefCount{0};
 
-  void iterateObjects(
-    Project::Object& parent,
-    std::function<void(Project::Object&, Project::Component::Entry*)> callback
-  )
+  // World transform for expanded prefab-instance children. The engine has no runtime
+  // transform hierarchy, so the editor composes nested transforms here to preview them.
+  struct EditorWorldX {
+    glm::vec3 pos{0,0,0};
+    glm::quat rot{glm::vec3(0.0f)}; // {1,0,0,0} would set x=1, not identity
+    glm::vec3 scale{1,1,1};
+  };
+
+  /**
+   * RAII: while a nested prefab node is drawn, place it at its composed world transform
+   * and swap its uuid for a pick id, restoring both on scope exit.
+   * Component draw callbacks read obj.pos/rot/scale and obj.uuid directly. The engine has
+   * no runtime transform hierarchy, so this is how a nested node is positioned and picked.
+   *
+   * The callbacks resolve the transform with a component Path active, which never matches
+   * a transform-override key, so they read the node's own bare slot (the resolve fallback,
+   * the override entry if present, else the Property default). We mutate that slot, so the
+   * placement is correct regardless of any scene-instance override.
+   * Declaration order matters. The fallback refs bind before the saved copies, so the
+   * copies capture the originals.
+   */
+  struct NestedRenderPlacement {
+    static glm::vec3& fb(Property<glm::vec3>& p, std::unordered_map<uint64_t, GenericValue>& ov) {
+      auto it = ov.find(p.id);
+      return it != ov.end() ? it->second.get<glm::vec3>() : p.value;
+    }
+    static glm::quat& fb(Property<glm::quat>& p, std::unordered_map<uint64_t, GenericValue>& ov) {
+      auto it = ov.find(p.id);
+      return it != ov.end() ? it->second.get<glm::quat>() : p.value;
+    }
+
+    Project::Object& node;
+    uint32_t savedUuid;
+    glm::vec3 &fPos, &fScale;
+    glm::quat &fRot;
+    glm::vec3 sPos, sScale;
+    glm::quat sRot;
+
+    NestedRenderPlacement(Project::Object& n, uint32_t pickId, const EditorWorldX& world)
+      : node{n}, savedUuid{n.uuid},
+        fPos{fb(n.pos, n.propOverrides)}, fScale{fb(n.scale, n.propOverrides)},
+        fRot{fb(n.rot, n.propOverrides)}, sPos{fPos}, sScale{fScale}, sRot{fRot}
+    {
+      node.uuid = pickId; // component draw writes this via setObjectID -> pickable
+      fPos = world.pos; fRot = world.rot; fScale = world.scale;
+    }
+    ~NestedRenderPlacement() {
+      fPos = sPos; fRot = sRot; fScale = sScale;
+      node.uuid = savedUuid;
+    }
+  };
+
+  using IterCallback = std::function<void(Project::Object&, Project::Component::Entry*)>;
+
+  // Maps a generated pick id -> (instance uuid, path) so nested objects can be picked
+  // in the viewport (they share definition uuids across instances). Rebuilt each render.
+  inline std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<uint32_t>>> nestedPickReg{};
+
+  uint32_t nestedPickId(uint32_t rootUuid, const std::vector<uint32_t>& path)
+  {
+    uint64_t h = PropScope::combine(rootUuid, 0x9E3779B9u);
+    for(uint32_t u : path) h = PropScope::combine(h, u);
+    uint32_t id = static_cast<uint32_t>(h ^ (h >> 32));
+    return id ? id : 1u;
+  }
+
+  /**
+   * Renders the children of a prefab instance (the prefab definition tree) at their
+   * composed world transforms. Component draw reads obj.pos/rot/scale, so we briefly
+   * place the node at its world transform for the callbacks, then restore it.
+   * The node uuid is briefly swapped for a per-instance pick id so it's pickable.
+   */
+  void renderNestedPrefab(Project::Object& node, const EditorWorldX& parentWorld,
+                          const IterCallback& callback, int depth,
+                          uint32_t rootUuid, std::vector<uint32_t> path)
+  {
+    if(depth > (int)PropScope::MAX_DEPTH || !node.enabled)return; // self-referencing prefabs
+    path.push_back(node.uuid);
+
+    Project::Object* src = Editor::SelectionUtils::prefabDefOf(&node);
+
+    // Match the build's cascade. A prefab-instance node contributes its own override
+    // layer, so its component overrides resolve here too. Without it the preview would
+    // diverge from the built ROM.
+    std::optional<PropScope::PrefabLayer> nodeLayer;
+    if(node.isPrefabInstance()) nodeLayer.emplace(node.propOverrides);
+
+    // node's local (parent-relative) transform, resolved with the scene-instance
+    // cascade (so a nested transform override is picked up). Used to compose world.
+    glm::vec3 lpos   = node.pos.resolve(node.propOverrides);
+    glm::quat lrot   = node.rot.resolve(node.propOverrides);
+    glm::vec3 lscale = node.scale.resolve(node.propOverrides);
+
+    EditorWorldX world{
+      parentWorld.pos + parentWorld.rot * (parentWorld.scale * lpos),
+      parentWorld.rot * lrot,
+      parentWorld.scale * lscale
+    };
+
+    uint32_t pickId = nestedPickId(rootUuid, path);
+    nestedPickReg[pickId] = {rootUuid, path};
+
+    {
+      NestedRenderPlacement place{node, pickId, world};
+      for(auto &comp : src->components) {
+        PropScope::Path compPath(comp.uuid); // so scene-instance overrides on nested props resolve
+        callback(node, &comp);
+      }
+      callback(node, nullptr);
+    } // node transform + uuid restored here
+
+    // Node-local, so this node's overrides don't reach into its children. Matches the build.
+    nodeLayer.reset();
+
+    for(auto &child : src->children) {
+      PropScope::Path childPath(child->uuid);
+      renderNestedPrefab(*child, world, callback, depth + 1, rootUuid, path);
+    }
+  }
+
+  void iterateObjects(Project::Object& parent, const IterCallback& callback)
   {
     for(auto& child : parent.children)
     {
       if(!child->enabled)continue;
 
       auto srcObj = child.get();
+      bool isInstance = false;
       if(child->isPrefabInstance()) {
         auto prefab = ctx.project->getAssets().getPrefabByUUID(child->uuidPrefab.value);
-        if(prefab)srcObj = &prefab->obj;
+        if(prefab) { srcObj = &prefab->obj; isInstance = true; }
       }
 
       for(auto &comp : srcObj->components) {
@@ -130,8 +249,106 @@ namespace
       }
       callback(*child, nullptr);
 
+      // Expand the prefab definition tree (composed onto the instance's world transform).
+      if(isInstance) {
+        EditorWorldX instWorld{
+          child->pos.resolve(child->propOverrides),
+          child->rot.resolve(child->propOverrides),
+          child->scale.resolve(child->propOverrides)
+        };
+        // Push the scene instance's overrides as the most-derived cascade layer, matching
+        // the build, so scene-level overrides on nested props (e.g. flame color) preview.
+        PropScope::PrefabLayer sceneLayer(child->propOverrides);
+        for(auto &defChild : srcObj->children) {
+          PropScope::Path nodePath(defChild->uuid);
+          renderNestedPrefab(*defChild, instWorld, callback, 0, child->uuid, {});
+        }
+      }
+
       iterateObjects(*child, callback);
     }
+  }
+
+  // Builds the cascade scope for a known node path under a prefab instance. The instance's
+  // override map is the outermost authoring layer, then one Path per node uuid down the
+  // chain, pushed all at once. The build and inspector produce the same keys by pushing
+  // the same primitives incrementally. See PropScope's scope-discipline note.
+  struct NestedPathScope {
+    PropScope::PrefabLayer layer;
+    std::vector<std::unique_ptr<PropScope::Path>> steps;
+    NestedPathScope(const std::unordered_map<uint64_t, GenericValue>& instanceOverrides,
+                    const std::vector<uint32_t>& path)
+      : layer{instanceOverrides}
+    {
+      for(uint32_t uid : path) steps.push_back(std::make_unique<PropScope::Path>(uid));
+    }
+  };
+
+  // Resolves the currently selected nested object (ctx.selSubPath under a prefab instance)
+  // to the definition node, the instance overrides are authored on, the node's parent
+  // world transform, and the node's own world. This descends the path, reading each
+  // intermediate transform to compose world, so it pushes Path incrementally rather than
+  // via NestedPathScope.
+  struct NestedTarget {
+    Project::Object* node{};
+    Project::Object* rootInstance{};
+    EditorWorldX parentWorld{};
+    EditorWorldX world{};
+    std::vector<Project::Object*> nodes{}; // resolved def node for each selSubPath element
+    bool valid{false};
+  };
+
+  NestedTarget resolveNestedTarget(Project::Scene& scene)
+  {
+    NestedTarget out;
+    if(ctx.selSubPath.empty())return out;
+    auto root = scene.getObjectByUUID(ctx.selObjectUUID);
+    if(!root || !root->isPrefabInstance())return out;
+    auto pf = ctx.project->getAssets().getPrefabByUUID(root->uuidPrefab.value);
+    if(!pf)return out;
+
+    EditorWorldX world{
+      root->pos.resolve(root->propOverrides),
+      root->rot.resolve(root->propOverrides),
+      root->scale.resolve(root->propOverrides)
+    };
+
+    // Cascade context: the scene instance's overrides cascade to every depth, while each
+    // nested instance's own layer is node-local (matches the build) - it resolves that
+    // node's own overrides but does not reach into its children.
+    PropScope::PrefabLayer sceneLayer(root->propOverrides);
+    std::vector<std::unique_ptr<PropScope::Path>> pathScopes;
+
+    Project::Object* node = &pf->obj;
+    for(uint32_t uid : ctx.selSubPath) {
+      Project::Object* defParent = Editor::SelectionUtils::prefabDefOf(node);
+      Project::Object* next = nullptr;
+      for(auto &c : defParent->children) { if(c->uuid == uid) { next = c.get(); break; } }
+      if(!next)return out; // stale path
+
+      out.parentWorld = world;
+      out.nodes.push_back(next);
+      pathScopes.push_back(std::make_unique<PropScope::Path>(uid));
+
+      std::optional<PropScope::PrefabLayer> nextLayer; // node-local
+      if(next->isPrefabInstance()) nextLayer.emplace(next->propOverrides);
+
+      glm::vec3 lpos = next->pos.resolve(next->propOverrides);
+      glm::quat lrot = next->rot.resolve(next->propOverrides);
+      glm::vec3 lscale = next->scale.resolve(next->propOverrides);
+      world = EditorWorldX{
+        world.pos + world.rot * (world.scale * lpos),
+        world.rot * lrot,
+        world.scale * lscale
+      };
+      node = next;
+    }
+
+    out.node = node;
+    out.rootInstance = root.get();
+    out.world = world;
+    out.valid = true;
+    return out;
   }
 
   void applyDeltaToChildren(
@@ -159,7 +376,7 @@ namespace
   template<typename T>
   void ensurePropertyOverride(Project::Object *obj, Property<T> &prop)
   {
-    if (obj->propOverrides.find(prop.id) == obj->propOverrides.end()) {
+    if (!obj->hasPropOverride(prop)) {
       obj->addPropOverride(prop);
     }
   }
@@ -170,11 +387,7 @@ namespace
   void collectCameras(Project::Object &parent, std::vector<CamRef> &out)
   {
     for (auto &child : parent.children) {
-      auto srcObj = child.get();
-      if (child->isPrefabInstance()) {
-        auto prefab = ctx.project->getAssets().getPrefabByUUID(child->uuidPrefab.value);
-        if (prefab) srcObj = &prefab->obj;
-      }
+      auto srcObj = Editor::SelectionUtils::prefabDefOf(child.get());
       for (auto &comp : srcObj->components) {
         if (comp.id == 3) { // Camera
           out.push_back({child->uuid, child->name.empty() ? "Camera" : child->name});
@@ -271,7 +484,7 @@ bool Editor::Viewport3D::alignFocusedObjectToCamera()
   if (!obj)return false;
 
   // Prefab instances store transform edits in overrides, so create them before writing position or rotation
-  if (obj->isPrefabInstance() && !obj->isPrefabEdit) {
+  if (obj->isPrefabInstance() && !ctx.isPrefabEditing(obj->uuid)) {
     ensurePropertyOverride(obj.get(), obj->pos);
     ensurePropertyOverride(obj.get(), obj->rot);
   }
@@ -368,6 +581,7 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
     if(!showCollObj && comp->id == 5)return;
 
     if(def.funcDraw3D) {
+      PropScope::Dispatch dispatchScope(obj.propOverrides, comp->uuid);
       def.funcDraw3D(obj, *comp, *this, cmdBuff, renderPass3D);
       hadDraw = true;
     }
@@ -383,6 +597,7 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
     if(!showCollObj && comp->id == 5)return;
 
     if(def.funcDrawPost3D) {
+      PropScope::Dispatch dispatchScope(obj.propOverrides, comp->uuid);
       def.funcDrawPost3D(obj, *comp, *this, cmdBuff, renderPass3D);
     }
   });
@@ -445,6 +660,7 @@ void Editor::Viewport3D::onCopyPass(SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPa
     if(!comp)return;
     auto &def = Project::Component::TABLE[comp->id];
     if(def.funcDrawCopyPass) {
+      PropScope::Dispatch dispatchScope(obj.propOverrides, comp->uuid);
       def.funcDrawCopyPass(obj, *comp, *this, cmdBuff, copyPass);
     }
   });
@@ -480,7 +696,10 @@ void Editor::Viewport3D::draw()
   iterateObjects(rootObj, [&](Project::Object &obj, Project::Component::Entry *comp) {
     if(!comp)return;
     auto &def = Project::Component::TABLE[comp->id];
-    if(def.funcUpdate)def.funcUpdate(obj, *comp);
+    if(def.funcUpdate) {
+      PropScope::Dispatch dispatchScope(obj.propOverrides, comp->uuid);
+      def.funcUpdate(obj, *comp);
+    }
   });
 
   fb.setClearColor(scene->conf.clearColor.value);
@@ -488,20 +707,33 @@ void Editor::Viewport3D::draw()
   if(pickedObjID.hasResult())
   {
     uint32_t newUUID = pickedObjID.consume();
-    auto newObj = scene->getObjectByUUID(newUUID);
-    if(newObj && !newObj->selectable) {
-      newUUID = 0;
-    }
 
-    if (newUUID == 0) {
-      if (!pickAdditive) {
-        ctx.clearObjectSelection();
+    auto regIt = nestedPickReg.find(newUUID);
+    if (newUUID != 0 && regIt != nestedPickReg.end()) {
+      // Picked a nested prefab object: select it as a nested override target, unless edit
+      // mode restricts it (only the edited prefab's own definition is selectable).
+      if (Editor::SelectionUtils::isSelectionAllowed(*scene, regIt->second.first, regIt->second.second)) {
+        ctx.setNestedSelection(regIt->second.first, regIt->second.second);
       }
     } else {
-      if (pickAdditive) {
-        ctx.toggleObjectSelection(newUUID);
+      auto newObj = scene->getObjectByUUID(newUUID);
+      if(newObj && !newObj->selectable) {
+        newUUID = 0;
+      }
+      // In prefab-edit mode only the edited instance is pickable. Ignore other picks
+      // instead of clearing, so the edit selection is kept.
+      if(newUUID != 0 && !Editor::SelectionUtils::isSelectionAllowed(*scene, newUUID, {})) {
+        // disallowed pick, leave selection unchanged
+      } else if (newUUID == 0) {
+        if (!pickAdditive) {
+          ctx.clearObjectSelection();
+        }
       } else {
-        ctx.setObjectSelection(newUUID);
+        if (pickAdditive) {
+          ctx.toggleObjectSelection(newUUID);
+        } else {
+          ctx.setObjectSelection(newUUID);
+        }
       }
     }
   }
@@ -524,11 +756,7 @@ void Editor::Viewport3D::draw()
   Project::Component::Camera::View camView{};
   if (boundCameraUUID) {
     if (auto camObj = scene->getObjectByUUID(boundCameraUUID)) {
-      auto srcObj = camObj.get();
-      if (camObj->isPrefabInstance()) {
-        auto prefab = ctx.project->getAssets().getPrefabByUUID(camObj->uuidPrefab.value);
-        if (prefab) srcObj = &prefab->obj;
-      }
+      auto srcObj = Editor::SelectionUtils::prefabDefOf(camObj.get());
       for (auto &comp : srcObj->components) {
         if (comp.id == 3) {
           camView = Project::Component::Camera::getView(*camObj, comp);
@@ -940,7 +1168,64 @@ void Editor::Viewport3D::draw()
   ImGuizmo::SetDrawlist(draw_list);
   ImGuizmo::SetRect(currPos.x, currPos.y, currSize.x, currSize.y);
 
-  if (hasSelection) {
+  // Nested prefab object selected: dedicated gizmo that writes a transform override on
+  // the instance, keyed by the path (composing/decomposing against the parent's world).
+  if (hasSelection && !ctx.selSubPath.empty())
+  {
+    auto target = resolveNestedTarget(*scene);
+    if (target.valid)
+    {
+      glm::vec3 skewN{0,0,0}; glm::vec4 perspN{0,0,0,1};
+      glm::vec3 gscale = target.world.scale;
+      for (int i = 0; i < 3; i++) if (glm::abs(gscale[i]) < 0.0001f) gscale[i] = 0.0001f;
+      glm::mat4 gizmoMat = glm::recompose(gscale, target.world.rot, target.world.pos, skewN, perspN);
+
+      glm::vec3 snap(10.0f);
+      if (gizmoOp == 1) snap = glm::vec3(90.0f / 4.0f);
+      else if (gizmoOp == 2) snap = glm::vec3(0.125f);
+      bool isSnap = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl);
+
+      if (ImGuizmo::Manipulate(
+            glm::value_ptr(uniGlobal.cameraMat), glm::value_ptr(uniGlobal.projMat),
+            GIZMO_OPS[gizmoOp], isTransWorld ? ImGuizmo::MODE::WORLD : ImGuizmo::MODE::LOCAL,
+            glm::value_ptr(gizmoMat), nullptr, isSnap ? glm::value_ptr(snap) : nullptr))
+      {
+        gizmoTransformActive = true;
+
+        glm::vec3 nwScale, nwPos; glm::quat nwRot;
+        glm::decompose(gizmoMat, nwScale, nwRot, nwPos, skewN, perspN);
+
+        // world -> parent-relative local
+        glm::quat pInv = glm::inverse(target.parentWorld.rot);
+        glm::vec3 newLpos = (pInv * (nwPos - target.parentWorld.pos)) / target.parentWorld.scale;
+        glm::quat newLrot = pInv * nwRot;
+        glm::vec3 newLscale = nwScale / target.parentWorld.scale;
+
+        auto auth = Editor::SelectionUtils::pickAuthNode(target.rootInstance, target.nodes);
+
+        if (auth.directDefEdit) {
+          // Direct edit of this prefab's definition (empty scope -> the node's own slot).
+          target.node->pos.resolve(target.node->propOverrides) = newLpos;
+          target.node->rot.resolve(target.node->propOverrides) = newLrot;
+          target.node->scale.resolve(target.node->propOverrides) = newLscale;
+        } else {
+          NestedPathScope authorScope(auth.authNode->propOverrides, auth.relPath);
+          ensurePropertyOverride(target.node, target.node->pos);
+          ensurePropertyOverride(target.node, target.node->rot);
+          ensurePropertyOverride(target.node, target.node->scale);
+          target.node->pos.resolve(target.node->propOverrides) = newLpos;
+          target.node->rot.resolve(target.node->propOverrides) = newLrot;
+          target.node->scale.resolve(target.node->propOverrides) = newLscale;
+        }
+
+        if (ctx.isPrefabEditing(target.rootInstance->uuid)) {
+          ctx.project->getAssets().markPrefabDirty(target.rootInstance->uuidPrefab.value);
+        }
+      }
+    }
+  }
+
+  if (hasSelection && ctx.selSubPath.empty()) {
     auto selectedObjects = Editor::SelectionUtils::collectSelectedObjects(*scene);
     if (!selectedObjects.empty()) {
       obj = scene->getObjectByUUID(selectedObjects.back()->uuid);
@@ -1066,7 +1351,7 @@ void Editor::Viewport3D::draw()
             };
 
             for (auto *selObj : selectedObjects) {
-              if (selObj->isPrefabInstance() && !selObj->isPrefabEdit) {
+              if (selObj->isPrefabInstance() && !ctx.isPrefabEditing(selObj->uuid)) {
                 ensurePropertyOverride(selObj, selObj->pos);
                 ensurePropertyOverride(selObj, selObj->rot);
                 ensurePropertyOverride(selObj, selObj->scale);
@@ -1104,7 +1389,7 @@ void Editor::Viewport3D::draw()
             }
           } else {
             for (auto *selObj : selectedObjects) {
-              if (selObj->isPrefabInstance() && !selObj->isPrefabEdit) {
+              if (selObj->isPrefabInstance() && !ctx.isPrefabEditing(selObj->uuid)) {
                 ensurePropertyOverride(selObj, selObj->pos);
                 ensurePropertyOverride(selObj, selObj->rot);
                 ensurePropertyOverride(selObj, selObj->scale);

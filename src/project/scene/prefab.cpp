@@ -26,11 +26,7 @@ void Project::Prefab::deserialize(const std::string &str)
   obj.deserialize(nullptr, doc["obj"]);
 }
 
-void Project::Prefab::save()
+void Project::Prefab::save(const std::string &path)
 {
-  auto prefabJson = serialize();
-  Utils::FS::saveTextFile(
-    ctx.project->getPath() + "/assets/" + obj.name + ".prefab",
-    prefabJson
-  );
+  Utils::FS::saveTextFile(path, serialize());
 }

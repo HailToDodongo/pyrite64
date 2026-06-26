@@ -158,12 +158,15 @@ void Project::Object::deserialize(Scene *scene, nlohmann::json &doc)
   auto &chArray = doc["children"];
   size_t childCount = chArray.size();
 
-  assert(scene || childCount == 0);
-  if(!scene)return;
-
   for (size_t i=0; i<childCount; ++i) {
     auto childObj = std::make_shared<Object>(*this);
     childObj->deserialize(scene, chArray[i]);
-    scene->addObject(*this, childObj);
+    if(scene) {
+      // In a scene, register in the scene's object map.
+      scene->addObject(*this, childObj);
+    } else {
+      // In a prefab there is no scene, so keep the child tree on the object directly.
+      children.push_back(childObj);
+    }
   }
 }

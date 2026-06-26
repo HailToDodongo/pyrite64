@@ -650,7 +650,7 @@ void Project::AssetManager::save()
       continue;
     }
 
-    entry->prefab->save();
+    entry->prefab->save(entry->path);
     dirtyPrefabs.erase(uuid);
     savedPrefabState.erase(uuid);
   }

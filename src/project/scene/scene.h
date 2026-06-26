@@ -93,6 +93,9 @@ namespace Project
 
       uint32_t createPrefabFromObject(uint32_t uuid);
 
+      // Unpacks a prefab instance (shallow) into real, editable scene objects
+      void unpackPrefabInstance(uint32_t uuid);
+
       std::string serialize(bool minify = false);
 
       void resetLayers();
@@ -101,6 +104,7 @@ namespace Project
 
       // Assigns the runtime object ids (uint16_t) for the whole tree.
       // Build-time only: must be called before serializing objects to the runtime format.
-      void assignRuntimeIds();
+      // Returns the first free id (base for build-time expanded prefab-instance children).
+      uint32_t assignRuntimeIds();
   };
 }

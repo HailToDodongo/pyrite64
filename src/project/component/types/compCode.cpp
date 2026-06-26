@@ -150,7 +150,7 @@ namespace Project::Component::Code
             ImGui::PushID(static_cast<int>(prop.id & 0xFFFFFFFFULL));
             ImTable::add(name);
             
-            bool isOverridden = obj.propOverrides.find(prop.id) != obj.propOverrides.end();
+            bool isOverridden = obj.hasPropOverride(prop);
             
             // Lock toggle button
             if (isInstanceMode)
@@ -170,7 +170,7 @@ namespace Project::Component::Code
             std::string resolved = prop.resolve(obj.propOverrides);
             uint64_t uuid = resolved.empty() ? 0 : Utils::parseU64(resolved);
             auto validationFunc = [&](uint64_t newId) {
-                if (isInstanceMode && obj.propOverrides.find(prop.id) == obj.propOverrides.end()) {
+                if (isInstanceMode && !obj.hasPropOverride(prop)) {
                   obj.addPropOverride(prop);
                 }
                 prop.resolve(obj.propOverrides) = std::to_string(newId);

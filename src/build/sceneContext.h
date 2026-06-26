@@ -39,6 +39,9 @@ namespace Build
     std::string assetFileMap{};
     uint32_t stringOffset{0};
 
+    // Next free runtime object id. Advances as prefab instances are expanded.
+    uint32_t nextRuntimeId{1};
+
     bool needsOpus{false};
 
     void addAsset(const Project::AssetManagerEntry &entry);
