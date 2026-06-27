@@ -79,6 +79,90 @@ namespace
   }
 
   /**
+   * Rebuilds child world positions after a parent transform edit.
+   * @param obj Parent object whose children should keep their relative offsets.
+   * @param relPosMap Cached child positions in the old parent local space.
+   * @param mat New parent transform matrix.
+   */
+  void applyDeltaToChildren(
+    Project::Object &obj,
+    const std::unordered_map<uint64_t, glm::vec3> &relPosMap,
+    const glm::mat4 &mat
+  ) {
+    // Process every child of the edited parent
+    for (auto &child : obj.children)
+    {
+      // A selected child would already be edited explicitly elsewhere
+      if (ctx.isObjectSelected(child->uuid)) continue;
+
+      // Skip children that were not part of the cached transform state
+      auto it = relPosMap.find(child->uuid);
+      if (it == relPosMap.end()) continue;
+
+      // Restore the child's world position using the new parent transform
+      child->pos.resolve(child->propOverrides) = mat * glm::vec4(it->second, 1.0f);
+    }
+  }
+
+  /**
+   * Wraps a transform editor so child world positions follow parent edits.
+   * @tparam T Edited property value type.
+   * @param obj Object whose transform is being edited.
+   * @param editFunc UI callback that edits the resolved property value.
+   * @return Wrapped callback with child propagation behavior.
+   */
+  template<typename T>
+  std::function<bool(T*)> preserveChildTransformsDuringEdit(
+    Project::Object *obj,
+    std::function<bool(T*)> editFunc
+  ) {
+    return [obj, editFunc = std::move(editFunc)](T *val) -> bool {
+      // There is no object to edit --> Abort
+      if (!obj) return false;
+
+      // Object has no children --> Abort
+      if (obj->children.empty())
+        return editFunc(val);
+
+      // Recompose the current parent matrix so child offsets can be cached in local space
+      glm::vec3 skew{0.0f};
+      glm::vec4 persp{0.0f, 0.0f, 0.0f, 1.0f};
+      auto oldObjMat = glm::recompose(
+        obj->scale.resolve(obj->propOverrides),
+        obj->rot.resolve(obj->propOverrides),
+        obj->pos.resolve(obj->propOverrides),
+        skew,
+        persp
+      );
+
+      // Cache each child relative to the current parent transform
+      std::unordered_map<uint64_t, glm::vec3> relPosMap{};
+      for (auto &child : obj->children)
+      {
+        relPosMap[child->uuid] = glm::inverse(oldObjMat) * glm::vec4(
+          child->pos.resolve(child->propOverrides),
+          1.0f
+        );
+      }
+
+      // Let the original editor update the parent property
+      bool changed = editFunc(val);
+      if (!changed) return false;
+
+      // Recompose the updated parent matrix and rebuild child world positions from it
+      auto newObjMat = glm::recompose(
+        obj->scale.resolve(obj->propOverrides),
+        obj->rot.resolve(obj->propOverrides),
+        obj->pos.resolve(obj->propOverrides),
+        skew,
+        persp
+      );
+      applyDeltaToChildren(*obj, relPosMap, newObjMat);
+      return true;
+    };
+  }
+
+  /**
    * Handles dropping an object script onto the inspector panel.
    * @param targetObj Object that should receive a new Code component.
    * @param dropRect Custom panel-space drop rectangle.
@@ -437,7 +521,15 @@ void Editor::ObjectInspector::draw() {
   {
     if(ImTable::start("Transform", obj.get()))
     {
-      ImTable::addObjProp("Pos", srcObj->pos);
+      ImTable::addObjProp(
+        "Pos",
+        srcObj->pos,
+        preserveChildTransformsDuringEdit<glm::vec3>(obj.get(), [](glm::vec3 *val) -> bool {
+          // Use the standard vector editor while preserving child offsets
+          return ImTable::typedInput<glm::vec3>(val);
+        }),
+        nullptr
+      );
 
       if(srcObj->proportionalScale)
       {
@@ -464,9 +556,22 @@ void Editor::ObjectInspector::draw() {
           *val = scale * ratio;
           return ratio != 1.0f;
         };
-        ImTable::addObjProp("Scale", srcObj->scale, cb, nullptr);
+        ImTable::addObjProp(
+          "Scale",
+          srcObj->scale,
+          preserveChildTransformsDuringEdit<glm::vec3>(obj.get(), cb),
+          nullptr
+        );
       } else {
-        ImTable::addObjProp("Scale", srcObj->scale);
+        ImTable::addObjProp(
+          "Scale",
+          srcObj->scale,
+          preserveChildTransformsDuringEdit<glm::vec3>(obj.get(), [](glm::vec3 *val) -> bool {
+            // Use the standard vector editor while preserving child offsets
+            return ImTable::typedInput<glm::vec3>(val);
+          }),
+          nullptr
+        );
       }
 
       // icon to toggle between proportional and independent scale
@@ -481,7 +586,15 @@ void Editor::ObjectInspector::draw() {
         : "Change to Proportional Scale"
       );
 
-      ImTable::addObjProp("Rot", srcObj->rot);
+      ImTable::addObjProp(
+        "Rot",
+        srcObj->rot,
+        preserveChildTransformsDuringEdit<glm::quat>(obj.get(), [](glm::quat *val) -> bool {
+          // Use the standard quaternion editor while preserving child offsets
+          return ImTable::typedInput<glm::quat>(val);
+        }),
+        nullptr
+      );
 
       // icon to toggle between quaternion and euler
       ImGui::SameLine();
