@@ -67,7 +67,9 @@ namespace Editor::SelectionUtils
     std::optional<PropScope::PrefabLayer> authLayer;
     std::vector<std::unique_ptr<PropScope::Path>> nestedPaths;
     std::optional<ImTable::ForceLockScope> nestedLock;
-    std::optional<PropScope::PrefabLayer> targetLayer;
+    // One layer per prefab-instance node between the author node and the selected node (the selected node's own layer is the last).
+    // Keeps the inspector's cascade matching the build.
+    std::vector<std::unique_ptr<PropScope::PrefabLayer>> nodeLayers;
   };
 
   // Decides where a nested node's edits are written and sets up the matching scope guards.

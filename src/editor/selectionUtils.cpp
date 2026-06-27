@@ -177,11 +177,19 @@ namespace Editor::SelectionUtils
 
     if(!out.directDefEdit) {
       out.authLayer.emplace(auth.authNode->propOverrides);
-      for(uint32_t uid : auth.relPath) out.nestedPaths.push_back(std::make_unique<PropScope::Path>(uid));
       out.nestedLock.emplace(true); // edits become overrides on authNode
-      // Node-local layer for the inspected node's own overrides, matching the build.
-      // Pushed after the path so authNode stays the outermost write target.
-      if(out.node->isPrefabInstance()) out.targetLayer.emplace(out.node->propOverrides);
+
+      // Descend relPath, pushing one Path per step and a layer for each nested prefab-instance
+      // node along the way (the selected node's own layer is the last). This resolves the same
+      // cascade the build does, so an override baked on an intermediate prefab still shows.
+      // authNode stays the outermost layer, so it remains the write target.
+      size_t startIdx = nodes.size() - auth.relPath.size();
+      for(size_t k = 0; k < auth.relPath.size(); k++) {
+        out.nestedPaths.push_back(std::make_unique<PropScope::Path>(auth.relPath[k]));
+        Project::Object* n = nodes[startIdx + k];
+        if(n->isPrefabInstance())
+          out.nodeLayers.push_back(std::make_unique<PropScope::PrefabLayer>(n->propOverrides));
+      }
     }
   }
 }

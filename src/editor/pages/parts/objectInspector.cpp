@@ -429,7 +429,14 @@ void Editor::ObjectInspector::draw() {
         ImTable::add("Name");
         ImGui::TextUnformatted(nested.node->name.c_str());
       } else {
-        ImTable::add("Name", obj->name);
+        // The name belongs to the object itself, not the prefab, so it stays editable even
+        // on a locked prefab instance.
+        ImTable::add("Name");
+        ImGui::PushID("Name");
+        if(ImGui::InputText("##Name", &obj->name)) {
+          Editor::UndoRedo::getHistory().markChanged("Edit Name");
+        }
+        ImGui::PopID();
 
         if(isPrefabInst) {
           ImTable::add("Prefab");

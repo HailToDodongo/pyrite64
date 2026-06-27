@@ -46,8 +46,10 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
     if(prefab)srcObj = &prefab->obj;
   }
 
-  std::optional<PropScope::PrefabLayer> objLayer;
-  objLayer.emplace(obj.propOverrides);
+  // This node's override layer stays active for its whole subtree. Keys are path-precise
+  // (combine(pathToTarget, propId)), so an override only resolves for its exact target. This
+  // lets a compound prefab carry overrides into the prefabs it contains.
+  PropScope::PrefabLayer objLayer{obj.propOverrides};
 
   uint16_t objFlags = 0;
   if(obj.enabled)objFlags |= P64::ObjectFlags::ACTIVE;
@@ -140,7 +142,6 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
 
   uint32_t count = 1;
   bool childExpanding = expanding || isInstance;
-  if(expanding) objLayer.reset(); // node-local, can't override into a nested prefab
   for (const auto &child : srcObj->children) {
     PropScope::Path childPath(child->uuid); // this/outer layers address slots inside the child
     uint16_t childRuntimeId = childExpanding ? static_cast<uint16_t>(ctx.nextRuntimeId++)

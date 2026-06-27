@@ -222,9 +222,8 @@ namespace
       callback(node, nullptr);
     } // node transform + uuid restored here
 
-    // Node-local, so this node's overrides don't reach into its children. Matches the build.
-    nodeLayer.reset();
-
+    // nodeLayer stays active for the children. Its keys are path-precise, so an override only
+    // resolves for its exact target. Matches the build and lets nested-prefab overrides show.
     for(auto &child : src->children) {
       PropScope::Path childPath(child->uuid);
       renderNestedPrefab(*child, world, callback, depth + 1, rootUuid, path);
@@ -313,11 +312,13 @@ namespace
       root->scale.resolve(root->propOverrides)
     };
 
-    // Cascade context: the scene instance's overrides cascade to every depth, while each
-    // nested instance's own layer is node-local (matches the build) - it resolves that
-    // node's own overrides but does not reach into its children.
+    // Cascade context: every prefab-instance node along the path keeps its own layer active
+    // for the rest of the descent (matches the build). Keys are path-precise, so an override
+    // only resolves for its exact target, and a compound prefab can reach into the prefabs it
+    // contains. The layers accumulate rather than popping per step.
     PropScope::PrefabLayer sceneLayer(root->propOverrides);
     std::vector<std::unique_ptr<PropScope::Path>> pathScopes;
+    std::vector<std::unique_ptr<PropScope::PrefabLayer>> nodeLayers;
 
     Project::Object* node = &pf->obj;
     for(uint32_t uid : ctx.selSubPath) {
@@ -330,8 +331,8 @@ namespace
       out.nodes.push_back(next);
       pathScopes.push_back(std::make_unique<PropScope::Path>(uid));
 
-      std::optional<PropScope::PrefabLayer> nextLayer; // node-local
-      if(next->isPrefabInstance()) nextLayer.emplace(next->propOverrides);
+      if(next->isPrefabInstance())
+        nodeLayers.push_back(std::make_unique<PropScope::PrefabLayer>(next->propOverrides));
 
       glm::vec3 lpos = next->pos.resolve(next->propOverrides);
       glm::quat lrot = next->rot.resolve(next->propOverrides);

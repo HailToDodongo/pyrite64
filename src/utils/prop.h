@@ -136,7 +136,8 @@ namespace PropScope
   };
 
   // Outermost (most-derived) layer first.
-  inline thread_local std::vector<Layer> stack{};
+  // Outermost (most-derived) layer first.
+  extern thread_local std::vector<Layer> stack;
 
   // Guard against a prefab that nests itself. Without it the walk recurses forever.
   inline constexpr size_t MAX_DEPTH = 64;
