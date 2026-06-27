@@ -23,76 +23,117 @@ namespace
 {
   constexpr int COMP_ID_CODE = 0;
 
+  /**
+   * Returns whether the current drag payload is an object-script asset.
+   * @param scriptUUID Optional output for the dragged script UUID.
+   * @return true when the active payload is a CODE_OBJ asset.
+   */
   bool isDraggedObjectScript(uint64_t *scriptUUID = nullptr)
   {
+    // Access ImGui's drag-drop state
     ImGuiContext &g = *GImGui;
+    // There is no drag operation or no project assets to inspect --> Do nothing
     if (!g.DragDropActive || !ctx.project) return false;
 
+    // Only asset payloads with UUIDs can create Code components here
     const ImGuiPayload *payload = ImGui::GetDragDropPayload();
-    if (!payload || !payload->IsDataType("ASSET") || payload->DataSize != sizeof(uint64_t)) {
+    if (!payload || !payload->IsDataType("ASSET") || payload->DataSize != sizeof(uint64_t))
       return false;
-    }
 
+    // Resolve the dragged UUID back to an asset entry and verify that it is an object script
     const uint64_t uuid = *static_cast<const uint64_t*>(payload->Data);
     auto *script = ctx.project->getAssets().getEntryByUUID(uuid);
-    if (!script || script->type != Project::FileType::CODE_OBJ) return false;
+    if (!script || script->type != Project::FileType::CODE_OBJ)
+      return false;
 
-    if (scriptUUID) *scriptUUID = uuid;
+    // Requeted to output the UUID --> Assign it
+    if (scriptUUID)
+      *scriptUUID = uuid;
+
     return true;
   }
 
+  /**
+   * Creates a Code component using dropped Script.
+   * @param targetObj Object receiving the new component.
+   * @param scriptUUID UUID of the dragged script.
+   * @return true when the component was added successfully.
+   */
   bool createCodeComponentFromScript(Project::Object *targetObj, uint64_t scriptUUID)
   {
+    // There is no target object --> Do nothing
     if (!targetObj) return false;
 
+    // Track the component count to detect whether addComponent actually appended one
     const auto oldSize = targetObj->components.size();
+    // Record undo history before modifying the component list
     Editor::UndoRedo::getHistory().markChanged("Add Code Component");
+    // Create a Code component
     targetObj->addComponent(COMP_ID_CODE);
     if (targetObj->components.size() <= oldSize) return false;
 
+    // Set the Script field for the created Code component
     auto &comp = targetObj->components.back();
     Project::Component::Code::setScript(comp, scriptUUID, false);
     return true;
   }
 
+  /**
+   * Handles dropping an object script onto the inspector panel.
+   * @param targetObj Object that should receive a new Code component.
+   * @param dropRect Custom panel-space drop rectangle.
+   * @param highlightWindow True to draw the inspector-wide highlight border.
+   * @return True when a valid script is hovering or was delivered to this target.
+   */
   bool handleScriptComponentDropTarget(Project::Object *targetObj, const ImRect &dropRect, bool highlightWindow)
   {
+    // Register the inspector panel as a custom drop target covering the requested rectangle
     if (!ImGui::BeginDragDropTargetCustom(dropRect, ImGui::GetID("##ScriptComponentDropTarget"))) return false;
 
+    // Peek the asset payload while it hovers so the panel can highlight before delivery
     const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(
       "ASSET",
       ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect
     );
+    // There is no compatible payload --> Skip the target
     if (!payload || payload->DataSize != sizeof(uint64_t)) {
       ImGui::EndDragDropTarget();
       return false;
     }
 
+    // Resolve the hovered asset UUID and reject anything that is not an object Script
     const uint64_t scriptUUID = *static_cast<const uint64_t*>(payload->Data);
     auto *script = ctx.project->getAssets().getEntryByUUID(scriptUUID);
+    // Is not a Code component --> Skip the target
     if (!script || script->type != Project::FileType::CODE_OBJ) {
       ImGui::EndDragDropTarget();
       return false;
     }
 
     if (highlightWindow) {
+      // Use the window's inner rectangle so the border matches the visible inspector panel
       ImGuiWindow *window = ImGui::GetCurrentWindowRead();
       auto col = ImGui::GetColorU32(ImGuiCol_DragDropTarget);
       ImRect borderRect = window->InnerRect;
+      // Fix the rect size not to write outside of the panel
       borderRect.Min.y += 1.0f;
       borderRect.Min.x += 2.0f;
       borderRect.Max.x -= 2.0f;
       borderRect.Max.y -= 2.0f;
+      // Draw an outline to highlight the object inspector panel
       ImGui::GetWindowDrawList()->AddRect(borderRect.Min, borderRect.Max, col, 0.0f, 0, 2.0f);
     }
 
     bool accepted = false;
+    // Released the mouse --> Commit drop, create Code component
     if (payload->Delivery) {
       accepted = createCodeComponentFromScript(targetObj, scriptUUID);
+    // Hovering valid script --> Mark the panel as active drop target
     } else {
       accepted = true;
     }
 
+    // Close the custom target scope opened above
     ImGui::EndDragDropTarget();
     return accepted;
   }

@@ -98,6 +98,12 @@ namespace Project::Component
 
   namespace Code
   {
+    /**
+     * Assigns a Script to a Code component.
+     * @param entry Code component entry to assign the Script to.
+     * @param scriptUUID UUID of the Script.
+     * @param openScriptComboBox true to auto-open the combo box.
+     */
     void setScript(Entry &entry, uint64_t scriptUUID, bool openScriptComboBox);
   }
 
