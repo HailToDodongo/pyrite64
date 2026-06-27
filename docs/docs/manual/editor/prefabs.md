@@ -157,3 +157,23 @@ scene objects with the prefab's current contents baked in, and it stops followin
 
 Unpacking only affects that one level. Any prefabs nested inside it stay as instances and remain
 linked to their own sources.
+
+## Prefabs at Runtime
+
+When a scene is being built for runtime use, all prefabs are resolved and baked.\
+This means in the scene-graph, prefabs no longer exist at runtime, and there is no extra cost in using them.
+
+### Spawning Prefabs
+
+Prefabs definitions still exist and can be dynamically spawned at runtime though.\
+To do so, call the `addObject` methond of the scene:
+
+```c++
+obj.getScene().addObject("Torch"_prefab, data->camTargetCur);
+```
+
+The value in the string is the 1:1 name of the prefab file.\
+When trying to reference a prefab that doesn't exist, compilation will fail.
+
+Note that nested prefabs spawn correctly,\
+and transforms of children are relative to the main objects position.
