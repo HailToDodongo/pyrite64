@@ -96,6 +96,11 @@ namespace Project::Component
     View getView(Object &obj, Entry &entry);
   }
 
+  namespace Code
+  {
+    void setScript(Entry &entry, uint64_t scriptUUID, bool openScriptComboBox);
+  }
+
   constexpr std::array TABLE{
     CompInfo{
       .id = 0,

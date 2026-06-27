@@ -123,33 +123,41 @@ namespace ImGui
   bool HandleComboBoxDragDrop(TId& targetId, TValidator validator)
   {
     if (!ImGui::BeginDragDropTarget()) return false;
-    
+
     bool changed = false;
-    
+
     // Handle ASSET payload
-    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET")) {
+    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET", ImGuiDragDropFlags_AcceptBeforeDelivery)) {
       uint64_t uuid = *((uint64_t*)payload->Data);
       if (validator(uuid, "ASSET")) {
-        auto next = static_cast<TId>(uuid);
-        if (targetId != next) {
-          targetId = next;
-          changed = true;
+        if (payload->Delivery) {
+          auto next = static_cast<TId>(uuid);
+          if (targetId != next) {
+            targetId = next;
+            changed = true;
+          }
         }
+      } else {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
       }
     }
-    
-    // Handle OBJECT payload  
-    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECT")) {
+
+    // Handle OBJECT payload
+    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECT", ImGuiDragDropFlags_AcceptBeforeDelivery)) {
       uint32_t uuid = *((uint32_t*)payload->Data);
       if (validator(uuid, "OBJECT")) {
-        auto next = static_cast<TId>(uuid);
-        if (targetId != next) {
-          targetId = next;
-          changed = true;
+        if (payload->Delivery) {
+          auto next = static_cast<TId>(uuid);
+          if (targetId != next) {
+            targetId = next;
+            changed = true;
+          }
         }
+      } else {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
       }
     }
-    
+
     ImGui::EndDragDropTarget();
     return changed;
   }

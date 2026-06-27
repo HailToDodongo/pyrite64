@@ -19,6 +19,85 @@
 #include "../../selectionUtils.h"
 #include "../../undoRedo.h"
 
+namespace
+{
+  constexpr int COMP_ID_CODE = 0;
+
+  bool isDraggedObjectScript(uint64_t *scriptUUID = nullptr)
+  {
+    ImGuiContext &g = *GImGui;
+    if (!g.DragDropActive || !ctx.project) return false;
+
+    const ImGuiPayload *payload = ImGui::GetDragDropPayload();
+    if (!payload || !payload->IsDataType("ASSET") || payload->DataSize != sizeof(uint64_t)) {
+      return false;
+    }
+
+    const uint64_t uuid = *static_cast<const uint64_t*>(payload->Data);
+    auto *script = ctx.project->getAssets().getEntryByUUID(uuid);
+    if (!script || script->type != Project::FileType::CODE_OBJ) return false;
+
+    if (scriptUUID) *scriptUUID = uuid;
+    return true;
+  }
+
+  bool createCodeComponentFromScript(Project::Object *targetObj, uint64_t scriptUUID)
+  {
+    if (!targetObj) return false;
+
+    const auto oldSize = targetObj->components.size();
+    Editor::UndoRedo::getHistory().markChanged("Add Code Component");
+    targetObj->addComponent(COMP_ID_CODE);
+    if (targetObj->components.size() <= oldSize) return false;
+
+    auto &comp = targetObj->components.back();
+    Project::Component::Code::setScript(comp, scriptUUID, false);
+    return true;
+  }
+
+  bool handleScriptComponentDropTarget(Project::Object *targetObj, const ImRect &dropRect, bool highlightWindow)
+  {
+    if (!ImGui::BeginDragDropTargetCustom(dropRect, ImGui::GetID("##ScriptComponentDropTarget"))) return false;
+
+    const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(
+      "ASSET",
+      ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect
+    );
+    if (!payload || payload->DataSize != sizeof(uint64_t)) {
+      ImGui::EndDragDropTarget();
+      return false;
+    }
+
+    const uint64_t scriptUUID = *static_cast<const uint64_t*>(payload->Data);
+    auto *script = ctx.project->getAssets().getEntryByUUID(scriptUUID);
+    if (!script || script->type != Project::FileType::CODE_OBJ) {
+      ImGui::EndDragDropTarget();
+      return false;
+    }
+
+    if (highlightWindow) {
+      ImGuiWindow *window = ImGui::GetCurrentWindowRead();
+      auto col = ImGui::GetColorU32(ImGuiCol_DragDropTarget);
+      ImRect borderRect = window->InnerRect;
+      borderRect.Min.y += 1.0f;
+      borderRect.Min.x += 2.0f;
+      borderRect.Max.x -= 2.0f;
+      borderRect.Max.y -= 2.0f;
+      ImGui::GetWindowDrawList()->AddRect(borderRect.Min, borderRect.Max, col, 0.0f, 0, 2.0f);
+    }
+
+    bool accepted = false;
+    if (payload->Delivery) {
+      accepted = createCodeComponentFromScript(targetObj, scriptUUID);
+    } else {
+      accepted = true;
+    }
+
+    ImGui::EndDragDropTarget();
+    return accepted;
+  }
+}
+
 Editor::ObjectInspector::ObjectInspector() {
 }
 
@@ -461,6 +540,12 @@ void Editor::ObjectInspector::draw() {
   if (ImGui::Button(addLabel)) {
     ImGui::OpenPopup("CompSelect");
   }
+
+  const ImVec2 contentMin = ImGui::GetWindowPos() + ImGui::GetWindowContentRegionMin();
+  const ImVec2 contentMax = ImGui::GetWindowPos() + ImGui::GetWindowContentRegionMax();
+
+  ImRect panelDropRect{contentMin, contentMax};
+  handleScriptComponentDropTarget(srcObj, panelDropRect, true);
 
   if (ImGui::BeginPopupContextItem("CompSelect"))
   {

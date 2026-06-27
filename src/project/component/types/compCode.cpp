@@ -25,6 +25,13 @@ namespace Project::Component::Code
     return data;
   }
 
+  void setScript(Entry &entry, uint64_t scriptUUID, bool openScriptComboBox)
+  {
+    Data &data = *static_cast<Data*>(entry.data.get());
+    data.scriptUUID = scriptUUID;
+    data.openScriptComboBox = openScriptComboBox;
+  }
+
   nlohmann::json serialize(const Entry &entry) {
     Data &data = *static_cast<Data*>(entry.data.get());
     Utils::JSON::Builder builder{};
