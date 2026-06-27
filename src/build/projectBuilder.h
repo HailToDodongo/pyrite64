@@ -55,7 +55,7 @@ namespace Build
   // ctx.nextRuntimeId rather than the scene-assigned ones.
   uint32_t writeObject(SceneCtx &ctx, Project::Object &obj, bool savePrefabItself = false,
                        uint16_t runtimeId = 0, uint16_t parentRuntimeId = 0, bool expanding = false,
-                       const WorldTransform &parentTransform = {});
+                       const WorldTransform &parentTransform = {}, bool isPrefabRoot = false);
 
   bool buildT3DCollision(
     Project::Project &project, SceneCtx &sceneCtx,

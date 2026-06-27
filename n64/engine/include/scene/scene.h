@@ -77,7 +77,8 @@ namespace P64
     fm_vec3_t pos{0,0,0};
     fm_vec3_t scale{1,1,1};
     fm_quat_t rot{0,0,0,1};
-    uint16_t objectId{0};
+    uint16_t objectId{0}; // id of the root, the expanded children follow it
+    uint16_t count{0};    // total objects in the prefab (root + nested)
   };
 
   class Scene

@@ -30,7 +30,7 @@ namespace
 
 uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool savePrefabItself,
                             uint16_t runtimeId, uint16_t parentRuntimeId, bool expanding,
-                            const Build::WorldTransform &parentTransform)
+                            const Build::WorldTransform &parentTransform, bool isPrefabRoot)
 {
   if(PropScope::stack.size() > PropScope::MAX_DEPTH) {
     Utils::Logger::log("Prefab nesting too deep (possible self-reference); aborting expansion",
@@ -61,6 +61,12 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
   glm::vec3 lpos   = srcObj->pos.resolve(obj.propOverrides);
   glm::vec3 lscale = srcObj->scale.resolve(obj.propOverrides);
   glm::quat lrot   = srcObj->rot.resolve(obj.propOverrides);
+
+  if(isPrefabRoot) {
+    lpos = {0,0,0};
+    lscale = {1,1,1};
+    lrot = glm::quat(glm::vec3(0.0f));
+  }
 
   // World transform of this node. Used for what we write when expanding and as the
   // parent transform handed to children. At depth 0 parentTransform is identity, so
@@ -149,7 +155,10 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
   if(isInstance && !obj.children.empty()) {
     PropScope::ResetScope freshScope; // resolve these against their own overrides only
     for (const auto &child : obj.children) {
-      count += writeObject(ctx, *child, savePrefabItself, child->runtimeId, runtimeId, false);
+      uint16_t childRuntimeId = expanding ? static_cast<uint16_t>(ctx.nextRuntimeId++)
+                                          : child->runtimeId;
+      count += writeObject(ctx, *child, savePrefabItself, childRuntimeId, runtimeId, expanding,
+                           expanding ? world : WorldTransform{});
     }
   }
   return count;

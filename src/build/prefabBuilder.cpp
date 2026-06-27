@@ -28,8 +28,14 @@ bool Build::buildPrefabAssets(Project::Project &project, SceneCtx &sceneCtx)
     // @TODO: lazy-build again after refactoring the asset table building
     //if(!assetBuildNeeded(asset, outPath))continue;
 
+    // A prefab asset is spawned at runtime, which has no prefab resolution or transform
+    // hierarchy. So bake the whole tree flat and world-relative to the root, expanding any
+    // nested prefabs, and prefix the object count so the runtime knows how many to load.
     sceneCtx.fileObj = {};
-    writeObject(sceneCtx, asset.prefab->obj, true);
+    sceneCtx.nextRuntimeId = 1; // the root is 0, expanded children continue from here
+    sceneCtx.fileObj.write<uint32_t>(0); // object count, patched below
+    uint32_t count = writeObject(sceneCtx, asset.prefab->obj, false, 0, 0, true, {}, true);
+    sceneCtx.fileObj.atPos(0, [&]{ sceneCtx.fileObj.write<uint32_t>(count); });
     sceneCtx.fileObj.writeToFile(outPath);
     sceneCtx.fileObj = {};
   }
