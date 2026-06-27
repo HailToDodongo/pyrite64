@@ -119,19 +119,9 @@ namespace
     glm::vec3 scale{1,1,1};
   };
 
-  /**
-   * RAII: while a nested prefab node is drawn, place it at its composed world transform
-   * and swap its uuid for a pick id, restoring both on scope exit.
-   * Component draw callbacks read obj.pos/rot/scale and obj.uuid directly. The engine has
-   * no runtime transform hierarchy, so this is how a nested node is positioned and picked.
-   *
-   * The callbacks resolve the transform with a component Path active, which never matches
-   * a transform-override key, so they read the node's own bare slot (the resolve fallback,
-   * the override entry if present, else the Property default). We mutate that slot, so the
-   * placement is correct regardless of any scene-instance override.
-   * Declaration order matters. The fallback refs bind before the saved copies, so the
-   * copies capture the originals.
-   */
+  // RAII used while drawing one nested prefab node. Component draws read obj.pos/rot/scale
+  // and obj.uuid directly, so we temporarily write the node's world transform and a pick id,
+  // then restore them on exit. fb() returns the actual transform slot we overwrite.
   struct NestedRenderPlacement {
     static glm::vec3& fb(Property<glm::vec3>& p, std::unordered_map<uint64_t, GenericValue>& ov) {
       auto it = ov.find(p.id);
