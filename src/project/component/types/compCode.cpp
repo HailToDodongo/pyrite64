@@ -5,10 +5,12 @@
 #include "../components.h"
 #include "../../../context.h"
 #include "../../../editor/imgui/helper.h"
+#include "../../../editor/imgui/notification.h"
 #include "../../../utils/json.h"
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
 #include "../../../utils/logger.h"
+#include "../../../utils/proc.h"
 #include "../../../utils/string.h"
 
 namespace Project::Component::Code
@@ -119,9 +121,27 @@ namespace Project::Component::Code
 
     if (ImTable::start("Comp", &obj)) {
       ImTable::add("Name", entry.name);
-      ImTable::addAssetVecComboBox("Script", scriptList, data.scriptUUID, true);
+      ImTable::add("Script");
+
+      // Reserve space for the edit button so the Script combo box keeps its full row layout
+      const float editButtonWidth = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 2;
+      const float spacing = ImGui::GetStyle().ItemSpacing.x;
+      ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - editButtonWidth - spacing);
+      ImTable::addAssetVecComboBox("", scriptList, data.scriptUUID, true);
 
       auto script = assets.getEntryByUUID(data.scriptUUID);
+      ImGui::SameLine();
+      if (!script) ImGui::BeginDisabled();
+
+      // Open the selected Script in an external application
+      if (ImGui::Button(ICON_MDI_PENCIL, {editButtonWidth, 0}) && script) {
+        if (!Utils::Proc::openFile(script->path)) {
+          Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File. This may be due to WSL path conversion failure.");
+        }
+      }
+      if (!script) ImGui::EndDisabled();
+      ImGui::SetItemTooltip("Edit Script");
+
       if (script) {
 
         ImTable::add("Arguments:");
@@ -150,7 +170,7 @@ namespace Project::Component::Code
             ImGui::PushID(static_cast<int>(prop.id & 0xFFFFFFFFULL));
             ImTable::add(name);
             
-            bool isOverridden = obj.propOverrides.find(prop.id) != obj.propOverrides.end();
+            bool isOverridden = obj.hasPropOverride(prop);
             
             // Lock toggle button
             if (isInstanceMode)
@@ -170,7 +190,7 @@ namespace Project::Component::Code
             std::string resolved = prop.resolve(obj.propOverrides);
             uint64_t uuid = resolved.empty() ? 0 : Utils::parseU64(resolved);
             auto validationFunc = [&](uint64_t newId) {
-                if (isInstanceMode && obj.propOverrides.find(prop.id) == obj.propOverrides.end()) {
+                if (isInstanceMode && !obj.hasPropOverride(prop)) {
                   obj.addPropOverride(prop);
                 }
                 prop.resolve(obj.propOverrides) = std::to_string(newId);

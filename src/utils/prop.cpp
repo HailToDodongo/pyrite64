@@ -6,6 +6,11 @@
 
 #include "string.h"
 
+namespace PropScope
+{
+  thread_local std::vector<Layer> stack{};
+}
+
 #define ST(v) std::to_string(v)
 
 std::string GenericValue::serialize() const

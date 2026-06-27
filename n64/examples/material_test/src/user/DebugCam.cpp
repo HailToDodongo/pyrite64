@@ -1,5 +1,6 @@
 #include "script/userScript.h"
 #include "scene/sceneManager.h"
+#include "../p64/assetTable.h"
 
 namespace P64::Script::C48BB14F061323F6
 {
@@ -33,6 +34,8 @@ namespace P64::Script::C48BB14F061323F6
   void update(Object& obj, Data *data, float deltaTime)
   {
     auto held = joypad_get_buttons_held(JOYPAD_PORT_1);
+    auto pressed = joypad_get_buttons_pressed(JOYPAD_PORT_1);
+
     auto joypad = joypad_get_inputs(JOYPAD_PORT_1);
     float camRotSpeed = deltaTime * 0.01f;
     float camSpeed = deltaTime * 5.01f;
@@ -65,6 +68,13 @@ namespace P64::Script::C48BB14F061323F6
 
     fm_vec3_lerp(&data->camPosCur, &data->camPosCur, &data->camPos, 0.1f);
     fm_vec3_lerp(&data->camTargetCur, &data->camTargetCur, &data->camTarget, 0.1f);
+
+    if(pressed.a) {
+      obj.getScene().addObject("Torch"_prefab, data->camTargetCur);
+    }
+    if(pressed.b) {
+      obj.getScene().addObject("TorchPair"_prefab, data->camTargetCur);
+    }
   }
 
   void draw(Object& obj, Data *data, float deltaTime)

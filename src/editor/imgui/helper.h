@@ -13,6 +13,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "IconsMaterialDesignIcons.h"
 #include "../../project/project.h"
+#include "../../context.h"
 #include "../undoRedo.h"
 #include "../keymap.h"
 #include "../../utils/filePicker.h"
@@ -183,15 +184,27 @@ namespace ImTable
 {
   extern Project::Object *obj;
   inline bool prefabEditOverride{false};
+  // Forces override-authoring mode while drawing the nested objects of a prefab instance.
+  // The drawn node is a prefab-internal object, possibly plain, but edits must become
+  // overrides on the enclosing scene instance rather than direct edits.
+  inline bool forcePrefabLocked{false};
 
   // Checks if the current object is a prefab instance and not in edit mode, or if the prefab edit override is active.
   inline bool isPrefabLocked(const Project::Object *target = nullptr)
   {
+    if (prefabEditOverride) return false;
+    if (forcePrefabLocked) return true;
     const auto *ref = target ? target : obj;
     if (!ref) return false;
-    if (prefabEditOverride) return false;
-    return ref->isPrefabInstance() && !ref->isPrefabEdit;
+    return ref->isPrefabInstance() && !ctx.isPrefabEditing(ref->uuid);
   }
+
+  struct ForceLockScope
+  {
+    bool prev{forcePrefabLocked};
+    explicit ForceLockScope(bool v) { forcePrefabLocked = v; }
+    ~ForceLockScope() { forcePrefabLocked = prev; }
+  };
 
   struct PrefabEditScope
   {
@@ -902,7 +915,8 @@ namespace ImTable
 
     T *val = &prop.value;
     if(isPrefabLocked()) {
-      val = &prop.resolve(obj->propOverrides, &isOverride);
+      isOverride = obj->hasPropOverride(prop); // override on the authored (scene) instance
+      val = &prop.resolve(obj->propOverrides); // effective value via the cascade
     }
 
     bool isDisabled = !isOverride;
@@ -925,7 +939,7 @@ namespace ImTable
           obj->removePropOverride(prop);
         }
       }
-      ImGui::SetItemTooltip("%s Override", isOverrideLocal ? "Disable" : "Enable");
+      ImGui::SetItemTooltip("%s", isOverrideLocal ? "Disable override (reset to prefab)" : "Enable override");
       ImGui::SameLine();
     }
 
@@ -933,6 +947,16 @@ namespace ImTable
     if (res) Editor::UndoRedo::getHistory().markChanged("Edit " + name);
 
     if(isDisabled)ImGui::EndDisabled();
+
+    if(isPrefabLocked() && isOverride) {
+      if(ImGui::BeginPopupContextItem("##resetOverride")) {
+        if(ImGui::MenuItem(ICON_MDI_UNDO " Reset to prefab")) {
+          obj->removePropOverride(prop);
+          Editor::UndoRedo::getHistory().markChanged("Reset " + name);
+        }
+        ImGui::EndPopup();
+      }
+    }
 
     ImGui::PopID();
     return res;

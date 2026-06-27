@@ -6,6 +6,7 @@
 #include "../utils/string.h"
 #include <filesystem>
 #include <algorithm>
+#include <optional>
 
 #include "../utils/binaryFile.h"
 #include "../utils/fs.h"
@@ -27,28 +28,64 @@ namespace
   constexpr uint32_t FLAG_SCR_32BIT = 1 << 2;
 }
 
-uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool savePrefabItself)
+uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool savePrefabItself,
+                            uint16_t runtimeId, uint16_t parentRuntimeId, bool expanding,
+                            const Build::WorldTransform &parentTransform, bool isPrefabRoot)
 {
+  if(PropScope::stack.size() > PropScope::MAX_DEPTH) {
+    Utils::Logger::log("Prefab nesting too deep (possible self-reference); aborting expansion",
+                       Utils::Logger::LEVEL_ERROR);
+    return 0;
+  }
+
   auto srcObj = &obj;
-  if(!savePrefabItself && obj.isPrefabInstance())
+  bool isInstance = !savePrefabItself && obj.isPrefabInstance();
+  if(isInstance)
   {
     auto prefab = ctx.project->getAssets().getPrefabByUUID(srcObj->uuidPrefab.value);
     if(prefab)srcObj = &prefab->obj;
   }
 
+  // This node's override layer stays active for its whole subtree. Keys are path-precise
+  // (combine(pathToTarget, propId)), so an override only resolves for its exact target. This
+  // lets a compound prefab carry overrides into the prefabs it contains.
+  PropScope::PrefabLayer objLayer{obj.propOverrides};
+
   uint16_t objFlags = 0;
   if(obj.enabled)objFlags |= P64::ObjectFlags::ACTIVE;
-  if(!obj.children.empty())objFlags |= P64::ObjectFlags::HAS_CHILDREN;
+  if(!srcObj->children.empty() || !obj.children.empty())objFlags |= P64::ObjectFlags::HAS_CHILDREN;
 
   ctx.fileObj.write<uint16_t>(objFlags); // @TODO type
-  ctx.fileObj.write<uint16_t>(obj.runtimeId);
-  ctx.fileObj.write<uint16_t>(obj.parent ? obj.parent->runtimeId : 0);
+  ctx.fileObj.write<uint16_t>(runtimeId);
+  ctx.fileObj.write<uint16_t>(parentRuntimeId);
   ctx.fileObj.write<uint16_t>(0); // padding
-  ctx.fileObj.write(srcObj->pos.resolve(obj.propOverrides));
-  ctx.fileObj.write(srcObj->scale.resolve(obj.propOverrides));
 
-  auto &rot = srcObj->rot.resolve(obj.propOverrides);
-  uint32_t quatQuant = T3D::Quantizer::quatTo32Bit({rot.x, rot.y, rot.z, rot.w});
+  glm::vec3 lpos   = srcObj->pos.resolve(obj.propOverrides);
+  glm::vec3 lscale = srcObj->scale.resolve(obj.propOverrides);
+  glm::quat lrot   = srcObj->rot.resolve(obj.propOverrides);
+
+  if(isPrefabRoot) {
+    lpos = {0,0,0};
+    lscale = {1,1,1};
+    lrot = glm::quat(glm::vec3(0.0f));
+  }
+
+  // World transform of this node. Used for what we write when expanding and as the
+  // parent transform handed to children. At depth 0 parentTransform is identity, so
+  // top-level and regular scene objects are written exactly as before.
+  WorldTransform world{
+    .pos   = parentTransform.pos + parentTransform.rot * (parentTransform.scale * lpos),
+    .rot   = parentTransform.rot * lrot,
+    .scale = parentTransform.scale * lscale
+  };
+
+  const glm::vec3 &wpos   = expanding ? world.pos   : lpos;
+  const glm::vec3 &wscale = expanding ? world.scale : lscale;
+  const glm::quat &wrot   = expanding ? world.rot   : lrot;
+
+  ctx.fileObj.write(wpos);
+  ctx.fileObj.write(wscale);
+  uint32_t quatQuant = T3D::Quantizer::quatTo32Bit({wrot.x, wrot.y, wrot.z, wrot.w});
   ctx.fileObj.write(quatQuant);
 
   // DATA
@@ -58,6 +95,7 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
     ctx.fileObj.skip(2); // flags (@TODO)
 
     if (comp.id >= 0 && comp.id < (int)Project::Component::TABLE.size()) {
+      PropScope::Path compPath(comp.uuid); // resolve comp props relative to this object
       Project::Component::TABLE[comp.id].funcBuild(obj, comp, ctx);
     } else {
       Utils::Logger::log("Component ID not found: " + std::to_string(comp.id), Utils::Logger::LEVEL_ERROR);
@@ -103,8 +141,26 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
   ctx.fileObj.write<uint32_t>(0);
 
   uint32_t count = 1;
-  for (const auto &child : obj.children) {
-    count += writeObject(ctx, *child, savePrefabItself);
+  bool childExpanding = expanding || isInstance;
+  for (const auto &child : srcObj->children) {
+    PropScope::Path childPath(child->uuid); // this/outer layers address slots inside the child
+    uint16_t childRuntimeId = childExpanding ? static_cast<uint16_t>(ctx.nextRuntimeId++)
+                                             : child->runtimeId;
+    count += writeObject(ctx, *child, savePrefabItself, childRuntimeId, runtimeId, childExpanding, world);
+  }
+
+  // For a prefab instance, also write children added directly to the instance in the
+  // scene. These are real, world-positioned scene objects, not part of the prefab.
+  // They resolve against their own overrides only, so the instance's cascade layer is
+  // cleared first, otherwise their transform would resolve the instance's placement.
+  if(isInstance && !obj.children.empty()) {
+    PropScope::ResetScope freshScope; // resolve these against their own overrides only
+    for (const auto &child : obj.children) {
+      uint16_t childRuntimeId = expanding ? static_cast<uint16_t>(ctx.nextRuntimeId++)
+                                          : child->runtimeId;
+      count += writeObject(ctx, *child, savePrefabItself, childRuntimeId, runtimeId, expanding,
+                           expanding ? world : WorldTransform{});
+    }
   }
   return count;
 }
@@ -119,7 +175,8 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
 
   // Object ids only exist at runtime; assign them now so writeObject and component
   // builds (which resolve object UUID -> runtime id) see a consistent id space.
-  sc->assignRuntimeIds();
+  // Expanded prefab-instance children get ids continuing past the scene objects.
+  ctx.nextRuntimeId = sc->assignRuntimeIds();
 
   auto fsDataPath = fs::absolute(fs::path{project.getPath()} / "filesystem" / "p64");
 
@@ -133,7 +190,7 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
   ctx.fileObj = {};
   auto &rootObj = sc->getRootObject();
   for (const auto &child : rootObj.children) {
-    objCount += writeObject(ctx, *child, false);
+    objCount += writeObject(ctx, *child, false, child->runtimeId, 0, false);
   }
 
   ctx.fileObj.writeToFile(fsDataPath / fileNameObj);

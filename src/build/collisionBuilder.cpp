@@ -174,14 +174,12 @@ namespace
 
     // printf("Vert/Index count: %lu %lu\n", vertices.size(), indices.size());
 
-    auto bvh = Project::Assets::Collision::createBVH(vertices, indices);
-
     file.write<uint32_t>(indices.size() / 3);
     file.write<uint32_t>(vertices.size());
     file.write<float>(1.0f);// / baseScale);
     file.write<uint32_t>(0); // vertex pointer
     file.write<uint32_t>(0); // normals pointer
-    file.write<uint32_t>(0); // BVH pointer
+    file.write<uint32_t>(0); // BVH pointer (unused for now)
 
     file.writeArray(indices.data(), indices.size());
     file.align(4);
@@ -196,10 +194,6 @@ namespace
     for(auto& v : verticesFloat) {
       file.writeArray(v.data, 3);
     }
-    file.align(4);
-
-    file.writeArray(bvh.data(), bvh.size());
-    file.writeArray(bvh.data(), bvh.size());
     file.align(4);
   }
 }

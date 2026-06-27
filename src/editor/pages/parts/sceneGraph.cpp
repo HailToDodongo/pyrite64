@@ -23,6 +23,10 @@ namespace
   std::string renameBuffer{};
   bool startingRename{false};
 
+  // Set per-frame at the start of draw(). When non-null a prefab is being edited and
+  // selection is restricted to its own definition, with everything else dimmed and inert.
+  Project::Object* prefabEditObj{nullptr};
+
   struct DragDropTask {
     uint32_t sourceUUID{0};
     uint32_t targetUUID{0};
@@ -239,6 +243,50 @@ namespace
     ImGui::SetCursorPos(oldCursorPos);
   }
 
+  // Display of a prefab instance's definition tree (nested prefab content). The nodes
+  // aren't scene objects, so they're shown dimmed and selecting one targets it as a
+  // nested override (rootUuid = instance, path = chain of definition-node uuids).
+  void drawPrefabDefNode(Project::Object &node, int depth, uint32_t rootUuid,
+                         std::vector<uint32_t> path, bool selectable)
+  {
+    if(depth > 64)return; // guard against self-referencing prefabs
+    path.push_back(node.uuid);
+
+    Project::Object* src = Editor::SelectionUtils::prefabDefOf(&node);
+
+    bool isSelected = (ctx.selObjectUUID == rootUuid && ctx.selSubPath == path);
+    bool dim = prefabEditObj ? !selectable : false;
+
+    ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow
+      | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_FramePadding
+      | ImGuiTreeNodeFlags_SpanAllColumns;
+    if(src->children.empty())flag |= ImGuiTreeNodeFlags_Leaf;
+    if(isSelected)flag |= ImGuiTreeNodeFlags_Selected;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 3_px));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
+    std::string nameID = getNodeIcons(node) + node.name + "##pf"
+      + std::to_string(reinterpret_cast<uintptr_t>(&node));
+    if(dim)ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    bool isOpen = ImGui::TreeNodeEx(nameID.c_str(), flag);
+    if(dim)ImGui::PopStyleColor();
+    ImGui::PopStyleVar(2);
+
+    if(selectable && ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen()) {
+      ctx.setNestedSelection(rootUuid, path);
+    }
+
+    if(isOpen) {
+      // Outside edit mode the whole def tree is selectable.
+      // In edit mode we may descend through regular children but stop at nested prefab instances.
+      bool childSelectable = prefabEditObj ? (selectable && !node.isPrefabInstance()) : true;
+      for(auto &child : src->children) {
+        drawPrefabDefNode(*child, depth + 1, rootUuid, path, childSelectable);
+      }
+      ImGui::TreePop();
+    }
+  }
+
   void drawObjectNode(
     Project::Scene &scene, Project::Object &obj, bool keyDelete,
     bool parentEnabled = true
@@ -248,7 +296,15 @@ namespace
       | ImGuiTreeNodeFlags_OpenOnDoubleClick
       | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_SpanAllColumns;
 
-    if (obj.children.empty()) {
+    // A prefab instance shows its definition tree (read-only) below, so it can expand
+    // even though the thin instance itself has no children.
+    Project::Object* prefabDef = nullptr;
+    if(obj.isPrefabInstance()) {
+      auto prefab = ctx.project->getAssets().getPrefabByUUID(obj.uuidPrefab.value);
+      if(prefab && !prefab->obj.children.empty())prefabDef = &prefab->obj;
+    }
+
+    if (obj.children.empty() && !prefabDef) {
       flag |= ImGuiTreeNodeFlags_Leaf;
     }
 
@@ -261,14 +317,28 @@ namespace
       deleteSelection = true;
     }
 
+    // While editing a prefab, only that instance may be selected here. Its own definition
+    // is handled by drawPrefabDefNode. All other scene objects are dimmed and inert.
+    bool canSelect = !prefabEditObj || (&obj == prefabEditObj);
+
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 3_px));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
 
     std::string nameID = getNodeIcons(obj) + obj.name + "##" + std::to_string(obj.uuid);
 
+    if(!canSelect)ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
     bool isOpen = ImGui::TreeNodeEx(nameID.c_str(), flag);
+    if(!canSelect)ImGui::PopStyleColor();
     ImGui::PopStyleVar(2);
     ImVec2 nodeRectMin = ImGui::GetItemRectMin();
+
+    // Mark object being edited in prefab-edit mode
+    if(ctx.isPrefabEditing(obj.uuid)) {
+      ImVec2 bgMax = ImGui::GetItemRectMax();
+      bgMax.x = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+      ImU32 editCol = ImGui::Theme::getColorU32("prefabEditBg", IM_COL32(190, 55, 55, 60));
+      ImGui::GetWindowDrawList()->AddRectFilled(nodeRectMin, bgMax, editCol);
+    }
 
     bool nodeIsClicked = ImGui::IsItemHovered()
       && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
@@ -341,7 +411,7 @@ namespace
       }
     }
 
-    if (nodeIsClicked) {
+    if (nodeIsClicked && canSelect) {
       bool isCtrlDown = ImGui::GetIO().KeyCtrl;
       if (isCtrlDown) {
         ctx.toggleObjectSelection(obj.uuid);
@@ -367,7 +437,21 @@ namespace
 
         if (obj.parent) {
           if (!obj.isPrefabInstance() && ImGui::MenuItem(ICON_MDI_PACKAGE_VARIANT_CLOSED_PLUS " To Prefab")) {
-            scene.createPrefabFromObject(obj.uuid);
+            // Defer: createPrefabFromObject reloads assets (frees GPU textures), which is
+            // unsafe mid-frame while ImGui draw data still references them.
+            auto *scenePtr = &scene;
+            uint32_t uuid = obj.uuid;
+            ctx.deferAction([scenePtr, uuid]() { scenePtr->createPrefabFromObject(uuid); });
+          }
+
+          if (obj.isPrefabInstance() && ImGui::MenuItem(ICON_MDI_PACKAGE_VARIANT " Unpack Prefab")) {
+            // Defer: modifies the scene tree (adds objects) - unsafe mid-iteration.
+            auto *scenePtr = &scene;
+            uint32_t uuid = obj.uuid;
+            ctx.deferAction([scenePtr, uuid]() {
+              Editor::UndoRedo::getHistory().markChanged("Unpack Prefab");
+              scenePtr->unpackPrefabInstance(uuid);
+            });
           }
 
           if (ImGui::MenuItem(ICON_MDI_TRASH_CAN " Delete"))deleteObj = &obj;
@@ -377,6 +461,15 @@ namespace
 
       for(auto &child : obj.children) {
         drawObjectNode(scene, *child, keyDelete, parentEnabled && obj.enabled);
+      }
+
+      // Prefab definition tree showing nested prefab content under the instance. Nodes are
+      // selectable for nested override editing, keyed relative to the prefab root. While
+      // editing a prefab, only the edited instance's own definition is selectable.
+      if(prefabDef) {
+        for(auto &child : prefabDef->children) {
+          drawPrefabDefNode(*child, 0, obj.uuid, {}, canSelect);
+        }
       }
 
       ImGui::TreePop();
@@ -392,6 +485,7 @@ void Editor::SceneGraph::draw()
   dragDropTask = {};
   deleteObj = nullptr;
   deleteSelection = false;
+  prefabEditObj = Editor::SelectionUtils::getPrefabEditObject(*scene);
   bool isFocus = ImGui::IsWindowFocused();
   // While rename is active, shortcuts stay disabled, so the text field can own the keyboard input
   bool isRenaming = renameObjectUUID != 0;

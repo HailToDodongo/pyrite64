@@ -4,7 +4,11 @@
 */
 #pragma once
 #include <cstdint>
+#include <cassert>
 #include <utility>
+#include <vector>
+#include <string>
+#include <unordered_map>
 
 #include "hash.h"
 #include "glm/vec3.hpp"
@@ -98,6 +102,172 @@ struct GenericValue
   void deserialize(const std::string &str);
 };
 
+/**
+ * Override keys are salted by the path to a property, so the same name on different
+ * components or nesting levels no longer collides.
+ *
+ * A property is addressed relative to the prefab instance that owns the override map.
+ * Resolution is a cascade. When prefabs nest, each enclosing instance contributes one
+ * layer (its override map plus the path accumulated within it). The outermost layer wins,
+ * so a scene placement can re-override a value an inner prefab already set.
+ *
+ * The context is ambient, a thread-local stack maintained via RAII at the dispatch and
+ * tree-walk points, so the many resolve() call sites don't each thread it.
+ *
+ * combine(0, id) == id, so the root object's own props keep bare keys and existing
+ * projects resolve without migration.
+ *
+ * Scope logic.
+ * A nested property is addressed by PrefabLayer(instance.propOverrides) per instance node,
+ * one Path(uuid) per node descended into, one Path(comp.uuid) for the owning component,
+ * then prop.id. An override authored under this scope must resolve to the same key the
+ * build writes. Four walkers build it and must stay in sync.
+ *   - build:     sceneBuilder::writeObject
+ *   - inspector: objectInspector nested section
+ *   - viewport:  viewport3D renderNestedPrefab / resolveNestedTarget
+ *   - graph:     sceneGraph drawPrefabDefNode (display only)
+ */
+namespace PropScope
+{
+  struct Layer
+  {
+    const std::unordered_map<uint64_t, GenericValue>* overrides{};
+    uint64_t pathHash{}; // path accumulated within this layer's prefab so far
+  };
+
+  // Outermost (most-derived) layer first.
+  // Outermost (most-derived) layer first.
+  extern thread_local std::vector<Layer> stack;
+
+  // Guard against a prefab that nests itself. Without it the walk recurses forever.
+  inline constexpr size_t MAX_DEPTH = 64;
+
+  constexpr uint64_t combine(uint64_t acc, uint64_t id)
+  {
+    if(acc == 0)return id;
+    uint64_t h = acc * 0x9E3779B97F4A7C15ull;
+    h ^= id + 0x9E3779B97F4A7C15ull + (h << 6) + (h >> 2);
+    return h;
+  }
+
+  // Path hash currently associated with the layer that owns the given map (0 if none).
+  inline uint64_t pathHashFor(const std::unordered_map<uint64_t, GenericValue>* map)
+  {
+    for(const auto &l : stack) {
+      if(l.overrides == map)return l.pathHash;
+    }
+    return 0;
+  }
+
+  // Final key used to store/read an override on the given map for property id.
+  inline uint64_t keyFor(const std::unordered_map<uint64_t, GenericValue>* map, uint64_t id)
+  {
+    return combine(pathHashFor(map), id);
+  }
+
+  // The layer overrides are authored into. This is the outermost layer, the prefab
+  // instance currently being edited. Its pathHash matches the key the build resolves for
+  // the same nested slot. Null when no instance context is active.
+  inline const Layer* authorLayer()
+  {
+    return stack.empty() ? nullptr : &stack.front();
+  }
+
+  /**
+   * RAII: extend the path of every active layer by `id` (a child object's uuid,
+   * a nested instance node's uuid, or a component uuid). Used while descending
+   * the object tree. Not invertible, so previous hashes are saved and restored.
+   */
+  struct Path
+  {
+    // Non-copyable and non-movable. The destructor un-folds the pathHash, so moving one
+    // (e.g. a by-value vector reallocating) runs a moved-from destructor and corrupts the
+    // live pathHash. Use a unique_ptr if you need a collection of these.
+    Path(const Path&) = delete;
+    Path(Path&&) = delete;
+    Path& operator=(const Path&) = delete;
+    Path& operator=(Path&&) = delete;
+
+    std::vector<uint64_t> prev;
+    explicit Path(uint64_t id)
+    {
+      // A zero id can't disambiguate a path slot, so a missing uuid here is a bug.
+      assert(id != 0 && "PropScope::Path: path component uuid must be non-zero");
+      prev.reserve(stack.size());
+      for(auto &l : stack) {
+        prev.push_back(l.pathHash);
+        l.pathHash = combine(l.pathHash, id);
+      }
+    }
+    ~Path()
+    {
+      for(size_t i = 0; i < prev.size() && i < stack.size(); ++i) {
+        stack[i].pathHash = prev[i];
+      }
+    }
+  };
+
+  /**
+   * RAII: push a new override layer for a prefab-instance node. Keys in this
+   * layer are relative to the referenced prefab's root, so the same prefab's
+   * overrides compose at any nesting depth. Push the outer node's uuid (via
+   * Path) before this so outer layers can address slots inside this instance.
+   */
+  struct PrefabLayer
+  {
+    explicit PrefabLayer(const std::unordered_map<uint64_t, GenericValue>& overrides)
+    {
+      stack.push_back({&overrides, 0});
+    }
+    ~PrefabLayer() { stack.pop_back(); }
+
+    // Destructor pops the stack, so it must not be copied or moved. See Path's note.
+    PrefabLayer(const PrefabLayer&) = delete;
+    PrefabLayer(PrefabLayer&&) = delete;
+    PrefabLayer& operator=(const PrefabLayer&) = delete;
+    PrefabLayer& operator=(PrefabLayer&&) = delete;
+  };
+
+  /**
+   * RAII for one component dispatch on a non-recursive (depth-1) call site:
+   * pushes a layer for the object's override map and folds the component uuid in.
+   * Equivalent to combine(compUuid, propId) for the keys, matching the recursive
+   * walker's Layer + Path(compUuid) at depth 1.
+   */
+  struct Dispatch
+  {
+    explicit Dispatch(const std::unordered_map<uint64_t, GenericValue>& overrides, uint64_t compUuid)
+    {
+      assert(compUuid != 0 && "PropScope::Dispatch: component uuid must be non-zero");
+      stack.push_back({&overrides, combine(0, compUuid)});
+    }
+    ~Dispatch() { stack.pop_back(); }
+
+    Dispatch(const Dispatch&) = delete;
+    Dispatch(Dispatch&&) = delete;
+    Dispatch& operator=(const Dispatch&) = delete;
+    Dispatch& operator=(Dispatch&&) = delete;
+  };
+
+  /**
+   * RAII: detach the whole layer stack and restore it on scope exit.
+   * Used when a walker must resolve a subtree against its own overrides only. The build
+   * does this for scene objects parented to a prefab instance, which must not see the
+   * instance's cascade layer or their transform would resolve the instance's placement.
+   */
+  struct ResetScope
+  {
+    std::vector<Layer> saved;
+    ResetScope() : saved{std::move(stack)} { stack.clear(); }
+    ~ResetScope() { stack = std::move(saved); }
+
+    ResetScope(const ResetScope&) = delete;
+    ResetScope(ResetScope&&) = delete;
+    ResetScope& operator=(const ResetScope&) = delete;
+    ResetScope& operator=(ResetScope&&) = delete;
+  };
+}
+
 template<typename T>
 struct Property
 {
@@ -117,6 +287,17 @@ struct Property
 
   T& resolve(std::unordered_map<uint64_t, GenericValue> &overrides, bool *isOverride = nullptr)
   {
+    // Cascade: most-derived (outermost) prefab layer first.
+    for(const auto &layer : PropScope::stack) {
+      auto it = const_cast<std::unordered_map<uint64_t, GenericValue>*>(layer.overrides)
+                  ->find(PropScope::combine(layer.pathHash, id));
+      if(it != layer.overrides->end()) {
+        if(isOverride)*isOverride = true;
+        return it->second.template get<T>();
+      }
+    }
+    // Fallback: the passed map keyed bare. Covers object-level props (pos/rot/scale),
+    // legacy pre-scoped overrides, and direct/explicit-map callers (empty stack).
     auto it = overrides.find(id);
     if(it != overrides.end()) {
       if(isOverride)*isOverride = true;
@@ -133,6 +314,12 @@ struct Property
 
   template<typename OBJ>
   const T& resolve(const OBJ &obj) const {
+    for(const auto &layer : PropScope::stack) {
+      const auto it = layer.overrides->find(PropScope::combine(layer.pathHash, id));
+      if(it != layer.overrides->end()) {
+        return it->second.template get<T>();
+      }
+    }
     const auto it = obj.propOverrides.find(id);
     if(it != obj.propOverrides.end()) {
       return it->second.template get<T>();

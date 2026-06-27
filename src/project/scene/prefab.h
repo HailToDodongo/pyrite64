@@ -28,6 +28,6 @@ namespace Project
 
       void deserialize(const std::string &str);
 
-      void save();
+      void save(const std::string &path);
   };
 }

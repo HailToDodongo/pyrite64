@@ -174,14 +174,37 @@ void P64::Scene::update(float deltaTime)
   ticksGlobalUpdate = get_user_ticks() - ticksGlobalUpdate;
 
   for(auto data : objectsToAdd) {
-    loadObject((uint8_t*&)data.prefabData, [&](Object &obj)
-    {
-      obj.id = data.objectId;
-      obj.pos = data.pos;
-      obj.scale = data.scale;
-      obj.rot = data.rot;
-      obj.flags = ObjectFlags::ACTIVE;
-    }, true);
+    auto *objPtr = (uint8_t*)data.prefabData;
+    for(uint16_t i = 0; i < data.count; ++i) {
+      loadObject(objPtr, [&, i](Object &obj)
+      {
+        uint16_t storedParent = obj.group; // parent's index within the prefab
+        obj.id = data.objectId + i;
+        obj.flags = ObjectFlags::ACTIVE | (obj.flags & ObjectFlags::HAS_CHILDREN);
+        if(i == 0) {
+          // The root is placed directly at the spawn transform, parented if requested.
+          obj.group = data.parentId;
+          obj.pos = data.pos;
+          obj.scale = data.scale;
+          obj.rot = data.rot;
+
+          if(data.parentId) {
+            if(auto* parent = getObjectById(data.parentId)) {
+              parent->setFlag(ObjectFlags::HAS_CHILDREN, true);
+              needsObjStateUpdate = true;
+            } else {
+              obj.group = 0;
+            }
+          }
+        } else {
+          // Children are baked relative to the root, so compose the spawn transform onto them.
+          obj.group = data.objectId + storedParent;
+          obj.pos = data.pos + data.rot * (data.scale * obj.pos);
+          obj.rot = data.rot * obj.rot;
+          obj.scale = data.scale * obj.scale;
+        }
+      }, true);
+    }
   }
 
   runPendingComponentInit();
@@ -429,17 +452,27 @@ uint16_t P64::Scene::addObject(
   uint32_t prefabIdx,
   const fm_vec3_t &pos,
   const fm_vec3_t &scale,
-  const fm_quat_t &rot
+  const fm_quat_t &rot,
+  uint16_t parentId
 ) {
-  auto *prefabData = AssetManager::getByIndex(prefabIdx);
+  auto *prefabData = (uint8_t*)AssetManager::getByIndex(prefabIdx);
+
+  // The prefab file is prefixed with its object count (root + all nested objects). Reserve a
+  // contiguous block of ids for them so children can reference their parent by id at spawn.
+  uint32_t count = *(uint32_t*)prefabData;
+  uint16_t rootId = nextId + 1;
+  nextId += count;
+
   objectsToAdd.push_back({
-    .prefabData = prefabData,
+    .prefabData = prefabData + sizeof(uint32_t),
     .pos = pos,
     .scale = scale,
     .rot = rot,
-    .objectId = ++nextId,
+    .objectId = rootId,
+    .count = (uint16_t)count,
+    .parentId = parentId,
   });
-  return nextId;
+  return rootId;
 }
 
 void P64::Scene::removeObject(Object &obj)

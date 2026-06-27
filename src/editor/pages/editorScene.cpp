@@ -9,6 +9,7 @@
 #include "imgui_internal.h"
 #include "../actions.h"
 #include "../undoRedo.h"
+#include "../selectionUtils.h"
 #include "../../context.h"
 
 #define IMVIEWGUIZMO_IMPLEMENTATION 1
@@ -507,6 +508,25 @@ void Editor::Scene::draw()
         }
         if(ImGui::MenuItem("Reset Layout"))wantResetLayout = true;
         ImGui::EndMenu();
+      }
+
+      // Centered button to leave prefab-edit mode
+      if(auto scene = ctx.project->getScenes().getLoadedScene()) {
+        if(auto *editObj = Editor::SelectionUtils::getPrefabEditObject(*scene)) {
+          std::string label = ICON_MDI_PENCIL_OFF " Exit Prefab Edit";
+          float w = ImGui::CalcTextSize(label.c_str()).x + ImGui::GetStyle().FramePadding.x * 2.0f;
+          ImGui::SetCursorPosX((ImGui::GetWindowWidth() - w) * 0.5f);
+          ImVec4 red = ImGui::Theme::getColor("prefabEditBg", ImVec4{0.745f, 0.216f, 0.216f, 1.0f});
+          red.w = 1.0f;
+          ImGui::PushStyleColor(ImGuiCol_Button, red);
+          ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{red.x * 1.25f, red.y * 1.25f, red.z * 1.25f, 1.0f});
+          ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4{red.x * 0.85f, red.y * 0.85f, red.z * 0.85f, 1.0f});
+          if(ImGui::Button(label.c_str())) {
+            ctx.project->getAssets().markPrefabDirty(editObj->uuidPrefab.value);
+            ctx.prefabEditUUID = 0;
+          }
+          ImGui::PopStyleColor(3);
+        }
       }
 
       ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 40_px);

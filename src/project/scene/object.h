@@ -41,7 +41,6 @@ namespace Project
       bool proportionalScale{false};
       bool enabled{true};
       bool selectable{true};
-      bool isPrefabEdit{false};
 
       std::unordered_map<uint64_t, GenericValue> propOverrides{};
 
@@ -61,17 +60,43 @@ namespace Project
         return uuidPrefab.value != 0;
       }
 
+      // Authoring targets the outermost cascade layer, the prefab instance being edited.
+      // An override on a deeply nested object is stored on that instance with a
+      // path-relative key the build resolves identically. Falls back to this object's own
+      // map when no instance context is active, such as direct transform edits.
       template<typename T>
       void addPropOverride(const Property<T>& prop)
       {
         GenericValue genVal{};
         genVal.set<T>(prop.value);
-        propOverrides[prop.id] = genVal;
+        if(const auto *layer = PropScope::authorLayer()) {
+          // Only the scoped key. The bare key is a different slot, the instance's own
+          // placement, and must not be touched.
+          auto *map = const_cast<std::unordered_map<uint64_t, GenericValue>*>(layer->overrides);
+          (*map)[PropScope::combine(layer->pathHash, prop.id)] = genVal;
+        } else {
+          propOverrides[prop.id] = genVal;
+        }
       }
 
       template<typename T>
       void removePropOverride(const Property<T>& prop) {
-        propOverrides.erase(prop.id);
+        if(const auto *layer = PropScope::authorLayer()) {
+          const_cast<std::unordered_map<uint64_t, GenericValue>*>(layer->overrides)
+            ->erase(PropScope::combine(layer->pathHash, prop.id));
+        } else {
+          propOverrides.erase(prop.id);
+        }
+      }
+
+      template<typename T>
+      bool hasPropOverride(const Property<T>& prop) const {
+        if(const auto *layer = PropScope::authorLayer()) {
+          // Only the scoped key. The bare key is a different slot, the instance's own
+          // transform, so checking it would falsely report nested props as overridden.
+          return layer->overrides->contains(PropScope::combine(layer->pathHash, prop.id));
+        }
+        return propOverrides.contains(prop.id);
       }
 
       Utils::AABB getLocalAABB() const {
@@ -80,6 +105,7 @@ namespace Project
         for (const auto &entry : components) {
           const auto &info = Component::TABLE[entry.id];
           if (!info.funcGetAABB) continue;
+          PropScope::Dispatch dispatchScope(propOverrides, entry.uuid);
           Utils::AABB compAABB = info.funcGetAABB(const_cast<Object&>(*this), const_cast<Component::Entry&>(entry));
           aabb.addPoint(compAABB.min);
           aabb.addPoint(compAABB.max);

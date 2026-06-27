@@ -1,0 +1,102 @@
+{
+  "obj": {
+    "children": [
+      {
+        "children": [],
+        "components": [],
+        "enabled": true,
+        "name": "Flame",
+        "pos": [
+          258.55926513671875,
+          56.261226654052734,
+          -158.92572021484375
+        ],
+        "propOverrides": {
+          "11272843812465326562": "1:1.000005,1.000000,1.000005",
+          "13911321452997764027": "1:0.000000,69.750771,0.000000",
+          "9467563534403475754": "0:0.000000,-0.975746,0.000000,-0.218905"
+        },
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          -0.8428543210029602,
+          0.0,
+          0.5381418466567993
+        ],
+        "scale": [
+          0.9999978542327881,
+          1.0,
+          0.999997079372406
+        ],
+        "selectable": true,
+        "uuid": 2503700388,
+        "uuidPrefab": 1874064647
+      }
+    ],
+    "components": [
+      {
+        "data": {
+          "culling": false,
+          "layerIdx": 0,
+          "material": {
+            "depth": 0,
+            "env": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "fresnel": 0,
+            "fresnelColor": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "lighting": false,
+            "prim": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "setDepth": false,
+            "setEnv": false,
+            "setFresnel": false,
+            "setLighting": false,
+            "setPrim": false
+          },
+          "meshFilter": "",
+          "model": 10926887260276532569
+        },
+        "id": 1,
+        "name": "Model (Static)",
+        "uuid": 8570013630626551600
+      }
+    ],
+    "enabled": true,
+    "name": "Torch",
+    "pos": [
+      425.0,
+      -15.0,
+      0.0
+    ],
+    "propOverrides": {},
+    "proportionalScale": false,
+    "rot": [
+      0.0,
+      0.7095946669578552,
+      0.0,
+      0.7046101093292236
+    ],
+    "scale": [
+      0.9999927282333374,
+      1.0,
+      0.9999927282333374
+    ],
+    "selectable": true,
+    "uuid": 279896752,
+    "uuidPrefab": 0
+  },
+  "uuid": 4049055903
+}

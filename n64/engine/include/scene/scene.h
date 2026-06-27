@@ -77,7 +77,9 @@ namespace P64
     fm_vec3_t pos{0,0,0};
     fm_vec3_t scale{1,1,1};
     fm_quat_t rot{0,0,0,1};
-    uint16_t objectId{0};
+    uint16_t objectId{0}; // id of the root, the expanded children follow it
+    uint16_t count{0};    // total objects in the prefab (root + nested)
+    uint16_t parentId{0}; // parent for the spawned root, 0 for none
   };
 
   class Scene
@@ -204,13 +206,17 @@ namespace P64
        * @param pos initial pos (default origin)
        * @param scale initial scale (default 1)
        * @param rot initial rotation (none)
+       * @param parentId id of the parent object, 0 for none. 
+       *                 If used, the new object becomes a child and its active/visible state considers the parent.
+       *                 The parent's iterChildren() will also see it.
        * @return ID of the new object
        */
       uint16_t addObject(
         uint32_t prefabIdx,
         const fm_vec3_t &pos = {0,0,0},
         const fm_vec3_t &scale = {1,1,1},
-        const fm_quat_t &rot = {0,0,0,1}
+        const fm_quat_t &rot = {0,0,0,1},
+        uint16_t parentId = 0
       );
 
       void removeObject(Object &obj);
