@@ -113,7 +113,7 @@ namespace
 
   // World transform for expanded prefab-instance children. The engine has no runtime
   // transform hierarchy, so the editor composes nested transforms here to preview them.
-  struct EditorWorldX {
+  struct EditorWorldTrans {
     glm::vec3 pos{0,0,0};
     glm::quat rot{glm::vec3(0.0f)}; // {1,0,0,0} would set x=1, not identity
     glm::vec3 scale{1,1,1};
@@ -139,7 +139,7 @@ namespace
     glm::vec3 sPos, sScale;
     glm::quat sRot;
 
-    NestedRenderPlacement(Project::Object& n, uint32_t pickId, const EditorWorldX& world)
+    NestedRenderPlacement(Project::Object& n, uint32_t pickId, const EditorWorldTrans& world)
       : node{n}, savedUuid{n.uuid},
         fPos{fb(n.pos, n.propOverrides)}, fScale{fb(n.scale, n.propOverrides)},
         fRot{fb(n.rot, n.propOverrides)}, sPos{fPos}, sScale{fScale}, sRot{fRot}
@@ -173,7 +173,7 @@ namespace
    * place the node at its world transform for the callbacks, then restore it.
    * The node uuid is briefly swapped for a per-instance pick id so it's pickable.
    */
-  void renderNestedPrefab(Project::Object& node, const EditorWorldX& parentWorld,
+  void renderNestedPrefab(Project::Object& node, const EditorWorldTrans& parentWorld,
                           const IterCallback& callback, int depth,
                           uint32_t rootUuid, std::vector<uint32_t> path)
   {
@@ -194,7 +194,7 @@ namespace
     glm::quat lrot   = node.rot.resolve(node.propOverrides);
     glm::vec3 lscale = node.scale.resolve(node.propOverrides);
 
-    EditorWorldX world{
+    EditorWorldTrans world{
       parentWorld.pos + parentWorld.rot * (parentWorld.scale * lpos),
       parentWorld.rot * lrot,
       parentWorld.scale * lscale
@@ -240,7 +240,7 @@ namespace
 
       // Expand the prefab definition tree (composed onto the instance's world transform).
       if(isInstance) {
-        EditorWorldX instWorld{
+        EditorWorldTrans instWorld{
           child->pos.resolve(child->propOverrides),
           child->rot.resolve(child->propOverrides),
           child->scale.resolve(child->propOverrides)
@@ -261,7 +261,7 @@ namespace
   // Builds the cascade scope for a known node path under a prefab instance. The instance's
   // override map is the outermost authoring layer, then one Path per node uuid down the
   // chain, pushed all at once. The build and inspector produce the same keys by pushing
-  // the same primitives incrementally. See PropScope's scope-discipline note.
+  // the same primitives incrementally. See PropScope's scope-logic note.
   struct NestedPathScope {
     PropScope::PrefabLayer layer;
     std::vector<std::unique_ptr<PropScope::Path>> steps;
@@ -281,8 +281,8 @@ namespace
   struct NestedTarget {
     Project::Object* node{};
     Project::Object* rootInstance{};
-    EditorWorldX parentWorld{};
-    EditorWorldX world{};
+    EditorWorldTrans parentWorld{};
+    EditorWorldTrans world{};
     std::vector<Project::Object*> nodes{}; // resolved def node for each selSubPath element
     bool valid{false};
   };
@@ -296,7 +296,7 @@ namespace
     auto pf = ctx.project->getAssets().getPrefabByUUID(root->uuidPrefab.value);
     if(!pf)return out;
 
-    EditorWorldX world{
+    EditorWorldTrans world{
       root->pos.resolve(root->propOverrides),
       root->rot.resolve(root->propOverrides),
       root->scale.resolve(root->propOverrides)
@@ -327,7 +327,7 @@ namespace
       glm::vec3 lpos = next->pos.resolve(next->propOverrides);
       glm::quat lrot = next->rot.resolve(next->propOverrides);
       glm::vec3 lscale = next->scale.resolve(next->propOverrides);
-      world = EditorWorldX{
+      world = EditorWorldTrans{
         world.pos + world.rot * (world.scale * lpos),
         world.rot * lrot,
         world.scale * lscale
@@ -1159,6 +1159,19 @@ void Editor::Viewport3D::draw()
   ImGuizmo::SetDrawlist(draw_list);
   ImGuizmo::SetRect(currPos.x, currPos.y, currSize.x, currSize.y);
 
+  // Snap settings (per gizmo mode, Ctrl to enable) plus the Manipulate call, shared by both
+  // selection paths below. Returns true while the gizmo is being dragged.
+  auto manipulateGizmo = [&](glm::mat4 &mat) -> bool {
+    glm::vec3 snap(10.0f);
+    if (gizmoOp == 1) snap = glm::vec3(90.0f / 4.0f);
+    else if (gizmoOp == 2) snap = glm::vec3(0.125f);
+    bool isSnap = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl);
+    return ImGuizmo::Manipulate(
+      glm::value_ptr(uniGlobal.cameraMat), glm::value_ptr(uniGlobal.projMat),
+      GIZMO_OPS[gizmoOp], isTransWorld ? ImGuizmo::MODE::WORLD : ImGuizmo::MODE::LOCAL,
+      glm::value_ptr(mat), nullptr, isSnap ? glm::value_ptr(snap) : nullptr);
+  };
+
   // Nested prefab object selected: dedicated gizmo that writes a transform override on
   // the instance, keyed by the path (composing/decomposing against the parent's world).
   if (hasSelection && !ctx.selSubPath.empty())
@@ -1171,15 +1184,7 @@ void Editor::Viewport3D::draw()
       for (int i = 0; i < 3; i++) if (glm::abs(gscale[i]) < 0.0001f) gscale[i] = 0.0001f;
       glm::mat4 gizmoMat = glm::recompose(gscale, target.world.rot, target.world.pos, skewN, perspN);
 
-      glm::vec3 snap(10.0f);
-      if (gizmoOp == 1) snap = glm::vec3(90.0f / 4.0f);
-      else if (gizmoOp == 2) snap = glm::vec3(0.125f);
-      bool isSnap = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl);
-
-      if (ImGuizmo::Manipulate(
-            glm::value_ptr(uniGlobal.cameraMat), glm::value_ptr(uniGlobal.projMat),
-            GIZMO_OPS[gizmoOp], isTransWorld ? ImGuizmo::MODE::WORLD : ImGuizmo::MODE::LOCAL,
-            glm::value_ptr(gizmoMat), nullptr, isSnap ? glm::value_ptr(snap) : nullptr))
+      if (manipulateGizmo(gizmoMat))
       {
         gizmoTransformActive = true;
 
@@ -1253,13 +1258,10 @@ void Editor::Viewport3D::draw()
 
       glm::mat4 oldGizmoMat = gizmoMat;
 
+      // Grid snap for the absolute-snap shortcut below (the gizmo's own snap is in the helper).
       glm::vec3 snap(10.0f);
-      if (gizmoOp == 1) { // rotate
-        snap = glm::vec3(90.0f / 4.0f);
-      } else if (gizmoOp == 2) { // scale
-        snap = glm::vec3(0.125f);
-      }
-      bool isSnap = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl);
+      if (gizmoOp == 1) snap = glm::vec3(90.0f / 4.0f);
+      else if (gizmoOp == 2) snap = glm::vec3(0.125f);
       bool isOnlySelf = ImGui::IsKeyDown(ImGuiKey_LeftShift);
 
       // snap object to absolute grid
@@ -1272,15 +1274,7 @@ void Editor::Viewport3D::draw()
         obj->pos.resolve(obj->propOverrides) = pos;
       }
 
-      if(ImGuizmo::Manipulate(
-        glm::value_ptr(uniGlobal.cameraMat),
-        glm::value_ptr(uniGlobal.projMat),
-        GIZMO_OPS[gizmoOp],
-        isTransWorld ? ImGuizmo::MODE::WORLD : ImGuizmo::MODE::LOCAL,
-        glm::value_ptr(gizmoMat),
-        nullptr,
-        isSnap ? glm::value_ptr(snap) : nullptr
-      )) {
+      if(manipulateGizmo(gizmoMat)) {
         gizmoTransformActive = true;
 
         if (!isMultiSelect) {

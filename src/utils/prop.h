@@ -117,7 +117,7 @@ struct GenericValue
  * combine(0, id) == id, so the root object's own props keep bare keys and existing
  * projects resolve without migration.
  *
- * Scope discipline.
+ * Scope logic.
  * A nested property is addressed by PrefabLayer(instance.propOverrides) per instance node,
  * one Path(uuid) per node descended into, one Path(comp.uuid) for the owning component,
  * then prop.id. An override authored under this scope must resolve to the same key the
