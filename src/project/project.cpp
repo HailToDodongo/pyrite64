@@ -134,6 +134,7 @@ std::string Project::ProjectConf::serialize() const {
     .set("sceneIdOnBoot", sceneIdOnBoot)
     .set("sceneIdOnReset", sceneIdOnReset)
     .set("sceneIdLastOpened", sceneIdLastOpened)
+    .set("debugMenu", debugMenu)
     .set("collLayer0", collLayerNames[0])
     .set("collLayer1", collLayerNames[1])
     .set("collLayer2", collLayerNames[2])
@@ -156,6 +157,7 @@ void Project::Project::deserialize(const nlohmann::json &doc) {
   conf.sceneIdOnBoot = doc.value("sceneIdOnBoot", 1);
   conf.sceneIdOnReset = doc.value("sceneIdOnReset", 1);
   conf.sceneIdLastOpened = doc.value("sceneIdLastOpened", 1);
+  conf.debugMenu = doc.value("debugMenu", true);
 
   for(int i=0; i<8; ++i) {
     conf.collLayerNames[i] = doc.value("collLayer" + std::to_string(i), "Layer " + std::to_string(i));

@@ -3,6 +3,7 @@
 #include <libdragon.h>
 
 #include "script/globalScript.h"
+#include "debug/debugMenu.h"
 
 namespace P64::GlobalScript
 {

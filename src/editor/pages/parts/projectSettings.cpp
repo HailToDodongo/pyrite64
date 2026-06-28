@@ -191,8 +191,16 @@ bool Editor::ProjectSettings::draw()
     ImTable::start("General");
     ImTable::add("Name", ctx.project->conf.name);
     ImTable::add("ROM-Name", ctx.project->conf.romName);
+    ImTable::addCheckBox("Debug Menu (L + D-Up)", ctx.project->conf.debugMenu);
     ImTable::end();
+
+    if(!ctx.project->conf.debugMenu) {
+      ImGui::TextWrapped(ICON_MDI_INFORMATION_OUTLINE
+        " The in-game debug menu hotkey (L + D-Up) is disabled.\n"
+        "Call P64::Debug::Overlay::toggle() from your own code to open it.");
+    }
   }
+
   if (ImGui::CollapsingHeader("Collision", ImGuiTreeNodeFlags_DefaultOpen))
   {
     ImTable::start("Collision");
