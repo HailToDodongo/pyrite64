@@ -8,6 +8,36 @@
 
 namespace Editor::TransformUtils
 {
+  namespace
+  {
+    /**
+     * Recursively caches descendant positions using each node's immediate parent matrix.
+     * @param obj Current subtree root being visited.
+     * @param parentMat World matrix of the current subtree root's parent.
+     * @param relPosMap Accumulator keyed by descendant UUID.
+     */
+    void captureChildLocalOffsetsRecursive(
+      const Project::Object &obj,
+      const glm::mat4 &parentMat,
+      ChildLocalOffsetMap &relPosMap
+    ) {
+      // Convert descendants from the current parent's world space into local space once
+      const glm::mat4 invParentMat = glm::inverse(parentMat);
+
+      for (const auto &child : obj.children)
+      {
+        // Cache the child relative to its immediate parent before recursing deeper
+        relPosMap[child->uuid] = invParentMat * glm::vec4(
+          child->pos.resolve(*child),
+          1.0f
+        );
+
+        // Recurse with the child's current world matrix so grandchildren use the correct space
+        captureChildLocalOffsetsRecursive(*child, composeResolvedObjectMatrix(*child), relPosMap);
+      }
+    }
+  }
+
   /**
    * Rebuilds an object's world matrix from its resolved transform properties.
    * @param obj Object whose resolved transform should be composed.
@@ -48,19 +78,9 @@ namespace Editor::TransformUtils
    */
   ChildLocalOffsetMap captureChildLocalOffsets(const Project::Object &obj, const glm::mat4 &mat)
   {
-    // Invert the provided parent matrix once so every child can be transformed into local space
-    const glm::mat4 invObjMat = glm::inverse(mat);
-
-    // Store one local-space position per direct child
+    // Store the entire subtree in local space starting from the provided parent matrix
     ChildLocalOffsetMap relPosMap{};
-    for (const auto &child : obj.children)
-    {
-      // Cache the child world position relative to the current parent transform
-      relPosMap[child->uuid] = invObjMat * glm::vec4(
-        child->pos.resolve(*child),
-        1.0f
-      );
-    }
+    captureChildLocalOffsetsRecursive(obj, mat, relPosMap);
     return relPosMap;
   }
 
@@ -80,15 +100,23 @@ namespace Editor::TransformUtils
     // Process every child of the edited parent
     for (auto &child : obj.children)
     {
-      // Keep callers free to preserve specific children exactly as they are
+      // Keep callers free to preserve specific subtrees exactly as they are
       if (shouldSkipChild && shouldSkipChild(*child)) continue;
 
-      // Skip children that were not part of the cached transform state
+      // Skip descendants that were not part of the cached transform state
       auto it = relPosMap.find(child->uuid);
       if (it == relPosMap.end()) continue;
 
-      // Restore the child's world position using the new parent transform
+      // Restore the child's world position using the updated parent transform
       child->pos.resolve(*child) = mat * glm::vec4(it->second, 1.0f);
+
+      // Recurse so grandchildren and deeper levels inherit the updated child transform
+      applyChildWorldPositions(
+        *child,
+        relPosMap,
+        composeResolvedObjectMatrix(*child),
+        shouldSkipChild
+      );
     }
   }
 }

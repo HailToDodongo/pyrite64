@@ -23,26 +23,26 @@ namespace Editor::TransformUtils
   glm::mat4 composeResolvedObjectMatrix(const Project::Object &obj);
 
   /**
-   * Caches each direct child's position in the local space of its parent.
+   * Caches each descendant's position in the local space of its immediate parent.
    * @param obj Parent object whose direct children should be captured.
-   * @return Map keyed by child UUID with cached local-space positions.
+   * @return Map keyed by descendant UUID with cached local-space positions.
    */
   ChildLocalOffsetMap captureChildLocalOffsets(const Project::Object &obj);
 
   /**
-   * Caches each direct child's position using an explicit parent world matrix.
+   * Caches each descendant's position using an explicit parent world matrix.
    * @param obj Parent object whose direct children should be captured.
    * @param mat Parent world matrix used to convert child positions into local space.
-   * @return Map keyed by child UUID with cached local-space positions.
+   * @return Map keyed by descendant UUID with cached local-space positions.
    */
   ChildLocalOffsetMap captureChildLocalOffsets(const Project::Object &obj, const glm::mat4 &mat);
 
   /**
-   * Rebuilds child world positions after the parent transform changed.
-   * @param obj Parent object whose direct children should be updated.
-   * @param relPosMap Cached child positions in the old parent local space.
+   * Rebuilds descendant world positions after the parent transform changed.
+   * @param obj Parent object whose descendants should be updated.
+   * @param relPosMap Cached descendant positions in the old immediate-parent local space.
    * @param mat New parent world matrix.
-   * @param shouldSkipChild Optional callback used to leave some children untouched.
+   * @param shouldSkipChild Optional callback used to leave some subtrees untouched.
    */
   void applyChildWorldPositions(
     Project::Object &obj,
@@ -65,24 +65,24 @@ namespace Editor::TransformUtils
     std::function<bool(T*)> editFunc,
     const std::function<bool(const Project::Object&)> &shouldSkipChild = {}
   ) {
-    // Keep the wrapped editor behavior unchanged when there is no target object.
+    // Keep the wrapped editor behavior unchanged when there is no target object
     return [obj, editFunc = std::move(editFunc), shouldSkipChild](T *val) -> bool {
-      // There is no object to edit --> Abort.
+      // There is no object to edit --> Abort
       if (!obj) return false;
 
-      // Objects without children do not need the extra capture-and-restore pass.
+      // Objects without children do not need the extra capture-and-restore pass
       if (obj->children.empty()) {
         return editFunc(val);
       }
 
-      // Cache child positions in the current parent local space before editing.
+      // Cache descendant positions in the current parent local space before editing
       ChildLocalOffsetMap relPosMap = captureChildLocalOffsets(*obj);
 
-      // Let the original editor change the parent transform value.
+      // Let the original editor change the parent transform value
       bool changed = editFunc(val);
       if (!changed) return false;
 
-      // Recompose the updated parent matrix and rebuild child world positions from it.
+      // Recompose the updated parent matrix and rebuild child world positions from it
       applyChildWorldPositions(
         *obj,
         relPosMap,
