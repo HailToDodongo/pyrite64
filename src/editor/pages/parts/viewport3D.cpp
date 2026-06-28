@@ -20,10 +20,12 @@
 #include "SDL3/SDL_gpu.h"
 #include "SDL3/SDL_mouse.h"
 #include "IconsMaterialDesignIcons.h"
+#include "../../transformUtils.h"
 #include "../../undoRedo.h"
 #include "../../selectionUtils.h"
 
 #include "../../../utils/logger.h"
+#include <cstdint>
 #include <memory>
 namespace
 {
@@ -343,22 +345,6 @@ namespace
     return out;
   }
 
-  void applyDeltaToChildren(
-    Project::Object &obj,
-    const std::unordered_map<uint64_t, glm::vec3> &relPosMap,
-    const glm::mat4 &mat
-  ) {
-    for(auto& child : obj.children)
-    {
-      // if child itself is selected, skip (already transformed with it)
-      if(ctx.isObjectSelected(child->uuid))continue;
-
-      auto it = relPosMap.find(child->uuid);
-      if(it == relPosMap.end())continue;
-      child->pos.resolve(child->propOverrides) = mat * glm::vec4(it->second, 1.0f);
-    }
-  }
-
   /**
    * Ensures a property has an override entry before writing to it on an object instance.
    * @tparam T Value type stored by the property.
@@ -484,21 +470,8 @@ bool Editor::Viewport3D::alignFocusedObjectToCamera()
   // Read current transform to preserve child offsets after moving the parent to the editor camera
   glm::vec3 skew{0.0f};
   glm::vec4 persp{0.0f, 0.0f, 0.0f, 1.0f};
-  glm::vec3 objScale = obj->scale.resolve(obj->propOverrides);
-  glm::quat objRot = obj->rot.resolve(obj->propOverrides);
-  glm::vec3 objPos = obj->pos.resolve(obj->propOverrides);
-
-  // Rebuild current object matrix so child transforms can be converted into the old local space
-  auto oldObjMatrix = glm::recompose(objScale, objRot, objPos, skew, persp);
-
-  // Cache each child in the local space of the old transform so they can be rebuilt relative to the new one
-  std::unordered_map<uint64_t, glm::vec3> relPosMap{};
-  for (auto& child : obj->children)
-  {
-    relPosMap[child->uuid] = glm::inverse(oldObjMatrix) * glm::vec4(
-      child->pos.resolve(child->propOverrides), 1.0f
-    );
-  }
+  auto oldObjMatrix = Editor::TransformUtils::composeResolvedObjectMatrix(*obj);
+  auto relPosMap = Editor::TransformUtils::captureChildLocalOffsets(*obj, oldObjMatrix);
 
   // Copy editor camera transform to focused object
   obj->pos.resolve(obj->propOverrides) = camera.pos;
@@ -514,7 +487,7 @@ bool Editor::Viewport3D::alignFocusedObjectToCamera()
   );
 
   // Re-apply cached child offsets relative to new parent transform
-  applyDeltaToChildren(*obj, relPosMap, newObjMatrix);
+  Editor::TransformUtils::applyChildWorldPositions(*obj, relPosMap, newObjMatrix);
 
   // Add to history
   UndoRedo::getHistory().markChanged("Align object to camera");
@@ -1331,13 +1304,7 @@ void Editor::Viewport3D::draw()
                 obj->rot.resolve(obj->propOverrides),
                 obj->pos.resolve(obj->propOverrides),
                 skew, persp);
-
-              for(auto& child : obj->children)
-              {
-                relPosMap[child->uuid] = glm::inverse(oldObjMat) * glm::vec4(
-                  child->pos.resolve(child->propOverrides), 1.0f
-                );
-              }
+              relPosMap = Editor::TransformUtils::captureChildLocalOffsets(*obj, oldObjMat);
             }
 
             glm::decompose(
@@ -1350,7 +1317,15 @@ void Editor::Viewport3D::draw()
 
             if(!isOnlySelf)
             {
-              applyDeltaToChildren(*obj, relPosMap, gizmoMat);
+              Editor::TransformUtils::applyChildWorldPositions(
+                *obj,
+                relPosMap,
+                gizmoMat,
+                [](const Project::Object &child) {
+                  // Selected children are already transformed by the gizmo.
+                  return ctx.isObjectSelected(child.uuid);
+                }
+              );
             }
           }
         } else {
@@ -1397,13 +1372,7 @@ void Editor::Viewport3D::draw()
               if(!isOnlySelf)
               {
                 auto oldObjMat = glm::recompose(oldScale, oldRot, oldPos, skew, persp);
-
-                for(auto& child : selObj->children)
-                {
-                  relPosMap[child->uuid] = glm::inverse(oldObjMat) * glm::vec4(
-                    child->pos.resolve(child->propOverrides), 1.0f
-                  );
-                }
+                relPosMap = Editor::TransformUtils::captureChildLocalOffsets(*selObj, oldObjMat);
               }
 
               objPos = center + ((oldPos - center) * scaleDelta);
@@ -1412,7 +1381,15 @@ void Editor::Viewport3D::draw()
               if(!isOnlySelf)
               {
                 auto newObjMat = glm::recompose(objScale, objRot, objPos, skew, persp);
-                applyDeltaToChildren(*selObj, relPosMap, newObjMat);
+                Editor::TransformUtils::applyChildWorldPositions(
+                  *selObj,
+                  relPosMap,
+                  newObjMat,
+                  [](const Project::Object &child) {
+                    // Selected children are already transformed by the gizmo.
+                    return ctx.isObjectSelected(child.uuid);
+                  }
+                );
               }
             }
           } else {
@@ -1431,13 +1408,7 @@ void Editor::Viewport3D::draw()
                   selObj->rot.resolve(selObj->propOverrides),
                   selObj->pos.resolve(selObj->propOverrides),
                   skew, persp);
-
-                for(auto& child : selObj->children)
-                {
-                  relPosMap[child->uuid] = glm::inverse(oldObjMat) * glm::vec4(
-                    child->pos.resolve(child->propOverrides), 1.0f
-                  );
-                }
+                relPosMap = Editor::TransformUtils::captureChildLocalOffsets(*selObj, oldObjMat);
               }
 
               auto oldObjMat = glm::recompose(
@@ -1456,7 +1427,15 @@ void Editor::Viewport3D::draw()
               );
 
               if(!isOnlySelf) {
-                applyDeltaToChildren(*selObj, relPosMap, newObjMat);
+                Editor::TransformUtils::applyChildWorldPositions(
+                  *selObj,
+                  relPosMap,
+                  newObjMat,
+                  [](const Project::Object &child) {
+                    // Selected children are already transformed by the gizmo.
+                    return ctx.isObjectSelected(child.uuid);
+                  }
+                );
               }
             }
           }

@@ -15,6 +15,7 @@
 
 #include "imgui_internal.h"
 #include "../../imgui/helper.h"
+#include "../../transformUtils.h"
 #include "../../../context.h"
 #include "../../../project/component/components.h"
 #include "../../selectionUtils.h"
@@ -77,90 +78,6 @@ namespace
     auto &comp = targetObj->components.back();
     Project::Component::Code::setScript(comp, scriptUUID, false);
     return true;
-  }
-
-  /**
-   * Rebuilds child world positions after a parent transform edit.
-   * @param obj Parent object whose children should keep their relative offsets.
-   * @param relPosMap Cached child positions in the old parent local space.
-   * @param mat New parent transform matrix.
-   */
-  void applyDeltaToChildren(
-    Project::Object &obj,
-    const std::unordered_map<uint64_t, glm::vec3> &relPosMap,
-    const glm::mat4 &mat
-  ) {
-    // Process every child of the edited parent
-    for (auto &child : obj.children)
-    {
-      // A selected child would already be edited explicitly elsewhere
-      if (ctx.isObjectSelected(child->uuid)) continue;
-
-      // Skip children that were not part of the cached transform state
-      auto it = relPosMap.find(child->uuid);
-      if (it == relPosMap.end()) continue;
-
-      // Restore the child's world position using the new parent transform
-      child->pos.resolve(child->propOverrides) = mat * glm::vec4(it->second, 1.0f);
-    }
-  }
-
-  /**
-   * Wraps a transform editor so child world positions follow parent edits.
-   * @tparam T Edited property value type.
-   * @param obj Object whose transform is being edited.
-   * @param editFunc UI callback that edits the resolved property value.
-   * @return Wrapped callback with child propagation behavior.
-   */
-  template<typename T>
-  std::function<bool(T*)> preserveChildTransformsDuringEdit(
-    Project::Object *obj,
-    std::function<bool(T*)> editFunc
-  ) {
-    return [obj, editFunc = std::move(editFunc)](T *val) -> bool {
-      // There is no object to edit --> Abort
-      if (!obj) return false;
-
-      // Object has no children --> Abort
-      if (obj->children.empty())
-        return editFunc(val);
-
-      // Recompose the current parent matrix so child offsets can be cached in local space
-      glm::vec3 skew{0.0f};
-      glm::vec4 persp{0.0f, 0.0f, 0.0f, 1.0f};
-      auto oldObjMat = glm::recompose(
-        obj->scale.resolve(obj->propOverrides),
-        obj->rot.resolve(obj->propOverrides),
-        obj->pos.resolve(obj->propOverrides),
-        skew,
-        persp
-      );
-
-      // Cache each child relative to the current parent transform
-      std::unordered_map<uint64_t, glm::vec3> relPosMap{};
-      for (auto &child : obj->children)
-      {
-        relPosMap[child->uuid] = glm::inverse(oldObjMat) * glm::vec4(
-          child->pos.resolve(child->propOverrides),
-          1.0f
-        );
-      }
-
-      // Let the original editor update the parent property
-      bool changed = editFunc(val);
-      if (!changed) return false;
-
-      // Recompose the updated parent matrix and rebuild child world positions from it
-      auto newObjMat = glm::recompose(
-        obj->scale.resolve(obj->propOverrides),
-        obj->rot.resolve(obj->propOverrides),
-        obj->pos.resolve(obj->propOverrides),
-        skew,
-        persp
-      );
-      applyDeltaToChildren(*obj, relPosMap, newObjMat);
-      return true;
-    };
   }
 
   /**
@@ -551,7 +468,7 @@ void Editor::ObjectInspector::draw() {
       ImTable::addObjProp(
         "Pos",
         xfSrc->pos,
-        preserveChildTransformsDuringEdit<glm::vec3>(obj.get(), [](glm::vec3 *val) -> bool {
+        Editor::TransformUtils::preserveChildTransformsDuringEdit<glm::vec3>(obj.get(), [](glm::vec3 *val) -> bool {
           // Use the standard vector editor while preserving child offsets
           return ImTable::typedInput<glm::vec3>(val);
         }),
@@ -583,18 +500,17 @@ void Editor::ObjectInspector::draw() {
           *val = scale * ratio;
           return ratio != 1.0f;
         };
-        ImTable::addObjProp("Scale", xfSrc->scale, cb, nullptr);
         ImTable::addObjProp(
           "Scale",
           xfSrc->scale,
-          preserveChildTransformsDuringEdit<glm::vec3>(obj.get(), cb),
+          Editor::TransformUtils::preserveChildTransformsDuringEdit<glm::vec3>(obj.get(), cb),
           nullptr
         );
       } else {
         ImTable::addObjProp(
           "Scale",
           xfSrc->scale,
-          preserveChildTransformsDuringEdit<glm::vec3>(obj.get(), [](glm::vec3 *val) -> bool {
+          Editor::TransformUtils::preserveChildTransformsDuringEdit<glm::vec3>(obj.get(), [](glm::vec3 *val) -> bool {
             // Use the standard vector editor while preserving child offsets
             return ImTable::typedInput<glm::vec3>(val);
           }),
@@ -617,7 +533,7 @@ void Editor::ObjectInspector::draw() {
       ImTable::addObjProp(
         "Rot",
         xfSrc->rot,
-        preserveChildTransformsDuringEdit<glm::quat>(obj.get(), [](glm::quat *val) -> bool {
+        Editor::TransformUtils::preserveChildTransformsDuringEdit<glm::quat>(obj.get(), [](glm::quat *val) -> bool {
           // Use the standard quaternion editor while preserving child offsets
           return ImTable::typedInput<glm::quat>(val);
         }),
@@ -733,8 +649,11 @@ void Editor::ObjectInspector::draw() {
       ImGui::OpenPopup("CompSelect");
     }
 
-    const ImVec2 contentMin = ImGui::GetWindowPos() + ImGui::GetWindowContentRegionMin();
-    const ImVec2 contentMax = ImGui::GetWindowPos() + ImGui::GetWindowContentRegionMax();
+    const ImVec2 windowPos = ImGui::GetWindowPos();
+    const ImVec2 contentRegionMin = ImGui::GetWindowContentRegionMin();
+    const ImVec2 contentRegionMax = ImGui::GetWindowContentRegionMax();
+    const ImVec2 contentMin{windowPos.x + contentRegionMin.x, windowPos.y + contentRegionMin.y};
+    const ImVec2 contentMax{windowPos.x + contentRegionMax.x, windowPos.y + contentRegionMax.y};
 
     ImRect panelDropRect{contentMin, contentMax};
     handleScriptComponentDropTarget(srcObj, panelDropRect, true);
