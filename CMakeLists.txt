@@ -139,6 +139,8 @@ add_executable(pyrite64 src/main.cpp
         src/editor/undoRedo.cpp
         src/editor/selectionUtils.h
         src/editor/selectionUtils.cpp
+        src/editor/transformUtils.h
+        src/editor/transformUtils.cpp
         src/editor/thumbnailCache.h
         src/editor/thumbnailCache.cpp
         src/editor/window.h
