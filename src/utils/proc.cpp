@@ -20,7 +20,6 @@
   #include <windows.h>
 #elif __APPLE__
   #include <mach-o/dyld.h>
-  #include <climits>
 #else
   #include <unistd.h>
 #endif
@@ -112,18 +111,26 @@ fs::path Utils::Proc::getSelfPath()
   wchar_t szPath[MAX_PATH];
   GetModuleFileNameW( NULL, szPath, MAX_PATH );
 #elif __APPLE__
-  char szPath[PATH_MAX];
-  uint32_t bufsize = PATH_MAX;
-  if (!_NSGetExecutablePath(szPath, &bufsize))
-    return fs::path{szPath}.parent_path() / ""; // to finish the folder path with (back)slash
-  return {};  // some error
-#else
-  // Linux specific
-  char szPath[PATH_MAX];
-  ssize_t count = readlink( "/proc/self/exe", szPath, PATH_MAX );
-  if( count < 0 || count >= PATH_MAX )
+  // First call with a null buffer reports the size needed (including the null terminator).
+  uint32_t bufsize = 0;
+  _NSGetExecutablePath(nullptr, &bufsize);
+  std::string szPath(bufsize, '\0');
+  if (_NSGetExecutablePath(szPath.data(), &bufsize) != 0)
     return {}; // some error
-  szPath[count] = '\0';
+  return fs::path{szPath.c_str()}.parent_path() / ""; // finish the folder path with a slash
+#else
+  // Linux specific. readlink does not null-terminate and gives no length up front,
+  // so grow the buffer until the path fits.
+  std::string szPath(256, '\0');
+  while (true) {
+    ssize_t count = readlink("/proc/self/exe", szPath.data(), szPath.size());
+    if (count < 0) return {}; // some error
+    if (static_cast<size_t>(count) < szPath.size()) {
+      szPath.resize(count);
+      break;
+    }
+    szPath.resize(szPath.size() * 2); // truncated, retry with a larger buffer
+  }
 #endif
 
   return fs::path{szPath};
