@@ -12,6 +12,7 @@
 #include "aabbTree.h"
 #include "raycast.h"
 #include "capsuleSweep.h"
+#include "sphereSweep.h"
 #include <array>
 #include <deque>
 #include <functional>
@@ -122,6 +123,16 @@ namespace P64::Coll {
       RaycastColliderTypeFlags collTypes,
       uint8_t readMask,
       CapsuleSweepHit& hit,
+      const Object* ignoreOwner = nullptr
+    ) const;
+
+    bool sphereSweep(
+      const fm_vec3_t& center,
+      float radius,
+      const fm_vec3_t& displacement,
+      RaycastColliderTypeFlags collTypes,
+      uint8_t readMask,
+      SphereSweepHit& hit,
       const Object* ignoreOwner = nullptr
     ) const;
 

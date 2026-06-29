@@ -1624,6 +1624,23 @@ namespace P64::Coll {
     }
   }
 
+  struct SphereGjkData {
+      fm_vec3_t center;
+      float radius;
+  };
+
+  static void sphereGjkSupport(const void *data, const fm_vec3_t &dir, fm_vec3_t &out) {
+    const auto &s = *static_cast<const SphereGjkData*>(data);
+    const float len2 = fm_vec3_len2(&dir);
+    if (len2 > FM_EPSILON * FM_EPSILON) {
+      // Center + (Normalized Direction * Radius)
+      out = s.center + dir * (1.0f / sqrtf(len2) * s.radius);
+    } else {
+      // Fallback if the direction vector is zero
+      out = s.center;
+    }
+  }
+
   // World-space support for a Collider. The shape support functions return LOCAL-space points (centered at origin), 
   // so we rotate the query direction into local space, sample, then transform the result back to world space.
   static void colliderWorldGjkSupport(const void *data, const fm_vec3_t &dir, fm_vec3_t &out) {
@@ -1792,6 +1809,174 @@ namespace P64::Coll {
           hit.normal = n;
           // Swept contact: the capsule is NOT penetrating at the start position,
           // it only reaches the surface partway through the move. 
+          // `depth` is reserved for pre-existing overlaps, so set 0 here
+          hit.depth  = 0.0f;
+          hit.point  = epa.contactB;
+        }
+      }
+    }
+
+    return hit.didHit;
+  }
+
+  bool CollisionScene::sphereSweep(
+          const fm_vec3_t& center,
+          float radius,
+          const fm_vec3_t& displacement,
+          RaycastColliderTypeFlags collTypes,
+          uint8_t readMask,
+          SphereSweepHit& hit,
+          const Object* ignoreOwner
+  ) const {
+    hit = SphereSweepHit{};
+
+    const bool doMesh    = hasFlag(collTypes, RaycastColliderTypeFlags::MESH_COLLIDERS);
+    const bool doBodies  = hasFlag(collTypes, RaycastColliderTypeFlags::COLLIDER_BODIES);
+    if (!doMesh && !doBodies) return false;
+
+    // Compute world-space swept AABB for broadphase
+    fm_vec3_t extents = {
+            radius,
+            radius,
+            radius
+    };
+    AABB capsuleBox = { center - extents, center + extents };
+    AABB sweptBox;
+    aabbExtendDirection(capsuleBox, displacement, sweptBox);
+
+    SphereSweepHit candidate{};
+
+    // ── Mesh colliders ──────────────────────────────────────────────────────
+    if (doMesh) {
+      constexpr int MAX_TRI = 64;
+      NodeProxy triCandidates[MAX_TRI];
+      constexpr int MAX_MESH_CANDIDATES = 32;
+      NodeProxy meshCandidates[MAX_MESH_CANDIDATES];
+
+      int meshCount = meshColliderAABBTree.queryBounds(sweptBox, meshCandidates, MAX_MESH_CANDIDATES);
+      for (int m = 0; m < meshCount; ++m) {
+        const MeshCollider* mesh = static_cast<const MeshCollider*>(
+                meshColliderAABBTree.getNodeData(meshCandidates[m]));
+        if (!mesh || mesh->triangleCount() == 0 || !mesh->ownerObject()) continue;
+
+        AABB localSweptBox = mesh->worldAabbToLocal(sweptBox);
+        int triCount = mesh->queryTriangleNodes(localSweptBox, triCandidates, MAX_TRI);
+
+        for (int i = 0; i < triCount; ++i) {
+          int triIdx = mesh->triangleIndexForNode(triCandidates[i]);
+          if (triIdx < 0 || triIdx >= static_cast<int>(mesh->triangleCount())) continue;
+
+          const MeshTriangleIndices& tri = mesh->triangleIndices(triIdx);
+
+          fm_vec3_t wv0 = mesh->hasTransform() ? mesh->toWorldSpace(mesh->vertex(tri.indices[0])) : mesh->vertex(tri.indices[0]);
+          fm_vec3_t wv1 = mesh->hasTransform() ? mesh->toWorldSpace(mesh->vertex(tri.indices[1])) : mesh->vertex(tri.indices[1]);
+          fm_vec3_t wv2 = mesh->hasTransform() ? mesh->toWorldSpace(mesh->vertex(tri.indices[2])) : mesh->vertex(tri.indices[2]);
+          fm_vec3_t wn  = mesh->hasTransform() ? mesh->localNormalToWorld(mesh->triangleNormal(triIdx)) : mesh->triangleNormal(triIdx);
+
+          candidate = SphereSweepHit{};
+          if (!sphereSweepTriangle(center, radius,
+                                    displacement, wv0, wv1, wv2, wn, candidate))
+            continue;
+
+          if (!hit.didHit || candidate.t < hit.t ||
+              (candidate.t == 0.0f && candidate.depth > hit.depth)) {
+            hit = candidate;
+          }
+        }
+      }
+    }
+
+    // Collider bodies (GJK + EPA)
+    if (doBodies) {
+      constexpr int MAX_CB_CANDIDATES = 16;
+      NodeProxy cbCandidates[MAX_CB_CANDIDATES];
+
+      const fm_vec3_t endCenter = center + displacement;
+      const SphereGjkData sphereStart{ center, radius };
+      const SphereGjkData sphereEnd  { endCenter, radius };
+
+      int cbCount = colliderAABBTree.queryBounds(sweptBox, cbCandidates, MAX_CB_CANDIDATES);
+      for (int ci = 0; ci < cbCount; ++ci) {
+        void *cbData = colliderAABBTree.getNodeData(cbCandidates[ci]);
+        if (!cbData) continue;
+        Collider *coll = static_cast<Collider *>(cbData);
+        if (!coll || !coll->ownerObject() || coll->isTrigger()) continue;
+        // Skip the sweep's filtered colliders
+        if (ignoreOwner && coll->ownerObject() == ignoreOwner) continue;
+        if ((coll->writeMask() & readMask) == 0) continue;
+
+        // Stable fallback direction for when EPA degenerates at a near-zero-depth touch.
+        // Points from the collider toward the sphere
+        // this can happen if .e.g the sphere hangs on the edge of an AABB
+        fm_vec3_t fallbackN = center - coll->worldCenter();
+        //if (fm_vec3_len2(&fallbackN) < FM_EPSILON * FM_EPSILON) fallbackN = axisUp;
+        //else fm_vec3_norm(&fallbackN, &fallbackN);
+        fm_vec3_norm(&fallbackN, &fallbackN);
+
+        // Below this, an "overlap" is really just a surface touch, not a penetration to push out of.
+        // Use the swept check here, which produces a stable contact normal for blocking/sliding.
+        constexpr float MIN_REAL_PENETRATION = 0.001f;
+
+        fm_vec3_t initDir = coll->worldCenter() - center;
+        //if (fm_vec3_len2(&initDir) < FM_EPSILON * FM_EPSILON) initDir = axisUp;
+
+        Simplex simplex{};
+        bool overlapAtStart = gjkCheckForOverlap(simplex,
+                                                 &sphereStart, sphereGjkSupport,
+                                                 coll, colliderWorldGjkSupport,
+                                                 initDir);
+
+        if (overlapAtStart) {
+          // Already inside: EPA gives the push-out normal and dept
+          EpaResult epa{};
+          if (epaSolve(simplex, &sphereStart, sphereGjkSupport, coll, colliderWorldGjkSupport, epa)
+              && epa.penetration > MIN_REAL_PENETRATION) {
+            fm_vec3_t n = epa.normal;
+            if (fm_vec3_len2(&n) < FM_EPSILON * FM_EPSILON) n = fallbackN;
+
+            if (!hit.didHit || hit.t > 0.0f || epa.penetration > hit.depth) {
+              hit.didHit = true;
+              hit.t      = 0.0f;
+              hit.normal = n;
+              hit.depth  = epa.penetration;
+              hit.point  = epa.contactB;
+            }
+            continue;
+          }
+          // Shallow / degenerate touch -> fall through to the swept check below
+        }
+
+        // End-position (swept) overlap check:
+        fm_vec3_t endInitDir = coll->worldCenter() - endCenter;
+        //if (fm_vec3_len2(&endInitDir) < FM_EPSILON * FM_EPSILON) endInitDir = axisUp;
+
+        Simplex endSimplex{};
+        bool overlapAtEnd = gjkCheckForOverlap(endSimplex,
+                                               &sphereEnd, sphereGjkSupport,
+                                               coll, colliderWorldGjkSupport,
+                                               endInitDir);
+
+        if (!overlapAtEnd) continue;
+
+        EpaResult epa{};
+        if (!epaSolve(endSimplex, &sphereEnd, sphereGjkSupport, coll, colliderWorldGjkSupport, epa)) continue;
+
+        fm_vec3_t n = epa.normal;
+        if (fm_vec3_len2(&n) < FM_EPSILON * FM_EPSILON) n = fallbackN;
+
+        // Estimate the touch fraction by backing the end-penetration out along the normal
+        const float dispAlongNormal = fabsf(fm_vec3_dot(&displacement, &n));
+        float t = 1.0f;
+        if (dispAlongNormal > FM_EPSILON) {
+          t = fmaxf(0.0f, fminf(1.0f - epa.penetration / dispAlongNormal, 1.0f));
+        }
+
+        if (!hit.didHit || t < hit.t) {
+          hit.didHit = true;
+          hit.t      = t;
+          hit.normal = n;
+          // Swept contact: the capsule is NOT penetrating at the start position,
+          // it only reaches the surface partway through the move.
           // `depth` is reserved for pre-existing overlaps, so set 0 here
           hit.depth  = 0.0f;
           hit.point  = epa.contactB;
