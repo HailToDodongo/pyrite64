@@ -7,10 +7,13 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <functional>
+#include <iterator>
 #include <optional>
 #include <sstream>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "imgui_internal.h"
@@ -24,6 +27,19 @@
 namespace
 {
   constexpr int COMP_ID_CODE = 0;
+
+  struct ComponentDragPayload
+  {
+    Project::Object *owner{};
+    uint64_t compUUID{};
+  };
+
+  struct ComponentReorderRequest
+  {
+    Project::Object *owner{};
+    uint64_t compUUID{};
+    size_t insertIndex{};
+  };
 
   /**
    * Returns whether the current drag payload is an object-script asset.
@@ -77,6 +93,116 @@ namespace
     // Set the Script field for the created Code component
     auto &comp = targetObj->components.back();
     Project::Component::Code::setScript(comp, scriptUUID, false);
+    return true;
+  }
+
+  /**
+   * Draws a thin insertion target for component reordering.
+   * @param owner Object owning the components.
+   * @param insertIndex Target insertion index in the owner component list.
+   * @param previousComponentCollapsed true when the component above the index is folded (spacing is smaller).
+   * @param reorderRequest Output request filled when a component is dropped here.
+   */
+  void drawComponentInsertTarget(
+    Project::Object *owner,
+    size_t insertIndex,
+    bool previousComponentCollapsed,
+    ComponentReorderRequest &reorderRequest
+  ) {
+    // No drag operation active --> Abort
+    if (!owner || !ImGui::IsDragDropActive()) return;
+
+    // Center the hit area on the current layout boundary without changing layout
+    const ImVec2 cursorScreen = ImGui::GetCursorScreenPos();
+    ImGuiWindow *window = ImGui::GetCurrentWindowRead();
+    const ImGuiStyle &style = ImGui::GetStyle();
+    const float headerOuterExtend = IM_TRUNC(window->WindowPadding.x * 0.5f);
+    const float minX = cursorScreen.x - headerOuterExtend;
+    const float maxX = window->WorkRect.Max.x + headerOuterExtend;
+    const float markerMargin = 1.0f; // Vertical margin between the marker and the components
+    const float markerHeight = style.ItemSpacing.y - markerMargin * 2.0f; // Make marker fit height, extra margin top and bottom
+    const float hitHeight = 18.0f; // Vertical space where the drop between component is accepted
+    const float markerY = cursorScreen.y - style.ItemSpacing.y * 0.5f - markerMargin + (previousComponentCollapsed ? 1.0f : 0.0f); // Y start position of the marker
+    const ImRect hitRect{
+      ImVec2{minX, markerY - hitHeight * 0.5f},
+      ImVec2{maxX, markerY + hitHeight * 0.5f}
+    };
+
+    // Register an explicit drop target that does not draw ImGui's default rectangle
+    ImGui::PushID(owner);
+    ImGui::PushID(static_cast<int>(insertIndex));
+    if (ImGui::BeginDragDropTargetCustom(hitRect, ImGui::GetID("##ComponentInsertTarget"))) {
+      const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(
+        "COMPONENT",
+        ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect
+      );
+
+      // Only components from the same owner can be reordered within this list
+      if (payload && payload->DataSize == sizeof(ComponentDragPayload)) {
+        const auto &dragPayload = *static_cast<const ComponentDragPayload*>(payload->Data);
+        if (dragPayload.owner == owner) {
+          const ImU32 markerColor = ImGui::GetColorU32(ImGuiCol_DragDropTarget);
+          ImGui::GetForegroundDrawList()->AddRectFilled(
+            ImVec2{minX, markerY - markerHeight * 0.5f},
+            ImVec2{maxX, markerY + markerHeight * 0.5f},
+            markerColor,
+            0.0f
+          );
+
+          // Mouse released over this boundary --> Store the reorder request
+          if (payload->Delivery) {
+            reorderRequest.owner = owner;
+            reorderRequest.compUUID = dragPayload.compUUID;
+            reorderRequest.insertIndex = insertIndex;
+          }
+        }
+      }
+
+      ImGui::EndDragDropTarget();
+    }
+    ImGui::PopID();
+    ImGui::PopID();
+  }
+
+  /**
+   * Moves a component to an index within its owner.
+   * @param owner Object whose component list should be reordered.
+   * @param compUUID UUID of the component to move.
+   * @param insertIndex Target index before removing the source component.
+   * @return true when the component order changed.
+   */
+  bool reorderComponent(Project::Object *owner, uint64_t compUUID, size_t insertIndex)
+  {
+    // There is no owner --> Abort
+    if (!owner) return false;
+
+    // Find the source component in the list of the owner
+    auto &components = owner->components;
+    auto it = std::find_if(
+      components.begin(),
+      components.end(),
+      [compUUID](const Project::Component::Entry &entry) {
+        return entry.uuid == compUUID;
+      }
+    );
+    // Cannot find the component --> Abort
+    if (it == components.end()) return false;
+
+    // Clamp the insertion index to the list size
+    insertIndex = std::min(insertIndex, components.size());
+
+    // Ignore drops that keep the component in the same place
+    const size_t sourceIndex = static_cast<size_t>(std::distance(components.begin(), it));
+    if (insertIndex == sourceIndex || insertIndex == sourceIndex + 1) return false;
+
+    // Move the component entry while preserving its UUID and data pointer
+    auto moving = std::move(*it);
+    components.erase(it);
+
+    // Removing an earlier element shifts later insertion boundaries one slot left
+    if (sourceIndex < insertIndex) --insertIndex;
+    components.insert(components.begin() + static_cast<std::ptrdiff_t>(insertIndex), std::move(moving));
+    
     return true;
   }
 
@@ -559,10 +685,13 @@ void Editor::ObjectInspector::draw() {
 
   uint64_t compDelUUID = 0;
   Project::Component::Entry *compCopy = nullptr;
+  // Store a deferred reorder request so the component vector is not modified while drawing
+  ComponentReorderRequest compReorder{};
 
   // viaPath: resolve component props through the active nested cascade (Path) rather than
   // a fresh component layer (Dispatch). True only for a nested override target.
-  auto drawComp = [&](Project::Object* obj, Project::Component::Entry &comp, bool isInstance, bool viaPath)
+  // Draw the component and return whether its header is open for the next insertion marker
+  auto drawComp = [&](Project::Object* obj, Project::Object *owner, Project::Component::Entry &comp, bool isInstance, bool viaPath) -> bool
   {
     ImTable::PrefabEditScope prefabScope(isInstance);
     ImGui::PushID(&comp);
@@ -574,6 +703,18 @@ void Editor::ObjectInspector::draw() {
     bool headerOpen = ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
     const bool locked = ImTable::isPrefabLocked(obj);
     const bool headerRightClicked = !locked && ImGui::IsItemClicked(ImGuiMouseButton_Right);
+
+    // Starting to drag
+    if (!locked && ImGui::BeginDragDropSource()) {
+      // Start component reordering from the dragged header
+      ComponentDragPayload payload{
+        .owner = owner,
+        .compUUID = comp.uuid
+      };
+      ImGui::SetDragDropPayload("COMPONENT", &payload, sizeof(payload));
+      ImGui::TextUnformatted(name.c_str());
+      ImGui::EndDragDropSource();
+    }
 
     // Faint help icon near the right edge of the header
     if (def.docSlug && def.docSlug[0]) {
@@ -609,18 +750,41 @@ void Editor::ObjectInspector::draw() {
       def.funcDraw(*obj, comp);
     }
     ImGui::PopID();
+    // Let the next insertion marker know if the previous component is folded
+    return headerOpen;
   };
 
-  for (auto &comp : compSrc->components) {
-    drawComp(tableObj, comp, false, compViaPath);
+  // Track whether the component above the current insertion boundary is folded
+  bool previousComponentCollapsed = false;
+  for (size_t i = 0; i < compSrc->components.size(); ++i) {
+    // Draw the insertion boundary before this component
+    drawComponentInsertTarget(compSrc, i, previousComponentCollapsed, compReorder);
+    // Draw the component and cache its folded state for the next boundary
+    previousComponentCollapsed = !drawComp(tableObj, compSrc, compSrc->components[i], false, compViaPath);
   }
+  // Draw the insertion boundary after the last component
+  drawComponentInsertTarget(compSrc, compSrc->components.size(), previousComponentCollapsed, compReorder);
 
   // Components added directly to a scene instance (not nested, not in edit mode).
   if(!nested.isNested && isPrefabInst && !ctx.isPrefabEditing(obj->uuid)) {
-    for (auto &comp : obj->components) {
-      drawComp(obj.get(), comp, true, false);
+    // Instance-owned components form a separate reorder list
+    previousComponentCollapsed = false;
+    for (size_t i = 0; i < obj->components.size(); ++i) {
+      // Draw the insertion boundary before this instance-owned component
+      drawComponentInsertTarget(obj.get(), i, previousComponentCollapsed, compReorder);
+      // Draw the component and store its folded state for the next boundary
+      previousComponentCollapsed = !drawComp(obj.get(), obj.get(), obj->components[i], true, false);
     }
+    // Draw the insertion boundary after the last instance-owned component
+    drawComponentInsertTarget(obj.get(), obj->components.size(), previousComponentCollapsed, compReorder);
     srcObj = obj.get();
+  }
+
+  // Apply the queued move after all component lists have finished drawing
+  if (compReorder.owner) {
+    if (reorderComponent(compReorder.owner, compReorder.compUUID, compReorder.insertIndex)) {
+      UndoRedo::getHistory().markChanged("Move Component");
+    }
   }
 
   if (isPrefabInst && ctx.isPrefabEditing(obj->uuid) && prefab) {
