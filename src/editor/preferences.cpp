@@ -45,6 +45,7 @@ void Editor::Preferences::load()
     fpsLimit = doc.value("fpsLimit", DEF.fpsLimit);
     showRotAsEuler = doc.value("showRotAsEuler", DEF.showRotAsEuler);
     mouseWheelModifiesSpeed = doc.value("mouseWheelModifiesSpeed", DEF.mouseWheelModifiesSpeed);
+    viewportLockMode = doc.value("viewportLockMode", DEF.viewportLockMode);
   } else {
     applyKeymapPreset();
   }
@@ -72,6 +73,7 @@ void Editor::Preferences::save()
     .set("fpsLimit", fpsLimit)
     .set("showRotAsEuler", showRotAsEuler)
     .set("mouseWheelModifiesSpeed", mouseWheelModifiesSpeed)
+    .set("viewportLockMode", viewportLockMode)
     .toString();
   auto prefPath = getPrefsPath();
   printf("Saving prefs to %s\n", prefPath.c_str());

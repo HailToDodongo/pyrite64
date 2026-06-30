@@ -849,8 +849,10 @@ void Editor::Viewport3D::draw()
   bool anyMouseClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left)
     || ImGui::IsMouseClicked(ImGuiMouseButton_Right)
     || ImGui::IsMouseClicked(ImGuiMouseButton_Middle);
-  if (!newMouseDown) inputActive = false;
+  if (!newMouseDown && !navLocked) inputActive = false;
   else if (anyMouseClicked && isMouseHover) inputActive = true;
+  if (navLocked) inputActive = true;
+  if (navLocked && !ctx.prefs.viewportLockMode) { navLocked = false; setCameraDrag(false); }
 
   bool isCameraFlying = false;
   bool isAltDown = ImGui::GetIO().KeyAlt;
@@ -866,8 +868,9 @@ void Editor::Viewport3D::draw()
   bool leftClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
   bool leftDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
   bool leftReleased = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
+  bool rightClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Right);
 
-  if (!overGizmo && isMouseHover && leftClicked && !isAltDown && !overRotGizmo) {
+  if (!navLocked && !overGizmo && isMouseHover && leftClicked && !isAltDown && !overRotGizmo) {
     selectionPending = true;
     selectionDragging = false;
     selectionStart = mousePos;
@@ -947,13 +950,22 @@ void Editor::Viewport3D::draw()
       obj = nullptr;
     }
 
-    isCameraFlying = mouseHeldRight && inputActive;
+    isCameraFlying = (mouseHeldRight && inputActive) || navLocked;
+
+    if (ctx.prefs.viewportLockMode && !camLocked) {
+      if (rightClicked && isMouseHover && !navLocked) {
+        navLocked = true;
+      } else if (navLocked && rightClicked) {
+        navLocked = false;
+        inputActive = false;
+      }
+    }
 
     if (deletedSelection) {
       hasSelection = false;
     }
 
-    if (newMouseDown && !camLocked && inputActive) {
+    if ((newMouseDown || navLocked) && !camLocked && inputActive) {
       glm::vec3 moveDir = {0,0,0};
       if (ImGui::IsKeyDown(ctx.prefs.keymap.moveForward))moveDir.z = -moveSpeed;
       if (ImGui::IsKeyDown(ctx.prefs.keymap.moveBack))moveDir.z = moveSpeed;
@@ -1114,14 +1126,21 @@ void Editor::Viewport3D::draw()
   auto dragDelta = mousePos - mousePosStart;
 
   // Orbit / pan / look all move the view freely, so lock the cursor for them
-  bool wantCameraDrag = isMouseDown && inputActive && !camLocked &&
-    ((isAltDown && mouseHeldLeft) || mouseHeldMiddle || mouseHeldRight);
+  bool wantCameraDrag = !camLocked && (navLocked ||
+    (isMouseDown && inputActive &&
+     ((isAltDown && mouseHeldLeft) || mouseHeldMiddle ||
+      (!ctx.prefs.viewportLockMode && mouseHeldRight))));
   setCameraDrag(wantCameraDrag);
 
-  if (isMouseDown && inputActive) {
+  if (navLocked || (isMouseDown && inputActive)) {
     ImGui::ClearActiveID();
     if (!camLocked) {
-      if (isAltDown && mouseHeldLeft) {
+      if (navLocked) {
+        camera.stopMoveDelta();
+        camera.lookDelta(dragDelta);
+        mousePosStart = mousePos = {0,0};
+        camera.stopRotateDelta();
+      } else if (isAltDown && mouseHeldLeft) {
         camera.stopMoveDelta();
         camera.orbitDelta(dragDelta);
       } else if (mouseHeldMiddle) {

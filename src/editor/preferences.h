@@ -32,6 +32,7 @@ namespace Editor
     int fpsLimit = 60;
     bool showRotAsEuler = false;
     bool mouseWheelModifiesSpeed = false;
+    bool viewportLockMode = false;
 
     void load();
     void save();

@@ -23,6 +23,7 @@ bool Editor::PreferenceOverlay::draw()
     ImTable::add("Pan Speed", ctx.prefs.panSpeed);
     ImTable::add("Look Speed", ctx.prefs.lookSpeed);
     ImTable::add("Invert Wheel Y", ctx.prefs.invertWheelY);
+    ImTable::add("Lock Viewport Navigation", ctx.prefs.viewportLockMode);
     ImTable::end();
   }
 

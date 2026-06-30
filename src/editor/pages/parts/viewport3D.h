@@ -71,6 +71,7 @@ namespace Editor
       bool overRotGizmo{false};
       bool inputActive{false};    // this viewport captured the camera drag (started inside it)
       bool viewGizmoOwned{false}; // this viewport owns the active orientation-cube drag
+      bool navLocked{false};      // viewport lock mode: cursor captured, right-click to toggle
 
       void onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::Scene& renderScene);
       void onCopyPass(SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass *copyPass);
