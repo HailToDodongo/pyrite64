@@ -41,8 +41,10 @@ namespace Editor {
     
     if (isWayland()) {
       SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_WAYLAND_WINDOW_ID_STRING, "main_window");
-      SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, DEFAULT_WIDTH);
-      SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, DEFAULT_HEIGHT);
+      if (state.sessionID.empty()) {
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, DEFAULT_WIDTH);
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, DEFAULT_HEIGHT);
+      }
     } else {
       SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state.w);
       SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state.h);
