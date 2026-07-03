@@ -111,8 +111,9 @@ namespace P64::Script::C17EA8EAB6CF1DEB
   {
     if(data->anim == nullptr) {
       data->anim = obj.getComponent<Comp::AnimModel>();
-      data->anim->setMainAnim(1);
-      data->anim->setBlendAnim(0);
+      auto layer = data->anim->getLayer();
+      layer.playByIdx(1);
+      layer.blendByIdx(0, 0.0f);
     }
 
     User::ctx.playerPos = obj.pos;
@@ -331,7 +332,7 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       if (data->stepSFXCooldown > 0)--data->stepSFXCooldown;
 
       data->targetAnimBlend = 0.0f;
-      t3d_anim_set_speed(data->anim->getMainAnim(), stickLen * 1.5f);
+      t3d_anim_set_speed(data->anim->getLayer().getAnim(), stickLen * 1.5f);
 
       data->dustTimer -= deltaTime;
 
@@ -358,12 +359,12 @@ namespace P64::Script::C17EA8EAB6CF1DEB
 
     // update animation state
     if (data->isMidJump) {
-      t3d_anim_set_speed(data->anim->getMainAnim(), 0.2f);
+      t3d_anim_set_speed(data->anim->getLayer().getAnim(), 0.2f);
     }
 
     float blendSpeed = data->targetAnimBlend > 0.5f ? 0.3f : 0.09f;
     blendSpeed *= deltaTime * 60.0f;
-    data->anim->blendFactor = t3d_lerp(data->anim->blendFactor, data->targetAnimBlend, blendSpeed);
+    data->anim->getLayer().setFactor(t3d_lerp(data->anim->getLayer().getFactor(), data->targetAnimBlend, blendSpeed));
 
     // Rotate player to face movement direction
     float currYaw = isFocus ? data->targetMoveYaw : atan2f(data->lastMoveDir.x, data->lastMoveDir.z);
