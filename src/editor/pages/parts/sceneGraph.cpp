@@ -23,6 +23,9 @@ namespace
   std::string renameBuffer{};
   bool startingRename{false};
 
+  // Filters the tree by object name; empty means no filtering
+  std::string searchFilter{};
+
   // Set per-frame at the start of draw(). When non-null a prefab is being edited and
   // selection is restricted to its own definition, with everything else dimmed and inert.
   Project::Object* prefabEditObj{nullptr};
@@ -287,11 +290,33 @@ namespace
     }
   }
 
+  /**
+   * Whether an object or any of its descendants matches the current search filter.
+   */
+  bool subtreeMatchesFilter(const Project::Object &obj)
+  {
+    if (ImTable::labelMatchesFilter(obj.name.c_str(), searchFilter))
+      return true;
+
+    for (const auto &child : obj.children) {
+      if (subtreeMatchesFilter(*child))
+        return true;
+    }
+    return false;
+  }
+
   void drawObjectNode(
     Project::Scene &scene, Project::Object &obj, bool keyDelete,
     bool parentEnabled = true
   )
   {
+    bool hasSearchFilter = !searchFilter.empty();
+    // Searching and this branch has no match anywhere --> Hide it entirely
+    if (hasSearchFilter && !subtreeMatchesFilter(obj))
+      return;
+
+    bool selfMatchesFilter = !hasSearchFilter || ImTable::labelMatchesFilter(obj.name.c_str(), searchFilter);
+
     ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow
       | ImGuiTreeNodeFlags_OpenOnDoubleClick
       | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_SpanAllColumns;
@@ -304,8 +329,20 @@ namespace
       if(prefab && !prefab->obj.children.empty())prefabDef = &prefab->obj;
     }
 
-    if (obj.children.empty() && !prefabDef) {
+    // While searching, a child only renders if its own branch has a match, so re-check
+    // that here to avoid showing an expandable arrow with nothing visible underneath.
+    bool anyVisibleChild = !hasSearchFilter
+      ? !obj.children.empty()
+      : std::any_of(obj.children.begin(), obj.children.end(),
+          [](const auto &child) { return subtreeMatchesFilter(*child); });
+
+    if (!anyVisibleChild && !prefabDef) {
       flag |= ImGuiTreeNodeFlags_Leaf;
+    }
+
+    // Searching and the match is in a descendant --> Force this node open so it stays visible
+    if (hasSearchFilter && !selfMatchesFilter) {
+      ImGui::SetNextItemOpen(true, ImGuiCond_Always);
     }
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
@@ -490,10 +527,25 @@ void Editor::SceneGraph::draw()
   // While rename is active, shortcuts stay disabled, so the text field can own the keyboard input
   bool isRenaming = renameObjectUUID != 0;
 
+  // Ctrl+F focuses the search box, matching common scene-tree behavior
+  if (isFocus && !isRenaming && ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_F)) {
+    ImGui::SetKeyboardFocusHere();
+  }
+
+  // Search box to filter the tree by object name; matching branches force their ancestors open
+  ImGui::SetNextItemWidth(-FLT_MIN);
+  ImGui::InputTextWithHint("##sceneGraphSearch", ICON_MDI_MAGNIFY " Search...", &searchFilter,
+    ImGuiInputTextFlags_AutoSelectAll);
+  bool isSearchActive = ImGui::IsItemActive();
+  if (isSearchActive && !searchFilter.empty() && ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+    searchFilter.clear();
+    ImGui::ClearActiveID();
+  }
+
   ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 16.0_px);
-  bool keyDelete = isFocus && !isRenaming && (ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace));
+  bool keyDelete = isFocus && !isRenaming && !isSearchActive && (ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace));
   // F2 starts renaming the current object, matching common scene-tree/file-explorer behavior
-  bool keyRename = isFocus && !isRenaming && ImGui::IsKeyPressed(ImGuiKey_F2);
+  bool keyRename = isFocus && !isRenaming && !isSearchActive && ImGui::IsKeyPressed(ImGuiKey_F2);
 
   if (keyRename) {
     const std::vector<uint32_t> &selectedIds = ctx.getSelectedObjectUUIDs();
@@ -505,7 +557,11 @@ void Editor::SceneGraph::draw()
   }
 
   auto &root = scene->getRootObject();
-  drawObjectNode(*scene, root, keyDelete);
+  if (!searchFilter.empty() && !subtreeMatchesFilter(root)) {
+    ImGui::TextDisabled("No matching objects");
+  } else {
+    drawObjectNode(*scene, root, keyDelete);
+  }
 
   ImGui::PopStyleVar(1);
 
