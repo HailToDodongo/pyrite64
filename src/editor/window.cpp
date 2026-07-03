@@ -10,8 +10,8 @@
 #include "imgui/theme.h"
 
 namespace Editor {
-  #define DEFAULT_WIDTH 1280
-  #define DEFAULT_HEIGHT 800
+  constexpr Sint64 default_width = 1280;
+  constexpr Sint64 default_height = 720;
 
   static bool isWayland() {
     const char* driver = SDL_GetCurrentVideoDriver();
@@ -42,8 +42,8 @@ namespace Editor {
     if (isWayland()) {
       SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_WAYLAND_WINDOW_ID_STRING, "main_window");
       if (state.sessionID.empty()) {
-        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, DEFAULT_WIDTH);
-        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, DEFAULT_HEIGHT);
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, default_width);
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, default_height);
       }
     } else {
       SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state.w);
@@ -105,8 +105,8 @@ namespace Editor {
       return true;
     }
 
-    state.w = json.value("windowW", DEFAULT_WIDTH);
-    state.h = json.value("windowH", DEFAULT_HEIGHT);
+    state.w = json.value("windowW", default_width);
+    state.h = json.value("windowH", default_height);
     state.x = json.value("windowX", (int)SDL_WINDOWPOS_CENTERED);
     state.y = json.value("windowY", (int)SDL_WINDOWPOS_CENTERED);
 
