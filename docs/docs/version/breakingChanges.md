@@ -2,6 +2,61 @@
 
 Breaking Changes by version they were introduced in.
 
+## v0.8.0
+
+This version reworked the animated-model (`AnimModel`) component.<br>
+Animations can now be configured in the editor (a base animation plus optional
+overlay layers and per-layer blending), and the runtime C++ API was replaced
+with a layer-based one. Existing scenes keep working, a model with no
+configured animation behaves as before (nothing plays until a script starts
+it), and the old editor-only "Preview Anim." setting is migrated automatically.<br>
+The C++ API has breaking changes.
+
+### Animation Model
+
+Playback is now organized in *layers*, obtained with `getLayer(index)` (index 0 is the base layer).\
+This returns a zero-cost handle you call methods on.\
+Animations are referenced by a compile-time name-hash (`"Run"_hash`)
+that is resolved per model instance, so the same script works across models:
+
+```cpp
+auto anim = obj.getComponent<Comp::AnimModel>();
+
+// Before:
+anim->setMainAnim(1);
+anim->setBlendAnim(0);
+anim->blendFactor = 0.5f;
+float f = anim->blendFactor;
+T3DAnim* a = anim->getMainAnim();
+
+// Now (by name-hash, recommended):
+anim->getLayer().play("Run"_hash);
+anim->getLayer().blend("Idle"_hash, 0.5f);
+anim->getLayer().setFactor(0.5f);
+float f = anim->getLayer().getFactor();
+T3DAnim* a = anim->getLayer().getAnim();
+```
+
+For per-frame hot paths, resolve the index once with `findAnim()` and use the
+index-based calls:
+
+```cpp
+int16_t runIdx = anim->findAnim("Run"_hash); // -1 if the model lacks it
+if(runIdx >= 0) anim->getLayer().playByIdx(runIdx);
+```
+
+The following members were **removed** (all replaced via `getLayer()`):
+`setMainAnim`, `setBlendAnim`, `getMainAnim`, `getBlendAnim`, and the public
+`blendFactor` field.
+
+New capabilities available through a layer handle include `crossfade()` (timed
+blend into another animation), `stop()` / `clearBlend()`, `isFinished()`, and
+additional overlay layers for animations that drive disjoint bones. `findBone()`
+was added for hash-based bone lookups.
+
+See the {doc}`Model (Animated) <../manual/editor/components/animModel>` component
+page for the editor options and the full runtime API.
+
 ## v0.7.0
 
 This version completely reworked the material system as well as the collision/physics system.<br>
