@@ -10,6 +10,14 @@
 #include "imgui/theme.h"
 
 namespace Editor {
+  #define DEFAULT_WIDTH 1280
+  #define DEFAULT_HEIGHT 800
+
+  static bool isWayland() {
+    const char* driver = SDL_GetCurrentVideoDriver();
+    return driver && std::string(driver) == "wayland";
+  }
+
   Window::~Window()
   {
     if(icon) {
@@ -20,15 +28,33 @@ namespace Editor {
   bool Window::init(const std::string& title) {
     loadState();
 
+    if (isWayland()) {
+      // Session ID does not target a specific window, its a top level property, 
+      // individual windows get their own identifiers.
+      SDL_SetStringProperty(SDL_GetGlobalProperties(), SDL_PROP_GLOBAL_VIDEO_WAYLAND_SESSION_ID_STRING, state.sessionID.c_str());
+    }
+    
+    SDL_PropertiesID props = SDL_CreateProperties();
+    SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, title.c_str());
     SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
-    sdlWindow = SDL_CreateWindow(title.c_str(), state.w, state.h, flags);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER, flags);
+    
+    if (isWayland()) {
+      SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_WAYLAND_WINDOW_ID_STRING, "main_window");
+      SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, DEFAULT_WIDTH);
+      SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, DEFAULT_HEIGHT);
+    } else {
+      SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, state.w);
+      SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, state.h);
+      SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, state.x);
+      SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, state.y);
+      SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_MAXIMIZED_BOOLEAN, state.maximized);
+    }
+
+    sdlWindow = SDL_CreateWindowWithProperties(props);
+    SDL_DestroyProperties(props);
     if (!sdlWindow) return false;
     ctx.window = sdlWindow;
-
-    SDL_SetWindowPosition(sdlWindow, state.x, state.y);
-    if (state.maximized) {
-      SDL_MaximizeWindow(sdlWindow);
-    }
 
     icon = IMG_Load("data/img/windowIcon.png");
     SDL_SetWindowIcon(sdlWindow, icon);
@@ -39,13 +65,15 @@ namespace Editor {
 
   void Window::trackGeometry() {
     if (!sdlWindow) return;
-    
     Uint32 flags = SDL_GetWindowFlags(sdlWindow);
+    
+    state.maximized = (flags & SDL_WINDOW_MAXIMIZED) != 0;
+    if (isWayland()) return;
+
     if (!(flags & SDL_WINDOW_MAXIMIZED)) {
         SDL_GetWindowSize(sdlWindow, &state.w, &state.h);
         SDL_GetWindowPosition(sdlWindow, &state.x, &state.y);
     }
-    state.maximized = (flags & SDL_WINDOW_MAXIMIZED) != 0;
   }
 
   std::string Window::getConfigPath() {
@@ -63,17 +91,22 @@ namespace Editor {
       fprintf(stderr, "Warning: corrupt editor.json, using defaults\n");
       return false;
     }
-
-    state.w = json.value("windowW", 1280);
-    state.h = json.value("windowH", 800);
-    state.x = json.value("windowX", (int)SDL_WINDOWPOS_CENTERED);
-    state.y = json.value("windowY", (int)SDL_WINDOWPOS_CENTERED);
-    state.maximized = json.value("maximized", false);
-
+    
     int zoomLevel = json.value("zoomLevel", -1);
     if(zoomLevel >= 0) {
       ImGui::Theme::setZoomLevel(zoomLevel);
     }
+    state.maximized = json.value("maximized", false); 
+
+    if (isWayland()) {
+      state.sessionID = json.value("sessionID", "");
+      return true;
+    }
+
+    state.w = json.value("windowW", DEFAULT_WIDTH);
+    state.h = json.value("windowH", DEFAULT_HEIGHT);
+    state.x = json.value("windowX", (int)SDL_WINDOWPOS_CENTERED);
+    state.y = json.value("windowY", (int)SDL_WINDOWPOS_CENTERED);
 
     if(state.w <= 0 || state.h <= 0)return false;
     state.w = std::min(state.w, 16384);
@@ -116,10 +149,16 @@ namespace Editor {
     if (path.empty() || state.w <= 0) return;
 
     nlohmann::json json;
-    json["windowW"] = state.w;
-    json["windowH"] = state.h;
-    json["windowX"] = state.x;
-    json["windowY"] = state.y;
+    if (isWayland()) {
+      json["sessionID"] = SDL_GetStringProperty(SDL_GetGlobalProperties(), SDL_PROP_GLOBAL_VIDEO_WAYLAND_SESSION_ID_STRING, "");
+    }
+    else {
+      json["windowX"] = state.x;
+      json["windowY"] = state.y;
+      // While these are accesible under wayland, without position they are functionally useless
+      json["windowW"] = state.w;
+      json["windowH"] = state.h;
+    }
     json["maximized"] = state.maximized;
     json["zoomLevel"] = ImGui::Theme::getZoomLevel();
 

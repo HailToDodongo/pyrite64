@@ -9,6 +9,7 @@ namespace Editor {
     int w{1280};
     int h{800};
     bool maximized{false};
+    std::string sessionID;
   };
 
   class Window {
