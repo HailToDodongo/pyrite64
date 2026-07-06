@@ -135,6 +135,8 @@ add_executable(pyrite64 src/main.cpp
         src/project/project.cpp
         src/editor/actions.h
         src/editor/actions.cpp
+        src/editor/audioPreview.h
+        src/editor/audioPreview.cpp
         src/editor/undoRedo.h
         src/editor/undoRedo.cpp
         src/editor/selectionUtils.h
