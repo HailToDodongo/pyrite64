@@ -175,8 +175,10 @@ bool Editor::ToolchainOverlay::draw()
         {
           ImGui::Text(
             "The N64 toolchain is missing or not properly installed.\n"
+            "N64_INST is set to: %s.\n"
             "Automatic installation is currently only available on Windows.\n"
-            "Please follow the guide for libdragon and tiny3d here:\n"
+            "Please follow the guide for libdragon and tiny3d here:\n",
+            ctx.toolchain.getState().toolchainPath.string().c_str()
           );
 
           ImGui::Dummy({0, 4_px});
