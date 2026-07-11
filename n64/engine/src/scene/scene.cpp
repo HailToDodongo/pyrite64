@@ -443,6 +443,16 @@ void P64::Scene::onObjectCollision(const Coll::CollEvent &event)
   dispatchObjectCollisionEvent(*selfObject, event);
 }
 
+bool P64::Scene::objectHasCollisionHandler(const Object &obj)
+{
+  auto compRefs = obj.getCompRefs();
+  for(uint32_t i = 0; i < obj.compCount; ++i)
+  {
+    if(COMP_TABLE[compRefs[i].type].onColl) return true;
+  }
+  return false;
+}
+
 uint16_t P64::Scene::addObject(
   uint32_t prefabIdx,
   const fm_vec3_t &pos,

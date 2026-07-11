@@ -17,7 +17,6 @@
 #include <deque>
 #include <functional>
 #include <cstddef>
-#include <unordered_set>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -159,6 +158,32 @@ namespace P64::Coll {
 
     int cachedConstraintCount_{0};
 
+    // Reusable per-step scratch state to avoid allocations
+
+    std::vector<NodeProxy> colliderCandidateScratch_{};
+    std::vector<NodeProxy> meshCandidateScratch_{};
+    std::vector<RigidBody *> islandScratch_{};
+    std::vector<RigidBody *> islandStackScratch_{};
+    // Monotonic counter for island traversals. Bodies stamped with the current
+    // epoch count as "visited" without needing a per-traversal set.
+    uint32_t islandVisitEpoch_{0};
+
+    struct PendingPairKey {
+      const Object *first{nullptr};
+      const Object *second{nullptr};
+      int32_t dispatchIndex{-1}; // -1 = neither object has a collision handler
+    };
+    struct PendingPairDispatch {
+      bool wantFirst{false};
+      bool wantSecond{false};
+      bool hasFirstEvent{false};
+      bool hasSecondEvent{false};
+      CollEvent firstEvent{};
+      CollEvent secondEvent{};
+    };
+    std::vector<PendingPairKey> pendingDispatchKeys_{};
+    std::vector<PendingPairDispatch> pendingDispatchScratch_{};
+
     static bool shouldTrackSleepState(const RigidBody *rigidBody);
     static bool rigidBodyTransformExceededSleepThreshold(const RigidBody *rigidBody);
     static bool rigidBodyVelocitiesExceededSleepThreshold(const RigidBody *rigidBody);
@@ -167,7 +192,8 @@ namespace P64::Coll {
     const std::vector<Collider *> *findCollidersForOwner(const Object *owner) const;
     void updateCompoundProperties(RigidBody *rigidBody) const;
     void syncCompoundProperties(RigidBody *rigidBody) const;
-    void collectConnectedIsland(RigidBody *seed, std::vector<RigidBody *> &island, std::unordered_set<RigidBody *> &visited) const;
+    void collectConnectedIsland(RigidBody *seed, std::vector<RigidBody *> &island);
+    uint32_t nextIslandEpoch();
     static void addWakeCandidate(std::vector<RigidBody *> &wakeCandidates, RigidBody *candidate, RigidBody *ignoredCandidate = nullptr);
     void wakeCandidateIslands(const std::vector<RigidBody *> &wakeCandidates);
     void removeCachedConstraints(
@@ -175,8 +201,7 @@ namespace P64::Coll {
       std::vector<RigidBody *> &wakeCandidates,
       RigidBody *ignoredCandidate = nullptr);
     void removeCachedConstraintAt(int index);
-    CollEvent makeCollisionEvent(const ContactConstraint &constraint) const;
-    void dispatchCollisionCallbacks() const;
+    void dispatchCollisionCallbacks();
 
     void rebuildCachedConstraintLookup();
     void wakeIsland(RigidBody *rigidBody);

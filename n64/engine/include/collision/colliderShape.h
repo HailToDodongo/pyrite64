@@ -21,6 +21,7 @@ namespace P64::Coll {
 
   class CollisionScene;
   struct MeshCollider;
+  struct RigidBody;
 
   struct Collider {
     void setShapeType(ShapeType newType) {
@@ -106,6 +107,8 @@ namespace P64::Coll {
     };
 
     P64::Object *owner_{nullptr};
+    // RigidBody registered for the same owner, maintained by the CollisionScene on add/remove
+    RigidBody *rigidBody_{nullptr};
     Matrix3x3 rotationMatrix_{Matrix3x3::identity()};
     Matrix3x3 inverseRotationMatrix_{Matrix3x3::identity()};
     AABB worldAabb_{};

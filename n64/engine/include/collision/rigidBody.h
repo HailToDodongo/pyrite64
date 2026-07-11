@@ -196,6 +196,10 @@ namespace P64::Coll {
     bool isSleeping_{false};
 
     float mass_{1.0f};
+    // Colliders registered for the same owner, maintained by the CollisionScene on add/remove
+    std::vector<Collider *> attachedColliders_{};
+    // Visitation stamp for island traversals (compared against the scene epoch counter)
+    uint32_t islandVisitEpoch_{0};
     Constraint constraints_{Constraint::None};
     fm_vec3_t localCenterOfMass_{};
     fm_vec3_t localCenterOfMassOffset_{};

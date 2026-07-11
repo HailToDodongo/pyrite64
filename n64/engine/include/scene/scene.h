@@ -163,6 +163,11 @@ namespace P64
 
       void onObjectCollision(const Coll::CollEvent &event);
 
+      /// @brief Returns true if any of the object's components has a collision callback.
+      /// @param obj 
+      /// @return 
+      static bool objectHasCollisionHandler(const Object &obj);
+
       void sendEvent(uint16_t targetId, uint16_t senderId, uint16_t type, uint32_t value) {
         eventQueue[eventQueueIdx].add(targetId, senderId, type, value);
       }

@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <limits>
 #include <utility>
-#include <unordered_set>
 
 #include "debug/debugDraw.h"
 
@@ -47,24 +46,34 @@ namespace P64::Coll {
     return body ? body->constrainedLinearInvMassAlong(direction) : 0.0f;
   }
 
-  static Object *collisionEventSelfObject(const CollEvent &event) {
-    if(event.selfCollider) return event.selfCollider->ownerObject();
-    if(event.selfMeshCollider) return event.selfMeshCollider->ownerObject();
+  // object owning the "self" side of a constraint for the given event direction
+  // (forward: A is self, mirrored: B is self)
+  static Object *constraintSideObject(const ContactConstraint &constraint, bool mirrored) {
+    const Collider *selfCollider = mirrored ? constraint.colliderB : constraint.colliderA;
+    if(selfCollider) return selfCollider->ownerObject();
+    const MeshCollider *selfMeshCollider = mirrored ? constraint.meshColliderB : constraint.meshColliderA;
+    if(selfMeshCollider) return selfMeshCollider->ownerObject();
     return nullptr;
   }
 
-  static bool collisionEventMasksOverlap(const CollEvent &event) {
-    if (event.selfRigidBody && !event.selfRigidBody->isEnabled()) return false;
-    if (event.hitRigidBody && !event.hitRigidBody->isEnabled()) return false;
+  // whether the "self" side of a constraint reads the "hit" side for the given event direction
+  static bool constraintMasksOverlap(const ContactConstraint &constraint, bool mirrored) {
+    if(constraint.rigidBodyA && !constraint.rigidBodyA->isEnabled()) return false;
+    if(constraint.rigidBodyB && !constraint.rigidBodyB->isEnabled()) return false;
 
-    if(event.selfCollider) {
-      if(event.hitCollider) return event.selfCollider->readsCollider(event.hitCollider);
-      if(event.hitMeshCollider) return event.selfCollider->readsMeshCollider(event.hitMeshCollider);
+    const Collider *selfCollider = mirrored ? constraint.colliderB : constraint.colliderA;
+    const Collider *hitCollider = mirrored ? constraint.colliderA : constraint.colliderB;
+    const MeshCollider *selfMeshCollider = mirrored ? constraint.meshColliderB : constraint.meshColliderA;
+    const MeshCollider *hitMeshCollider = mirrored ? constraint.meshColliderA : constraint.meshColliderB;
+
+    if(selfCollider) {
+      if(hitCollider) return selfCollider->readsCollider(hitCollider);
+      if(hitMeshCollider) return selfCollider->readsMeshCollider(hitMeshCollider);
       return false;
     }
 
-    if(event.selfMeshCollider) {
-      if(event.hitCollider) return event.selfMeshCollider->readsCollider(event.hitCollider);
+    if(selfMeshCollider) {
+      if(hitCollider) return selfMeshCollider->readsCollider(hitCollider);
     }
 
     return false;
@@ -77,25 +86,35 @@ namespace P64::Coll {
     return {objectA, objectB};
   }
 
-  static CollEvent makeMirroredCollisionEvent(const CollEvent &event) {
-    CollEvent mirrored{};
-    mirrored.selfCollider = event.hitCollider;
-    mirrored.hitCollider = event.selfCollider;
-    mirrored.selfMeshCollider = event.hitMeshCollider;
-    mirrored.hitMeshCollider = event.selfMeshCollider;
-    mirrored.selfRigidBody = event.hitRigidBody;
-    mirrored.hitRigidBody = event.selfRigidBody;
-    mirrored.contactCount = event.contactCount;
-    mirrored.otherObject = collisionEventSelfObject(event);
+  // build collision event for one direction of a constraint in place, avoiding intermediate event copies
+  static void fillCollisionEvent(CollEvent &event, const ContactConstraint &constraint, bool mirrored) {
+    if(mirrored) {
+      event.selfCollider = constraint.colliderB;
+      event.hitCollider = constraint.colliderA;
+      event.selfMeshCollider = constraint.meshColliderB;
+      event.hitMeshCollider = constraint.meshColliderA;
+      event.selfRigidBody = constraint.rigidBodyB;
+      event.hitRigidBody = constraint.rigidBodyA;
+      event.otherObject = constraintSideObject(constraint, false);
+    } else {
+      event.selfCollider = constraint.colliderA;
+      event.hitCollider = constraint.colliderB;
+      event.selfMeshCollider = constraint.meshColliderA;
+      event.hitMeshCollider = constraint.meshColliderB;
+      event.selfRigidBody = constraint.rigidBodyA;
+      event.hitRigidBody = constraint.rigidBodyB;
+      event.otherObject = constraint.objectB;
+    }
+    event.contactCount = static_cast<uint16_t>(std::min(constraint.pointCount, MAX_CONTACT_POINTS_PER_PAIR));
 
     for(uint16_t i = 0; i < event.contactCount; ++i) {
-      mirrored.contacts[i] = event.contacts[i];
-      std::swap(mirrored.contacts[i].contactA, mirrored.contacts[i].contactB);
-      std::swap(mirrored.contacts[i].localPointA, mirrored.contacts[i].localPointB);
-      std::swap(mirrored.contacts[i].aToContact, mirrored.contacts[i].bToContact);
+      event.contacts[i] = constraint.points[i];
+      if(mirrored) {
+        std::swap(event.contacts[i].contactA, event.contacts[i].contactB);
+        std::swap(event.contacts[i].localPointA, event.contacts[i].localPointB);
+        std::swap(event.contacts[i].aToContact, event.contacts[i].bToContact);
+      }
     }
-
-    return mirrored;
   }
 
   bool CollisionScene::shouldTrackSleepState(const RigidBody *rigidBody) {
@@ -152,6 +171,14 @@ namespace P64::Coll {
   void CollisionScene::reset() {
     colliderAABBTree.destroy();
     meshColliderAABBTree.destroy();
+
+    // clear cached cross links so participants that outlive the scene don't dangle
+    for(Collider *collider : colliders_) {
+      if(collider) collider->rigidBody_ = nullptr;
+    }
+    for(RigidBody *body : rigidBodies_) {
+      if(body) body->attachedColliders_.clear();
+    }
 
     rigidBodies_.clear();
     ownerRigidBodies_.clear();
@@ -266,7 +293,16 @@ namespace P64::Coll {
     if(!rigidBody || !rigidBody->owner_) return;
     rigidBodies_.push_back(rigidBody);
     ownerRigidBodies_[rigidBody->owner_] = rigidBody;
-    
+
+    // Link colliders that were registered for this owner before the body existed
+    rigidBody->attachedColliders_.clear();
+    auto ownerIt = ownerColliders_.find(rigidBody->owner_);
+    if(ownerIt != ownerColliders_.end()) {
+      rigidBody->attachedColliders_ = ownerIt->second;
+      for(Collider *collider : rigidBody->attachedColliders_) {
+        if(collider) collider->rigidBody_ = rigidBody;
+      }
+    }
 
     rigidBody->markCompoundPropertiesDirty();
     syncCompoundProperties(rigidBody);
@@ -278,6 +314,11 @@ namespace P64::Coll {
     if(!rigidBody) return;
 
     disableRigidBody(rigidBody);
+
+    for(Collider *collider : rigidBody->attachedColliders_) {
+      if(collider && collider->rigidBody_ == rigidBody) collider->rigidBody_ = nullptr;
+    }
+    rigidBody->attachedColliders_.clear();
 
     if(rigidBody->owner_) {
       auto ownerIt = ownerRigidBodies_.find(rigidBody->owner_);
@@ -336,8 +377,10 @@ namespace P64::Coll {
     collider->syncWorldState();
 
     RigidBody *rigidBody = findRigidBodyByOwner(collider->owner_);
+    collider->rigidBody_ = rigidBody;
     if (rigidBody)
     {
+      rigidBody->attachedColliders_.push_back(collider);
       rigidBody->markCompoundPropertiesDirty();
       syncCompoundProperties(rigidBody);
     }
@@ -373,12 +416,13 @@ namespace P64::Coll {
       collider->aabbTreeNodeId_ = NULL_NODE;
     }
 
-    if(owner) {
-      RigidBody *rigidBody = findRigidBodyByOwner(owner);
-      if(rigidBody) {
-        rigidBody->markCompoundPropertiesDirty();
-        syncCompoundProperties(rigidBody);
-      }
+    RigidBody *rigidBody = collider->rigidBody_;
+    collider->rigidBody_ = nullptr;
+    if(rigidBody) {
+      auto &attached = rigidBody->attachedColliders_;
+      attached.erase(std::remove(attached.begin(), attached.end(), collider), attached.end());
+      rigidBody->markCompoundPropertiesDirty();
+      syncCompoundProperties(rigidBody);
     }
   }
 
@@ -475,10 +519,23 @@ namespace P64::Coll {
     return &cachedConstraints_[it->second];
   }
 
-  void CollisionScene::collectConnectedIsland(RigidBody *seed, std::vector<RigidBody *> &island, std::unordered_set<RigidBody *> &visited) const {
+  uint32_t CollisionScene::nextIslandEpoch() {
+    if(++islandVisitEpoch_ == 0) {
+      // counter wrapped: clear stale stamps so no body falsely reads as visited
+      for(RigidBody *body : rigidBodies_) {
+        if(body) body->islandVisitEpoch_ = 0;
+      }
+      islandVisitEpoch_ = 1;
+    }
+    return islandVisitEpoch_;
+  }
+
+  void CollisionScene::collectConnectedIsland(RigidBody *seed, std::vector<RigidBody *> &island) {
     if(!shouldTrackSleepState(seed)) return;
 
-    std::vector<RigidBody *> stack;
+    const uint32_t epoch = nextIslandEpoch();
+    std::vector<RigidBody *> &stack = islandStackScratch_;
+    stack.clear();
     stack.push_back(seed);
 
     while(!stack.empty()) {
@@ -486,8 +543,8 @@ namespace P64::Coll {
       stack.pop_back();
 
       if(!shouldTrackSleepState(current)) continue;
-      if(visited.find(current) != visited.end()) continue;
-      visited.insert(current);
+      if(current->islandVisitEpoch_ == epoch) continue;
+      current->islandVisitEpoch_ = epoch;
       island.push_back(current);
 
       for(int i = 0; i < cachedConstraintCount_; ++i) {
@@ -502,7 +559,7 @@ namespace P64::Coll {
         }
 
         if(!shouldTrackSleepState(other)) continue;
-        if(visited.find(other) == visited.end()) {
+        if(other->islandVisitEpoch_ != epoch) {
           stack.push_back(other);
         }
       }
@@ -554,74 +611,9 @@ namespace P64::Coll {
     cachedConstraintCount_ = static_cast<int>(cachedConstraints_.size());
   }
 
-  CollEvent CollisionScene::makeCollisionEvent(const ContactConstraint &constraint) const {
-    CollEvent event{};
-    event.selfCollider = constraint.colliderA;
-    event.hitCollider = constraint.colliderB;
-    event.selfMeshCollider = constraint.meshColliderA;
-    event.hitMeshCollider = constraint.meshColliderB;
-    event.selfRigidBody = constraint.rigidBodyA;
-    event.hitRigidBody = constraint.rigidBodyB;
-    event.otherObject = constraint.objectB;
-    event.contactCount = static_cast<uint16_t>(std::min(constraint.pointCount, MAX_CONTACT_POINTS_PER_PAIR));
-
-    for(uint16_t i = 0; i < event.contactCount; ++i) {
-      event.contacts[i] = constraint.points[i];
-    }
-
-    return event;
-  }
-
-
-
-  void CollisionScene::dispatchCollisionCallbacks() const {
-
-    struct ObjectPairHash
-    {
-      size_t operator()(const std::pair<const Object *, const Object *> &p) const
-      {
-        std::size_t hash = 0;
-        const auto combine = [&hash](std::size_t value) {
-          hash ^= value + 0x9e3779b97f4a7c15ull + (hash << 6) + (hash >> 2);
-        };
-
-        combine(reinterpret_cast<std::uintptr_t>(p.first));
-        combine(reinterpret_cast<std::uintptr_t>(p.second));
-        return hash;
-      }
-    };
-
-    struct PendingPairDispatch {
-      std::pair<const Object *, const Object *> key{};
-      bool hasFirstEvent{false};
-      bool hasSecondEvent{false};
-      CollEvent firstEvent{};
-      CollEvent secondEvent{};
-    };
-
-    std::vector<PendingPairDispatch> pendingDispatches;
-    pendingDispatches.reserve(cachedConstraintCount_);
-    std::unordered_map<std::pair<const Object *, const Object *>, std::size_t, ObjectPairHash> dispatchLookup;
-
-    auto captureDirectionalEvent = [](PendingPairDispatch &dispatch, const CollEvent &event) {
-      if(!collisionEventMasksOverlap(event)) return;
-
-      Object *selfObject = collisionEventSelfObject(event);
-      if(!selfObject) return;
-
-      if(selfObject == dispatch.key.first) {
-        if(!dispatch.hasFirstEvent) {
-          dispatch.firstEvent = event;
-          dispatch.hasFirstEvent = true;
-        }
-        return;
-      }
-
-      if(selfObject == dispatch.key.second && !dispatch.hasSecondEvent) {
-        dispatch.secondEvent = event;
-        dispatch.hasSecondEvent = true;
-      }
-    };
+  void CollisionScene::dispatchCollisionCallbacks() {
+    pendingDispatchKeys_.clear();
+    pendingDispatchScratch_.clear();
 
     for(int i = 0; i < cachedConstraintCount_; ++i) {
       const ContactConstraint &constraint = cachedConstraints_[i];
@@ -631,20 +623,68 @@ namespace P64::Coll {
 
       const auto key = makeObjectPairKey(constraint.objectA, constraint.objectB);
 
-      auto lookupIt = dispatchLookup.find(key);
-      if(lookupIt == dispatchLookup.end()) {
-        pendingDispatches.push_back(PendingPairDispatch{});
-        pendingDispatches.back().key = key;
-        lookupIt = dispatchLookup.emplace(key, pendingDispatches.size() - 1).first;
+      // number of unique object pairs per step is small, so linear scan over list of pairs
+      // likely beats hashmap lookup and allocation
+      int32_t dispatchIndex = -1;
+      bool seen = false;
+      for(const PendingPairKey &pairKey : pendingDispatchKeys_) {
+        if(pairKey.first == key.first && pairKey.second == key.second) {
+          dispatchIndex = pairKey.dispatchIndex;
+          seen = true;
+          break;
+        }
       }
 
-      PendingPairDispatch &dispatch = pendingDispatches[lookupIt->second];
-      const CollEvent event = makeCollisionEvent(constraint);
-      captureDirectionalEvent(dispatch, event);
-      captureDirectionalEvent(dispatch, makeMirroredCollisionEvent(event));
+      if(!seen) {
+        // only pairs where at least one object actually has a collision callback get event storage
+        // others are remembered as not-interested.
+        const bool wantFirst = Scene::objectHasCollisionHandler(*key.first);
+        const bool wantSecond = Scene::objectHasCollisionHandler(*key.second);
+        if(wantFirst || wantSecond) {
+          dispatchIndex = static_cast<int32_t>(pendingDispatchScratch_.size());
+          pendingDispatchScratch_.push_back(PendingPairDispatch{});
+          PendingPairDispatch &created = pendingDispatchScratch_.back();
+          created.wantFirst = wantFirst;
+          created.wantSecond = wantSecond;
+        }
+        pendingDispatchKeys_.push_back(PendingPairKey{key.first, key.second, dispatchIndex});
+      }
+
+      if(dispatchIndex < 0) continue; // neither object listens for collisions
+
+      PendingPairDispatch &dispatch = pendingDispatchScratch_[dispatchIndex];
+      if((dispatch.hasFirstEvent || !dispatch.wantFirst) &&
+         (dispatch.hasSecondEvent || !dispatch.wantSecond)) {
+        continue; // both directions already captured by an earlier constraint of this pair
+      }
+
+      for(int direction = 0; direction < 2; ++direction) {
+        const bool mirrored = direction == 1;
+        Object *selfObject = constraintSideObject(constraint, mirrored);
+        if(!selfObject) continue;
+
+        bool isFirstSlot;
+        if(selfObject == key.first) {
+          isFirstSlot = true;
+        } else if(selfObject == key.second) {
+          isFirstSlot = false;
+        } else {
+          continue;
+        }
+
+        const bool want = isFirstSlot ? dispatch.wantFirst : dispatch.wantSecond;
+        bool &hasEvent = isFirstSlot ? dispatch.hasFirstEvent : dispatch.hasSecondEvent;
+        if(!want || hasEvent) continue;
+        if(!constraintMasksOverlap(constraint, mirrored)) continue;
+
+        CollEvent &event = isFirstSlot ? dispatch.firstEvent : dispatch.secondEvent;
+        event = CollEvent{};
+        fillCollisionEvent(event, constraint, mirrored);
+        hasEvent = true;
+      }
     }
 
-    for(const PendingPairDispatch &dispatch : pendingDispatches) {
+    for(const PendingPairDispatch &dispatch : pendingDispatchScratch_) {
       if(dispatch.hasFirstEvent) {
         SceneManager::getCurrent().onObjectCollision(dispatch.firstEvent);
       }
@@ -660,9 +700,9 @@ namespace P64::Coll {
   void CollisionScene::wakeIsland(RigidBody *rigidBody) {
     if(!rigidBody) return;
 
-    std::vector<RigidBody *> island;
-    std::unordered_set<RigidBody *> visited;
-    collectConnectedIsland(rigidBody, island, visited);
+    std::vector<RigidBody *> &island = islandScratch_;
+    island.clear();
+    collectConnectedIsland(rigidBody, island);
 
     if(island.empty() && shouldTrackSleepState(rigidBody)) {
       island.push_back(rigidBody);
@@ -693,17 +733,20 @@ namespace P64::Coll {
   }
 
   void CollisionScene::updateSleepStates() {
-    std::unordered_set<RigidBody *> visited;
+    // One epoch for the whole pass: bodies claimed by an earlier island are skipped as seeds
+    const uint32_t epoch = nextIslandEpoch();
 
     for(RigidBody *body : rigidBodies_) {
       if(!shouldTrackSleepState(body) || body->isSleeping_) continue;
-      if(visited.find(body) != visited.end()) continue;
+      if(body->islandVisitEpoch_ == epoch) continue;
 
       // Build the island of AWAKE, connected bodies only.
       // They are only woken explicitly when a new dynamic contact forces it.
-      std::vector<RigidBody *> island;
+      std::vector<RigidBody *> &island = islandScratch_;
+      island.clear();
       {
-        std::vector<RigidBody *> stack;
+        std::vector<RigidBody *> &stack = islandStackScratch_;
+        stack.clear();
         stack.push_back(body);
         while(!stack.empty()) {
           RigidBody *current = stack.back();
@@ -711,8 +754,8 @@ namespace P64::Coll {
 
           if(!shouldTrackSleepState(current)) continue;
           if(current->isSleeping_) continue; // skip sleeping bodies
-          if(visited.find(current) != visited.end()) continue;
-          visited.insert(current);
+          if(current->islandVisitEpoch_ == epoch) continue;
+          current->islandVisitEpoch_ = epoch;
           island.push_back(current);
 
           for(int i = 0; i < cachedConstraintCount_; ++i) {
@@ -726,7 +769,7 @@ namespace P64::Coll {
             if(!other) continue;
             if(!shouldTrackSleepState(other)) continue;
             if(other->isSleeping_) continue; // skip sleeping neighbours
-            if(visited.find(other) == visited.end()) {
+            if(other->islandVisitEpoch_ != epoch) {
               stack.push_back(other);
             }
           }
@@ -839,10 +882,10 @@ namespace P64::Coll {
   // ── Swept substep detection ─────────────────────────────────
 
   void CollisionScene::detectSweptCollisions() {
-    std::vector<NodeProxy> candidates;
+    std::vector<NodeProxy> &candidates = colliderCandidateScratch_;
     candidates.resize(colliders_.size());
 
-    std::vector<NodeProxy> meshCandidates;
+    std::vector<NodeProxy> &meshCandidates = meshCandidateScratch_;
     meshCandidates.resize(meshColliders_.size());
 
     for(RigidBody *body : rigidBodies_) {
@@ -853,8 +896,8 @@ namespace P64::Coll {
 
       const fm_vec3_t displacement = body->linearVelocity_ * dt;
 
-      const std::vector<Collider *> *ownerColliders = findCollidersForOwner(body->owner_);
-      if(!ownerColliders || ownerColliders->empty()) continue;
+      const std::vector<Collider *> *ownerColliders = &body->attachedColliders_;
+      if(ownerColliders->empty()) continue;
 
       const fm_vec3_t halfExt = (body->worldAabb_.max - body->worldAabb_.min) * 0.5f;
       const float dispAbs[3] = { fabsf(displacement.x), fabsf(displacement.y), fabsf(displacement.z) };
@@ -915,7 +958,7 @@ namespace P64::Coll {
             if(collider->owner_ == collB->owner_) continue;
             if(!collider->readsCollider(collB) && !collB->readsCollider(collider)) continue;
 
-            RigidBody *rbB = findRigidBodyByOwner(collB->owner_);
+            RigidBody *rbB = collB->rigidBody_;
             if(collideDetectObjectToObject(collider, body, collB, rbB, false)) {
               debugf("CCD substep %d/%d: body %u hit body %u", k, substeps, collider->owner_->id, collB->owner_->id);
               hit = true;
@@ -978,15 +1021,10 @@ namespace P64::Coll {
     // Swept substep detection for fast-moving bodies that could tunnel through geometry
     detectSweptCollisions();
 
-    //map of unique collider pairs that have already been tested this step to avoid duplication
-    std::unordered_set<int32_t> tested_pairs;
-
     //list of candidate colliders for broad phase query results
-    std::vector<NodeProxy> candidateColliders;
-
-    
-    
+    std::vector<NodeProxy> &candidateColliders = colliderCandidateScratch_;
     candidateColliders.resize(colliders_.size());
+
     const uint64_t bodyDetectStart = get_ticks();
     for (Collider *collider : colliders_)
     {
@@ -995,7 +1033,7 @@ namespace P64::Coll {
       if (collider->isTrigger_)
         continue;
 
-      RigidBody *rbA = findRigidBodyByOwner(collider->owner_);
+      RigidBody *rbA = collider->rigidBody_;
 
       const int candidateCount = colliderAABBTree.queryBounds(
           collider->worldAabb_,
@@ -1006,43 +1044,43 @@ namespace P64::Coll {
         void *data = colliderAABBTree.getNodeData(candidateColliders[candidateIdx]);
         if (!data)
           continue;
-        
+
         Collider *collB = static_cast<Collider *>(data);
 
-        // When you get a candidate pair:
-        auto key = AABBTree::makeNodePairKey(collider->aabbTreeNodeId_, collB->aabbTreeNodeId_);
-        if (tested_pairs.insert(key).second)
-        {
-          // Was not present -> test this pair
-          // don't let collider collide with itself or colliders of the same object
-          if (!collB || collB == collider || !collB->owner_)
-            continue;
-          if (collider->owner_ == collB->owner_)
-            continue;
+        // don't let collider collide with itself or other colliders on the same object
+        if (collB == collider)
+          continue;
+        if (collB->owner_ && collider->owner_ == collB->owner_)
+          continue;
 
-          if (!collider->readsCollider(collB) && !collB->readsCollider(collider))
+        // overlapping pair is always discovered from both directions, because each
+        // leafs fattened bounds contain its tight bounds. Ordering by tree node id therefore
+        // tests each pair exactly once without needing a tested-pairs set
+        if (!collB->isTrigger_ && collider->aabbTreeNodeId_ > collB->aabbTreeNodeId_)
+          continue;
+
+        if (!collider->readsCollider(collB) && !collB->readsCollider(collider))
+          continue;
+        RigidBody *rbB = collB->rigidBody_;
+        if((rbA && rbA->isSleeping_) && (rbB && rbB->isSleeping_)) {
+          // Allow sleeping objects to generate contacts with triggers, but skip if both are sleeping non-triggers
+          if(!collider->isTrigger_ && !collB->isTrigger_) {
             continue;
-          RigidBody *rbB = findRigidBodyByOwner(collB->owner_);
-          if((rbA && rbA->isSleeping_) && (rbB && rbB->isSleeping_)) {
-            // Allow sleeping objects to generate contacts with triggers, but skip if both are sleeping non-triggers to save performance
-            if(!collider->isTrigger_ && !collB->isTrigger_) {
-              continue;
-            }
           }
-          collideDetectObjectToObject(collider, rbA, collB, rbB, true);
         }
+        collideDetectObjectToObject(collider, rbA, collB, rbB, true);
       }
     }
     ticksDetectBodyPairs = get_ticks() - bodyDetectStart;
 
-    std::vector<NodeProxy> candidateMeshColliders;
+    std::vector<NodeProxy> &candidateMeshColliders = meshCandidateScratch_;
     candidateMeshColliders.resize(meshColliders_.size());
 
     const uint64_t meshDetectStart = get_ticks();
     for (Collider *collider : colliders_) {
       if (!collider || !collider->owner_) continue;
 
-      RigidBody *rigidBodyA = findRigidBodyByOwner(collider->owner_);
+      RigidBody *rigidBodyA = collider->rigidBody_;
 
       if (!collider->isTrigger_ && rigidBodyA && rigidBodyA->isSleeping_) continue;
 
@@ -2009,7 +2047,7 @@ namespace P64::Coll {
 
       const fm_vec3_t previousCenter = collider->worldCenter_;
 
-      RigidBody *rb = findRigidBodyByOwner(collider->owner_);
+      RigidBody *rb = collider->rigidBody_;
       const bool changed = rb ? collider->syncFromRigidBody(rb->position_, rb->rotation_)
                               : collider->syncWorldState();
 
@@ -2098,11 +2136,11 @@ namespace P64::Coll {
       body->applyPositionConstraints();
       body->updateWorldInertia();
 
-      const std::vector<Collider *> *ownerColliders = findCollidersForOwner(body->owner_);
-      if(!ownerColliders || ownerColliders->empty()) continue;
+      const std::vector<Collider *> &ownerColliders = body->attachedColliders_;
+      if(ownerColliders.empty()) continue;
 
       body->worldAabb_ = AABB {.min = body->worldCenterOfMass_, .max = body->worldCenterOfMass_};
-      for (Collider *collider : *ownerColliders)
+      for (Collider *collider : ownerColliders)
       {
         if (!collider) continue;
 
@@ -2184,7 +2222,7 @@ namespace P64::Coll {
         color_t col{0xFF, 0xFF, 0x00, 0xFF};
         if (collider)
         {
-          const RigidBody *rigidBody = findRigidBodyByOwner(collider->owner_);
+          const RigidBody *rigidBody = collider->rigidBody_;
           const bool isSleepingBody = rigidBody && rigidBody->isSleeping_;
 
           if (isSleepingBody)
