@@ -835,8 +835,9 @@ namespace P64::Coll {
 
         refreshContactPointWorldState(cp, cc);
 
-        // Deactivate if too separated
-        if(cp.penetration < -0.001f) {
+        // Deactivate if too separated; up to the breaking separation the point stays
+        // active as a speculative contact (see preSolveContacts)
+        if(cp.penetration < -CONTACT_BREAKING_SEPARATION) {
           cp.active = false;
         }
       }
@@ -1111,6 +1112,7 @@ namespace P64::Coll {
 
   void CollisionScene::preSolveContacts() {
     const float restitutionSlop = 0.5f;
+    const float invFixedDt = (fixedDt_ > 0.0f) ? 1.0f / fixedDt_ : 0.0f;
 
     for(ContactConstraint *constraint : solverConstraints_) {
       ContactConstraint &cc = *constraint;
@@ -1219,6 +1221,12 @@ namespace P64::Coll {
         float relVelN = fm_vec3_dot(&relVel, &cc.normal);
         if(relVelN < -restitutionSlop) {
           cp.velocityBias += cc.combinedBounce * relVelN;
+        }
+
+        // Speculative contact: a separated manifold point may approach at up to
+        // gap/dt, this keeps grazing corners of a resting manifold active
+        if(cp.penetration < 0.0f) {
+          cp.velocityBias += -cp.penetration * invFixedDt;
         }
       }
     }

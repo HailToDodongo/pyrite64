@@ -4,6 +4,7 @@
  * @brief Functions to detect collisions between different shapes and objects and record them (see collide.h)
  */
 #include "collision/collide.h"
+#include "collision/boxBox.h"
 #include "collision/collisionScene.h"
 #include "collision/contactUtils.h"
 #include "collision/gjk.h"
@@ -1138,6 +1139,177 @@ namespace P64::Coll {
   }
 
 
+  /// @brief Fills a collider-pair contact constraint with the SAT box-box manifold in one pass.
+  /// Counterpart of collideCacheSatContactConstraint for collider pairs: replaces the whole
+  /// manifold each frame while preserving warm-started impulses via proximity matching.
+  /// The caller must pass the pair in canonical cache-key order (see collideDetectBoxBox).
+  static ContactConstraint *collideCacheBoxBoxContactConstraint(
+    RigidBody *rigidBodyA, Collider *colliderA, Object *objectA,
+    RigidBody *rigidBodyB, Collider *colliderB, Object *objectB,
+    const EpaResult *results, int resultCount,
+    float combinedFriction, float combinedBounce,
+    bool respondsA, bool respondsB) {
+
+    if(resultCount <= 0 || !colliderA || !colliderB) return nullptr;
+
+    CollisionScene *scene = collisionSceneGetInstance();
+    const fm_vec3_t normal = makeSafeContactNormal(results[0].normal, results[0].contactA, results[0].contactB);
+
+    ContactConstraintKey key = makeColliderPairConstraintKey(colliderA, colliderB);
+    ContactConstraint *cc = scene->findCachedConstraint(key);
+
+    // Save old points for warm-start matching before we overwrite them
+    ContactPoint oldPoints[MAX_CONTACT_POINTS_PER_PAIR]{};
+    int oldCount = 0;
+    if(cc) {
+      oldCount = cc->pointCount;
+      for(int i = 0; i < oldCount; ++i) oldPoints[i] = cc->points[i];
+    } else {
+      cc = scene->createCachedConstraint(key,
+        rigidBodyA, colliderA, nullptr, objectA,
+        rigidBodyB, colliderB, nullptr, objectB);
+      if(!cc) return nullptr;
+    }
+
+    cc->rigidBodyA = rigidBodyA;
+    cc->colliderA = colliderA;
+    cc->meshColliderA = nullptr;
+    cc->objectA = objectA;
+    cc->rigidBodyB = rigidBodyB;
+    cc->colliderB = colliderB;
+    cc->meshColliderB = nullptr;
+    cc->objectB = objectB;
+    cc->isActive = true;
+    cc->isTrigger = false;
+    cc->normal = normal;
+    vec3CalculateTangents(normal, cc->tangentU, cc->tangentV);
+    cc->combinedFriction = combinedFriction;
+    cc->combinedBounce = combinedBounce;
+    cc->respondsA = respondsA;
+    cc->respondsB = respondsB;
+
+    // The manifold is fresh for the current transforms; recording the versions lets
+    // refreshContacts skip the redundant re-derivation from local anchors this step.
+    cc->transformVersionA = contactTransformVersion(rigidBodyA, colliderA, nullptr);
+    cc->transformVersionB = contactTransformVersion(rigidBodyB, colliderB, nullptr);
+
+    const int newCount = resultCount < MAX_CONTACT_POINTS_PER_PAIR ? resultCount : MAX_CONTACT_POINTS_PER_PAIR;
+    const float MATCH_DIST_SQ = 0.02f;
+    bool oldClaimed[MAX_CONTACT_POINTS_PER_PAIR] = {};
+
+    for(int i = 0; i < newCount; ++i) {
+      const EpaResult &r = results[i];
+      ContactPoint &cp = cc->points[i];
+
+      // Find closest unclaimed old point for warm-start impulse transfer
+      int bestOld = -1;
+      float bestDistSq = MATCH_DIST_SQ;
+      for(int j = 0; j < oldCount; ++j) {
+        if(oldClaimed[j]) continue;
+        fm_vec3_t diff = oldPoints[j].contactA - r.contactA;
+        float distSq = fm_vec3_len2(&diff);
+        if(distSq < bestDistSq) {
+          bestDistSq = distSq;
+          bestOld = j;
+        }
+      }
+
+      if(bestOld >= 0) {
+        oldClaimed[bestOld] = true;
+        cp.accumulatedNormalImpulse = oldPoints[bestOld].accumulatedNormalImpulse;
+        cp.accumulatedTangentImpulseU = oldPoints[bestOld].accumulatedTangentImpulseU;
+        cp.accumulatedTangentImpulseV = oldPoints[bestOld].accumulatedTangentImpulseV;
+      } else {
+        cp.accumulatedNormalImpulse = 0.0f;
+        cp.accumulatedTangentImpulseU = 0.0f;
+        cp.accumulatedTangentImpulseV = 0.0f;
+      }
+
+      cp.contactA = r.contactA;
+      cp.contactB = r.contactB;
+      cp.point = (r.contactA + r.contactB) * 0.5f;
+      cp.penetration = r.penetration;
+      cp.active = true;
+      cp.localPointA = contactLocalPointFromWorldPoint(cp.contactA, rigidBodyA, colliderA, nullptr);
+      cp.localPointB = contactLocalPointFromWorldPoint(cp.contactB, rigidBodyB, colliderB, nullptr);
+    }
+
+    cc->pointCount = newCount;
+    return cc;
+  }
+
+
+  /// @brief Analytical SAT box-box detection with one-shot manifold generation.
+  /// Replaces the GJK+EPA path for box-box pairs: produces the whole contact patch in a
+  /// single call (up to 4 points) instead of one point per frame, which keeps warm
+  /// starting effective and lets stacks settle and sleep.
+  static bool collideDetectBoxBox(
+    Collider *colliderA, RigidBody *rbA, Collider *colliderB, RigidBody *rbB,
+    bool aReadsB, bool bReadsA, bool recordConstraints) {
+
+    CollisionScene *scene = collisionSceneGetInstance();
+
+    // Canonical cache-key order: keeps the SAT A/B roles (and therefore reference-face
+    // selection and normal orientation) stable for a pair across frames regardless of
+    // which collider the broadphase enumerates first.
+    if(shouldSwapColliderPairOrder(colliderA, colliderB)) {
+      std::swap(colliderA, colliderB);
+      std::swap(rbA, rbB);
+      std::swap(aReadsB, bReadsA);
+    }
+
+    const SatObb obbA{colliderA->worldCenter(), colliderA->rotationMatrix(), colliderA->boxShape().halfSize};
+    const SatObb obbB{colliderB->worldCenter(), colliderB->rotationMatrix(), colliderB->boxShape().halfSize};
+
+    // Trigger pairs and probe queries (CCD substeps) only need a boolean overlap answer
+    const bool isTriggerContact = colliderA->isTrigger() || colliderB->isTrigger();
+    if(isTriggerContact || !recordConstraints) {
+      if(analyticalBoxBoxManifold(obbA, obbB, nullptr, 0) == 0) return false;
+
+      if(isTriggerContact) {
+        if(recordConstraints) {
+          EpaResult dummyResult;
+          dummyResult.normal = makeSafeContactNormal(VEC3_ZERO, colliderA->worldCenter(), colliderB->worldCenter());
+          dummyResult.penetration = 0.0f;
+          dummyResult.contactA = colliderA->worldCenter();
+          dummyResult.contactB = colliderB->worldCenter();
+          collideCacheContactConstraint(
+            rbA, colliderA, nullptr, colliderA->ownerObject(),
+            rbB, colliderB, nullptr, colliderB->ownerObject(),
+            dummyResult, 0.0f, 0.0f, true, false, false);
+        }
+        return true;
+      }
+
+      // solid CCD probe: wake sleeping bodies like the GJK+EPA path does
+      if(aReadsB && rbA && rbA->isSleeping()) scene->wakeRigidBodyIsland(rbA);
+      if(bReadsA && rbB && rbB->isSleeping()) scene->wakeRigidBodyIsland(rbB);
+      return true;
+    }
+
+    EpaResult satResults[BOX_BOX_MAX_CONTACTS];
+    constexpr int maxPoints = BOX_BOX_MAX_CONTACTS < MAX_CONTACT_POINTS_PER_PAIR
+                                ? BOX_BOX_MAX_CONTACTS : MAX_CONTACT_POINTS_PER_PAIR;
+    const int satCount = analyticalBoxBoxManifold(obbA, obbB, satResults, maxPoints);
+    if(satCount <= 0) return false;
+
+    if(aReadsB && rbA && rbA->isSleeping()) scene->wakeRigidBodyIsland(rbA);
+    if(bReadsA && rbB && rbB->isSleeping()) scene->wakeRigidBodyIsland(rbB);
+
+    const float combinedFriction = fminf(colliderA->friction(), colliderB->friction());
+    const float combinedBounce = fmaxf(colliderA->bounce(), colliderB->bounce());
+
+    collideCacheBoxBoxContactConstraint(
+      rbA, colliderA, colliderA->ownerObject(),
+      rbB, colliderB, colliderB->ownerObject(),
+      satResults, satCount,
+      combinedFriction, combinedBounce,
+      aReadsB, bReadsA);
+
+    return true;
+  }
+
+
   /// @brief Performs a collision test between a collider and a single Mesh triangle. Used as a subroutine for object-to-mesh collision detection.
   ///
   /// Hint: This function is designed to be called with the collider already transformed into the mesh's local space.
@@ -1368,6 +1540,11 @@ namespace P64::Coll {
       if(colliderA->isTrigger() && colliderB->isTrigger()) return false;
     }
 
+    // Box-Box: analytical SAT with one-shot manifold generation (handles triggers and probes too)
+    if(colliderA->shapeType() == ShapeType::Box && colliderB->shapeType() == ShapeType::Box) {
+      return collideDetectBoxBox(colliderA, rbA, colliderB, rbB, aReadsB, bReadsA, recordConstraints);
+    }
+
     // Try analytical closed-form tests first before falling back to GJK+EPA for general convex shapes.
     
     EpaResult result;
@@ -1412,8 +1589,6 @@ namespace P64::Coll {
       hasAnalyticalPath = true;
       analyticalHit = analyticalCapsuleCapsule(colliderA, colliderB, result);
     }
-
-    // TODO: Implement Box-Box with SAT?
 
     // If an analytical test exists for the pair but reports no collision, we can skip GJK+EPA entirely.
     if(hasAnalyticalPath && !analyticalHit) return false;

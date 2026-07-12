@@ -15,7 +15,14 @@ namespace P64 { class Object; }
 
 namespace P64::Coll {
 
-  constexpr int MAX_CONTACT_POINTS_PER_PAIR = 3;
+  // 4 points so a box resting face-on-face keeps all four corners supported;
+  // with only 3 the unsupported corner makes stacks rock and delays sleep.
+  constexpr int MAX_CONTACT_POINTS_PER_PAIR = 4;
+
+  // Manifold points separated by <= this distance stay active as speculative contacts
+  // The velocity solver lets them approach at up to separation/dt (see
+  // preSolveContacts), so they stabilize resting manifolds against small tilts without hovering
+  constexpr float CONTACT_BREAKING_SEPARATION = 0.01f;
 
   struct RigidBody; // forward declare
   struct Collider;  // forward declare
