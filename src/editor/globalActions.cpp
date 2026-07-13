@@ -159,7 +159,16 @@ namespace Editor::Actions
 
       std::string runCmd{};
       if (arg == "run") {
-        runCmd = ctx.project->conf.pathEmu + " " + z64Path;
+        // Quote both paths so spaces (e.g. "E:\Ares Emulator\ares.exe") don't
+        // split into separate tokens. runSyncLogged() runs this via popen(),
+        // which on Windows invokes `cmd.exe /c`; cmd strips the outermost pair
+        // of quotes, so the whole command is wrapped in an extra pair to keep
+        // the per-path quotes intact.
+#ifdef _WIN32
+        runCmd = "\"\"" + ctx.project->conf.pathEmu + "\" \"" + z64Path + "\"\"";
+#else
+        runCmd = "\"" + ctx.project->conf.pathEmu + "\" \"" + z64Path + "\"";
+#endif
       }
 
       ctx.futureBuildRun = std::async(std::launch::async, [] (std::string configPath, std::string runCmd)
