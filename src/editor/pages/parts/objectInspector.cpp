@@ -471,22 +471,6 @@ void Editor::ObjectInspector::draw() {
         });
         ImGui::PopID();
 
-        ImTable::add("Scale");
-        ImGui::PushID("Scale");
-        float scaleWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 2.0f) / 3.0f;
-        drawFloatField("ScaleX", mixedScale[0], scaleValue.x, scaleWidth, "Edit Scale", [&](float val) {
-          applyVec3Component(&Project::Object::scale, 0, val);
-        });
-        ImGui::SameLine();
-        drawFloatField("ScaleY", mixedScale[1], scaleValue.y, scaleWidth, "Edit Scale", [&](float val) {
-          applyVec3Component(&Project::Object::scale, 1, val);
-        });
-        ImGui::SameLine();
-        drawFloatField("ScaleZ", mixedScale[2], scaleValue.z, scaleWidth, "Edit Scale", [&](float val) {
-          applyVec3Component(&Project::Object::scale, 2, val);
-        });
-        ImGui::PopID();
-
         ImTable::add("Rot");
         ImGui::PushID("Rot");
         float rotWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 3.0f) / 4.0f;
@@ -504,6 +488,22 @@ void Editor::ObjectInspector::draw() {
         ImGui::SameLine();
         drawFloatField("RotW", mixedRot[3], rotValue.w, rotWidth, "Edit Rot", [&](float val) {
           applyQuatComponent(&Project::Object::rot, 3, val);
+        });
+        ImGui::PopID();
+
+        ImTable::add("Scale");
+        ImGui::PushID("Scale");
+        float scaleWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 2.0f) / 3.0f;
+        drawFloatField("ScaleX", mixedScale[0], scaleValue.x, scaleWidth, "Edit Scale", [&](float val) {
+          applyVec3Component(&Project::Object::scale, 0, val);
+        });
+        ImGui::SameLine();
+        drawFloatField("ScaleY", mixedScale[1], scaleValue.y, scaleWidth, "Edit Scale", [&](float val) {
+          applyVec3Component(&Project::Object::scale, 1, val);
+        });
+        ImGui::SameLine();
+        drawFloatField("ScaleZ", mixedScale[2], scaleValue.z, scaleWidth, "Edit Scale", [&](float val) {
+          applyVec3Component(&Project::Object::scale, 2, val);
         });
         ImGui::PopID();
 
@@ -601,6 +601,29 @@ void Editor::ObjectInspector::draw() {
         nullptr
       );
 
+      ImTable::addObjProp(
+        "Rot",
+        xfSrc->rot,
+        Editor::TransformUtils::preserveChildTransformsDuringEdit<glm::quat>(obj.get(), [](glm::quat *val) -> bool {
+          // Use the standard quaternion editor while preserving child offsets
+          return ImTable::typedInput<glm::quat>(val);
+        }),
+        nullptr
+      );
+
+      // icon to toggle between quaternion and euler
+      ImGui::SameLine();
+      ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 32_px);
+      if(ImGui::IconButton(ctx.prefs.showRotAsEuler ? ICON_MDI_AXIS_Z_ROTATE_CLOCKWISE : ICON_MDI_SPHERE, {24_px, 24_px})) {
+        ImGui::ClearActiveID();
+        ctx.prefs.showRotAsEuler = !ctx.prefs.showRotAsEuler;
+        ctx.prefs.save();
+      }
+      ImGui::SetItemTooltip(ctx.prefs.showRotAsEuler
+        ? "Change to Quaternion"
+        : "Change to Euler (degrees)"
+      );
+
       if(xfSrc->proportionalScale)
       {
         std::function<bool(glm::vec3*)> cb = [](glm::vec3 *val) -> bool {
@@ -654,29 +677,6 @@ void Editor::ObjectInspector::draw() {
       ImGui::SetItemTooltip(xfSrc->proportionalScale
         ? "Change to Independent Scale"
         : "Change to Proportional Scale"
-      );
-
-      ImTable::addObjProp(
-        "Rot",
-        xfSrc->rot,
-        Editor::TransformUtils::preserveChildTransformsDuringEdit<glm::quat>(obj.get(), [](glm::quat *val) -> bool {
-          // Use the standard quaternion editor while preserving child offsets
-          return ImTable::typedInput<glm::quat>(val);
-        }),
-        nullptr
-      );
-
-      // icon to toggle between quaternion and euler
-      ImGui::SameLine();
-      ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 32_px);
-      if(ImGui::IconButton(ctx.prefs.showRotAsEuler ? ICON_MDI_AXIS_Z_ROTATE_CLOCKWISE : ICON_MDI_SPHERE, {24_px, 24_px})) {
-        ImGui::ClearActiveID();
-        ctx.prefs.showRotAsEuler = !ctx.prefs.showRotAsEuler;
-        ctx.prefs.save();
-      }
-      ImGui::SetItemTooltip(ctx.prefs.showRotAsEuler
-        ? "Change to Quaternion"
-        : "Change to Euler (degrees)"
       );
 
       ImTable::end();
