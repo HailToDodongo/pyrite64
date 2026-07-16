@@ -1156,7 +1156,8 @@ namespace P64::Coll {
       const float invMassA = cc.respondsA ? constrainedLinearInvMassAlong(a, cc.normal) : 0.0f;
       const float invMassB = cc.respondsB ? constrainedLinearInvMassAlong(b, cc.normal) : 0.0f;
       const float totalInvMass = invMassA + invMassB;
-      if(totalInvMass < FM_EPSILON) continue; // neither side can respond
+      // constraint only drops out when neither side has a linear nor an angular way to respond
+      if(totalInvMass < FM_EPSILON && !aCanRotate && !bCanRotate) continue;
 
       // Tangent effective masses for friction
       const float linearU = (cc.respondsA ? constrainedLinearInvMassAlong(a, cc.tangentU) : 0.0f) +
@@ -1204,34 +1205,41 @@ namespace P64::Coll {
         cp.aToContact = a ? cp.contactA - a->worldCenterOfMass() : VEC3_ZERO;
         cp.bToContact = b ? cp.contactB - b->worldCenterOfMass() : VEC3_ZERO;
 
-        solverPoints_.push_back(SolverContactPoint{});
-        solverFrictionPoints_.push_back(SolverFrictionPoint{});
-        SolverContactPoint &sp = solverPoints_.back();
-        SolverFrictionPoint &fp = solverFrictionPoints_.back();
-        fp.source = &cp;
-
         // Normal effective mass: 1 / (invMassA + invMassB + (rA×n)·I_A^-1·(rA×n) + ...)
         fm_vec3_t raCrossN;
         fm_vec3_cross(&raCrossN, &cp.aToContact, &cc.normal);
         fm_vec3_t rbCrossN;
         fm_vec3_cross(&rbCrossN, &cp.bToContact, &cc.normal);
 
+        fm_vec3_t angularResponseA = VEC3_ZERO;
+        fm_vec3_t angularResponseB = VEC3_ZERO;
         float angularA = 0.0f;
         if(aCanRotate) {
-          sp.angularResponseA = a->applyConstrainedWorldInertia(raCrossN);
-          angularA = fm_vec3_dot(&raCrossN, &sp.angularResponseA);
+          angularResponseA = a->applyConstrainedWorldInertia(raCrossN);
+          angularA = fm_vec3_dot(&raCrossN, &angularResponseA);
         }
         float angularB = 0.0f;
         if(bCanRotate) {
           fm_vec3_t inertia = b->applyConstrainedWorldInertia(rbCrossN);
           angularB = fm_vec3_dot(&rbCrossN, &inertia);
-          sp.angularResponseB = -inertia;
+          angularResponseB = -inertia;
         }
+
+        // Skip points nothing can respond to
+        const float denomN = totalInvMass + angularA + angularB;
+        if(denomN < FM_EPSILON) continue;
+
+        solverPoints_.push_back(SolverContactPoint{});
+        solverFrictionPoints_.push_back(SolverFrictionPoint{});
+        SolverContactPoint &sp = solverPoints_.back();
+        SolverFrictionPoint &fp = solverFrictionPoints_.back();
+        fp.source = &cp;
+
+        sp.angularResponseA = angularResponseA;
+        sp.angularResponseB = angularResponseB;
         if(aHasMotionAngular) sp.angularMeasureA = raCrossN;
         if(bHasMotionAngular) sp.angularMeasureB = rbCrossN;
 
-        float denomN = totalInvMass + angularA + angularB;
-        if(denomN < FM_EPSILON) denomN = FM_EPSILON;
         sp.normalMass = 1.0f / denomN;
         sp.accumulatedImpulse = cp.accumulatedNormalImpulse;
 
@@ -1316,6 +1324,12 @@ namespace P64::Coll {
       }
 
       h.pointCount = static_cast<uint16_t>(solverPoints_.size() - h.pointStart);
+      if(h.pointCount == 0) {
+        // every point was skipped, drop the constraint again
+        solverHeaders_.pop_back();
+        solverFrictionHeaders_.pop_back();
+        continue;
+      }
       solverOrder_.push_back(headerIndex);
     }
   }
