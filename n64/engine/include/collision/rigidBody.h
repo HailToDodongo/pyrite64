@@ -160,11 +160,6 @@ namespace P64::Coll {
       return matrix3Vec3Mul(constrainedInvWorldInertiaTensor_, in);
     }
 
-    /// Reset split impulse push velocities at the start of each physics step
-    void resetPushVelocities() { pushLinearVelocity_ = VEC3_ZERO; pushAngularVelocity_ = VEC3_ZERO; }
-    const fm_vec3_t &pushLinearVelocity() const { return pushLinearVelocity_; }
-    const fm_vec3_t &pushAngularVelocity() const { return pushAngularVelocity_; }
-
   private:
     friend class CollisionScene;
 
@@ -215,11 +210,9 @@ namespace P64::Coll {
     bool hasAngularConstraints_{false};
     bool compoundPropertiesDirty_{true};
 
-    /// Split impulse push velocities (Bullet-style).
-    /// These accumulate position-correction impulses separately from real velocities,
-    /// preventing the "bouncy stacking" artifact of Baumgarte stabilization.
-    fm_vec3_t pushLinearVelocity_{};
-    fm_vec3_t pushAngularVelocity_{};
+    /// Index into the CollisionScene's per-step solver body array (-1 = not participating).
+    /// Only valid while the scene builds and runs the contact solvers.
+    int16_t solverIndex_{-1};
 
     void refreshConstraintCaches();
     void refreshAngularConstraintProjection();

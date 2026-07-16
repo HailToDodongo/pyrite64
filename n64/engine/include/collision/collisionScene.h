@@ -145,6 +145,83 @@ namespace P64::Coll {
     std::unordered_map<ContactConstraintKey, int, ContactConstraintKeyHash> cachedConstraintLookup_{};
     std::vector<ContactConstraint *> solverConstraints_{};
 
+    // Contact solver working data (rebuilt each step in preSolveContacts)
+    // preSolveContacts bakes each side's per-unit-impulse response, so warm start and the solver loops are just multiply-adds
+
+    /// @brief Per-body data for the solver. Index 0 is a sentinel for the static side of a constraint (null/immovable), so the loops need no null checks.
+    struct SolverBody {
+      fm_vec3_t linearVelocity{};
+      fm_vec3_t angularVelocity{};
+      fm_vec3_t pushLinearVelocity{};
+      fm_vec3_t pushAngularVelocity{};
+      RigidBody *body{nullptr};
+    };
+    
+    /// @brief Per-constraint data for the normal (non-penetration) iterations.
+    /// linearResponse* is the velocity change per unit normal impulse, and is zeroed when that side can't respond
+    struct SolverConstraintHeader {
+      fm_vec3_t normal{};
+      fm_vec3_t linearResponseA{};
+      fm_vec3_t linearResponseB{};
+      uint16_t bodyA{0};
+      uint16_t bodyB{0};
+      uint16_t pointStart{0};
+      uint16_t pointCount{0};
+    };
+
+    /// @brief Per-contact point data for the normal iterations (hot loop).
+    /// angularMeasure* = r x n, used to read relative velocity at the contact;
+    /// angularResponse* = the spin change per unit impulse. Both zeroed when unused.
+    struct SolverContactPoint {
+      fm_vec3_t angularMeasureA{};
+      fm_vec3_t angularMeasureB{};
+      fm_vec3_t angularResponseA{};
+      fm_vec3_t angularResponseB{};
+      float normalMass{0.0f};
+      float velocityBias{0.0f};
+      float accumulatedImpulse{0.0f};
+      float positionBias{0.0f};
+      float accumulatedPushImpulse{0.0f};
+    };
+
+    /// @brief Per-constraint friction data (solved in one pass after the normal iterations)
+    /// linearMeasureScale* is 0 when that side's velocity is excluded (disabled/kinematic)
+    struct SolverFrictionHeader {
+      fm_vec3_t tangentU{};
+      fm_vec3_t tangentV{};
+      fm_vec3_t linearResponseUA{};
+      fm_vec3_t linearResponseUB{};
+      fm_vec3_t linearResponseVA{};
+      fm_vec3_t linearResponseVB{};
+      float friction{0.0f};
+      float linearMeasureScaleA{0.0f};
+      float linearMeasureScaleB{0.0f};
+    };
+
+    /// @brief Per-point friction data; index-aligned with solverPoints_
+    struct SolverFrictionPoint {
+      fm_vec3_t angularMeasureUA{};
+      fm_vec3_t angularMeasureUB{};
+      fm_vec3_t angularMeasureVA{};
+      fm_vec3_t angularMeasureVB{};
+      fm_vec3_t angularResponseUA{};
+      fm_vec3_t angularResponseUB{};
+      fm_vec3_t angularResponseVA{};
+      fm_vec3_t angularResponseVB{};
+      float tangentMassU{0.0f};
+      float tangentMassV{0.0f};
+      float accumulatedImpulseU{0.0f};
+      float accumulatedImpulseV{0.0f};
+      ContactPoint *source{nullptr};   // accumulated impulses are written back here for warm starting
+    };
+
+    std::vector<SolverBody> solverBodies_{};
+    std::vector<SolverConstraintHeader> solverHeaders_{};
+    std::vector<SolverContactPoint> solverPoints_{};
+    std::vector<SolverFrictionHeader> solverFrictionHeaders_{};
+    std::vector<SolverFrictionPoint> solverFrictionPoints_{};
+    std::vector<uint16_t> solverOrder_{}; // constraint processing order, shuffled once per step to avoid bias
+
     AABBTree colliderAABBTree;
     AABBTree meshColliderAABBTree;
 
@@ -211,10 +288,11 @@ namespace P64::Coll {
     void removeInactiveContacts();
     void rebuildSolverConstraints();
     void detectAllContacts();
+    uint16_t acquireSolverBodyIndex(RigidBody *body);
     void preSolveContacts();
     void warmStart();
     void solveVelocityConstraints();
-    bool solvePositionConstraints();
+    void solvePositionConstraints();
     void detectSweptCollisions();
     void updateMeshColliderWorldStates();
   };
