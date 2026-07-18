@@ -210,6 +210,7 @@ namespace
       NestedRenderPlacement place{node, pickId, world};
       for(auto &comp : src->components) {
         PropScope::Path compPath(comp.uuid); // so scene-instance overrides on nested props resolve
+        if (!comp.enabled.resolve(node)) continue;
         callback(node, &comp);
       }
       callback(node, nullptr);
@@ -237,6 +238,8 @@ namespace
       }
 
       for(auto &comp : srcObj->components) {
+        PropScope::Dispatch enabledScope(child->propOverrides, comp.uuid);
+        if (!comp.enabled.resolve(*child)) continue;
         callback(*child, &comp);
       }
       callback(*child, nullptr);
@@ -367,7 +370,8 @@ namespace
     for (auto &child : parent.children) {
       auto srcObj = Editor::SelectionUtils::prefabDefOf(child.get());
       for (auto &comp : srcObj->components) {
-        if (comp.id == 3) { // Camera
+        PropScope::Dispatch enabledScope(child->propOverrides, comp.uuid);
+        if (comp.enabled.resolve(*child) && comp.id == 3) { // Camera
           out.push_back({child->uuid, child->name.empty() ? "Camera" : child->name});
           break;
         }
@@ -740,7 +744,8 @@ void Editor::Viewport3D::draw()
     if (auto camObj = scene->getObjectByUUID(boundCameraUUID)) {
       auto srcObj = Editor::SelectionUtils::prefabDefOf(camObj.get());
       for (auto &comp : srcObj->components) {
-        if (comp.id == 3) {
+        PropScope::Dispatch enabledScope(camObj->propOverrides, comp.uuid);
+        if (comp.enabled.resolve(*camObj) && comp.id == 3) {
           camView = Project::Component::Camera::getView(*camObj, comp);
           camera.pos = camObj->pos.resolve(camObj->propOverrides);
           camera.rot = glm::normalize(camObj->rot.resolve(camObj->propOverrides));

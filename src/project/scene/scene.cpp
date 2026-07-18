@@ -329,6 +329,7 @@ void Project::Scene::unpackPrefabInstance(uint32_t uuid)
       auto data = cdef.funcSerialize(comp);
       dst.components.push_back(Component::Entry{
         .id = comp.id, .uuid = comp.uuid, .name = comp.name,
+        .enabled = comp.enabled,
         .data = cdef.funcDeserialize(data)
       });
     }

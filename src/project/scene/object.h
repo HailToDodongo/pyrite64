@@ -103,6 +103,8 @@ namespace Project
         Utils::AABB aabb{};
         bool hasVolume = false;
         for (const auto &entry : components) {
+          PropScope::Dispatch enabledScope(propOverrides, entry.uuid);
+          if (!entry.enabled.resolve(*this)) continue;
           const auto &info = Component::TABLE[entry.id];
           if (!info.funcGetAABB) continue;
           PropScope::Dispatch dispatchScope(propOverrides, entry.uuid);

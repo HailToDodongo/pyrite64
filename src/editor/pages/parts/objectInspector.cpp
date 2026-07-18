@@ -696,11 +696,22 @@ void Editor::ObjectInspector::draw() {
     ImTable::PrefabEditScope prefabScope(isInstance);
     ImGui::PushID(&comp);
 
+    // Keep component path active for both its header state and its regular fields. On prefab instances applies as an override
+    std::optional<PropScope::Dispatch> dispatch;
+    std::optional<PropScope::Path> compPath;
+    if(viaPath) compPath.emplace(comp.uuid);
+    else        dispatch.emplace(obj->propOverrides, comp.uuid);
+
     auto &def = Project::Component::TABLE[comp.id];
     auto name = std::string{def.icon} + "  " + comp.name;
 
-    ImGui::SetNextItemAllowOverlap();
-    bool headerOpen = ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
+    bool headerOpen = ImGui::CollapsingHeader(
+      "##ComponentHeader",
+      ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowOverlap
+    );
+    const ImVec2 headerMin = ImGui::GetItemRectMin();
+    const ImVec2 headerMax = ImGui::GetItemRectMax();
+    const ImVec2 cursorAfterHeader = ImGui::GetCursorScreenPos();
     const bool locked = ImTable::isPrefabLocked(obj);
     const bool headerRightClicked = !locked && ImGui::IsItemClicked(ImGuiMouseButton_Right);
 
@@ -715,6 +726,51 @@ void Editor::ObjectInspector::draw() {
       ImGui::TextUnformatted(name.c_str());
       ImGui::EndDragDropSource();
     }
+
+    // Place the component toggle inside the header, between its folding arrow and icon
+    const float checkboxMargin = 2_px; // Checkbox margin, so doesn't fit full header height
+    const float checkboxSize = (headerMax.y - headerMin.y) - checkboxMargin * 2.0f;
+    const float checkboxPaddingY = std::max(0.0f, (checkboxSize - ImGui::GetFontSize()) * 0.5f);
+    // Position checkbox centered vertically inside the header
+    ImGui::SetCursorScreenPos({
+      headerMin.x + ImGui::GetTreeNodeToLabelSpacing(),
+      headerMin.y + checkboxMargin
+    });
+    // Resolve through the active component path so prefab-instance overrides are shown
+    bool enabled = comp.enabled.resolve(*obj);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {
+      ImGui::GetStyle().FramePadding.x,
+      checkboxPaddingY
+    });
+    if (ImGui::Checkbox("##Enabled", &enabled)) {
+      // Snapshot the scene before writing either the base value or an instance override
+      Editor::UndoRedo::getHistory().markChanged(enabled ? "Enable Component" : "Disable Component");
+      // Locked prefab components cannot alter their definition; create an override slot
+      // on the inspected instance before assigning the newly selected value
+      if(locked && !obj->hasPropOverride(comp.enabled)) {
+        obj->addPropOverride(comp.enabled);
+      }
+      // Prefab instances write through the resolved override; regular objects own the base
+      if (locked)
+        comp.enabled.resolve(*obj) = enabled;
+      else
+        comp.enabled.value = enabled;
+    }
+    ImGui::PopStyleVar();
+    ImGui::SetItemTooltip("%s Component", enabled ? "Disable" : "Enable");
+
+    // The collapsing header uses a hidden label, so draw the icon and component name
+    // manually after the checkbox and tint them when the component is disabled
+    const ImVec2 checkMax = ImGui::GetItemRectMax();
+    const ImVec2 textSize = ImGui::CalcTextSize(name.c_str());
+    ImGui::GetWindowDrawList()->AddText(
+      {checkMax.x + ImGui::GetStyle().ItemInnerSpacing.x,
+       headerMin.y + (headerMax.y - headerMin.y - textSize.y) * 0.5f},
+      ImGui::GetColorU32(enabled ? ImGuiCol_Text : ImGuiCol_TextDisabled),
+      name.c_str()
+    );
+    // Restore the cursor so this overlaid header content does not affect following layout
+    ImGui::SetCursorScreenPos(cursorAfterHeader);
 
     // Faint help icon near the right edge of the header
     if (def.docSlug && def.docSlug[0]) {
@@ -743,10 +799,6 @@ void Editor::ObjectInspector::draw() {
         }
       }
 
-      std::optional<PropScope::Dispatch> dispatch;
-      std::optional<PropScope::Path> compPath;
-      if(viaPath) compPath.emplace(comp.uuid);
-      else        dispatch.emplace(obj->propOverrides, comp.uuid);
       def.funcDraw(*obj, comp);
     }
     ImGui::PopID();

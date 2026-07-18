@@ -45,6 +45,7 @@ namespace
       c["id"] = comp.id;
       c["uuid"] = comp.uuid;
       c["name"] = comp.name;
+      c["enabled"] = comp.enabled.value;
       c["data"] = def.funcSerialize(comp);
       comps.push_back(c);
     }
@@ -147,6 +148,7 @@ void Project::Object::deserialize(Scene *scene, nlohmann::json &doc)
         .id = id,
         .uuid = compObj["uuid"],
         .name = compObj["name"],
+        .enabled = Property<bool>{"enabled", compObj.value("enabled", true)},
         .data = def.funcDeserialize(compObj["data"])
       });
 
