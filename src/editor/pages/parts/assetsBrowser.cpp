@@ -123,6 +123,81 @@ void Editor::AssetsBrowser::draw() {
     ImGui::EndDragDropTarget();
   };
 
+  // Moves a browser file or folder into a target directory after the current frame
+  auto moveBrowserEntry = [&](const fs::path &sourcePath, const fs::path &targetDir) {
+    fs::path source = fs::absolute(sourcePath).lexically_normal();
+    fs::path target = fs::absolute(targetDir).lexically_normal();
+    fs::path destination = target / source.filename();
+    bool isDirectory = fs::is_directory(source);
+
+    if(source.parent_path() == target) return;
+
+    if(isDirectory) {
+      fs::path relativeTarget = target.lexically_relative(source);
+      bool targetInsideSource = !relativeTarget.empty()
+        && relativeTarget.begin()->string() != "..";
+      if(targetInsideSource) return;
+    }
+
+    if(fs::exists(destination) || (!isDirectory && fs::exists(destination.string() + ".conf"))) {
+      Editor::Noti::add(
+        Editor::Noti::Type::ERROR,
+        "A file or folder with that name already exists in the target directory."
+      );
+      return;
+    }
+
+    bool updateFolderSelection = selectedFolderPath == source.string();
+    ctx.deferAction([this, source, destination, isDirectory, updateFolderSelection]() {
+      std::error_code ec;
+      fs::rename(source, destination, ec);
+      if(ec) {
+        Editor::Noti::add(Editor::Noti::Type::ERROR, "Move failed: " + ec.message());
+        return;
+      }
+
+      if(!isDirectory) {
+        fs::path sourceConf = source.string() + ".conf";
+        fs::path destinationConf = destination.string() + ".conf";
+        if(fs::exists(sourceConf)) {
+          fs::rename(sourceConf, destinationConf, ec);
+          if(ec) {
+            Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to move .conf: " + ec.message());
+          }
+        }
+      }
+
+      if(updateFolderSelection) selectedFolderPath = destination.string();
+      ctx.project->getAssets().reload();
+    });
+  };
+
+  // Accepts files and folders from the browser over a folder item
+  auto acceptBrowserEntryPayload = [&](const fs::path &targetDir) {
+    const ImGuiPayload* activePayload = ImGui::GetDragDropPayload();
+    if(!activePayload) return;
+
+    if(activePayload->IsDataType("ASSET")) {
+      uint64_t assetUUID = *static_cast<const uint64_t*>(activePayload->Data);
+      auto *asset = ctx.project->getAssets().getEntryByUUID(assetUUID);
+
+      // Node Graphs are shown virtually in Scripts but remain stored under Assets
+      if(asset && asset->type != FileType::NODE_GRAPH) {
+        if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(
+             "ASSET", ImGuiDragDropFlags_AcceptBeforeDelivery
+           ); payload && payload->Delivery) {
+          moveBrowserEntry(asset->path, targetDir);
+        }
+      }
+    } else if(activePayload->IsDataType("ASSET_FOLDER")) {
+      if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(
+           "ASSET_FOLDER", ImGuiDragDropFlags_AcceptBeforeDelivery
+         ); payload && payload->Delivery) {
+        moveBrowserEntry(static_cast<const char*>(payload->Data), targetDir);
+      }
+    }
+  };
+
   const std::array<TabDef, 4> TABS{
     TabDef{
       .name = ICON_MDI_EARTH_BOX "  Scenes",
@@ -225,6 +300,11 @@ void Editor::AssetsBrowser::draw() {
     if (ImGui::Button(baseLabel)) {
       dirState.clear();
     }
+    if(ImGui::BeginDragDropTarget()) {
+      acceptBrowserEntryPayload(basePathAbs);
+      ImGui::EndDragDropTarget();
+    }
+
     std::string accum{};
     for (const auto &part : crumbParts) {
       ImGui::SameLine();
@@ -233,6 +313,10 @@ void Editor::AssetsBrowser::draw() {
       accum = joinDir(accum, part);
       if (ImGui::Button(part.c_str())) {
         dirState = accum;
+      }
+      if(ImGui::BeginDragDropTarget()) {
+        acceptBrowserEntryPayload(basePathAbs / accum);
+        ImGui::EndDragDropTarget();
       }
     }
     ImGui::PopStyleVar(2);
@@ -468,8 +552,22 @@ void Editor::AssetsBrowser::draw() {
       );
       bool folderDoubleClicked = ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered();
 
-      if(activeTab == TAB_IDX_ASSETS || activeTab == TAB_IDX_PREFABS) {
-        acceptObjectAsPrefabDrop(joinDir(dirState, folder));
+      if(ImGui::BeginDragDropSource()) {
+        ImGui::SetDragDropPayload(
+          "ASSET_FOLDER",
+          folderPath.c_str(),
+          folderPath.size() + 1
+        );
+        ImGui::TextUnformatted(folder.c_str());
+        ImGui::EndDragDropSource();
+      }
+
+      if(ImGui::BeginDragDropTarget()) {
+        if(activeTab == TAB_IDX_ASSETS || activeTab == TAB_IDX_PREFABS) {
+          acceptObjectAsPrefabPayload(joinDir(dirState, folder));
+        }
+        acceptBrowserEntryPayload(folderPath);
+        ImGui::EndDragDropTarget();
       }
 
       if(folderClicked) {
