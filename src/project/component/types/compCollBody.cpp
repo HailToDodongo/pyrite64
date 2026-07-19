@@ -43,12 +43,14 @@ namespace Project::Component::CollBody
     PROP_FLOAT(bounce);
   };
 
-  std::shared_ptr<void> init(Object &obj) {
-    auto data = std::make_shared<Data>();
-    data->halfExtend.value = {10.0f, 10.0f, 10.0f};
-    data->friction.value = 0.8f;
-
-    // Make the collider fit the size of the model, if any
+  /**
+   * Calculates the combined bounds of all static and animated models on an object.
+   * @param obj Object whose model components will be inspected.
+   * @param halfExtend Output half size of the combined model bounds.
+   * @param offset Output centre of the combined model bounds.
+   * @return true when at least one valid model was found.
+   */
+  bool getModelFit(Object &obj, glm::vec3 &halfExtend, glm::vec3 &offset) {
     Utils::AABB modelBounds{};
     bool hasModelBounds = false;
 
@@ -81,12 +83,22 @@ namespace Project::Component::CollBody
     }
 
     if(hasModelBounds) {
-      data->halfExtend.value = modelBounds.getHalfExtend();
-      data->halfExtend.value.x = std::max(data->halfExtend.value.x, 0.001f);
-      data->halfExtend.value.y = std::max(data->halfExtend.value.y, 0.001f);
-      data->halfExtend.value.z = std::max(data->halfExtend.value.z, 0.001f);
-      data->offset.value = modelBounds.getCenter();
+      halfExtend = modelBounds.getHalfExtend();
+      halfExtend.x = std::max(halfExtend.x, 0.001f);
+      halfExtend.y = std::max(halfExtend.y, 0.001f);
+      halfExtend.z = std::max(halfExtend.z, 0.001f);
+      offset = modelBounds.getCenter();
     }
+    return hasModelBounds;
+  }
+
+  std::shared_ptr<void> init(Object &obj) {
+    auto data = std::make_shared<Data>();
+    data->halfExtend.value = {10.0f, 10.0f, 10.0f};
+    data->friction.value = 0.8f;
+
+    // Make the collider fit the size of the model, if any
+    getModelFit(obj, data->halfExtend.value, data->offset.value);
     return data;
   }
 
@@ -174,6 +186,31 @@ namespace Project::Component::CollBody
         ImTable::add("Half Height", ext.y);
       }
       ImTable::addObjProp("Offset", data.offset);
+
+      // Button to auto-fit the size
+      ImTable::add("");
+      if (ImGui::Button("Auto fit")) {
+        glm::vec3 halfExtend{};
+        glm::vec3 offset{};
+        if (getModelFit(obj, halfExtend, offset)) {
+          Editor::UndoRedo::getHistory().markChanged("Auto-fit Collider");
+
+          // Prefab components write the fitted values into instance overrides
+          if (ImTable::isPrefabLocked(&obj)) {
+            if (!obj.hasPropOverride(data.halfExtend))
+              obj.addPropOverride(data.halfExtend);
+            if (!obj.hasPropOverride(data.offset))
+              obj.addPropOverride(data.offset);
+            data.halfExtend.resolve(obj.propOverrides) = halfExtend;
+            data.offset.resolve(obj.propOverrides) = offset;
+          } else {
+            data.halfExtend.value = halfExtend;
+            data.offset.value = offset;
+          }
+        }
+      }
+      ImGui::SetItemTooltip("Fit collider to 3D model");
+
       ImTable::addObjProp("Trigger", data.isTrigger);
 
       ImTable::addMultiSelectMask8("Reacts to", data.maskRead.resolve(obj), ctx.project->conf.collLayerNames, "<Nothing>");
