@@ -21,8 +21,14 @@ namespace Editor
       std::string renamePath{};
       std::string deletePath{};
       char renameBuffer[256];
+      static uint64_t pendingPrefabFocusUUID;
 
     public:
+      /**
+       * Requests that the Prefabs view displays and selects a prefab.
+       * @param prefabUUID UUID of the prefab to focus.
+       */
+      static void focusPrefab(uint64_t prefabUUID);
       void draw();
       void showContextMenu(const std::string& path, bool showOpenItem = true);
   };

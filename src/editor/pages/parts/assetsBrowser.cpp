@@ -22,6 +22,8 @@
 using FileType = Project::FileType;
 namespace fs = std::filesystem;
 
+uint64_t Editor::AssetsBrowser::pendingPrefabFocusUUID{0};
+
 namespace
 {
   constexpr int TAB_IDX_SCENES = 0;
@@ -78,6 +80,15 @@ namespace
 }
 
 void Editor::AssetsBrowser::draw() {
+  if(pendingPrefabFocusUUID) {
+    activeTab = TAB_IDX_PREFABS;
+    tabDirs[TAB_IDX_PREFABS].clear();
+    searchFilter.clear();
+    ctx.selAssetUUID = pendingPrefabFocusUUID;
+    pendingPrefabFocusUUID = 0;
+    ImGui::makeTabVisible("Files");
+  }
+
   auto &scenes = ctx.project->getScenes().getEntries();
 
   // Converts a delivered Scene Graph object into a prefab inside the target directory
@@ -813,6 +824,10 @@ void Editor::AssetsBrowser::draw() {
 
   ImGui::EndChild();
   ImGui::EndChild();
+}
+
+void Editor::AssetsBrowser::focusPrefab(uint64_t prefabUUID) {
+  pendingPrefabFocusUUID = prefabUUID;
 }
 
 void Editor::AssetsBrowser::showContextMenu(const std::string& path, bool showOpenItem) {

@@ -3,6 +3,7 @@
 * @license MIT
 */
 #include "sceneGraph.h"
+#include "assetsBrowser.h"
 
 #include <algorithm>
 #include <string>
@@ -441,7 +442,11 @@ namespace
             // unsafe mid-frame while ImGui draw data still references them.
             auto *scenePtr = &scene;
             uint32_t uuid = obj.uuid;
-            ctx.deferAction([scenePtr, uuid]() { scenePtr->createPrefabFromObject(uuid); });
+            ctx.deferAction([scenePtr, uuid]() {
+              uint64_t prefabUUID = scenePtr->createPrefabFromObject(uuid);
+              if(prefabUUID)
+                Editor::AssetsBrowser::focusPrefab(prefabUUID);
+            });
           }
 
           if (obj.isPrefabInstance() && ImGui::MenuItem(ICON_MDI_PACKAGE_VARIANT " Unpack Prefab")) {
