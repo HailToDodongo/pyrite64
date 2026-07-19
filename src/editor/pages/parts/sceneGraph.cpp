@@ -247,7 +247,8 @@ namespace
   // aren't scene objects, so they're shown dimmed and selecting one targets it as a
   // nested override (rootUuid = instance, path = chain of definition-node uuids).
   void drawPrefabDefNode(Project::Object &node, int depth, uint32_t rootUuid,
-                         std::vector<uint32_t> path, bool selectable)
+                         std::vector<uint32_t> path, bool selectable,
+                         bool parentEnabled = true)
   {
     if(depth > 64)return; // guard against self-referencing prefabs
     path.push_back(node.uuid);
@@ -255,7 +256,7 @@ namespace
     Project::Object* src = Editor::SelectionUtils::prefabDefOf(&node);
 
     bool isSelected = (ctx.selObjectUUID == rootUuid && ctx.selSubPath == path);
-    bool dim = prefabEditObj ? !selectable : false;
+    bool dim = (prefabEditObj && !selectable) || !parentEnabled || !node.enabled;
 
     ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow
       | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_FramePadding
@@ -281,7 +282,8 @@ namespace
       // In edit mode we may descend through regular children but stop at nested prefab instances.
       bool childSelectable = prefabEditObj ? (selectable && !node.isPrefabInstance()) : true;
       for(auto &child : src->children) {
-        drawPrefabDefNode(*child, depth + 1, rootUuid, path, childSelectable);
+        drawPrefabDefNode(*child, depth + 1, rootUuid, path, childSelectable,
+                          parentEnabled && node.enabled);
       }
       ImGui::TreePop();
     }
@@ -326,9 +328,11 @@ namespace
 
     std::string nameID = getNodeIcons(obj) + obj.name + "##" + std::to_string(obj.uuid);
 
-    if(!canSelect)ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    // Set style disabled when editing a prefab or the element or an ancestor is disabled
+    const bool dimNode = !canSelect || !parentEnabled || !obj.enabled;
+    if(dimNode)ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
     bool isOpen = ImGui::TreeNodeEx(nameID.c_str(), flag);
-    if(!canSelect)ImGui::PopStyleColor();
+    if(dimNode)ImGui::PopStyleColor();
     ImGui::PopStyleVar(2);
     ImVec2 nodeRectMin = ImGui::GetItemRectMin();
 
@@ -468,7 +472,7 @@ namespace
       // editing a prefab, only the edited instance's own definition is selectable.
       if(prefabDef) {
         for(auto &child : prefabDef->children) {
-          drawPrefabDefNode(*child, 0, obj.uuid, {}, canSelect);
+          drawPrefabDefNode(*child, 0, obj.uuid, {}, canSelect, parentEnabled && obj.enabled);
         }
       }
 

@@ -558,15 +558,37 @@ void Editor::ObjectInspector::draw() {
       } else {
         // The name belongs to the object itself, not the prefab, so it stays editable even
         // on a locked prefab instance.
-        ImTable::add("Name");
+        // Build this row manually so the object-enabled checkbox sits before the Name label
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
         ImGui::PushID("Name");
+        // Edit a local copy so undo captures the scene before Object::enabled is changed
+        bool enabled = obj->enabled;
+        if (ImGui::Checkbox("##Enabled", &enabled)) {
+          Editor::UndoRedo::getHistory().markChanged(enabled ? "Enable Object" : "Disable Object");
+          obj->enabled = enabled;
+        }
+        ImGui::SetItemTooltip("%s Object", obj->enabled ? "Disable" : "Enable");
+        // Reuse checkbox width and spacing to align following labels with the Name text
+        const float objectLabelOffset = ImGui::GetItemRectSize().x + ImGui::GetStyle().ItemInnerSpacing.x;
+        ImGui::SameLine();
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted("Name");
+        // The editable name itself remains in the table's value column
+        ImGui::TableSetColumnIndex(1);
         if(ImGui::InputText("##Name", &obj->name)) {
           Editor::UndoRedo::getHistory().markChanged("Edit Name");
         }
         ImGui::PopID();
 
         if(isPrefabInst) {
-          ImTable::add("Prefab");
+          // Leave the checkbox column empty so Prefab starts below Name
+          ImGui::TableNextRow();
+          ImGui::TableSetColumnIndex(0);
+          ImGui::SetCursorPosX(ImGui::GetCursorPosX() + objectLabelOffset);
+          ImGui::AlignTextToFramePadding();
+          ImGui::TextUnformatted("Prefab");
+          ImGui::TableSetColumnIndex(1);
 
           bool editing = ctx.isPrefabEditing(obj->uuid);
           auto name = std::string{ICON_MDI_PENCIL " "};
