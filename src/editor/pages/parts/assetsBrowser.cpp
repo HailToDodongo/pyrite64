@@ -53,6 +53,26 @@ namespace
     return left + "/" + right;
   }
 
+  /**
+   * Adds a platform-specific menu item that reveals a path in the system file browser.
+   * @param path File or directory path to reveal.
+   */
+  void showInFileBrowserMenuItem(const std::string &path)
+  {
+#if defined(_WIN32)
+    const char* prompt = ICON_MDI_FOLDER_OPEN " Show in Explorer";
+#elif defined(__APPLE__)
+    const char* prompt = ICON_MDI_FOLDER_OPEN " Show in Finder";
+#else
+    const char* prompt = ICON_MDI_FOLDER_OPEN " Show in File Manager";
+#endif
+    if(ImGui::MenuItem(prompt) && !Utils::Proc::openInFileBrowser(path)) {
+      Editor::Noti::add(
+        Editor::Noti::Type::ERROR, "Failed to open File Explorer. This may be due to WSL path conversion failure."
+      );
+    }
+  }
+
   std::string scriptName{};
   int scriptType{0};
 }
@@ -649,23 +669,21 @@ void Editor::AssetsBrowser::draw() {
     ImGui::EndPopup();
   }
 
+  // Show the current directory menu when right-clicking empty browser space
+  if(baseLabel && ImGui::BeginPopupContextWindow(
+       "AssetsBackgroundContext",
+       ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems
+     )) {
+    showInFileBrowserMenuItem((basePathAbs / dirState).string());
+    ImGui::EndPopup();
+  }
+
   ImGui::EndChild();
   ImGui::EndChild();
 }
 
 void Editor::AssetsBrowser::showContextMenu(const std::string& path) {
-#if defined(_WIN32)
-  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in Explorer";
-#elif defined(__APPLE__)
-  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in Finder";
-#else
-  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in File Manager";
-#endif
-  if(ImGui::MenuItem(showPrompt.c_str())) {
-    if (!Utils::Proc::openInFileBrowser(path)) {
-      Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File Explorer. This may be due to WSL path conversion failure.");
-    }
-  }
+  showInFileBrowserMenuItem(path);
 
   if(ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open")) {
     if (!Utils::Proc::openFile(path)) {
