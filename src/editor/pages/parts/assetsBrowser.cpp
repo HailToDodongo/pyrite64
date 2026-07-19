@@ -597,7 +597,10 @@ void Editor::AssetsBrowser::draw() {
     ImGui::Separator();
     
     if (ImGui::Button("OK", ImVec2(120_px, 0))) {
+        bool isFile = fs::is_regular_file(deletePath);
         fs::remove(deletePath);
+        if(isFile)
+          fs::remove(deletePath + ".conf");
         deletePath.clear();
         ImGui::CloseCurrentPopup(); 
     }
