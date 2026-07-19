@@ -474,12 +474,14 @@ void Editor::AssetsBrowser::draw() {
 
       if(folderClicked) {
         selectedFolderPath = folderPath;
+        ctx.selAssetUUID = 0;
       }
       if(folderDoubleClicked) {
         folderToOpen = folder;
       }
       if(ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
         selectedFolderPath = folderPath;
+        ctx.selAssetUUID = 0;
       }
 
       if(ImGui::BeginPopupContextItem(folder.c_str())) {
