@@ -596,6 +596,12 @@ void Editor::AssetsBrowser::draw() {
   }
 
   static std::string newScriptDir{};
+  auto openNewScriptPopup = [&]() {
+    newScriptDir = dirState;
+    scriptName = "New_Script";
+    scriptType = 0;
+    ImGui::OpenPopup("NewScript");
+  };
 
   if (activeTab == TAB_IDX_SCRIPTS || activeTab == TAB_IDX_SCENES)
   {
@@ -608,10 +614,7 @@ void Editor::AssetsBrowser::draw() {
       textBtnSize
     )) {
       if(activeTab == TAB_IDX_SCRIPTS) {
-        newScriptDir = dirState;
-        scriptName = "New_Script";
-        scriptType = 0;
-        ImGui::OpenPopup("NewScript");
+        openNewScriptPopup();
       } else {
         ctx.project->getScenes().add();
       }
@@ -669,6 +672,8 @@ void Editor::AssetsBrowser::draw() {
     ImGui::EndPopup();
   }
 
+  bool createScriptRequested = false;
+
   // Show the current directory menu when right-clicking empty browser space
   if(baseLabel && ImGui::BeginPopupContextWindow(
        "AssetsBackgroundContext",
@@ -680,7 +685,7 @@ void Editor::AssetsBrowser::draw() {
     showInFileBrowserMenuItem(currentDir.string());
 
     // Menu item to create a folder
-    if (ImGui::MenuItem(ICON_MDI_FOLDER_PLUS " Create Folder")) {
+    if (ImGui::MenuItem(ICON_MDI_FOLDER_PLUS " Create new Folder")) {
       std::string folderName = "New Folder";
       fs::path folderPath = currentDir / folderName;
       for (unsigned int suffix = 2; fs::exists(folderPath); ++suffix) {
@@ -701,7 +706,17 @@ void Editor::AssetsBrowser::draw() {
         );
       }
     }
+
+    // Menu item to create a script
+    if(activeTab == TAB_IDX_SCRIPTS &&
+       ImGui::MenuItem(ICON_MDI_FILE_DOCUMENT_PLUS_OUTLINE " Create new Script")) {
+      createScriptRequested = true;
+    }
     ImGui::EndPopup();
+  }
+
+  if(createScriptRequested) {
+    openNewScriptPopup();
   }
 
   ImGui::EndChild();
