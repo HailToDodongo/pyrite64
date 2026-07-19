@@ -674,7 +674,33 @@ void Editor::AssetsBrowser::draw() {
        "AssetsBackgroundContext",
        ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems
      )) {
-    showInFileBrowserMenuItem((basePathAbs / dirState).string());
+    const fs::path currentDir = basePathAbs / dirState;
+    
+    // Menu item to display in file browser
+    showInFileBrowserMenuItem(currentDir.string());
+
+    // Menu item to create a folder
+    if (ImGui::MenuItem(ICON_MDI_FOLDER_PLUS " Create Folder")) {
+      std::string folderName = "New Folder";
+      fs::path folderPath = currentDir / folderName;
+      for (unsigned int suffix = 2; fs::exists(folderPath); ++suffix) {
+        folderName = "New Folder (" + std::to_string(suffix) + ")";
+        folderPath = currentDir / folderName;
+      }
+
+      std::error_code ec;
+      if (fs::create_directory(folderPath, ec)) {
+        renamePath = folderPath.string();
+        strncpy(renameBuffer, folderName.c_str(), sizeof(renameBuffer) - 1);
+        renameBuffer[sizeof(renameBuffer) - 1] = '\0';
+        searchFilter.clear();
+      } else {
+        Editor::Noti::add(
+          Editor::Noti::Type::ERROR,
+          "Failed to create folder: " + ec.message()
+        );
+      }
+    }
     ImGui::EndPopup();
   }
 
