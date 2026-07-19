@@ -402,6 +402,7 @@ void Editor::AssetsBrowser::draw() {
       return a->name < b->name;
     });
 
+    std::string folderToOpen{};
     for (const auto &folder : folders) {
       if(!searchFilter.empty() && !folder.contains(searchFilter)) {
         continue;
@@ -411,18 +412,42 @@ void Editor::AssetsBrowser::draw() {
 
       // Show a filled folder when it contains assets for this tab, outlined (empty) folder otherwise
       const char* folderIcon = folderHasAssets[folder] ? ICON_MDI_FOLDER : ICON_MDI_FOLDER_OUTLINE;
-      if (drawGridButton(folderPath, ImTextureRef(nullptr), folderIcon, folder, false, 1.0f)) {
-        dirState = joinDir(dirState, folder);
+      bool folderClicked = drawGridButton(
+        folderPath,
+        ImTextureRef(nullptr),
+        folderIcon,
+        folder,
+        selectedFolderPath == folderPath,
+        1.0f
+      );
+      bool folderDoubleClicked = ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered();
+
+      if(folderClicked) {
+        selectedFolderPath = folderPath;
+      }
+      if(folderDoubleClicked) {
+        folderToOpen = folder;
+      }
+      if(ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+        selectedFolderPath = folderPath;
       }
 
       if(ImGui::BeginPopupContextItem(folder.c_str())) {
-        showContextMenu(folderPath);
+        if(ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open Folder")) {
+          folderToOpen = folder;
+        }
+        showContextMenu(folderPath, false);
         ImGui::EndPopup();
       }
 
       if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
         ImGui::SetTooltip("Folder: %s", joinDir(dirState, folder).c_str());
       }
+    }
+
+    if(!folderToOpen.empty()) {
+      dirState = joinDir(dirState, folderToOpen);
+      selectedFolderPath.clear();
     }
   }
 
@@ -477,6 +502,7 @@ void Editor::AssetsBrowser::draw() {
     bool isDblClick = ImGui::IsMouseDoubleClicked(0) && ImGui::IsItemHovered();
 
     if (clicked) {
+      selectedFolderPath.clear();
       ctx.selAssetUUID = asset.getUUID();
       ImGui::makeTabVisible("Asset");
     }
@@ -534,6 +560,11 @@ void Editor::AssetsBrowser::draw() {
   }
 
   static int ctxSceneId = -1;
+  auto openScene = [&](int sceneId) {
+    ctx.project->getScenes().loadScene(sceneId);
+    ctx.project->conf.sceneIdLastOpened = sceneId;
+    ctx.project->saveConfig();
+  };
 
   if(tab.showScenes)
   {
@@ -542,8 +573,9 @@ void Editor::AssetsBrowser::draw() {
       checkLineBreak();
       auto activeScene = ctx.project->getScenes().getLoadedScene();
 
-      bool isSelected = activeScene && (activeScene->getId() == scene.id);
-      const auto &liveName = isSelected ? activeScene->getName() : scene.name;
+      bool isLoaded = activeScene && (activeScene->getId() == scene.id);
+      bool isSelected = selectedSceneId < 0 ? isLoaded : selectedSceneId == scene.id;
+      const auto &liveName = isLoaded ? activeScene->getName() : scene.name;
       const auto &displayName = liveName.empty() ? "(unnamed)" : liveName;
       auto buttonLabel = displayName + "##" + std::to_string(scene.id);
 
@@ -552,10 +584,13 @@ void Editor::AssetsBrowser::draw() {
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.5f,0.5f,0.7f,0.8f});
       }
 
-      if (ImGui::Button(buttonLabel.c_str(), textBtnSize)) {
-        ctx.project->getScenes().loadScene(scene.id);
-        ctx.project->conf.sceneIdLastOpened = scene.id;
-        ctx.project->saveConfig();
+      bool sceneClicked = ImGui::Button(buttonLabel.c_str(), textBtnSize);
+      bool sceneDoubleClicked = ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered();
+      if(sceneClicked) {
+        selectedSceneId = scene.id;
+      }
+      if(sceneDoubleClicked) {
+        openScene(scene.id);
       }
 
       if(isSelected)ImGui::PopStyleColor(2);
@@ -566,6 +601,7 @@ void Editor::AssetsBrowser::draw() {
       }
 
       if(ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+        selectedSceneId = scene.id;
         ctxSceneId = scene.id;
         ImGui::OpenPopup("SceneCtxMenu");
       }
@@ -574,6 +610,10 @@ void Editor::AssetsBrowser::draw() {
     if(ImGui::BeginPopup("SceneCtxMenu")) {
       bool canDelete = scenes.size() > 1;
 
+      if(ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open Scene")) {
+        openScene(ctxSceneId);
+      }
+
       if(ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Duplicate")) {
         ctx.project->getScenes().duplicate(ctxSceneId);
       }
@@ -581,6 +621,7 @@ void Editor::AssetsBrowser::draw() {
       if(!canDelete) ImGui::BeginDisabled();
       if(ImGui::MenuItem(ICON_MDI_TRASH_CAN_OUTLINE " Delete")) {
         ctx.project->getScenes().remove(ctxSceneId);
+        if(selectedSceneId == ctxSceneId) selectedSceneId = -1;
         ctx.project->conf.sceneIdLastOpened = ctx.project->getScenes().getEntries().empty()
           ? 0 : ctx.project->getScenes().getEntries().front().id;
         ctx.project->saveConfig();
@@ -723,10 +764,10 @@ void Editor::AssetsBrowser::draw() {
   ImGui::EndChild();
 }
 
-void Editor::AssetsBrowser::showContextMenu(const std::string& path) {
+void Editor::AssetsBrowser::showContextMenu(const std::string& path, bool showOpenItem) {
   showInFileBrowserMenuItem(path);
 
-  if(ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open")) {
+  if(showOpenItem && ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open")) {
     if (!Utils::Proc::openFile(path)) {
       Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File. This may be due to WSL path conversion failure.");
     }
