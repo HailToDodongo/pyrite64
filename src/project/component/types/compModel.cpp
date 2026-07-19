@@ -264,9 +264,19 @@ namespace Project::Component::Model
 
   Utils::AABB getAABB(Object &obj, Entry &entry) {
     Data &data = *static_cast<Data*>(entry.data.get());
-    Utils::AABB aabb = data.aabb;
-    aabb.min *= (float)0xFFFF;
-    aabb.max *= (float)0xFFFF;
+    Utils::AABB aabb{};
+    auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
+    if (!asset) return aabb;
+
+    // Imported positions already use the local units expected by scene components
+    // Reading them directly also works before the renderer has created the GPU mesh
+    for (const auto &model : asset->model.t3dm.models) {
+      for (const auto &triangle : model.triangles) {
+        for (const auto &vert : triangle.vert) {
+          aabb.addPoint({vert.pos[0], vert.pos[1], vert.pos[2]});
+        }
+      }
+    }
     return aabb;
   }
 }

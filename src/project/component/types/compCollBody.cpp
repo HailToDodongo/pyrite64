@@ -14,6 +14,7 @@
 #include "../../../utils/meshGen.h"
 #include <glm/gtc/quaternion.hpp>
 #include <algorithm>
+#include <cmath>
 
 #include "../../../../n64/engine/include/collision/types.h"
 
@@ -46,6 +47,46 @@ namespace Project::Component::CollBody
     auto data = std::make_shared<Data>();
     data->halfExtend.value = {10.0f, 10.0f, 10.0f};
     data->friction.value = 0.8f;
+
+    // Make the collider fit the size of the model, if any
+    Utils::AABB modelBounds{};
+    bool hasModelBounds = false;
+
+    // Include every static or animated model owned by the supplied object
+    auto includeModels = [&](Object &componentSource, Object &overrideSource) {
+      for (auto &entry : componentSource.components) {
+        if (entry.id != 1 && entry.id != 10) continue;
+
+        auto bounds = Component::TABLE[entry.id].funcGetAABB(overrideSource, entry);
+        const bool valid =
+          std::isfinite(bounds.min.x) && std::isfinite(bounds.min.y) && std::isfinite(bounds.min.z) &&
+          std::isfinite(bounds.max.x) && std::isfinite(bounds.max.y) && std::isfinite(bounds.max.z) &&
+          bounds.min.x <= bounds.max.x && bounds.min.y <= bounds.max.y && bounds.min.z <= bounds.max.z;
+        if (!valid) continue;
+
+        modelBounds.addPoint(bounds.min);
+        modelBounds.addPoint(bounds.max);
+        hasModelBounds = true;
+      }
+    };
+
+    includeModels(obj, obj);
+
+    // Components added to a prefab instance are stored on the instance, while its model
+    // usually lives on the prefab definition, so resolve it through the instance
+    if (obj.isPrefabInstance() && ctx.project) {
+      auto prefab = ctx.project->getAssets().getPrefabByUUID(obj.uuidPrefab.value);
+      if (prefab)
+        includeModels(prefab->obj, obj);
+    }
+
+    if(hasModelBounds) {
+      data->halfExtend.value = modelBounds.getHalfExtend();
+      data->halfExtend.value.x = std::max(data->halfExtend.value.x, 0.001f);
+      data->halfExtend.value.y = std::max(data->halfExtend.value.y, 0.001f);
+      data->halfExtend.value.z = std::max(data->halfExtend.value.z, 0.001f);
+      data->offset.value = modelBounds.getCenter();
+    }
     return data;
   }
 
