@@ -4,6 +4,7 @@
 */
 #include "scene.h"
 #include "object.h"
+#include <filesystem>
 #include <functional>
 #include "../../utils/json.h"
 #include "../../context.h"
@@ -241,7 +242,7 @@ void Project::Scene::save()
   Utils::FS::saveTextFile(scenePath + "/scene.json", serialize());
 }
 
-uint32_t Project::Scene::createPrefabFromObject(uint32_t uuid)
+uint64_t Project::Scene::createPrefabFromObject(uint32_t uuid, const std::string &subDir)
 {
   auto obj = getObjectByUUID(uuid);
   if(!obj)return 0;
@@ -282,10 +283,11 @@ uint32_t Project::Scene::createPrefabFromObject(uint32_t uuid)
   ), name.end());
   if(name.empty())name = "prefab " + std::to_string(prefab.uuid.value);
 
-  Utils::FS::saveTextFile(
-    ctx.project->getPath() + "/assets/" + name + ".prefab",
-    prefabJson
-  );
+  auto prefabPath = std::filesystem::path(ctx.project->getPath()) / "assets";
+  if(!subDir.empty())
+    prefabPath /= subDir;
+  prefabPath /= name + ".prefab";
+  Utils::FS::saveTextFile(prefabPath, prefabJson);
 
   ctx.project->getAssets().reload();
 
@@ -306,7 +308,7 @@ uint32_t Project::Scene::createPrefabFromObject(uint32_t uuid)
   obj->addPropOverride(obj->pos);
   obj->addPropOverride(obj->rot);
   obj->addPropOverride(obj->scale);
-  return 0;
+  return prefab.uuid.value;
 }
 
 void Project::Scene::unpackPrefabInstance(uint32_t uuid)

@@ -80,6 +80,38 @@ namespace
 void Editor::AssetsBrowser::draw() {
   auto &scenes = ctx.project->getScenes().getEntries();
 
+  // Converts a delivered Scene Graph object into a prefab inside the target directory
+  auto acceptObjectAsPrefabPayload = [&](const std::string &targetDir) {
+    if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(
+         "OBJECT", ImGuiDragDropFlags_AcceptBeforeDelivery
+       )) {
+      uint32_t objectUUID = *static_cast<const uint32_t*>(payload->Data);
+      auto *scene = ctx.project->getScenes().getLoadedScene();
+      auto object = scene ? scene->getObjectByUUID(objectUUID) : nullptr;
+      if(payload->Delivery && object && !object->isPrefabInstance()) {
+        std::string normalizedTargetDir = normalizeDir(targetDir);
+
+        // Prefabs always appear in their dedicated view after a successful drop
+        activeTab = TAB_IDX_PREFABS;
+        tabDirs[TAB_IDX_PREFABS] = normalizedTargetDir;
+        searchFilter.clear();
+
+        // Asset reloads are unsafe while the current frame still references textures
+        ctx.deferAction([scene, objectUUID, normalizedTargetDir]() {
+          uint64_t prefabUUID = scene->createPrefabFromObject(objectUUID, normalizedTargetDir);
+          if(prefabUUID) ctx.selAssetUUID = prefabUUID;
+        });
+      }
+    }
+  };
+
+  // Registers the last ImGui item as a prefab drop target and handles its payload
+  auto acceptObjectAsPrefabDrop = [&](const std::string &targetDir) {
+    if(!ImGui::BeginDragDropTarget()) return;
+    acceptObjectAsPrefabPayload(targetDir);
+    ImGui::EndDragDropTarget();
+  };
+
   const std::array<TabDef, 4> TABS{
     TabDef{
       .name = ICON_MDI_EARTH_BOX "  Scenes",
@@ -103,6 +135,9 @@ void Editor::AssetsBrowser::draw() {
   for (int i=0; i<(int)TABS.size(); ++i) {
     bool isActive = i == activeTab;
     if (ImGui::Selectable(TABS[i].name, isActive))activeTab = i;
+    if (i == TAB_IDX_ASSETS || i == TAB_IDX_PREFABS) {
+      acceptObjectAsPrefabDrop({});
+    }
   }
   ImGui::EndChild();
 
@@ -422,6 +457,10 @@ void Editor::AssetsBrowser::draw() {
       );
       bool folderDoubleClicked = ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered();
 
+      if(activeTab == TAB_IDX_ASSETS || activeTab == TAB_IDX_PREFABS) {
+        acceptObjectAsPrefabDrop(joinDir(dirState, folder));
+      }
+
       if(folderClicked) {
         selectedFolderPath = folderPath;
       }
@@ -711,6 +750,18 @@ void Editor::AssetsBrowser::draw() {
       ImGui::CloseCurrentPopup();
     }
     ImGui::EndPopup();
+  }
+
+  // The whole browser panel represents the currently open directory
+  ImRect directoryDropRect = ImGui::GetCurrentWindow()->InnerRect;
+  directoryDropRect.Max.y -= 1_px; // For some reason setting real height overlaps by 1px
+  if((activeTab == TAB_IDX_ASSETS || activeTab == TAB_IDX_PREFABS) &&
+     ImGui::BeginDragDropTargetCustom(
+       directoryDropRect,
+       ImGui::GetID("AssetsDirectoryDropTarget")
+     )) {
+    acceptObjectAsPrefabPayload(dirState);
+    ImGui::EndDragDropTarget();
   }
 
   bool createScriptRequested = false;
