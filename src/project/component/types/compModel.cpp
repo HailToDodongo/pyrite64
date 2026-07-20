@@ -21,6 +21,8 @@
 #include "../../../editor/pages/parts/assets/matInstanceEditor.h"
 #include "glm/gtx/matrix_decompose.hpp"
 
+#include <unordered_set>
+
 #include "../shared/meshFilter.h"
 
 namespace Project::Component::Model
@@ -268,5 +270,45 @@ namespace Project::Component::Model
     aabb.min *= (float)0xFFFF;
     aabb.max *= (float)0xFFFF;
     return aabb;
+  }
+
+  void collectVertices(Object &obj, Entry &entry, std::vector<glm::vec3> &vertices)
+  {
+    Data &data = *static_cast<Data*>(entry.data.get());
+
+    // Resolve the model asset through the object's property overrides
+    auto asset = ctx.project->getAssets().getEntryByUUID(data.model.resolve(obj));
+    if (!asset) return;
+
+    auto &models = asset->model.t3dm.models;
+
+    // Match the same mesh filter used to render the component
+    auto &filteredModels = data.filter.filterT3DM(models, obj, true);
+
+    // T3DM triangles repeat shared vertices, so keep each local position only once
+    std::unordered_set<uint64_t> uniqueVertices{};
+
+    auto appendModel = [&](const T3DM::Model &model) {
+      for (const auto &triangle : model.triangles) {
+        for (const auto &vertex : triangle.vert) {
+          // Pack the coordinates into a stable position key
+          uint64_t key = static_cast<uint16_t>(vertex.pos[0])
+            | (static_cast<uint64_t>(static_cast<uint16_t>(vertex.pos[1])) << 16)
+            | (static_cast<uint64_t>(static_cast<uint16_t>(vertex.pos[2])) << 32);
+          if (uniqueVertices.insert(key).second) {
+            vertices.emplace_back(vertex.pos[0], vertex.pos[1], vertex.pos[2]);
+          }
+        }
+      }
+    };
+
+    // An empty filter is how the renderer represents all model parts
+    if (filteredModels.empty()) {
+      for (const auto &model : models) appendModel(model);
+    } else {
+      for (uint32_t index : filteredModels) {
+        if (index < models.size()) appendModel(models[index]);
+      }
+    }
   }
 }
