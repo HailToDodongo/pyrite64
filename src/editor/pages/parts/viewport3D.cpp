@@ -1232,7 +1232,10 @@ void Editor::Viewport3D::draw()
 
     // Collect source vertices before dragging and external target vertices while dragging
     iterateObjects(rootObj, [&](Project::Object &candidateObj, Project::Component::Entry *comp) {
-      if (!comp || (comp->id != 1 && comp->id != 10)) return;
+      // Not a model of any kind or collider --> Do nothing
+      if (!comp || (comp->id != 1 && comp->id != 5 && comp->id != 10)) return;
+      // Is a collider and they are not shown --> Do nothing
+      if (comp->id == 5 && !showCollObj) return;
 
       bool isSourceObject = hasSelectedAncestor(candidateObj);
       bool excludedTarget = isSourceObject;
@@ -1240,14 +1243,19 @@ void Editor::Viewport3D::draw()
 
       std::vector<glm::vec3> localVertices{};
       PropScope::Dispatch dispatchScope(candidateObj.propOverrides, comp->uuid);
+      // Is a model
       if (comp->id == 1) {
         Project::Component::Model::collectVertices(candidateObj, *comp, localVertices);
-      } else {
+      // Is an anim model
+      } else if (comp->id == 10) {
         Project::Component::AnimModel::collectVertices(candidateObj, *comp, localVertices);
+      // Is a collider
+      } else if (comp->id == 5) {
+        Project::Component::CollBody::collectVertices(candidateObj, *comp, localVertices);
       }
       if (localVertices.empty()) return;
 
-      // Transform each local model vertex exactly as the rendered component does
+      // Transform each local component vertex exactly as its rendered geometry
       glm::vec3 skew{0.0f};
       glm::vec4 perspective{0.0f, 0.0f, 0.0f, 1.0f};
       glm::mat4 modelMatrix = glm::recompose(

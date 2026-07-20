@@ -132,6 +132,17 @@ namespace Project::Component
     void collectVertices(Object &obj, Entry &entry, std::vector<glm::vec3> &vertices);
   }
 
+  namespace CollBody
+  {
+    /**
+     * Appends the Collider preview vertices in object-local coordinates.
+     * @param obj Object used to resolve the Collider transform and properties.
+     * @param entry Collider component entry.
+     * @param vertices Destination vertex list.
+     */
+    void collectVertices(Object &obj, Entry &entry, std::vector<glm::vec3> &vertices);
+  }
+
   constexpr std::array TABLE{
     CompInfo{
       .id = 0,

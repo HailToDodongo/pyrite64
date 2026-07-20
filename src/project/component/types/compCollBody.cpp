@@ -192,4 +192,47 @@ namespace Project::Component::CollBody
       Utils::Mesh::addLinePyramid(*vp.getLines(), center, halfExt, glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, objRot);
     }
   }
+
+  void collectVertices(Object &obj, Entry &entry, std::vector<glm::vec3> &vertices)
+  {
+    Data &data = *static_cast<Data*>(entry.data.get());
+    glm::vec3 objectScale = obj.scale.resolve(obj.propOverrides);
+    glm::vec3 halfExtend = data.halfExtend.resolve(obj.propOverrides) * objectScale;
+    glm::vec3 center = data.offset.resolve(obj.propOverrides) * objectScale;
+
+    // Reuse the wireframe generator so snapping points exactly match the Collider preview
+    Renderer::Mesh previewMesh{};
+    glm::quat identity{1.0f, 0.0f, 0.0f, 0.0f};
+    switch (data.type.resolve(obj.propOverrides)) {
+      case TYPE_BOX:
+        Utils::Mesh::addLineBox(previewMesh, center, halfExtend, {}, identity);
+        break;
+      case TYPE_SPHERE:
+        Utils::Mesh::addLineSphere(previewMesh, center, halfExtend, {}, identity);
+        break;
+      case TYPE_CYLINDER:
+        Utils::Mesh::addLineCylinder(previewMesh, center, halfExtend, {}, identity);
+        break;
+      case TYPE_CAPSULE:
+        Utils::Mesh::addLineCapsule(previewMesh, center, halfExtend, {}, identity);
+        break;
+      case TYPE_CONE:
+        Utils::Mesh::addLineCone(previewMesh, center, halfExtend, {}, identity);
+        break;
+      case TYPE_PYRAMID:
+        Utils::Mesh::addLinePyramid(previewMesh, center, halfExtend, {}, identity);
+        break;
+    }
+
+    // Undo object scaling because the viewport applies the complete object matrix afterwards
+    for (const auto &vertex : previewMesh.vertLines) {
+      glm::vec3 local{};
+      for (int axis = 0; axis < 3; ++axis) {
+        local[axis] = glm::abs(objectScale[axis]) > 0.000001f
+          ? vertex.pos[axis] / objectScale[axis]
+          : 0.0f;
+      }
+      vertices.push_back(local);
+    }
+  }
 }
