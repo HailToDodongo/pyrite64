@@ -857,8 +857,12 @@ namespace ImTable
     bool disabled  (isPrefabLocked());
     ImGui::PushID(name.c_str());
     if(disabled)ImGui::BeginDisabled();
+    auto mathInputBefore = ImGui::GetMathInputActivity();
     bool changed = typedInput<T>(&value);
-    if(changed)Editor::UndoRedo::getHistory().markChanged("Edit " + name);
+    auto mathInputAfter = ImGui::GetMathInputActivity();
+    bool usedMathInput = mathInputAfter.uses != mathInputBefore.uses;
+    bool confirmed = mathInputAfter.confirmations != mathInputBefore.confirmations;
+    if(usedMathInput ? confirmed : changed)Editor::UndoRedo::getHistory().markChanged("Edit " + name);
     if(disabled)ImGui::EndDisabled();
     ImGui::PopID();
     return changed;
@@ -869,8 +873,12 @@ namespace ImTable
   {
     add(name);
     ImGui::PushID(name.c_str());
+    auto mathInputBefore = ImGui::GetMathInputActivity();
     bool changed = typedInput<T>(&prop.value);
-    if(changed)Editor::UndoRedo::getHistory().markChanged("Edit " + name);
+    auto mathInputAfter = ImGui::GetMathInputActivity();
+    bool usedMathInput = mathInputAfter.uses != mathInputBefore.uses;
+    bool confirmed = mathInputAfter.confirmations != mathInputBefore.confirmations;
+    if(usedMathInput ? confirmed : changed)Editor::UndoRedo::getHistory().markChanged("Edit " + name);
     ImGui::PopID();
     return changed;
   }
@@ -945,8 +953,12 @@ namespace ImTable
       ImGui::SameLine();
     }
 
+    auto mathInputBefore = ImGui::GetMathInputActivity();
     res = editFunc(val);
-    if (res) Editor::UndoRedo::getHistory().markChanged("Edit " + name);
+    auto mathInputAfter = ImGui::GetMathInputActivity();
+    bool usedMathInput = mathInputAfter.uses != mathInputBefore.uses;
+    bool confirmed = mathInputAfter.confirmations != mathInputBefore.confirmations;
+    if (usedMathInput ? confirmed : res) Editor::UndoRedo::getHistory().markChanged("Edit " + name);
 
     if(isDisabled)ImGui::EndDisabled();
 

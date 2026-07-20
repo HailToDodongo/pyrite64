@@ -9,6 +9,18 @@
 
 namespace ImGui
 {
+  struct MathInputActivity
+  {
+    uint64_t uses{};
+    uint64_t confirmations{};
+  };
+
+  /**
+   * Returns counters used to distinguish live previews from confirmed mathematical inputs.
+   * @return Current mathematical input activity counters.
+   */
+  MathInputActivity GetMathInputActivity();
+
   /**
    * Evaluates a mathematical expression containing arithmetic operators and parentheses.
    * @param expression Expression to evaluate.

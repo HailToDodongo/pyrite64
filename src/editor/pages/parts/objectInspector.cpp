@@ -429,10 +429,14 @@ void Editor::ObjectInspector::draw() {
               text.clear();
             }
           } else {
+            auto mathInputBefore = ImGui::GetMathInputActivity();
             if (ImGui::MathInputFloat(inputId.c_str(), &value)) {
               applyValue(value);
             }
-            handleHistory(snapshotLabel);
+            auto mathInputAfter = ImGui::GetMathInputActivity();
+            // Expression confirmed --> Record one undo step
+            if (mathInputAfter.confirmations != mathInputBefore.confirmations)
+              Editor::UndoRedo::getHistory().markChanged(snapshotLabel);
           }
         };
 

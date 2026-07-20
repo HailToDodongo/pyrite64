@@ -24,6 +24,7 @@ namespace
 
   // ImGui IDs distinguish repeated labels across tables, components and vector axes
   std::unordered_map<ImGuiID, MathInputState> mathInputStates{};
+  ImGui::MathInputActivity mathInputActivity{};
 
   /**
    * Parses arithmetic expressions through recursive descent and operator precedence.
@@ -246,6 +247,9 @@ namespace
   template<typename T>
   bool mathInputScalar(const char *label, T *value)
   {
+    // Record that the surrounding inspector control uses a mathematical input
+    ++mathInputActivity.uses;
+
     // Keep one editable expression per concrete widget
     ImGuiID id = ImGui::GetID(label);
     auto [stateIt, inserted] = mathInputStates.try_emplace(id);
@@ -274,10 +278,12 @@ namespace
 
     bool enterPressed = (active || wasActive)
       && (ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsKeyPressed(ImGuiKey_KeypadEnter));
-    bool confirmed = enterPressed || ImGui::IsItemDeactivated();
+    bool confirmed = (active || wasActive)
+      && (enterPressed || ImGui::IsItemDeactivated());
     if (confirmed) {
       // Replace the expression with its calculated value on Enter or focus loss
       state.expression = formatMathValue(*value);
+      ++mathInputActivity.confirmations;
       if (active) ImGui::ClearActiveID();
       active = false;
     }
@@ -314,6 +320,10 @@ namespace
     ImGui::EndGroup();
     return changed;
   }
+}
+
+ImGui::MathInputActivity ImGui::GetMathInputActivity() {
+  return mathInputActivity;
 }
 
 bool ImGui::MathInputFloat(const char *label, float *value) {
