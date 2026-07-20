@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <limits>
+#include <optional>
 #include <type_traits>
 #include <unordered_map>
 
@@ -19,6 +20,7 @@ namespace
   struct MathInputState
   {
     std::string expression{};
+    double baseValue{};
     bool active{false};
   };
 
@@ -33,6 +35,7 @@ namespace
   {
     private:
       const char *cursor{};
+      std::optional<double> currentValue{};
 
       /**
        * Advances the parser cursor past consecutive whitespace characters.
@@ -148,14 +151,19 @@ namespace
       }
 
       /**
-       * Parses a numeric literal or a parenthesised expression.
+       * Parses a current-value token, numeric literal or parenthesised expression.
        * @param value Destination for the evaluated primary expression.
        * @return True when a complete primary value was parsed successfully.
        */
       bool parsePrimary(double &value)
       {
-        // A primary value is either a parenthesised expression or a floating-point literal
+        // A primary value can be the supplied current value, a parenthesised expression or a number
         skipSpaces();
+        if (consume('#')) {
+          if (!currentValue.has_value()) return false;
+          value = *currentValue;
+          return std::isfinite(value);
+        }
         if (consume('(')) {
           if (!parseExpression(value) || !consume(')')) return false;
           return true;
@@ -173,9 +181,13 @@ namespace
       /**
        * Creates a parser positioned at the beginning of an expression.
        * @param expression Expression whose storage remains valid during parsing.
+       * @param currentValue Optional value substituted for # tokens.
        */
-      explicit MathExpressionParser(const std::string &expression)
-        : cursor{expression.c_str()}
+      explicit MathExpressionParser(
+        const std::string &expression,
+        std::optional<double> currentValue = std::nullopt
+      )
+        : cursor{expression.c_str()}, currentValue{currentValue}
       {
       }
 
@@ -257,6 +269,7 @@ namespace
     if (inserted || !state.active) {
       // Inactive fields mirror external changes made by gizmos, scripts or other inspectors
       state.expression = formatMathValue(*value);
+      state.baseValue = static_cast<double>(*value);
     }
 
     // Auto-select preserves the normal behaviour of numeric ImGui inputs on activation
@@ -266,7 +279,7 @@ namespace
 
     bool changed = false;
     double result{};
-    bool valid = MathExpressionParser{state.expression}.parse(result);
+    bool valid = MathExpressionParser{state.expression, state.baseValue}.parse(result);
     if ((active || wasActive) && valid) {
       // Apply every complete intermediate expression so the viewport updates in real time
       T calculated = convertMathValue<T>(result);
@@ -334,6 +347,15 @@ bool ImGui::MathInputFloat(const char *label, float *value) {
 bool ImGui::EvaluateMathExpression(const std::string &expression, double &result) {
   // Expose the parser for custom text fields such as mixed multi-selection values
   return MathExpressionParser{expression}.parse(result);
+}
+
+bool ImGui::EvaluateMathExpression(
+  const std::string &expression,
+  double &result,
+  double currentValue
+) {
+  // Supply the per-object base value used by # during multi-selection edits
+  return MathExpressionParser{expression, currentValue}.parse(result);
 }
 
 bool ImGui::MathInputInt(const char *label, int *value) {

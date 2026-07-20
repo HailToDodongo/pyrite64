@@ -30,6 +30,15 @@ namespace ImGui
   bool EvaluateMathExpression(const std::string &expression, double &result);
 
   /**
+   * Evaluates a mathematical expression using # as the supplied current value.
+   * @param expression Expression to evaluate.
+   * @param result Destination for the calculated value.
+   * @param currentValue Value substituted for every # token.
+   * @return True when the complete expression is valid.
+   */
+  bool EvaluateMathExpression(const std::string &expression, double &result, double currentValue);
+
+  /**
    * Draws a floating-point input that evaluates mathematical expressions in real time.
    * @param label ImGui identifier and optional visible label.
    * @param value Floating-point value updated with valid expression results.
