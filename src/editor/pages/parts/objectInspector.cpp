@@ -11,7 +11,6 @@
 #include <functional>
 #include <iterator>
 #include <optional>
-#include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -304,27 +303,6 @@ void Editor::ObjectInspector::draw() {
 
     static std::unordered_map<std::string, std::string> mixedValueCache{};
 
-    auto parseFloatList = [](const std::string &text, float *out, int count) {
-      std::string cleaned = text;
-      for (auto &ch : cleaned) {
-        if (ch == ',' || ch == ';' || ch == '(' || ch == ')' || ch == '[' || ch == ']') {
-          ch = ' ';
-        }
-      }
-
-      std::stringstream stream(cleaned);
-      for (int i = 0; i < count; ++i) {
-        if (!(stream >> out[i])) {
-          return false;
-        }
-      }
-      return true;
-    };
-
-    auto parseFloat = [&](const std::string &text, float &out) {
-      return parseFloatList(text, &out, 1);
-    };
-
     if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen)) {
       if (ImTable::start("General", nullptr)) {
         bool mixedName = false;
@@ -437,18 +415,21 @@ void Editor::ObjectInspector::draw() {
           ImGui::SetNextItemWidth(width);
           if (mixed) {
             auto &text = mixedValueCache[inputId];
-            ImGui::InputTextWithHint(inputId.c_str(), "-", &text);
+            bool edited = ImGui::InputTextWithHint(inputId.c_str(), "-", &text);
             handleHistory(snapshotLabel);
-            if (ImGui::IsItemDeactivatedAfterEdit()) {
-              float parsed = value;
-              if (parseFloat(text, parsed)) {
+            if (edited) {
+              double result{};
+              if (ImGui::EvaluateMathExpression(text, result)) {
+                float parsed = static_cast<float>(result);
                 value = parsed;
                 applyValue(parsed);
               }
+            }
+            if (ImGui::IsItemDeactivatedAfterEdit()) {
               text.clear();
             }
           } else {
-            if (ImGui::InputFloat(inputId.c_str(), &value)) {
+            if (ImGui::MathInputFloat(inputId.c_str(), &value)) {
               applyValue(value);
             }
             handleHistory(snapshotLabel);
@@ -629,7 +610,7 @@ void Editor::ObjectInspector::draw() {
         std::function<bool(glm::vec3*)> cb = [](glm::vec3 *val) -> bool {
           glm::vec3 scale = *val;
           if (scale == glm::vec3(0,0,0)) {
-            if (!ImGui::InputFloat3("##", glm::value_ptr(*val))) return false;
+            if (!ImGui::MathInputFloatN("##", glm::value_ptr(*val), 3)) return false;
             *val = glm::vec3(val->x + val->y + val->z);
             return true;
           }
@@ -641,7 +622,7 @@ void Editor::ObjectInspector::draw() {
             if (i > 0) ImGui::SameLine(0, g.Style.ItemInnerSpacing.x);
             bool isZero = glm::abs(scale[i]) < 0.0001f;
             if (isZero) ImGui::BeginDisabled();
-            if (ImGui::InputFloat("", &(*val)[i])) ratio = (*val)[i] / scale[i];
+            if (ImGui::MathInputFloat("", &(*val)[i])) ratio = (*val)[i] / scale[i];
             if (isZero) ImGui::EndDisabled();
             ImGui::PopID();
             ImGui::PopItemWidth();

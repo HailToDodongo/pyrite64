@@ -19,10 +19,12 @@
 #include "../../utils/filePicker.h"
 #include "../../utils/prop.h"
 #include "theme.h"
+#include "mathInput.h"
 #include "glm/vec3.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include <functional>
+#include <type_traits>
 
 #include "imgui_internal.h"
 
@@ -820,27 +822,27 @@ namespace ImTable
   bool typedInput(T *value)
   {
     if constexpr (std::is_same_v<T, float>) {
-      return ImGui::InputFloat("##", value);
+      return ImGui::MathInputFloat("##", value);
     } else if constexpr (std::is_same_v<T, bool>) {
       return ImGui::Checkbox("##", value);
     } else if constexpr (std::is_same_v<T, int>) {
-      return ImGui::InputInt("##", value);
+      return ImGui::MathInputInt("##", value);
     } else if constexpr (std::is_same_v<T, uint32_t>) {
-      return ImGui::InputScalar("##", ImGuiDataType_U32, value);
+      return ImGui::MathInputU32("##", value);
     } else if constexpr (std::is_same_v<T, uint16_t>) {
-      return ImGui::InputScalar("##", ImGuiDataType_U16, value);
+      return ImGui::MathInputU16("##", value);
     } else if constexpr (std::is_same_v<T, uint8_t>) {
-      return ImGui::InputScalar("##", ImGuiDataType_U8, value);
+      return ImGui::MathInputU8("##", value);
     } else if constexpr (std::is_same_v<T, glm::vec2>) {
-      return ImGui::InputFloat2("##", glm::value_ptr(*value));
+      return ImGui::MathInputFloatN("##", glm::value_ptr(*value), 2);
     } else if constexpr (std::is_same_v<T, glm::vec3>) {
-      return ImGui::InputFloat3("##", glm::value_ptr(*value));
+      return ImGui::MathInputFloatN("##", glm::value_ptr(*value), 3);
     } else if constexpr (std::is_same_v<T, glm::vec4>) {
       return ImGui::ColorEdit4("##", glm::value_ptr(*value), ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_AlphaPreviewHalf);
     } else if constexpr (std::is_same_v<T, glm::quat>) {
       return ImGui::rotationInput(*value);
     } else if constexpr (std::is_same_v<T, glm::ivec2>) {
-      return ImGui::InputInt2("##", glm::value_ptr(*value));
+      return ImGui::MathInputIntN("##", glm::value_ptr(*value), 2);
     } else if constexpr (std::is_same_v<T, std::string>) {
       return ImGui::InputText("##", value);
     } else {
