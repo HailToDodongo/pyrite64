@@ -119,15 +119,16 @@ namespace P64
       SceneConf conf{};
       uint16_t id;
 
-      /// Saved physics transforms for render interpolation restore
+      /// Extrapolated transforms written to objects for rendering. Only the shown
+      /// values are kept; restore re-bases against the body's synced snapshot
       struct SavedTransform {
-        Object *obj;
-        fm_vec3_t pos;
-        fm_quat_t rot;
+        Coll::RigidBody *body;
+        fm_vec3_t shownPos;
+        fm_quat_t shownRot;
       };
       std::vector<SavedTransform> savedTransforms_{};
 
-      void applyRenderInterpolation(float dt);
+      void applyRigidBodyRenderInterpolation(float dt);
       void restoreInterpolatedTransforms();
 
       void loadSceneConfig();

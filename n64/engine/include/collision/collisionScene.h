@@ -282,7 +282,8 @@ namespace P64::Coll {
 
     void rebuildCachedConstraintLookup();
     void wakeIsland(RigidBody *rigidBody);
-    void wakeBodiesTransformedExternally();
+    void wakeMovedBody(RigidBody *body);
+    void syncExternallyMovedBodies();
     void updateSleepStates();
     void refreshContacts();
     void removeInactiveContacts();

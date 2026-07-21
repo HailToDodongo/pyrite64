@@ -167,6 +167,8 @@ namespace P64::Coll {
     previousStepRotation_ = rotation_;
     previousStepPosition_ = position_;
     previousStepScale_ = object->scale;
+    syncedOwnerPos_ = object->pos;
+    syncedOwnerRot_ = object->rot;
   }
 
   void RigidBody::setMass(float newMass) {

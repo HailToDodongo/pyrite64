@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cassert>
 #include <cinttypes>
+#include <cstring>
 #include <functional>
 #include <algorithm>
 #include <limits>
@@ -710,17 +711,61 @@ namespace P64::Coll {
     }
   }
 
-  void CollisionScene::wakeBodiesTransformedExternally() {
-    std::vector<RigidBody *> wakeCandidates;
 
-    for(RigidBody *body : rigidBodies_) {
-      if(!body || !body->isEnabled_ || !body->isSleeping_) continue;
-      if(!rigidBodyTransformExceededSleepThreshold(body)) continue;
-      wakeCandidates.push_back(body);
+  // Wake everything a moved body can affect. Kinematic bodies are not part of
+  // sleep islands, so wake whatever rests on them instead.
+  void CollisionScene::wakeMovedBody(RigidBody *body) {
+    if(shouldTrackSleepState(body)) {
+      wakeIsland(body);
+      return;
     }
 
-    for(RigidBody *body : wakeCandidates) {
-      wakeIsland(body);
+    for(int i = 0; i < cachedConstraintCount_; ++i) {
+      const ContactConstraint &cc = cachedConstraints_[i];
+      if(!cc.isActive || cc.isTrigger) continue;
+      RigidBody *other = nullptr;
+      if(cc.rigidBodyA == body)      other = cc.rigidBodyB;
+      else if(cc.rigidBodyB == body) other = cc.rigidBodyA;
+      if(other) wakeIsland(other);
+    }
+  }
+
+
+  /// @brief Handle external changes to owner objects and apply them to the physics bodies.
+  /// Scripts may move or rotate an owner object directly: the difference between the
+  /// owner and what the last step wrote back is applied to the body as a teleport
+  /// delta on top of the physics state, so manual changes and the physical response mesh together. 
+  /// Scripts may also change the body state directly (setPosition etc.) or rescale the owner
+  void CollisionScene::syncExternallyMovedBodies() {
+    for(RigidBody *body : rigidBodies_) {
+      if(!body || !body->owner_) continue;
+      Object *owner = body->owner_;
+
+      bool applied = false;
+      if(memcmp(&owner->pos, &body->syncedOwnerPos_, sizeof(fm_vec3_t)) != 0) {
+        const fm_vec3_t delta = (owner->pos - body->syncedOwnerPos_) * getInvGfxScale();
+        body->position_ += delta;
+        body->previousStepPosition_ += delta;
+        body->syncedOwnerPos_ = owner->pos;
+        applied = true;
+      }
+      if(memcmp(&owner->rot, &body->syncedOwnerRot_, sizeof(fm_quat_t)) != 0) {
+        fm_quat_t deltaRot = owner->rot * quatConjugate(body->syncedOwnerRot_);
+        fm_quat_norm(&deltaRot, &deltaRot);
+        body->rotation_ = deltaRot * body->rotation_;
+        fm_quat_norm(&body->rotation_, &body->rotation_);
+        body->previousStepRotation_ = deltaRot * body->previousStepRotation_;
+        body->syncedOwnerRot_ = owner->rot;
+        applied = true;
+      }
+
+      if(!body->isEnabled_) continue;
+
+      if(applied) {
+        wakeMovedBody(body);
+      } else if(body->isSleeping_ && rigidBodyTransformExceededSleepThreshold(body)) {
+        wakeIsland(body);
+      }
     }
   }
 
@@ -2096,8 +2141,9 @@ namespace P64::Coll {
     // recalculates world AABBs and marks if transform changed for potential broadphase optimization
     updateMeshColliderWorldStates();
 
-    // Wake sleeping rigid bodies that were moved or rotated externally.
-    wakeBodiesTransformedExternally();
+    // Adopt owner transforms that scripts changed directly and wake sleeping
+    // bodies whose physics state was moved externally (e.g. via setPosition)
+    syncExternallyMovedBodies();
     ticksWakePrep = get_ticks() - stageStart;
 
     stageStart = get_ticks();
@@ -2206,9 +2252,11 @@ namespace P64::Coll {
         body->worldAabb_ = aabbUnion(body->worldAabb_, collider->worldAabb_);
       }
 
-      // Sync visual object with physics position
+      // Sync visual object with physics position and save snapshot, so external changes to the owner can be detected next step
       body->owner_->pos = body->position_ * getGfxScale();
       body->owner_->rot = body->rotation_;
+      body->syncedOwnerPos_ = body->owner_->pos;
+      body->syncedOwnerRot_ = body->owner_->rot;
     }
 
     // Update RigidBody sleep states

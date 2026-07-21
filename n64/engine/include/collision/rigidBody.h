@@ -86,6 +86,8 @@ namespace P64::Coll {
 
     const fm_vec3_t &previousStepPosition() const { return previousStepPosition_; }
     const fm_quat_t &previousStepRotation() const { return previousStepRotation_; }
+    const fm_vec3_t &syncedOwnerPos() const { return syncedOwnerPos_; }
+    const fm_quat_t &syncedOwnerRot() const { return syncedOwnerRot_; }
 
     const AABB &worldAabb() const { return worldAabb_; }
     const Matrix3x3 &inverseWorldInertiaTensor() const { return invWorldInertiaTensor_; }
@@ -178,6 +180,10 @@ namespace P64::Coll {
     fm_vec3_t previousStepPosition_{};
     fm_quat_t previousStepRotation_{};
     fm_vec3_t previousStepScale_{};
+    // Owner transform as last written by the physics->object sync. If the owner no longer matches (e.g. it got moved) 
+    // the scene adopts the new transform as a teleport at the start of the next step
+    fm_vec3_t syncedOwnerPos_{};
+    fm_quat_t syncedOwnerRot_{};
     float inverseMass_{1.0f};
     float timeScale_{1.0f};
     float gravityScale_{1.0f};
