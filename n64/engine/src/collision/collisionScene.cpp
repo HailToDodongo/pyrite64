@@ -742,14 +742,14 @@ namespace P64::Coll {
       Object *owner = body->owner_;
 
       bool applied = false;
-      if(memcmp(&owner->pos, &body->syncedOwnerPos_, sizeof(fm_vec3_t)) != 0) {
+      if(owner->pos != body->syncedOwnerPos_) {
         const fm_vec3_t delta = (owner->pos - body->syncedOwnerPos_) * getInvGfxScale();
         body->position_ += delta;
         body->previousStepPosition_ += delta;
         body->syncedOwnerPos_ = owner->pos;
         applied = true;
       }
-      if(memcmp(&owner->rot, &body->syncedOwnerRot_, sizeof(fm_quat_t)) != 0) {
+      if(owner->rot != body->syncedOwnerRot_) {
         fm_quat_t deltaRot = owner->rot * quatConjugate(body->syncedOwnerRot_);
         fm_quat_norm(&deltaRot, &deltaRot);
         body->rotation_ = deltaRot * body->rotation_;

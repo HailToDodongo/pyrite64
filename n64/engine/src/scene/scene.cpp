@@ -412,8 +412,8 @@ void P64::Scene::applyRigidBodyRenderInterpolation(float dt)
     if(!obj) continue;
 
     // A transform that doesn't match the last physics writeback holds a manual change that physics hasn't adopted yet
-    if(memcmp(&obj->pos, &body->syncedOwnerPos(), sizeof(fm_vec3_t)) != 0 ||
-       memcmp(&obj->rot, &body->syncedOwnerRot(), sizeof(fm_quat_t)) != 0) continue;
+    if(obj->pos != body->syncedOwnerPos() ||
+       obj->rot != body->syncedOwnerRot()) continue;
 
     // Extrapolate forward by the remaining time
     const fm_vec3_t &vel = body->linearVelocity();
@@ -437,12 +437,12 @@ void P64::Scene::restoreInterpolatedTransforms()
 
     // If a script/update changed the transform after extrapolation, re-base its change onto the real physics transform 
     //so the extrapolation offset doesn't leak into it
-    if(memcmp(&obj->pos, &saved.shownPos, sizeof(saved.shownPos)) == 0) {
+    if(obj->pos == saved.shownPos) {
       obj->pos = basePos;
     } else {
       obj->pos = basePos + (obj->pos - saved.shownPos);
     }
-    if(memcmp(&obj->rot, &saved.shownRot, sizeof(saved.shownRot)) == 0) {
+    if(obj->rot == saved.shownRot) {
       obj->rot = baseRot;
     } else {
       obj->rot = (obj->rot * Coll::quatConjugate(saved.shownRot)) * baseRot;
