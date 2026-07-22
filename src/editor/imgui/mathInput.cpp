@@ -3,12 +3,12 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
+#include "quickjs.h"
 
 #include <algorithm>
 #include <charconv>
 #include <cctype>
 #include <cmath>
-#include <cstdlib>
 #include <limits>
 #include <optional>
 #include <type_traits>
@@ -29,181 +29,132 @@ namespace
   ImGui::MathInputActivity mathInputActivity{};
 
   /**
-   * Parses arithmetic expressions through recursive descent and operator precedence.
+   * Evaluates restricted arithmetic expressions with an isolated QuickJS context.
    */
-  class MathExpressionParser
+  class MathExpressionEvaluator
   {
     private:
-      const char *cursor{};
-      std::optional<double> currentValue{};
+      JSRuntime *runtime{};
+      JSContext *context{};
 
       /**
-       * Advances the parser cursor past consecutive whitespace characters.
+       * Checks that an expression contains only supported arithmetic tokens.
+       * @param expression Expression to validate.
+       * @return True when no JavaScript identifiers or statements are present.
        */
-      void skipSpaces()
+      bool hasOnlyArithmeticTokens(const std::string &expression) const
       {
-        // Whitespace is allowed between every token
-        while (*cursor && std::isspace(static_cast<unsigned char>(*cursor)))
-          ++cursor;
-      }
-
-      /**
-       * Consumes a token when it is the next non-space character.
-       * @param token Character expected at the current parser position.
-       * @return True when the token was found and consumed.
-       */
-      bool consume(char token)
-      {
-        // Advance only when the next non-space character matches the requested token
-        skipSpaces();
-        if (*cursor != token) return false;
-        ++cursor;
+        if (expression.empty() || expression.size() > 1024) return false;
+        for (unsigned char token : expression) {
+          if (std::isdigit(token) || std::isspace(token)) continue;
+          switch (token) {
+            case '.': case '+': case '-': case '*': case '/':
+            case '%': case '^': case '(': case ')': case '#':
+            case 'e': case 'E':
+              break;
+            default:
+              return false;
+          }
+        }
         return true;
-      }
-
-      /**
-       * Parses addition and subtraction expressions.
-       * @param value Destination for the evaluated expression.
-       * @return True when this precedence level was parsed successfully.
-       */
-      bool parseExpression(double &value)
-      {
-        // Addition and subtraction are evaluated after all higher-precedence operations
-        if (!parseTerm(value)) return false;
-        
-        while (true) {
-          if (consume('+')) {
-            double rhs{};
-            if (!parseTerm(rhs)) return false;
-            value += rhs;
-          } else if (consume('-')) {
-            double rhs{};
-            if (!parseTerm(rhs)) return false;
-            value -= rhs;
-          } else {
-            return std::isfinite(value);
-          }
-        }
-      }
-
-      /**
-       * Parses multiplication, division and remainder expressions.
-       * @param value Destination for the evaluated term.
-       * @return True when this precedence level was parsed successfully.
-       */
-      bool parseTerm(double &value)
-      {
-        // Multiplication, division and remainder share precedence and associate to the left
-        if (!parseUnary(value)) return false;
-
-        while (true) {
-          if (consume('*')) {
-            double rhs{};
-            if (!parseUnary(rhs)) return false;
-            value *= rhs;
-          } else if (consume('/')) {
-            double rhs{};
-            // Division by zero invalidates the expression without changing the property
-            if (!parseUnary(rhs) || rhs == 0.0) return false;
-            value /= rhs;
-          } else if (consume('%')) {
-            double rhs{};
-            if (!parseUnary(rhs) || rhs == 0.0) return false;
-            value = std::fmod(value, rhs);
-          } else {
-            return std::isfinite(value);
-          }
-        }
-      }
-
-      /**
-       * Parses recursive unary plus and minus operators.
-       * @param value Destination for the evaluated unary expression.
-       * @return True when this precedence level was parsed successfully.
-       */
-      bool parseUnary(double &value)
-      {
-        // Recursive unary parsing accepts chains such as --2 and preserves power precedence
-        if (consume('+')) return parseUnary(value);
-        if (consume('-')) {
-          if (!parseUnary(value)) return false;
-          value = -value;
-          return true;
-        }
-        return parsePower(value);
-      }
-
-      /**
-       * Parses right-associative exponentiation expressions.
-       * @param value Destination for the evaluated power expression.
-       * @return True when this precedence level was parsed successfully.
-       */
-      bool parsePower(double &value)
-      {
-        // Parsing the exponent through unary makes powers right-associative and allows 2^-2
-        if (!parsePrimary(value)) return false;
-        if (consume('^')) {
-          double exponent{};
-          if (!parseUnary(exponent)) return false;
-          value = std::pow(value, exponent);
-        }
-        return std::isfinite(value);
-      }
-
-      /**
-       * Parses a current-value token, numeric literal or parenthesised expression.
-       * @param value Destination for the evaluated primary expression.
-       * @return True when a complete primary value was parsed successfully.
-       */
-      bool parsePrimary(double &value)
-      {
-        // A primary value can be the supplied current value, a parenthesised expression or a number
-        skipSpaces();
-        if (consume('#')) {
-          if (!currentValue.has_value()) return false;
-          value = *currentValue;
-          return std::isfinite(value);
-        }
-        if (consume('(')) {
-          if (!parseExpression(value) || !consume(')')) return false;
-          return true;
-        }
-
-        char *numberEnd{};
-        // strtod also supports decimal and scientific notation
-        value = std::strtod(cursor, &numberEnd);
-        if (numberEnd == cursor) return false;
-        cursor = numberEnd;
-        return std::isfinite(value);
       }
 
     public:
       /**
-       * Creates a parser positioned at the beginning of an expression.
-       * @param expression Expression whose storage remains valid during parsing.
-       * @param currentValue Optional value substituted for # tokens.
+       * Creates the isolated runtime used by all mathematical inspector inputs.
        */
-      explicit MathExpressionParser(
-        const std::string &expression,
-        std::optional<double> currentValue = std::nullopt
-      )
-        : cursor{expression.c_str()}, currentValue{currentValue}
+      MathExpressionEvaluator()
       {
+        runtime = JS_NewRuntime();
+        if (!runtime) return;
+        JS_SetMemoryLimit(runtime, 1024 * 1024);
+        context = JS_NewContext(runtime);
       }
 
       /**
-       * Evaluates the complete expression and rejects trailing invalid tokens.
-       * @param value Destination for the evaluated result.
-       * @return True when the complete expression is valid and finite.
+       * Releases the private QuickJS context and runtime.
        */
-      bool parse(double &value)
+      ~MathExpressionEvaluator()
       {
-        // A valid result must consume the complete input except for trailing whitespace
-        if (!parseExpression(value)) return false;
-        skipSpaces();
-        return *cursor == '\0' && std::isfinite(value);
+        if (context) JS_FreeContext(context);
+        if (runtime) JS_FreeRuntime(runtime);
+      }
+
+      MathExpressionEvaluator(const MathExpressionEvaluator&) = delete;
+      MathExpressionEvaluator& operator=(const MathExpressionEvaluator&) = delete;
+
+      /**
+       * Evaluates an arithmetic expression and optionally supplies the value represented by #.
+       * @param expression Arithmetic expression to evaluate.
+       * @param value Destination for the finite numeric result.
+       * @param currentValue Optional value substituted for # tokens.
+       * @return True when QuickJS produced a finite number.
+       */
+      bool evaluate(
+        const std::string &expression,
+        double &value,
+        std::optional<double> currentValue = std::nullopt
+      )
+      {
+        if (!context || !hasOnlyArithmeticTokens(expression)) return false;
+
+        std::string jsExpression{};
+        jsExpression.reserve(expression.size() * 2 + 2);
+        jsExpression.push_back('(');
+        for (char token : expression) {
+          if (token == '#') {
+            if (!currentValue.has_value()) return false;
+            jsExpression += "__currentValue";
+          } else if (token == '^') {
+            // JavaScript spells exponentiation as ** while the inspector exposes ^
+            jsExpression += "**";
+          } else {
+            jsExpression.push_back(token);
+          }
+        }
+        jsExpression.push_back(')');
+
+        JSValue global = JS_GetGlobalObject(context);
+        JS_SetPropertyStr(
+          context,
+          global,
+          "__currentValue",
+          JS_NewFloat64(context, currentValue.value_or(0.0))
+        );
+        JS_FreeValue(context, global);
+
+        JSValue result = JS_Eval(
+          context,
+          jsExpression.c_str(),
+          jsExpression.size(),
+          "<math-input>",
+          JS_EVAL_TYPE_GLOBAL
+        );
+        if (JS_IsException(result)) {
+          // Reading the exception clears it before the next live evaluation
+          JSValue exception = JS_GetException(context);
+          JS_FreeValue(context, exception);
+          JS_FreeValue(context, result);
+          return false;
+        }
+
+        bool valid = JS_IsNumber(result)
+          && JS_ToFloat64(context, &value, result) == 0
+          && std::isfinite(value);
+        JS_FreeValue(context, result);
+        return valid;
       }
   };
+
+  /**
+   * Returns the evaluator shared by mathematical inspector inputs.
+   * @return Process-local evaluator instance.
+   */
+  MathExpressionEvaluator& getMathExpressionEvaluator()
+  {
+    static MathExpressionEvaluator evaluator{};
+    return evaluator;
+  }
 
   /**
    * Formats a numeric value using its shortest round-trippable representation.
@@ -279,8 +230,9 @@ namespace
 
     bool changed = false;
     double result{};
-    bool valid = MathExpressionParser{state.expression, state.baseValue}.parse(result);
-    if ((active || wasActive) && valid) {
+    bool valid = (active || wasActive)
+      && getMathExpressionEvaluator().evaluate(state.expression, result, state.baseValue);
+    if (valid) {
       // Apply every complete intermediate expression so the viewport updates in real time
       T calculated = convertMathValue<T>(result);
       if (*value != calculated) {
@@ -340,13 +292,13 @@ ImGui::MathInputActivity ImGui::GetMathInputActivity() {
 }
 
 bool ImGui::MathInputFloat(const char *label, float *value) {
-  // Public typed wrappers share the same parser and interaction state
+  // Public typed wrappers share the same evaluator and interaction state
   return mathInputScalar(label, value);
 }
 
 bool ImGui::EvaluateMathExpression(const std::string &expression, double &result) {
-  // Expose the parser for custom text fields such as mixed multi-selection values
-  return MathExpressionParser{expression}.parse(result);
+  // Expose the evaluator for custom text fields such as mixed multi-selection values
+  return getMathExpressionEvaluator().evaluate(expression, result);
 }
 
 bool ImGui::EvaluateMathExpression(
@@ -355,7 +307,7 @@ bool ImGui::EvaluateMathExpression(
   double currentValue
 ) {
   // Supply the per-object base value used by # during multi-selection edits
-  return MathExpressionParser{expression, currentValue}.parse(result);
+  return getMathExpressionEvaluator().evaluate(expression, result, currentValue);
 }
 
 bool ImGui::MathInputInt(const char *label, int *value) {
