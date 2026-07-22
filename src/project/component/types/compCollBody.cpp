@@ -242,32 +242,34 @@ namespace Project::Component::CollBody
     glm::vec3 localOffset = data.offset.resolve(obj.propOverrides);
     glm::vec3 center = objPos + (objRot * (localOffset * objScale));
     auto type = data.type.resolve(obj.propOverrides);
+    // Line vertices store colour channels as bytes rather than normalised floats, hence the * 255.0f
+    glm::u8vec4 colliderColor = glm::u8vec4(
+      glm::vec4{glm::clamp(ctx.prefs.colliderColor, 0.0f, 1.0f), 1.0f} * 255.0f
+    );
 
     if(type == TYPE_BOX) // Box
     {
-      glm::vec4 aabbCol{0.0f, 1.0f, 1.0f, 1.0f};
-
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, aabbCol, objRot);
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, aabbCol, objRot);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, colliderColor, objRot);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, colliderColor, objRot);
     } else if(type == TYPE_SPHERE) // Sphere
     {
-      Utils::Mesh::addLineSphere(*vp.getLines(), center, halfExt, glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, objRot);
+      Utils::Mesh::addLineSphere(*vp.getLines(), center, halfExt, colliderColor, objRot);
     }
     else if(type == TYPE_CYLINDER) // Cylinder
     {
-      Utils::Mesh::addLineCylinder(*vp.getLines(), center, halfExt, glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, objRot);
+      Utils::Mesh::addLineCylinder(*vp.getLines(), center, halfExt, colliderColor, objRot);
     }
     else if(type == TYPE_CAPSULE) // Capsule
     {
-      Utils::Mesh::addLineCapsule(*vp.getLines(), center, halfExt, glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, objRot);
+      Utils::Mesh::addLineCapsule(*vp.getLines(), center, halfExt, colliderColor, objRot);
     }
     else if(type == TYPE_CONE) // Cone
     {
-      Utils::Mesh::addLineCone(*vp.getLines(), center, halfExt, glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, objRot);
+      Utils::Mesh::addLineCone(*vp.getLines(), center, halfExt, colliderColor, objRot);
     }
     else if(type == TYPE_PYRAMID) // Pyramid
     {
-      Utils::Mesh::addLinePyramid(*vp.getLines(), center, halfExt, glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, objRot);
+      Utils::Mesh::addLinePyramid(*vp.getLines(), center, halfExt, colliderColor, objRot);
     }
   }
 }
