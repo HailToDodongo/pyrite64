@@ -15,6 +15,7 @@
 
 #include "scene/globalState.h"
 #include "collision/meshCollider.h"
+#include "collision/gfxScale.h"
 #include "vi/swapChain.h"
 #include "lib/memory.h"
 #include "lib/logger.h"
@@ -415,9 +416,9 @@ void P64::Scene::applyRigidBodyRenderInterpolation(float dt)
     if(obj->pos != body->syncedOwnerPos() ||
        obj->rot != body->syncedOwnerRot()) continue;
 
-    // Extrapolate forward by the remaining time
+    // Extrapolate forward by the remaining time (velocity is in physics units, obj->pos in gfx units)
     const fm_vec3_t &vel = body->linearVelocity();
-    obj->pos = obj->pos + vel * dt;
+    obj->pos = obj->pos + vel * dt * Coll::getGfxScale();
 
     const fm_vec3_t &angVel = body->angularVelocity();
     if(!Coll::vec3IsZero(angVel)) {
