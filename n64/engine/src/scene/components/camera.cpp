@@ -24,6 +24,8 @@ void P64::Comp::Camera::initDelete(Object &obj, Camera* data, InitData* initData
   cam.fov  = initData->fov;
   cam.near = initData->near;
   cam.far  = initData->far;
+  cam.orthoSize = initData->orthoSize;
+  cam.projection = initData->projection;
 
   cam.aspectRatio = initData->aspectRatio;
   if(cam.aspectRatio <= 0) {

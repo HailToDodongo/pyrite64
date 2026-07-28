@@ -22,7 +22,13 @@ P64::Camera::~Camera() {
 
 void P64::Camera::update([[maybe_unused]] float deltaTime)
 {
-  t3d_viewport_set_perspective(&viewports, fov, aspectRatio, near, far);
+  if(projection == Projection::ORTHOGRAPHIC) {
+    float halfHeight = orthoSize;
+    float halfWidth = orthoSize * aspectRatio;
+    t3d_viewport_set_ortho(&viewports, -halfWidth, halfWidth, -halfHeight, halfHeight, near, far);
+  } else {
+    t3d_viewport_set_perspective(&viewports, fov, aspectRatio, near, far);
+  }
   t3d_viewport_set_view_matrix(&viewports, &viewMatrix);
 }
 

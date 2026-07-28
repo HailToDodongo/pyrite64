@@ -21,6 +21,8 @@ namespace P64::Comp
       OBJECT = 1,
     };
 
+    using Projection = P64::Camera::Projection;
+
     struct InitData
     {
       int vpOffset[2];
@@ -29,11 +31,33 @@ namespace P64::Comp
       float near;
       float far;
       float aspectRatio;
+      float orthoSize;
       Mode mode;
+      Projection projection;
     };
 
     P64::Camera camera{};
     Mode mode;
+
+    /**
+     * Switches the camera over to a perspective projection.
+     * @param fov vertical fov in radians
+     */
+    void setPerspective(float fov) { camera.setPerspective(fov); }
+
+    /**
+     * Switches the camera over to an orthographic projection.
+     * @param orthoSize vertical half-size of the view volume in world units
+     */
+    void setOrthographic(float orthoSize) { camera.setOrthographic(orthoSize); }
+
+    /**
+     * Switches between perspective and orthographic projection,
+     * keeping the settings (fov / ortho-size) of both.
+     */
+    void setProjection(Projection projection) { camera.setProjection(projection); }
+
+    [[nodiscard]] Projection getProjection() const { return camera.getProjection(); }
 
     static uint32_t getAllocSize([[maybe_unused]] InitData* initData)
     {

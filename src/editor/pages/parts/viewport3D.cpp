@@ -745,6 +745,8 @@ void Editor::Viewport3D::draw()
           camera.pos = camObj->pos.resolve(camObj->propOverrides);
           camera.rot = glm::normalize(camObj->rot.resolve(camObj->propOverrides));
           camera.fov = camView.fov;
+          camera.isOrtho = camView.isOrtho;
+          camera.orthoSize = camView.orthoSize;
           camera.velocity = {0,0,0};
           camera.zoomSpeed = 0.0f;
           camLocked = true;
@@ -756,7 +758,11 @@ void Editor::Viewport3D::draw()
       boundCameraUUID = 0; // bound object no longer exists
     }
   }
-  if(!camLocked) camera.fov = 70.0f; // restore the editor default when free-flying
+  if(!camLocked) { // restore the editor defaults when free-flying
+    camera.fov = 70.0f;
+    camera.orthoSize = Renderer::Camera::DEFAULT_ORTHO_SIZE;
+    camera.isOrtho = freeFlyOrtho;
+  }
 
   // Displayed image size; letterboxed to the camera aspect when locked, otherwise fills the area.
   ImVec2 viewSize = availSize;
@@ -910,7 +916,9 @@ void Editor::Viewport3D::draw()
   {
     if(ImGui::IsKeyPressed(ctx.prefs.keymap.toggleOrtho))
     {
-      camera.isOrtho = !camera.isOrtho;
+      freeFlyOrtho = !freeFlyOrtho;
+      // while bound to a camera the projection is mirrored from it, in that case don't fight it
+      if(!camLocked)camera.isOrtho = freeFlyOrtho;
     }
 
     // Handle object deletion when Delete is pressed while the viewport is focused and an object is selected

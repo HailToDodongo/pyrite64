@@ -13,6 +13,13 @@ namespace P64
 {
   class Camera
   {
+    public:
+      enum class Projection : uint8_t
+      {
+        PERSPECTIVE = 0,
+        ORTHOGRAPHIC = 1,
+      };
+
     private:
       T3DViewport viewports{};
       fm_mat4_t viewMatrix{};
@@ -22,10 +29,14 @@ namespace P64
 
       uint8_t needsProjUpdate{false};
     public:
-      float fov{};
+      float fov{}; // FOV in radians, only used in perspective mode
       float near{};
       float far{};
       float aspectRatio{};
+      // Vertical half-size of the view volume in world units, only used in orthographic mode.
+      // The horizontal half-size is derived from it via aspectRatio.
+      float orthoSize{};
+      Projection projection{Projection::PERSPECTIVE};
 
       Camera();
       CLASS_NO_COPY_MOVE(Camera);
@@ -47,6 +58,34 @@ namespace P64
       }
 
       void setScreenArea(int x, int y, int width, int height);
+
+      /**
+       * Switches the camera over to a perspective projection.
+       * @param newFov vertical fov in radians
+       */
+      void setPerspective(float newFov) {
+        fov = newFov;
+        projection = Projection::PERSPECTIVE;
+      }
+
+      /**
+       * Switches the camera over to an orthographic projection.
+       * @param newOrthoSize vertical half-size of the view volume in world units
+       */
+      void setOrthographic(float newOrthoSize) {
+        orthoSize = newOrthoSize;
+        projection = Projection::ORTHOGRAPHIC;
+      }
+
+      /**
+       * Switches between perspective and orthographic projection,
+       * keeping the settings (fov / ortho-size) of both.
+       */
+      void setProjection(Projection newProjection) {
+        projection = newProjection;
+      }
+
+      [[nodiscard]] Projection getProjection() const { return projection; }
 
       /**
        * Sets new camera values based on a look-at transform.

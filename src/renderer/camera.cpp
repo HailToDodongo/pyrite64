@@ -12,7 +12,6 @@ namespace
 {
   constexpr glm::vec3 WORLD_UP{0,1,0};
   constexpr glm::vec3 WORLD_FORWARD{0,0,-1};
-  constexpr float ORTHO_SIZE = 310.0f;
 }
 
 Renderer::Camera::Camera() {
@@ -54,7 +53,6 @@ void Renderer::Camera::apply(UniformGlobal &uniGlobal)
   if(isOrtho)
   {
     uniGlobal.spriteSize = {10, 10};
-    float orthoSize = ORTHO_SIZE;
     uniGlobal.projMat = glm::ortho(
       -orthoSize * aspect,
       orthoSize * aspect,
@@ -124,7 +122,7 @@ void Renderer::Camera::moveDelta(glm::vec2 screenDelta) {
   float pixelsToWorld = 0.001f;
   if (isOrtho) {
     if (screenSize.y > 0.0f) {
-      pixelsToWorld = (ORTHO_SIZE * 2.0f) / screenSize.y;
+      pixelsToWorld = (orthoSize * 2.0f) / screenSize.y;
     }
   } else {
     float dist = glm::length(pivot - pos);
