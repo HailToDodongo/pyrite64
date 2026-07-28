@@ -582,15 +582,19 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
 
     // hack to get thicker lines with AA, just draw again with a 1px offset in screen-space
     if(ctx.prefs.renderFactorAA > 1.0f) {
-      auto oldMat = uniGlobal.projMat[2];
-      uniGlobal.projMat[2][0] += 1.0f / uniGlobal.screenSize.x;
-      uniGlobal.projMat[2][1] -= 1.0f / uniGlobal.screenSize.y;
+      // the depth column only yields a constant offset under perspective, where 'w' is -viewZ.
+      // in ortho 'w' is 1, which would scale the offset by depth, so shift the position column.
+      int col = camera.isOrtho ? 3 : 2;
+      float dir = camera.isOrtho ? -1.0f : 1.0f;
+      auto oldMat = uniGlobal.projMat[col];
+      uniGlobal.projMat[col][0] += dir / uniGlobal.screenSize.x;
+      uniGlobal.projMat[col][1] -= dir / uniGlobal.screenSize.y;
       SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
 
       if(showGrid)objGrid.draw(renderPass3D, cmdBuff);
       objLines.draw(renderPass3D, cmdBuff);
 
-      uniGlobal.projMat[2] = oldMat;
+      uniGlobal.projMat[col] = oldMat;
       SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
     }
     if(ctx.debugMode)SDL_PopGPUDebugGroup(cmdBuff);
