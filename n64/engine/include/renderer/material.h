@@ -88,7 +88,7 @@ namespace P64::Renderer
     constexpr static uint32_t FLAG_ENV        = 1 << 15;
 
     constexpr static uint32_t FLAG_T3D_VERT_FX = 1 << 16;
-    constexpr static uint32_t FLAG_T3D_        = 1 << 17;
+    constexpr static uint32_t FLAG_T3D_ZOFFSET = 1 << 17;
 
     constexpr static uint32_t FLAG_OVERRIDE    = 1 << 18;
     constexpr static uint32_t FLAG_DUAL_PH     = 1 << 19;

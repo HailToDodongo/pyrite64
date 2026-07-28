@@ -69,6 +69,9 @@ namespace Project::Assets
     PROP_S32(zprim); PROP_BOOL(zprimSet);
     PROP_S32(zdelta);
 
+    // fixed offset added to the final screen-space depth (t3d_state_set_depth_offset)
+    PROP_S32(depthOffset); PROP_BOOL(depthOffsetSet);
+
     PROP_BOOL(persp);    PROP_BOOL(perspSet);
     PROP_S32(alphaComp); PROP_BOOL(alphaCompSet);
 
