@@ -14,6 +14,7 @@
 #include "capsuleSweep.h"
 #include "sphereSweep.h"
 #include <array>
+#include <deque>
 #include <functional>
 #include <cstddef>
 #include <unordered_map>
@@ -21,7 +22,6 @@
 #include <vector>
 
 namespace P64::Coll {
-  constexpr int INITIAL_CONSTRAINT_CAPACITY = 10;
   constexpr float DEFAULT_FIXED_DT = 1.0f / 50.0f;
   constexpr fm_vec3_t DEFAULT_GRAVITY = {0.0f, -9.8f, 0.0f};
   constexpr uint8_t DEFAULT_VELOCITY_SOLVER_ITERATIONS = 8;
@@ -140,7 +140,7 @@ namespace P64::Coll {
     std::unordered_map<const Object *, RigidBody *> ownerRigidBodies_{};
     std::vector<Collider *> colliders_{};
     std::unordered_map<const Object *, std::vector<Collider *>> ownerColliders_{};
-    std::vector<ContactConstraint> cachedConstraints_{};
+    std::deque<ContactConstraint> cachedConstraints_{};
     std::unordered_map<ContactConstraintKey, int, ContactConstraintKeyHash> cachedConstraintLookup_{};
     std::vector<ContactConstraint *> solverConstraints_{};
 

@@ -165,9 +165,7 @@ namespace P64::Coll {
     meshColliders_.clear();
     cachedConstraintCount_ = 0;
     cachedConstraints_.clear();
-    cachedConstraints_.reserve(INITIAL_CONSTRAINT_CAPACITY);
     cachedConstraintLookup_.clear();
-    cachedConstraintLookup_.reserve(INITIAL_CONSTRAINT_CAPACITY);
     solverConstraints_.clear();
     solverBodies_.clear();
     solverHeaders_.clear();
