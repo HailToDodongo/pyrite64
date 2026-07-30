@@ -189,7 +189,6 @@ namespace P64::Coll {
     float gravityScale_{1.0f};
     float angularDamping_{0.03f};
     uint32_t transformVersion_{0};
-    NodeProxy aabbTreeNodeId_{NULL_NODE};
     uint16_t sleepCounter_{0};
     bool hasGravity_{true};
     bool isEnabled_{true};
