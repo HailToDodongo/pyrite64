@@ -66,6 +66,8 @@ namespace P64::Comp
 
     static void initDelete([[maybe_unused]] Object& obj, Camera* data, InitData* initData);
 
+    static void onEvent(Object& obj, Camera* data, const ObjectEvent& event);
+
     static void update([[maybe_unused]] Object& obj, [[maybe_unused]] Camera* data, [[maybe_unused]] float deltaTime);
 
     static void draw([[maybe_unused]] Object& obj, [[maybe_unused]] Camera* data, [[maybe_unused]] float deltaTime) {
