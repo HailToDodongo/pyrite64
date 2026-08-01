@@ -39,34 +39,36 @@ namespace
 
   DragDropTask dragDropTask{};
 
-  struct PrefabDropTask {
-    uint64_t prefabUUID{0};
+  struct AssetDropTask {
+    uint64_t assetUUID{0};
     uint32_t targetUUID{0};
     bool asChild{false};
   };
 
-  PrefabDropTask prefabDropTask{};
+  AssetDropTask assetDropTask{};
   ImVec2 lastInsertLineStart{};
   ImVec2 lastInsertLineEnd{};
   bool hasInsertLine{false};
 
   /**
-   * Accepts a prefab asset payload and records where its scene instance should be created.
+   * Accepts a prefab or 3D model asset and records where its scene object should be created.
    * @param targetUUID Destination object UUID, or zero to add at the scene root.
    * @param asChild Whether the new instance should become a child of the target.
    */
-  void acceptPrefabDrop(uint32_t targetUUID, bool asChild)
+  void acceptSceneAssetDrop(uint32_t targetUUID, bool asChild)
   {
     const ImGuiPayload* payload = ImGui::GetDragDropPayload();
     if (!payload || !payload->IsDataType("ASSET")) return;
 
-    uint64_t prefabUUID = *static_cast<const uint64_t*>(payload->Data);
-    if (!ctx.project->getAssets().getPrefabByUUID(prefabUUID)) return;
+    uint64_t assetUUID = *static_cast<const uint64_t*>(payload->Data);
+    auto asset = ctx.project->getAssets().getEntryByUUID(assetUUID);
+    if (!asset || (asset->type != Project::FileType::PREFAB
+        && asset->type != Project::FileType::MODEL_3D)) return;
 
     if (ImGui::AcceptDragDropPayload("ASSET")) {
-      prefabDropTask.prefabUUID = prefabUUID;
-      prefabDropTask.targetUUID = targetUUID;
-      prefabDropTask.asChild = asChild;
+      assetDropTask.assetUUID = assetUUID;
+      assetDropTask.targetUUID = targetUUID;
+      assetDropTask.asChild = asChild;
     }
   }
 
@@ -198,7 +200,9 @@ namespace
     bool acceptsPayload = activePayload && activePayload->IsDataType("OBJECT");
     if (activePayload && activePayload->IsDataType("ASSET")) {
       uint64_t assetUUID = *static_cast<const uint64_t*>(activePayload->Data);
-      acceptsPayload = ctx.project->getAssets().getPrefabByUUID(assetUUID) != nullptr;
+      auto asset = ctx.project->getAssets().getEntryByUUID(assetUUID);
+      acceptsPayload = asset && (asset->type == Project::FileType::PREFAB
+        || asset->type == Project::FileType::MODEL_3D);
     }
 
     if (hovered && acceptsPayload) {
@@ -220,7 +224,7 @@ namespace
         res = true;
       }
       if (!prefabEditObj)
-        acceptPrefabDrop(uuid, false);
+        acceptSceneAssetDrop(uuid, false);
       ImGui::EndDragDropTarget();
     }
     ImGui::PopStyleColor();
@@ -458,14 +462,14 @@ namespace
       ImGui::EndDragDropTarget();
     }
 
-    // Keep prefab child drops in the centre of the row, away from insertion lines
+    // Keep asset child drops in the centre of the row, away from insertion lines
     if (!prefabEditObj && !obj.isPrefabInstance()) {
-      ImRect prefabTargetRect{nodeRectMin, nodeRectMax};
-      prefabTargetRect.Min.y += 4_px;
-      prefabTargetRect.Max.y -= 4_px;
+      ImRect assetTargetRect{nodeRectMin, nodeRectMax};
+      assetTargetRect.Min.y += 4_px;
+      assetTargetRect.Max.y -= 4_px;
       ImGui::PushID(obj.uuid);
-      if (ImGui::BeginDragDropTargetCustom(prefabTargetRect, ImGui::GetID("PrefabChildDrop"))) {
-        acceptPrefabDrop(obj.parent ? obj.uuid : 0, obj.parent != nullptr);
+      if (ImGui::BeginDragDropTargetCustom(assetTargetRect, ImGui::GetID("SceneAssetChildDrop"))) {
+        acceptSceneAssetDrop(obj.parent ? obj.uuid : 0, obj.parent != nullptr);
         ImGui::EndDragDropTarget();
       }
       ImGui::PopID();
@@ -596,7 +600,7 @@ void Editor::SceneGraph::draw()
   if (!scene)return;
 
   dragDropTask = {};
-  prefabDropTask = {};
+  assetDropTask = {};
   hasInsertLine = false;
   deleteObj = nullptr;
   deleteSelection = false;
@@ -641,7 +645,7 @@ void Editor::SceneGraph::draw()
     drawObjectNode(*scene, root, keyDelete);
   }
 
-  // Use the remaining tree space as a drop target for root-level prefab instances
+  // Use the remaining tree space as a drop target for root-level prefab or model objects
   if (!prefabEditObj && ImGui::IsDragDropActive()) {
     ImVec2 emptySize = ImGui::GetContentRegionAvail();
     constexpr float INSERT_DROP_HEIGHT = 8.0f;
@@ -656,11 +660,12 @@ void Editor::SceneGraph::draw()
       ImGui::InvisibleButton("##ScenePrefabDropTarget", emptySize);
 
       const ImGuiPayload* payload = ImGui::GetDragDropPayload();
-      bool isPrefabPayload = payload && payload->IsDataType("ASSET")
-        && ctx.project->getAssets().getPrefabByUUID(
-          *static_cast<const uint64_t*>(payload->Data)
-        );
-      if (isPrefabPayload && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
+      auto draggedAsset = payload && payload->IsDataType("ASSET")
+        ? ctx.project->getAssets().getEntryByUUID(*static_cast<const uint64_t*>(payload->Data))
+        : nullptr;
+      bool isSceneAsset = draggedAsset && (draggedAsset->type == Project::FileType::PREFAB
+        || draggedAsset->type == Project::FileType::MODEL_3D);
+      if (isSceneAsset && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
         ImGui::GetWindowDrawList()->AddLine(
           lineStart,
           lineEnd,
@@ -672,7 +677,7 @@ void Editor::SceneGraph::draw()
       // Hide the default full-area frame while preserving the empty-space hit zone
       ImGui::PushStyleColor(ImGuiCol_DragDropTarget, ImVec4(0, 0, 0, 0));
       if (ImGui::BeginDragDropTarget()) {
-        acceptPrefabDrop(0, false);
+        acceptSceneAssetDrop(0, false);
         ImGui::EndDragDropTarget();
       }
       ImGui::PopStyleColor();
@@ -702,32 +707,45 @@ void Editor::SceneGraph::draw()
       UndoRedo::getHistory().markChanged("Move Object");
   }
 
-  if (prefabDropTask.prefabUUID) {
+  if (assetDropTask.assetUUID) {
+    auto asset = ctx.project->getAssets().getEntryByUUID(assetDropTask.assetUUID);
     auto &root = scene->getRootObject();
-    bool targetIsRoot = prefabDropTask.targetUUID == root.uuid;
+    bool targetIsRoot = assetDropTask.targetUUID == root.uuid;
     std::shared_ptr<Project::Object> target{};
-    if (prefabDropTask.targetUUID && !targetIsRoot) {
-      target = scene->getObjectByUUID(prefabDropTask.targetUUID);
+    if (assetDropTask.targetUUID && !targetIsRoot) {
+      target = scene->getObjectByUUID(assetDropTask.targetUUID);
     }
 
-    bool targetExists = !prefabDropTask.targetUUID || targetIsRoot || target;
-    bool canAddAsChild = !prefabDropTask.asChild || targetIsRoot
+    bool targetExists = !assetDropTask.targetUUID || targetIsRoot || target;
+    bool canAddAsChild = !assetDropTask.asChild || targetIsRoot
       || (target && !target->isPrefabInstance());
 
-    // A stale target or a child drop on a prefab must not create an instance elsewhere
-    if (targetExists && canAddAsChild) {
-      auto added = scene->addPrefabInstance(prefabDropTask.prefabUUID);
+    // A stale target or a child drop on a prefab must not create an object elsewhere
+    if (asset && targetExists && canAddAsChild) {
+      bool isPrefab = asset->type == Project::FileType::PREFAB;
+      auto added = isPrefab
+        ? scene->addPrefabInstance(assetDropTask.assetUUID)
+        : scene->addModelObject(assetDropTask.assetUUID);
       if (added) {
+        // Root-level objects start at the scene origin
         glm::vec3 position{0.0f};
-        if (prefabDropTask.asChild && target) {
+        // Dropped over an object --> Set same global position and set as child
+        if (assetDropTask.asChild && target) {
           position = target->pos.resolve(target->propOverrides);
           scene->moveObject(added->uuid, target->uuid, true);
-        } else if (prefabDropTask.targetUUID) {
-          scene->moveObject(added->uuid, prefabDropTask.targetUUID, false);
+        // Dropped beside an object --> Use the shared parent position and set as sibling
+        } else if (assetDropTask.targetUUID) {
+          // It is being set as a child of another object --> Set same global position
+          if (target && target->parent)
+            position = target->parent->pos.resolve(target->parent->propOverrides);
+          scene->moveObject(added->uuid, assetDropTask.targetUUID, false);
         }
+        // Apply the position after moving the object to its final place in the tree
         added->pos.resolve(added->propOverrides) = position;
+        // Focus the newly created object in the editor
         ctx.setObjectSelection(added->uuid);
-        UndoRedo::getHistory().markChanged("Add Prefab");
+        // Record the completed drop as an undoable action
+        UndoRedo::getHistory().markChanged(isPrefab ? "Add Prefab" : "Add Model");
       }
     }
   }

@@ -1167,17 +1167,26 @@ void Editor::Viewport3D::draw()
   {
     if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET"))
     {
-      uint64_t prefabUUID = *((uint64_t*)payload->Data);
-      auto prefab = ctx.project->getAssets().getPrefabByUUID(prefabUUID);
-      if(prefab) {
-        UndoRedo::getHistory().markChanged("Add Prefab");
-        auto newObj = scene->addPrefabInstance(prefabUUID);
+      // Resolve the dragged asset from the UUID stored in the browser payload
+      uint64_t assetUUID = *static_cast<const uint64_t*>(payload->Data);
+      auto asset = ctx.project->getAssets().getEntryByUUID(assetUUID);
+
+      // Only prefabs and 3D models can create objects in the viewport
+      if(asset && (asset->type == Project::FileType::PREFAB
+          || asset->type == Project::FileType::MODEL_3D)) {
+        // Create the appropriate scene object and keep the drop as one undoable action
+        bool isPrefab = asset->type == Project::FileType::PREFAB;
+        UndoRedo::getHistory().markChanged(isPrefab ? "Add Prefab" : "Add Model");
+        auto newObj = isPrefab
+          ? scene->addPrefabInstance(assetUUID)
+          : scene->addModelObject(assetUUID);
         if (newObj) {
-          // place in front of camera view
+          // Place the new object in front of the current camera view
           glm::vec3 camForward = camera.rot * glm::vec3{0,0,-1};
           glm::vec3 camPos = camera.pos;
           newObj->pos.resolve(newObj->propOverrides) = camPos + camForward * 150.0f;
 
+          // Focus the newly created object in the editor
           ctx.setObjectSelection(newObj->uuid);
         }
       }

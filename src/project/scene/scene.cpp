@@ -21,6 +21,8 @@
 namespace
 {
   constexpr float DEF_MODEL_SCALE = 1.0f;
+  constexpr int COMP_ID_MODEL_STATIC = 1;
+  constexpr int COMP_ID_MODEL_ANIMATED = 10;
 
   /**
    * Checks whether a target object belongs to the subtree of a given ancestor.
@@ -156,6 +158,27 @@ std::shared_ptr<Project::Object> Project::Scene::addPrefabInstance(uint64_t pref
   obj->addPropOverride(obj->scale);
 
   return addObject(root, obj);
+}
+
+std::shared_ptr<Project::Object> Project::Scene::addModelObject(uint64_t modelUUID)
+{
+  AssetManagerEntry* asset = ctx.project->getAssets().getEntryByUUID(modelUUID);
+  if (!asset || asset->type != FileType::MODEL_3D) return nullptr;
+
+  std::shared_ptr<Object> obj = addObject(root);
+  obj->name = std::filesystem::path{asset->name}.stem().string();
+
+  // Models containing animation clips use the animated component automatically
+  bool isAnimated = !asset->model.t3dm.animations.empty();
+  obj->addComponent(isAnimated ? COMP_ID_MODEL_ANIMATED : COMP_ID_MODEL_STATIC);
+
+  Component::Entry &component = obj->components.back();
+  if (isAnimated)
+    Component::AnimModel::setModel(component, modelUUID);
+  else
+    Component::Model::setModel(component, modelUUID);
+
+  return obj;
 }
 
 void Project::Scene::removeObject(Object &obj) {

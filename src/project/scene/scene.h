@@ -79,6 +79,13 @@ namespace Project
 
       std::shared_ptr<Object> addPrefabInstance(uint64_t prefabUUID);
 
+      /**
+       * Creates an object with a static or animated Model component for a 3D model asset.
+       * @param modelUUID UUID of the 3D model asset.
+       * @return Created scene object, or null when the asset is not a 3D model.
+       */
+      std::shared_ptr<Object> addModelObject(uint64_t modelUUID);
+
       void removeObject(Object &obj);
       void removeAllObjects();
 

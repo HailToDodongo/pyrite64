@@ -112,6 +112,26 @@ namespace Project::Component
     void setScript(Entry &entry, uint64_t scriptUUID, bool openScriptComboBox);
   }
 
+  namespace Model
+  {
+    /**
+     * Assigns a 3D model asset to a static Model component.
+     * @param entry Static Model component entry to update.
+     * @param modelUUID UUID of the 3D model asset.
+     */
+    void setModel(Entry &entry, uint64_t modelUUID);
+  }
+
+  namespace AnimModel
+  {
+    /**
+     * Assigns a 3D model asset to an animated Model component.
+     * @param entry Animated Model component entry to update.
+     * @param modelUUID UUID of the 3D model asset.
+     */
+    void setModel(Entry &entry, uint64_t modelUUID);
+  }
+
   constexpr std::array TABLE{
     CompInfo{
       .id = 0,
