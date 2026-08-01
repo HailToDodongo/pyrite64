@@ -258,6 +258,7 @@ add_executable(pyrite64 src/main.cpp
         src/build/prefabBuilder.cpp
         src/project/component/types/compConstraint.cpp
         src/project/component/types/compCulling.cpp
+        src/project/component/types/compSurface.cpp
         src/editor/pages/parts/nodeEditor.cpp
         src/project/component/shared/materialInstance.cpp
         src/project/component/shared/meshFilter.cpp

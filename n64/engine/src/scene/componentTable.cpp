@@ -19,6 +19,7 @@
 #include "scene/components/nodeGraph.h"
 #include "scene/components/animModel.h"
 #include "scene/components/charBody.h"
+#include "scene/components/surface.h"
 
 // some template magic to auto-detect if a function exists in a component
 #define HAS_FUNC_TPL(NAME_HAS, NAME_GET, FUNC) \
@@ -69,5 +70,6 @@ namespace P64
     SET_COMP(AnimModel),
     SET_COMP(RigidBody),
     SET_COMP(CharBody),
+    SET_COMP(Surface),
   };
 }

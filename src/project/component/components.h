@@ -90,6 +90,7 @@ namespace Project::Component
   MAKE_COMP(NodeGraph)
   MAKE_COMP(AnimModel)
   MAKE_COMP(CharBody)
+  MAKE_COMP(Surface)
 
   namespace Camera
   {
@@ -284,6 +285,19 @@ namespace Project::Component
       .funcSerialize = CharBody::serialize,
       .funcDeserialize = CharBody::deserialize,
       .funcBuild = CharBody::build,
+      .funcGetAABB = nullptr
+    },
+    CompInfo{
+      .id = 13,
+      .prio = -1, // surfaces must exist before scripts/components that may fetch them in init
+      .icon = ICON_MDI_TEXTURE " ",
+      .name = "Surface",
+      .docSlug = "/manual/editor/components/surface",
+      .funcInit = Surface::init,
+      .funcDraw = Surface::draw,
+      .funcSerialize = Surface::serialize,
+      .funcDeserialize = Surface::deserialize,
+      .funcBuild = Surface::build,
       .funcGetAABB = nullptr
     },
   };

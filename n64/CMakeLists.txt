@@ -89,6 +89,8 @@ add_executable(n64_engine
         engine/src/scene/components/charBody.cpp
         engine/src/scene/componentTable.cpp
         engine/src/scene/components/culling.cpp
+        engine/include/scene/components/surface.h
+        engine/src/scene/components/surface.cpp
         engine/include/renderer/material.h
         engine/src/scene/components/constraint.cpp
         engine/src/scene/components/camera.cpp
