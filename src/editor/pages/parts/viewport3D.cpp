@@ -849,10 +849,10 @@ void Editor::Viewport3D::draw()
 
   bool hasSelection = !ctx.getSelectedObjectUUIDs().empty();
 
-  // "V" key enables vertex snapping globally unless a text field is receiving keyboard input
+  // The assigned key enables vertex snapping globally unless a text field is receiving keyboard input
   bool vertexSnapMode = vertexSnapActive || (
     hasSelection && ctx.selSubPath.empty() && !ImGui::GetIO().WantTextInput
-    && ImGui::IsKeyDown(ImGuiKey_V)
+    && ImGui::IsKeyDown(ctx.prefs.keymap.snapVertices)
   );
 
   // Vertex dragging owns the left mouse button and must not start a box selection
