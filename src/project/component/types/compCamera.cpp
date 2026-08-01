@@ -34,6 +34,7 @@ namespace Project::Component::Camera
     PROP_FLOAT(orthoSize);
     PROP_S32(mode);
     PROP_S32(projection);
+    Property<uint32_t> visMask{"visMask", 0xFF};
   };
 
   std::shared_ptr<void> init(Object &obj) {
@@ -62,6 +63,7 @@ namespace Project::Component::Camera
       .set(data.orthoSize)
       .set(data.mode)
       .set(data.projection)
+      .set(data.visMask)
       .doc;
   }
 
@@ -76,6 +78,7 @@ namespace Project::Component::Camera
     Utils::JSON::readProp(doc, data->orthoSize, 300.0f);
     Utils::JSON::readProp(doc, data->mode, 0);
     Utils::JSON::readProp(doc, data->projection, PROJ_PERSPECTIVE);
+    Utils::JSON::readProp(doc, data->visMask, 0xFFu);
     return data;
   }
 
@@ -92,6 +95,7 @@ namespace Project::Component::Camera
     ctx.fileObj.write<float>(data.orthoSize.resolve(obj));
     ctx.fileObj.write<uint8_t>(data.mode.resolve(obj));
     ctx.fileObj.write<uint8_t>(data.projection.resolve(obj));
+    ctx.fileObj.write<uint8_t>(data.visMask.resolve(obj));
   }
 
   void update(Object &obj, Entry &entry)
@@ -141,6 +145,8 @@ namespace Project::Component::Camera
       ImTable::addObjProp("Near", data.near);
       ImTable::addObjProp("Far", data.far);
       ImTable::addObjProp("Aspect", data.aspect);
+      ImTable::addMultiSelectMask8("Sees Layers", data.visMask.resolve(obj),
+        ctx.project->conf.visLayerNames, "<Nothing>");
       ImTable::end();
     }
   }

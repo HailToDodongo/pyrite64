@@ -36,7 +36,8 @@ namespace P64
       uint16_t id{};
       uint16_t group{};
       uint16_t flags{};
-      uint16_t compCount{0};
+      uint8_t compCount{0};
+      uint8_t visMask{0xFF};
 
       // extra data, is overlapping with component data if unused
       fm_quat_t rot{};

@@ -30,7 +30,8 @@ namespace
       .set(obj.uuidPrefab)
       .set(obj.pos)
       .set(obj.rot)
-      .set(obj.scale);
+      .set(obj.scale)
+      .set(obj.visMask);
 
     auto ovr = nlohmann::json::object();
     for(auto &[key, val] : obj.propOverrides) {
@@ -63,6 +64,12 @@ namespace
 void Project::Object::addComponent(int compID) {
   if (compID < 0 || compID >= static_cast<int>(Component::TABLE.size()))return;
   auto &def = Component::TABLE[compID];
+
+  if (components.size() >= MAX_COMPONENTS) {
+    Utils::Logger::log("Object '" + name + "' reached the component limit (max. 255)", Utils::Logger::LEVEL_ERROR);
+    Editor::Noti::add(Editor::Noti::Type::ERROR, "Object '" + name + "' reached the component limit (max. 255)");
+    return;
+  }
 
   // if components already contains a rigidbody don't add another one and show an error message instead
   if (def.id == 11) // rigidbody
@@ -120,6 +127,7 @@ void Project::Object::deserialize(Scene *scene, nlohmann::json &doc)
   Utils::JSON::readProp(doc, pos);
   Utils::JSON::readProp(doc, rot);
   Utils::JSON::readProp(doc, scale, {1,1,1});
+  Utils::JSON::readProp(doc, visMask, 1u);
 
   propOverrides.clear();
   if(doc.contains("propOverrides"))

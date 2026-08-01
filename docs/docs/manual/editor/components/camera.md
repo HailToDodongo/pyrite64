@@ -20,6 +20,7 @@ Multiple cameras can be active at once (e.g. for split-screen).
 | **Near** | Near clip plane distance. |
 | **Far** | Far clip plane distance. |
 | **Aspect** | Aspect ratio used for the projection. |
+| **Sees Layers** | Visibility layers this camera renders. An object is only drawn if it shares at least one layer with the camera (set via **Visibility** in the object inspector). By default a camera sees all layers. Layers can be named in the project settings. |
 
 ## Switching the projection at runtime
 

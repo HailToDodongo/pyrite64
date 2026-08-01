@@ -325,6 +325,7 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
     {
       //debugf(" - %d\n", obj->id);
       if(!obj->isEnabled())continue;
+      if(!(obj->visMask & cam->visMask))continue;
       auto compRefs = obj->getCompRefs();
 
       for (uint32_t i=0; i<obj->compCount; ++i)

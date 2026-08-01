@@ -34,6 +34,7 @@ namespace P64::Comp
       float orthoSize;
       Mode mode;
       Projection projection;
+      uint8_t visMask;
     };
 
     P64::Camera camera{};

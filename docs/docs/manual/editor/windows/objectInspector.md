@@ -12,6 +12,10 @@ The top section holds the object **Name**. For prefab instances it also shows th
 comes from, with a button to switch between editing the instance and editing the prefab source
 (see the Prefabs section below).
 
+It also contains the object's **Visibility** layers: during the 3D pass, an object is only
+drawn by cameras that share at least one of its layers (see the camera's **Sees Layers**
+option).
+
 ## Transform
 
 The transform section edits the object's **Position**, **Rotation** and **Scale**. Values are

@@ -37,6 +37,8 @@ namespace P64
       // The horizontal half-size is derived from it via aspectRatio.
       float orthoSize{};
       Projection projection{Projection::PERSPECTIVE};
+      // Visibility read-mask: only objects whose 'visMask' shares a bit with this are drawn.
+      uint8_t visMask{0xFF};
 
       Camera();
       CLASS_NO_COPY_MOVE(Camera);
