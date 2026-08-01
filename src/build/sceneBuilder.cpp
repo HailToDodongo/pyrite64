@@ -116,11 +116,15 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
 
   std::vector<Project::Component::Entry*> compList{};
   for (auto &comp : srcObj->components) {
+    PropScope::Path compPath(comp.uuid);
+    if (!comp.enabled.resolve(obj)) continue;
     compList.push_back(&comp);
   }
 
   if(srcObj != &obj) {
     for (auto &comp : obj.components) {
+      PropScope::Path compPath(comp.uuid);
+      if (!comp.enabled.resolve(obj)) continue;
       compList.push_back(&comp);
     }
   }

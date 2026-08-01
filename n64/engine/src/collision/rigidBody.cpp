@@ -142,7 +142,6 @@ namespace P64::Coll {
     owner_ = object;
     position_ = object->pos * getInvGfxScale();
     rotation_ = object->rot;
-    aabbTreeNodeId_ = NULL_NODE;
     constraints_ = Constraint::None;
     sleepCounter_ = 0;
     isSleeping_ = false;
@@ -167,6 +166,8 @@ namespace P64::Coll {
     previousStepRotation_ = rotation_;
     previousStepPosition_ = position_;
     previousStepScale_ = object->scale;
+    syncedOwnerPos_ = object->pos;
+    syncedOwnerRot_ = object->rot;
   }
 
   void RigidBody::setMass(float newMass) {

@@ -28,6 +28,7 @@ struct UBO_Material {
 
   ivec2 blender;
   float alphaClip;
+  float depthOffset;
 
   uint objectID;
 };

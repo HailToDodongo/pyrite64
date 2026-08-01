@@ -43,6 +43,12 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Project::Asse
 
   part.material.primLodDepth[1] = t3dMat.primLod.value / 256.0f; // intentional 0x100 instead 0xFF
 
+  // t3d offsets the screen-space depth, where the entire depth-range spans 0x8000 units.
+  // projection maps that range to [-1,1], so scale it into clip-space units here.
+  part.material.depthOffset = t3dMat.depthOffsetSet.value
+    ? t3dMat.depthOffset.value * (2.0f / 0x8000)
+    : 0.0f;
+
   // @TODO
   //part.material.flags |= t3dMat.setBlendColor ? UniformN64Material::FLAG_SET_BLEND_COL : 0;
 

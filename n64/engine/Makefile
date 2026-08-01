@@ -5,7 +5,7 @@ PROJECT_NAME=engine
 include $(N64_INST)/include/n64.mk
 include $(N64_INST)/include/t3d.mk
 
-N64_CXXFLAGS += -std=gnu++20 -fno-exceptions -Os -Iinclude \
+N64_CXXFLAGS += -std=gnu++20 -fno-exceptions -O3 -Iinclude \
 	-Wall -Wextra -Werror \
 	-Wformat-signedness -fno-common \
 	-Wshadow -Wdouble-promotion -Wformat-security -Wformat-overflow -Wformat-truncation \

@@ -91,7 +91,7 @@ namespace Project
         return nullptr;
       }
 
-      uint32_t createPrefabFromObject(uint32_t uuid);
+      uint64_t createPrefabFromObject(uint32_t uuid, const std::string &subDir = {});
 
       // Unpacks a prefab instance (shallow) into real, editable scene objects
       void unpackPrefabInstance(uint32_t uuid);

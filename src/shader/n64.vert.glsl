@@ -78,6 +78,8 @@ void main()
 
   vec4 posWorld = matM * vec4(vec3(inPosition), 1.0);
   gl_Position = matMVP * vec4(vec3(inPosition), 1.0);
+  // material depth-offset
+  gl_Position.z += material.depthOffset * gl_Position.w;
   posScreen = gl_Position.xy / gl_Position.w;
 
   cc_shade = inColor;

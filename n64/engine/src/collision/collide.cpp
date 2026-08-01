@@ -897,7 +897,6 @@ namespace P64::Coll {
       existing->isActive = true;
       existing->isTrigger = isTrigger;
       existing->normal = orderedResult.normal;
-      vec3CalculateTangents(orderedResult.normal, existing->tangentU, existing->tangentV);
       existing->combinedFriction = combinedFriction;
       existing->combinedBounce = combinedBounce;
       existing->respondsA = respondsA;
@@ -1003,7 +1002,6 @@ namespace P64::Coll {
       rigidBodyB, colliderB, meshColliderB, objectB);
     if(!cc) return nullptr;
     cc->normal = orderedResult.normal;
-    vec3CalculateTangents(orderedResult.normal, cc->tangentU, cc->tangentV);
     cc->combinedFriction = combinedFriction;
     cc->combinedBounce = combinedBounce;
     cc->isActive = true;
@@ -1087,7 +1085,6 @@ namespace P64::Coll {
     cc->isActive = true;
     cc->isTrigger = false;
     cc->normal = normal;
-    vec3CalculateTangents(normal, cc->tangentU, cc->tangentV);
     cc->combinedFriction = combinedFriction;
     cc->combinedBounce = combinedBounce;
     cc->respondsA = respondsA;
@@ -1182,7 +1179,6 @@ namespace P64::Coll {
     cc->isActive = true;
     cc->isTrigger = false;
     cc->normal = normal;
-    vec3CalculateTangents(normal, cc->tangentU, cc->tangentV);
     cc->combinedFriction = combinedFriction;
     cc->combinedBounce = combinedBounce;
     cc->respondsA = respondsA;

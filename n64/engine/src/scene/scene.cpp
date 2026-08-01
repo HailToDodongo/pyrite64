@@ -11,9 +11,11 @@
 #include "scene/scene.h"
 
 #include <malloc.h>
+#include <cstring>
 
 #include "scene/globalState.h"
 #include "collision/meshCollider.h"
+#include "collision/gfxScale.h"
 #include "vi/swapChain.h"
 #include "lib/memory.h"
 #include "lib/logger.h"
@@ -251,7 +253,7 @@ void P64::Scene::update(float deltaTime)
   // Extrapolate rigid body transforms for visual smoothness
   if(conf.interpolatePhysicsTransforms){
     float remainderSec = static_cast<float>(accumulator_ticks) / static_cast<float>(TICKS_FROM_US(SEC_TO_USEC));
-    applyRenderInterpolation(remainderSec);
+    applyRigidBodyRenderInterpolation(remainderSec);
   }
 
   ticksActorUpdate = get_ticks();
@@ -279,7 +281,7 @@ void P64::Scene::update(float deltaTime)
     if(obj->id < idLookup.size()) {
       idLookup[obj->id] = nullptr;
     }
-    std::erase_if(savedTransforms_, [&](const SavedTransform &st) { return st.obj == obj; });
+    std::erase_if(savedTransforms_, [&](const SavedTransform &st) { return st.body->ownerObject() == obj; });
     std::erase(objects, obj);
     obj->~Object();
 
@@ -399,10 +401,10 @@ void P64::Scene::runPendingEvents()
   evQueue.clear();
 }
 
-void P64::Scene::applyRenderInterpolation(float dt)
+void P64::Scene::applyRigidBodyRenderInterpolation(float dt)
 {
   auto &rigidBodies = Coll::collisionSceneGetInstance()->getRigidBodies();
-  savedTransforms_.clear();
+  restoreInterpolatedTransforms();
 
   for(auto *body : rigidBodies) {
     if(!body || body->isSleeping() || body->isKinematic()) continue;
@@ -410,25 +412,43 @@ void P64::Scene::applyRenderInterpolation(float dt)
     Object *obj = body->ownerObject();
     if(!obj) continue;
 
-    savedTransforms_.push_back({obj, obj->pos, obj->rot});
+    // A transform that doesn't match the last physics writeback holds a manual change that physics hasn't adopted yet
+    if(obj->pos != body->syncedOwnerPos() ||
+       obj->rot != body->syncedOwnerRot()) continue;
 
-    // Extrapolate position forward by remaining time
+    // Extrapolate forward by the remaining time (velocity is in physics units, obj->pos in gfx units)
     const fm_vec3_t &vel = body->linearVelocity();
-    obj->pos = obj->pos + vel * dt;
+    obj->pos = obj->pos + vel * dt * Coll::getGfxScale();
 
-    // Extrapolate rotation forward by remaining time
     const fm_vec3_t &angVel = body->angularVelocity();
     if(!Coll::vec3IsZero(angVel)) {
       obj->rot = Coll::quatApplyAngularVelocity(obj->rot, angVel, dt);
     }
+
+    savedTransforms_.push_back({body, obj->pos, obj->rot});
   }
 }
 
 void P64::Scene::restoreInterpolatedTransforms()
 {
   for(auto &saved : savedTransforms_) {
-    saved.obj->pos = saved.pos;
-    saved.obj->rot = saved.rot;
+    Object *obj = saved.body->ownerObject();
+    const fm_vec3_t &basePos = saved.body->syncedOwnerPos();
+    const fm_quat_t &baseRot = saved.body->syncedOwnerRot();
+
+    // If a script/update changed the transform after extrapolation, re-base its change onto the real physics transform 
+    //so the extrapolation offset doesn't leak into it
+    if(obj->pos == saved.shownPos) {
+      obj->pos = basePos;
+    } else {
+      obj->pos = basePos + (obj->pos - saved.shownPos);
+    }
+    if(obj->rot == saved.shownRot) {
+      obj->rot = baseRot;
+    } else {
+      obj->rot = (obj->rot * Coll::quatConjugate(saved.shownRot)) * baseRot;
+      fm_quat_norm(&obj->rot, &obj->rot);
+    }
   }
   savedTransforms_.clear();
 }

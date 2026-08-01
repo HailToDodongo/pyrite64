@@ -210,6 +210,7 @@ namespace
       NestedRenderPlacement place{node, pickId, world};
       for(auto &comp : src->components) {
         PropScope::Path compPath(comp.uuid); // so scene-instance overrides on nested props resolve
+        if (!comp.enabled.resolve(node)) continue;
         callback(node, &comp);
       }
       callback(node, nullptr);
@@ -237,6 +238,8 @@ namespace
       }
 
       for(auto &comp : srcObj->components) {
+        PropScope::Dispatch enabledScope(child->propOverrides, comp.uuid);
+        if (!comp.enabled.resolve(*child)) continue;
         callback(*child, &comp);
       }
       callback(*child, nullptr);
@@ -367,7 +370,8 @@ namespace
     for (auto &child : parent.children) {
       auto srcObj = Editor::SelectionUtils::prefabDefOf(child.get());
       for (auto &comp : srcObj->components) {
-        if (comp.id == 3) { // Camera
+        PropScope::Dispatch enabledScope(child->propOverrides, comp.uuid);
+        if (comp.enabled.resolve(*child) && comp.id == 3) { // Camera
           out.push_back({child->uuid, child->name.empty() ? "Camera" : child->name});
           break;
         }
@@ -582,15 +586,19 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
 
     // hack to get thicker lines with AA, just draw again with a 1px offset in screen-space
     if(ctx.prefs.renderFactorAA > 1.0f) {
-      auto oldMat = uniGlobal.projMat[2];
-      uniGlobal.projMat[2][0] += 1.0f / uniGlobal.screenSize.x;
-      uniGlobal.projMat[2][1] -= 1.0f / uniGlobal.screenSize.y;
+      // the depth column only yields a constant offset under perspective, where 'w' is -viewZ.
+      // in ortho 'w' is 1, which would scale the offset by depth, so shift the position column.
+      int col = camera.isOrtho ? 3 : 2;
+      float dir = camera.isOrtho ? -1.0f : 1.0f;
+      auto oldMat = uniGlobal.projMat[col];
+      uniGlobal.projMat[col][0] += dir / uniGlobal.screenSize.x;
+      uniGlobal.projMat[col][1] -= dir / uniGlobal.screenSize.y;
       SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
 
       if(showGrid)objGrid.draw(renderPass3D, cmdBuff);
       objLines.draw(renderPass3D, cmdBuff);
 
-      uniGlobal.projMat[2] = oldMat;
+      uniGlobal.projMat[col] = oldMat;
       SDL_PushGPUVertexUniformData(cmdBuff, 0, &uniGlobal, sizeof(uniGlobal));
     }
     if(ctx.debugMode)SDL_PopGPUDebugGroup(cmdBuff);
@@ -740,11 +748,14 @@ void Editor::Viewport3D::draw()
     if (auto camObj = scene->getObjectByUUID(boundCameraUUID)) {
       auto srcObj = Editor::SelectionUtils::prefabDefOf(camObj.get());
       for (auto &comp : srcObj->components) {
-        if (comp.id == 3) {
+        PropScope::Dispatch enabledScope(camObj->propOverrides, comp.uuid);
+        if (comp.enabled.resolve(*camObj) && comp.id == 3) {
           camView = Project::Component::Camera::getView(*camObj, comp);
           camera.pos = camObj->pos.resolve(camObj->propOverrides);
           camera.rot = glm::normalize(camObj->rot.resolve(camObj->propOverrides));
           camera.fov = camView.fov;
+          camera.isOrtho = camView.isOrtho;
+          camera.orthoSize = camView.orthoSize;
           camera.velocity = {0,0,0};
           camera.zoomSpeed = 0.0f;
           camLocked = true;
@@ -756,7 +767,11 @@ void Editor::Viewport3D::draw()
       boundCameraUUID = 0; // bound object no longer exists
     }
   }
-  if(!camLocked) camera.fov = 70.0f; // restore the editor default when free-flying
+  if(!camLocked) { // restore the editor defaults when free-flying
+    camera.fov = 70.0f;
+    camera.orthoSize = Renderer::Camera::DEFAULT_ORTHO_SIZE;
+    camera.isOrtho = freeFlyOrtho;
+  }
 
   // Displayed image size; letterboxed to the camera aspect when locked, otherwise fills the area.
   ImVec2 viewSize = availSize;
@@ -922,7 +937,9 @@ void Editor::Viewport3D::draw()
   {
     if(ImGui::IsKeyPressed(ctx.prefs.keymap.toggleOrtho))
     {
-      camera.isOrtho = !camera.isOrtho;
+      freeFlyOrtho = !freeFlyOrtho;
+      // while bound to a camera the projection is mirrored from it, in that case don't fight it
+      if(!camLocked)camera.isOrtho = freeFlyOrtho;
     }
 
     // Handle object deletion when Delete is pressed while the viewport is focused and an object is selected

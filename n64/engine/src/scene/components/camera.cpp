@@ -18,12 +18,13 @@ void P64::Comp::Camera::initDelete(Object &obj, Camera* data, InitData* initData
   new(data) Camera();
 
   data->mode = initData->mode;
-  SceneManager::getCurrent().addCamera(&data->camera);
   auto &cam = data->camera;
   cam.setScreenArea(initData->vpOffset[0], initData->vpOffset[1], initData->vpSize[0], initData->vpSize[1]);
   cam.fov  = initData->fov;
   cam.near = initData->near;
   cam.far  = initData->far;
+  cam.orthoSize = initData->orthoSize;
+  cam.projection = initData->projection;
 
   cam.aspectRatio = initData->aspectRatio;
   if(cam.aspectRatio <= 0) {
@@ -31,6 +32,20 @@ void P64::Comp::Camera::initDelete(Object &obj, Camera* data, InitData* initData
   }
 
   cam.setPosRot(obj.pos, obj.rot);
+
+  if(obj.isEnabled()) {
+    SceneManager::getCurrent().addCamera(&cam);
+  }
+}
+
+void P64::Comp::Camera::onEvent(Object &obj, Camera* data, const ObjectEvent &event)
+{
+  if(event.type == EVENT_TYPE_DISABLE) {
+    return SceneManager::getCurrent().removeCamera(&data->camera);
+  }
+  if(event.type == EVENT_TYPE_ENABLE) {
+    return SceneManager::getCurrent().addCamera(&data->camera);
+  }
 }
 
 void P64::Comp::Camera::update(Object &obj, Camera* data, float deltaTime)

@@ -49,6 +49,13 @@ bool Editor::PreferenceOverlay::draw()
       ctx.prefs.fpsLimit = std::max(20, ctx.prefs.fpsLimit);
     }
 
+    ImTable::add("Collider Color");
+    ImGui::ColorEdit3(
+      "##ColliderColor",
+      glm::value_ptr(ctx.prefs.colliderColor),
+      ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel
+    );
+
     ImTable::end();
   }
 

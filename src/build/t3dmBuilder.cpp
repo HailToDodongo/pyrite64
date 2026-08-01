@@ -98,6 +98,11 @@ namespace
       f->write<int16_t>(mat.zdelta.value);
     }
 
+    if(mat.depthOffsetSet.value) {
+      flags |= P64::Renderer::Material::FLAG_T3D_ZOFFSET;
+      f->write<int16_t>(mat.depthOffset.value);
+    }
+
     if(mat.vertexFX.value != 0)
     {
       flags |= P64::Renderer::Material::FLAG_T3D_VERT_FX;

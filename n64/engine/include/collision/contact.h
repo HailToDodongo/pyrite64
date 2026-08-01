@@ -99,30 +99,19 @@ namespace P64::Coll {
     return key;
   }
 
-  /// Linked-list node for tracking contacts on a physics object
-  struct Contact {
-    struct ContactConstraint *constraint{nullptr};
-    RigidBody *otherBody{nullptr};
-  };
-
-  /// Single contact point within a contact constraint
+  /// Single contact point within a contact constraint.
+  /// Solver working data lives in per step arrays, accumulated impulses kept here for warm starting
   struct ContactPoint {
     fm_vec3_t point{};
     fm_vec3_t contactA{};
     fm_vec3_t contactB{};
     fm_vec3_t localPointA{};
     fm_vec3_t localPointB{};
-    fm_vec3_t aToContact{};
-    fm_vec3_t bToContact{};
     float penetration{0.0f};
 
     float accumulatedNormalImpulse{0.0f};
     float accumulatedTangentImpulseU{0.0f};
     float accumulatedTangentImpulseV{0.0f};
-    float normalMass{0.0f};
-    float tangentMassU{0.0f};
-    float tangentMassV{0.0f};
-    float velocityBias{0.0f};
 
     bool active{false};
   };
@@ -140,8 +129,6 @@ namespace P64::Coll {
     Object *objectB{nullptr};
 
     fm_vec3_t normal{};
-    fm_vec3_t tangentU{};
-    fm_vec3_t tangentV{};
     fm_vec3_t cachedSeparatingAxis{}; // Cached GJK separating axis for faster convergence
 
     float combinedFriction{0.0f};

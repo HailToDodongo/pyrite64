@@ -14,6 +14,7 @@
 #include "../../../utils/meshGen.h"
 #include <glm/gtc/quaternion.hpp>
 #include <algorithm>
+#include <cmath>
 
 #include "../../../../n64/engine/include/collision/types.h"
 
@@ -42,10 +43,62 @@ namespace Project::Component::CollBody
     PROP_FLOAT(bounce);
   };
 
+  /**
+   * Calculates the combined bounds of all static and animated models on an object.
+   * @param obj Object whose model components will be inspected.
+   * @param halfExtend Output half size of the combined model bounds.
+   * @param offset Output centre of the combined model bounds.
+   * @return true when at least one valid model was found.
+   */
+  bool getModelFit(Object &obj, glm::vec3 &halfExtend, glm::vec3 &offset) {
+    Utils::AABB modelBounds{};
+    bool hasModelBounds = false;
+
+    // Include every static or animated model owned by the supplied object
+    auto includeModels = [&](Object &componentSource, Object &overrideSource) {
+      for (auto &entry : componentSource.components) {
+        if (entry.id != 1 && entry.id != 10) continue;
+
+        auto bounds = Component::TABLE[entry.id].funcGetAABB(overrideSource, entry);
+        const bool valid =
+          std::isfinite(bounds.min.x) && std::isfinite(bounds.min.y) && std::isfinite(bounds.min.z) &&
+          std::isfinite(bounds.max.x) && std::isfinite(bounds.max.y) && std::isfinite(bounds.max.z) &&
+          bounds.min.x <= bounds.max.x && bounds.min.y <= bounds.max.y && bounds.min.z <= bounds.max.z;
+        if (!valid) continue;
+
+        modelBounds.addPoint(bounds.min);
+        modelBounds.addPoint(bounds.max);
+        hasModelBounds = true;
+      }
+    };
+
+    includeModels(obj, obj);
+
+    // Components added to a prefab instance are stored on the instance, while its model
+    // usually lives on the prefab definition, so resolve it through the instance
+    if (obj.isPrefabInstance() && ctx.project) {
+      auto prefab = ctx.project->getAssets().getPrefabByUUID(obj.uuidPrefab.value);
+      if (prefab)
+        includeModels(prefab->obj, obj);
+    }
+
+    if(hasModelBounds) {
+      halfExtend = modelBounds.getHalfExtend();
+      halfExtend.x = std::max(halfExtend.x, 0.001f);
+      halfExtend.y = std::max(halfExtend.y, 0.001f);
+      halfExtend.z = std::max(halfExtend.z, 0.001f);
+      offset = modelBounds.getCenter();
+    }
+    return hasModelBounds;
+  }
+
   std::shared_ptr<void> init(Object &obj) {
     auto data = std::make_shared<Data>();
     data->halfExtend.value = {10.0f, 10.0f, 10.0f};
     data->friction.value = 0.8f;
+
+    // Make the collider fit the size of the model, if any
+    getModelFit(obj, data->halfExtend.value, data->offset.value);
     return data;
   }
 
@@ -133,6 +186,31 @@ namespace Project::Component::CollBody
         ImTable::add("Half Height", ext.y);
       }
       ImTable::addObjProp("Offset", data.offset);
+
+      // Button to auto-fit the size
+      ImTable::add("");
+      if (ImGui::Button("Auto fit")) {
+        glm::vec3 halfExtend{};
+        glm::vec3 offset{};
+        if (getModelFit(obj, halfExtend, offset)) {
+          Editor::UndoRedo::getHistory().markChanged("Auto-fit Collider");
+
+          // Prefab components write the fitted values into instance overrides
+          if (ImTable::isPrefabLocked(&obj)) {
+            if (!obj.hasPropOverride(data.halfExtend))
+              obj.addPropOverride(data.halfExtend);
+            if (!obj.hasPropOverride(data.offset))
+              obj.addPropOverride(data.offset);
+            data.halfExtend.resolve(obj.propOverrides) = halfExtend;
+            data.offset.resolve(obj.propOverrides) = offset;
+          } else {
+            data.halfExtend.value = halfExtend;
+            data.offset.value = offset;
+          }
+        }
+      }
+      ImGui::SetItemTooltip("Fit collider to 3D model");
+
       ImTable::addObjProp("Trigger", data.isTrigger);
 
       ImTable::addMultiSelectMask8("Reacts to", data.maskRead.resolve(obj), ctx.project->conf.collLayerNames, "<Nothing>");
@@ -164,32 +242,34 @@ namespace Project::Component::CollBody
     glm::vec3 localOffset = data.offset.resolve(obj.propOverrides);
     glm::vec3 center = objPos + (objRot * (localOffset * objScale));
     auto type = data.type.resolve(obj.propOverrides);
+    // Line vertices store colour channels as bytes rather than normalised floats, hence the * 255.0f
+    glm::u8vec4 colliderColor = glm::u8vec4(
+      glm::vec4{glm::clamp(ctx.prefs.colliderColor, 0.0f, 1.0f), 1.0f} * 255.0f
+    );
 
     if(type == TYPE_BOX) // Box
     {
-      glm::vec4 aabbCol{0.0f, 1.0f, 1.0f, 1.0f};
-
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, aabbCol, objRot);
-      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, aabbCol, objRot);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt, colliderColor, objRot);
+      Utils::Mesh::addLineBox(*vp.getLines(), center, halfExt + 0.002f, colliderColor, objRot);
     } else if(type == TYPE_SPHERE) // Sphere
     {
-      Utils::Mesh::addLineSphere(*vp.getLines(), center, halfExt, glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, objRot);
+      Utils::Mesh::addLineSphere(*vp.getLines(), center, halfExt, colliderColor, objRot);
     }
     else if(type == TYPE_CYLINDER) // Cylinder
     {
-      Utils::Mesh::addLineCylinder(*vp.getLines(), center, halfExt, glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, objRot);
+      Utils::Mesh::addLineCylinder(*vp.getLines(), center, halfExt, colliderColor, objRot);
     }
     else if(type == TYPE_CAPSULE) // Capsule
     {
-      Utils::Mesh::addLineCapsule(*vp.getLines(), center, halfExt, glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, objRot);
+      Utils::Mesh::addLineCapsule(*vp.getLines(), center, halfExt, colliderColor, objRot);
     }
     else if(type == TYPE_CONE) // Cone
     {
-      Utils::Mesh::addLineCone(*vp.getLines(), center, halfExt, glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, objRot);
+      Utils::Mesh::addLineCone(*vp.getLines(), center, halfExt, colliderColor, objRot);
     }
     else if(type == TYPE_PYRAMID) // Pyramid
     {
-      Utils::Mesh::addLinePyramid(*vp.getLines(), center, halfExt, glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, objRot);
+      Utils::Mesh::addLinePyramid(*vp.getLines(), center, halfExt, colliderColor, objRot);
     }
   }
 

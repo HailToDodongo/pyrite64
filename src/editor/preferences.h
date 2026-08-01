@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include "keymap.h"
+#include "glm/vec3.hpp"
 
 namespace Editor
 {
@@ -33,6 +34,7 @@ namespace Editor
     bool showRotAsEuler = false;
     bool mouseWheelModifiesSpeed = false;
     bool viewportLockMode = false;
+    glm::vec3 colliderColor{0.0f, 0.0f, 0.0f};
 
     void load();
     void save();

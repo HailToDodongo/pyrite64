@@ -22,6 +22,8 @@
 using FileType = Project::FileType;
 namespace fs = std::filesystem;
 
+uint64_t Editor::AssetsBrowser::pendingPrefabFocusUUID{0};
+
 namespace
 {
   constexpr int TAB_IDX_SCENES = 0;
@@ -53,12 +55,148 @@ namespace
     return left + "/" + right;
   }
 
+  /**
+   * Adds a platform-specific menu item that reveals a path in the system file browser.
+   * @param path File or directory path to reveal.
+   */
+  void showInFileBrowserMenuItem(const std::string &path)
+  {
+#if defined(_WIN32)
+    const char* prompt = ICON_MDI_FOLDER_OPEN " Show in Explorer";
+#elif defined(__APPLE__)
+    const char* prompt = ICON_MDI_FOLDER_OPEN " Show in Finder";
+#else
+    const char* prompt = ICON_MDI_FOLDER_OPEN " Show in File Manager";
+#endif
+    if(ImGui::MenuItem(prompt) && !Utils::Proc::openInFileBrowser(path)) {
+      Editor::Noti::add(
+        Editor::Noti::Type::ERROR, "Failed to open File Explorer. This may be due to WSL path conversion failure."
+      );
+    }
+  }
+
   std::string scriptName{};
   int scriptType{0};
 }
 
 void Editor::AssetsBrowser::draw() {
+  if(pendingPrefabFocusUUID) {
+    activeTab = TAB_IDX_PREFABS;
+    tabDirs[TAB_IDX_PREFABS].clear();
+    searchFilter.clear();
+    ctx.selAssetUUID = pendingPrefabFocusUUID;
+    pendingPrefabFocusUUID = 0;
+    ImGui::makeTabVisible("Files");
+  }
+
   auto &scenes = ctx.project->getScenes().getEntries();
+
+  // Converts a delivered Scene Graph object into a prefab inside the target directory
+  auto acceptObjectAsPrefabPayload = [&](const std::string &targetDir) {
+    if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(
+         "OBJECT", ImGuiDragDropFlags_AcceptBeforeDelivery
+       )) {
+      uint32_t objectUUID = *static_cast<const uint32_t*>(payload->Data);
+      auto *scene = ctx.project->getScenes().getLoadedScene();
+      auto object = scene ? scene->getObjectByUUID(objectUUID) : nullptr;
+      if(payload->Delivery && object && !object->isPrefabInstance()) {
+        std::string normalizedTargetDir = normalizeDir(targetDir);
+
+        // Prefabs always appear in their dedicated view after a successful drop
+        activeTab = TAB_IDX_PREFABS;
+        tabDirs[TAB_IDX_PREFABS] = normalizedTargetDir;
+        searchFilter.clear();
+
+        // Asset reloads are unsafe while the current frame still references textures
+        ctx.deferAction([scene, objectUUID, normalizedTargetDir]() {
+          uint64_t prefabUUID = scene->createPrefabFromObject(objectUUID, normalizedTargetDir);
+          if(prefabUUID) ctx.selAssetUUID = prefabUUID;
+        });
+      }
+    }
+  };
+
+  // Registers the last ImGui item as a prefab drop target and handles its payload
+  auto acceptObjectAsPrefabDrop = [&](const std::string &targetDir) {
+    if(!ImGui::BeginDragDropTarget()) return;
+    acceptObjectAsPrefabPayload(targetDir);
+    ImGui::EndDragDropTarget();
+  };
+
+  // Moves a browser file or folder into a target directory after the current frame
+  auto moveBrowserEntry = [&](const fs::path &sourcePath, const fs::path &targetDir) {
+    fs::path source = fs::absolute(sourcePath).lexically_normal();
+    fs::path target = fs::absolute(targetDir).lexically_normal();
+    fs::path destination = target / source.filename();
+    bool isDirectory = fs::is_directory(source);
+
+    if(source.parent_path() == target) return;
+
+    if(isDirectory) {
+      fs::path relativeTarget = target.lexically_relative(source);
+      bool targetInsideSource = !relativeTarget.empty()
+        && relativeTarget.begin()->string() != "..";
+      if(targetInsideSource) return;
+    }
+
+    if(fs::exists(destination) || (!isDirectory && fs::exists(destination.string() + ".conf"))) {
+      Editor::Noti::add(
+        Editor::Noti::Type::ERROR,
+        "A file or folder with that name already exists in the target directory."
+      );
+      return;
+    }
+
+    bool updateFolderSelection = selectedFolderPath == source.string();
+    ctx.deferAction([this, source, destination, isDirectory, updateFolderSelection]() {
+      std::error_code ec;
+      fs::rename(source, destination, ec);
+      if(ec) {
+        Editor::Noti::add(Editor::Noti::Type::ERROR, "Move failed: " + ec.message());
+        return;
+      }
+
+      if(!isDirectory) {
+        fs::path sourceConf = source.string() + ".conf";
+        fs::path destinationConf = destination.string() + ".conf";
+        if(fs::exists(sourceConf)) {
+          fs::rename(sourceConf, destinationConf, ec);
+          if(ec) {
+            Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to move .conf: " + ec.message());
+          }
+        }
+      }
+
+      if(updateFolderSelection) selectedFolderPath = destination.string();
+      ctx.project->getAssets().reload();
+    });
+  };
+
+  // Accepts files and folders from the browser over a folder item
+  auto acceptBrowserEntryPayload = [&](const fs::path &targetDir) {
+    const ImGuiPayload* activePayload = ImGui::GetDragDropPayload();
+    if(!activePayload) return;
+
+    if(activePayload->IsDataType("ASSET")) {
+      uint64_t assetUUID = *static_cast<const uint64_t*>(activePayload->Data);
+      auto *asset = ctx.project->getAssets().getEntryByUUID(assetUUID);
+
+      // Node Graphs are shown virtually in Scripts but remain stored under Assets
+      if(asset && asset->type != FileType::NODE_GRAPH) {
+        if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(
+             "ASSET", ImGuiDragDropFlags_AcceptBeforeDelivery
+           ); payload && payload->Delivery) {
+          moveBrowserEntry(asset->path, targetDir);
+        }
+      }
+    } else if(activePayload->IsDataType("ASSET_FOLDER")) {
+      if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(
+           "ASSET_FOLDER", ImGuiDragDropFlags_AcceptBeforeDelivery
+         ); payload && payload->Delivery) {
+        moveBrowserEntry(static_cast<const char*>(payload->Data), targetDir);
+      }
+    }
+  };
 
   const std::array<TabDef, 4> TABS{
     TabDef{
@@ -83,6 +221,9 @@ void Editor::AssetsBrowser::draw() {
   for (int i=0; i<(int)TABS.size(); ++i) {
     bool isActive = i == activeTab;
     if (ImGui::Selectable(TABS[i].name, isActive))activeTab = i;
+    if (i == TAB_IDX_ASSETS || i == TAB_IDX_PREFABS) {
+      acceptObjectAsPrefabDrop({});
+    }
   }
   ImGui::EndChild();
 
@@ -159,6 +300,11 @@ void Editor::AssetsBrowser::draw() {
     if (ImGui::Button(baseLabel)) {
       dirState.clear();
     }
+    if(ImGui::BeginDragDropTarget()) {
+      acceptBrowserEntryPayload(basePathAbs);
+      ImGui::EndDragDropTarget();
+    }
+
     std::string accum{};
     for (const auto &part : crumbParts) {
       ImGui::SameLine();
@@ -167,6 +313,10 @@ void Editor::AssetsBrowser::draw() {
       accum = joinDir(accum, part);
       if (ImGui::Button(part.c_str())) {
         dirState = accum;
+      }
+      if(ImGui::BeginDragDropTarget()) {
+        acceptBrowserEntryPayload(basePathAbs / accum);
+        ImGui::EndDragDropTarget();
       }
     }
     ImGui::PopStyleVar(2);
@@ -382,6 +532,7 @@ void Editor::AssetsBrowser::draw() {
       return a->name < b->name;
     });
 
+    std::string folderToOpen{};
     for (const auto &folder : folders) {
       if(!searchFilter.empty() && !folder.contains(searchFilter)) {
         continue;
@@ -391,18 +542,62 @@ void Editor::AssetsBrowser::draw() {
 
       // Show a filled folder when it contains assets for this tab, outlined (empty) folder otherwise
       const char* folderIcon = folderHasAssets[folder] ? ICON_MDI_FOLDER : ICON_MDI_FOLDER_OUTLINE;
-      if (drawGridButton(folderPath, ImTextureRef(nullptr), folderIcon, folder, false, 1.0f)) {
-        dirState = joinDir(dirState, folder);
+      bool folderClicked = drawGridButton(
+        folderPath,
+        ImTextureRef(nullptr),
+        folderIcon,
+        folder,
+        selectedFolderPath == folderPath,
+        1.0f
+      );
+      bool folderDoubleClicked = ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered();
+
+      if(ImGui::BeginDragDropSource()) {
+        ImGui::SetDragDropPayload(
+          "ASSET_FOLDER",
+          folderPath.c_str(),
+          folderPath.size() + 1
+        );
+        ImGui::TextUnformatted(folder.c_str());
+        ImGui::EndDragDropSource();
+      }
+
+      if(ImGui::BeginDragDropTarget()) {
+        if(activeTab == TAB_IDX_ASSETS || activeTab == TAB_IDX_PREFABS) {
+          acceptObjectAsPrefabPayload(joinDir(dirState, folder));
+        }
+        acceptBrowserEntryPayload(folderPath);
+        ImGui::EndDragDropTarget();
+      }
+
+      if(folderClicked) {
+        selectedFolderPath = folderPath;
+        ctx.selAssetUUID = 0;
+      }
+      if(folderDoubleClicked) {
+        folderToOpen = folder;
+      }
+      if(ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+        selectedFolderPath = folderPath;
+        ctx.selAssetUUID = 0;
       }
 
       if(ImGui::BeginPopupContextItem(folder.c_str())) {
-        showContextMenu(folderPath);
+        if(ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open Folder")) {
+          folderToOpen = folder;
+        }
+        showContextMenu(folderPath, false);
         ImGui::EndPopup();
       }
 
       if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
         ImGui::SetTooltip("Folder: %s", joinDir(dirState, folder).c_str());
       }
+    }
+
+    if(!folderToOpen.empty()) {
+      dirState = joinDir(dirState, folderToOpen);
+      selectedFolderPath.clear();
     }
   }
 
@@ -457,6 +652,7 @@ void Editor::AssetsBrowser::draw() {
     bool isDblClick = ImGui::IsMouseDoubleClicked(0) && ImGui::IsItemHovered();
 
     if (clicked) {
+      selectedFolderPath.clear();
       ctx.selAssetUUID = asset.getUUID();
       ImGui::makeTabVisible("Asset");
     }
@@ -499,7 +695,10 @@ void Editor::AssetsBrowser::draw() {
     ImGui::Separator();
     
     if (ImGui::Button("OK", ImVec2(120_px, 0))) {
+        bool isFile = fs::is_regular_file(deletePath);
         fs::remove(deletePath);
+        if(isFile)
+          fs::remove(deletePath + ".conf");
         deletePath.clear();
         ImGui::CloseCurrentPopup(); 
     }
@@ -514,6 +713,11 @@ void Editor::AssetsBrowser::draw() {
   }
 
   static int ctxSceneId = -1;
+  auto openScene = [&](int sceneId) {
+    ctx.project->getScenes().loadScene(sceneId);
+    ctx.project->conf.sceneIdLastOpened = sceneId;
+    ctx.project->saveConfig();
+  };
 
   if(tab.showScenes)
   {
@@ -522,8 +726,9 @@ void Editor::AssetsBrowser::draw() {
       checkLineBreak();
       auto activeScene = ctx.project->getScenes().getLoadedScene();
 
-      bool isSelected = activeScene && (activeScene->getId() == scene.id);
-      const auto &liveName = isSelected ? activeScene->getName() : scene.name;
+      bool isLoaded = activeScene && (activeScene->getId() == scene.id);
+      bool isSelected = selectedSceneId < 0 ? isLoaded : selectedSceneId == scene.id;
+      const auto &liveName = isLoaded ? activeScene->getName() : scene.name;
       const auto &displayName = liveName.empty() ? "(unnamed)" : liveName;
       auto buttonLabel = displayName + "##" + std::to_string(scene.id);
 
@@ -532,10 +737,13 @@ void Editor::AssetsBrowser::draw() {
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.5f,0.5f,0.7f,0.8f});
       }
 
-      if (ImGui::Button(buttonLabel.c_str(), textBtnSize)) {
-        ctx.project->getScenes().loadScene(scene.id);
-        ctx.project->conf.sceneIdLastOpened = scene.id;
-        ctx.project->saveConfig();
+      bool sceneClicked = ImGui::Button(buttonLabel.c_str(), textBtnSize);
+      bool sceneDoubleClicked = ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered();
+      if(sceneClicked) {
+        selectedSceneId = scene.id;
+      }
+      if(sceneDoubleClicked) {
+        openScene(scene.id);
       }
 
       if(isSelected)ImGui::PopStyleColor(2);
@@ -546,6 +754,7 @@ void Editor::AssetsBrowser::draw() {
       }
 
       if(ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+        selectedSceneId = scene.id;
         ctxSceneId = scene.id;
         ImGui::OpenPopup("SceneCtxMenu");
       }
@@ -554,6 +763,10 @@ void Editor::AssetsBrowser::draw() {
     if(ImGui::BeginPopup("SceneCtxMenu")) {
       bool canDelete = scenes.size() > 1;
 
+      if(ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open Scene")) {
+        openScene(ctxSceneId);
+      }
+
       if(ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Duplicate")) {
         ctx.project->getScenes().duplicate(ctxSceneId);
       }
@@ -561,6 +774,7 @@ void Editor::AssetsBrowser::draw() {
       if(!canDelete) ImGui::BeginDisabled();
       if(ImGui::MenuItem(ICON_MDI_TRASH_CAN_OUTLINE " Delete")) {
         ctx.project->getScenes().remove(ctxSceneId);
+        if(selectedSceneId == ctxSceneId) selectedSceneId = -1;
         ctx.project->conf.sceneIdLastOpened = ctx.project->getScenes().getEntries().empty()
           ? 0 : ctx.project->getScenes().getEntries().front().id;
         ctx.project->saveConfig();
@@ -576,6 +790,12 @@ void Editor::AssetsBrowser::draw() {
   }
 
   static std::string newScriptDir{};
+  auto openNewScriptPopup = [&]() {
+    newScriptDir = dirState;
+    scriptName = "New_Script";
+    scriptType = 0;
+    ImGui::OpenPopup("NewScript");
+  };
 
   if (activeTab == TAB_IDX_SCRIPTS || activeTab == TAB_IDX_SCENES)
   {
@@ -588,10 +808,7 @@ void Editor::AssetsBrowser::draw() {
       textBtnSize
     )) {
       if(activeTab == TAB_IDX_SCRIPTS) {
-        newScriptDir = dirState;
-        scriptName = "New_Script";
-        scriptType = 0;
-        ImGui::OpenPopup("NewScript");
+        openNewScriptPopup();
       } else {
         ctx.project->getScenes().add();
       }
@@ -649,25 +866,77 @@ void Editor::AssetsBrowser::draw() {
     ImGui::EndPopup();
   }
 
+  // The whole browser panel represents the currently open directory
+  ImRect directoryDropRect = ImGui::GetCurrentWindow()->InnerRect;
+  directoryDropRect.Max.y -= 1_px; // For some reason setting real height overlaps by 1px
+  if((activeTab == TAB_IDX_ASSETS || activeTab == TAB_IDX_PREFABS) &&
+     ImGui::BeginDragDropTargetCustom(
+       directoryDropRect,
+       ImGui::GetID("AssetsDirectoryDropTarget")
+     )) {
+    acceptObjectAsPrefabPayload(dirState);
+    ImGui::EndDragDropTarget();
+  }
+
+  bool createScriptRequested = false;
+
+  // Show the current directory menu when right-clicking empty browser space
+  if(baseLabel && ImGui::BeginPopupContextWindow(
+       "AssetsBackgroundContext",
+       ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems
+     )) {
+    const fs::path currentDir = basePathAbs / dirState;
+    
+    // Menu item to display in file browser
+    showInFileBrowserMenuItem(currentDir.string());
+
+    // Menu item to create a folder
+    if (ImGui::MenuItem(ICON_MDI_FOLDER_PLUS " Create new Folder")) {
+      std::string folderName = "New Folder";
+      fs::path folderPath = currentDir / folderName;
+      for (unsigned int suffix = 2; fs::exists(folderPath); ++suffix) {
+        folderName = "New Folder (" + std::to_string(suffix) + ")";
+        folderPath = currentDir / folderName;
+      }
+
+      std::error_code ec;
+      if (fs::create_directory(folderPath, ec)) {
+        renamePath = folderPath.string();
+        strncpy(renameBuffer, folderName.c_str(), sizeof(renameBuffer) - 1);
+        renameBuffer[sizeof(renameBuffer) - 1] = '\0';
+        searchFilter.clear();
+      } else {
+        Editor::Noti::add(
+          Editor::Noti::Type::ERROR,
+          "Failed to create folder: " + ec.message()
+        );
+      }
+    }
+
+    // Menu item to create a script
+    if(activeTab == TAB_IDX_SCRIPTS &&
+       ImGui::MenuItem(ICON_MDI_FILE_DOCUMENT_PLUS_OUTLINE " Create new Script")) {
+      createScriptRequested = true;
+    }
+    ImGui::EndPopup();
+  }
+
+  if(createScriptRequested) {
+    openNewScriptPopup();
+  }
+
   ImGui::EndChild();
   ImGui::EndChild();
 }
 
-void Editor::AssetsBrowser::showContextMenu(const std::string& path) {
-#if defined(_WIN32)
-  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in Explorer";
-#elif defined(__APPLE__)
-  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in Finder";
-#else
-  std::string showPrompt = ICON_MDI_FOLDER_OPEN " Show in File Manager";
-#endif
-  if(ImGui::MenuItem(showPrompt.c_str())) {
-    if (!Utils::Proc::openInFileBrowser(path)) {
-      Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File Explorer. This may be due to WSL path conversion failure.");
-    }
-  }
+void Editor::AssetsBrowser::focusPrefab(uint64_t prefabUUID) {
+  pendingPrefabFocusUUID = prefabUUID;
+}
 
-  if(ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open")) {
+void Editor::AssetsBrowser::showContextMenu(const std::string& path, bool showOpenItem) {
+  showInFileBrowserMenuItem(path);
+
+  if(showOpenItem && ImGui::MenuItem(ICON_MDI_OPEN_IN_NEW " Open")) {
     if (!Utils::Proc::openFile(path)) {
       Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to open File. This may be due to WSL path conversion failure.");
     }

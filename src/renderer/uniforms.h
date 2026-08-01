@@ -52,6 +52,7 @@ namespace Renderer
 
     glm::u32vec2 blender;
     float alphaClip;
+    float depthOffset; // clip-space, emulates 't3d_state_set_depth_offset'
   };
 
   struct UniformsObject

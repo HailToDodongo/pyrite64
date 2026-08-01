@@ -46,6 +46,20 @@ void Editor::Preferences::load()
     showRotAsEuler = doc.value("showRotAsEuler", DEF.showRotAsEuler);
     mouseWheelModifiesSpeed = doc.value("mouseWheelModifiesSpeed", DEF.mouseWheelModifiesSpeed);
     viewportLockMode = doc.value("viewportLockMode", DEF.viewportLockMode);
+    colliderColor = DEF.colliderColor;
+    if (doc.contains("colliderColor")
+        && doc["colliderColor"].is_array()
+        && doc["colliderColor"].size() >= 3
+        && doc["colliderColor"][0].is_number()
+        && doc["colliderColor"][1].is_number()
+        && doc["colliderColor"][2].is_number()) {
+      // Read each channel explicitly because GLM vectors are not deserialised by nlohmann
+      colliderColor = {
+        doc["colliderColor"][0].get<float>(),
+        doc["colliderColor"][1].get<float>(),
+        doc["colliderColor"][2].get<float>()
+      };
+    }
   } else {
     applyKeymapPreset();
   }
@@ -74,6 +88,9 @@ void Editor::Preferences::save()
     .set("showRotAsEuler", showRotAsEuler)
     .set("mouseWheelModifiesSpeed", mouseWheelModifiesSpeed)
     .set("viewportLockMode", viewportLockMode)
+    .set("colliderColor", nlohmann::json::array({
+      colliderColor.r, colliderColor.g, colliderColor.b
+    }))
     .toString();
   auto prefPath = getPrefsPath();
   printf("Saving prefs to %s\n", prefPath.c_str());

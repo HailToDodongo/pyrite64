@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cassert>
 #include <cinttypes>
+#include <cstring>
 #include <functional>
 #include <algorithm>
 #include <limits>
@@ -98,7 +99,6 @@ namespace P64::Coll {
       if(mirrored) {
         std::swap(event.contacts[i].contactA, event.contacts[i].contactB);
         std::swap(event.contacts[i].localPointA, event.contacts[i].localPointB);
-        std::swap(event.contacts[i].aToContact, event.contacts[i].bToContact);
       }
     }
   }
@@ -138,14 +138,6 @@ namespace P64::Coll {
     if(!rigidBody || !rigidBody->owner_) return false;
     if(rigidBody->compoundPropertiesDirty()) return true;
     return fm_vec3_distance2(&rigidBody->getCompoundScale(), &rigidBody->owner_->scale) > FM_EPSILON * FM_EPSILON;
-  }
-
-  void CollisionScene::rebuildCachedConstraintLookup() {
-    cachedConstraintLookup_.clear();
-    for(int i = 0; i < cachedConstraintCount_; ++i) {
-      ContactConstraint &cc = cachedConstraints_[i];
-      cachedConstraintLookup_[cc.key] = i;
-    }
   }
 
   CollisionScene *collisionSceneGetInstance() {
@@ -330,7 +322,8 @@ namespace P64::Coll {
   void CollisionScene::disableRigidBody(RigidBody* rigidBody) {
     if(!rigidBody || !rigidBody->isEnabled_) return;
 
-    std::vector<RigidBody *> wakeCandidates;
+    std::vector<RigidBody *> &wakeCandidates = wakeCandidateScratch_;
+    wakeCandidates.clear();
 
     removeCachedConstraints([rigidBody](const ContactConstraint &cc) {
       return cc.rigidBodyA == rigidBody || cc.rigidBodyB == rigidBody;
@@ -383,7 +376,8 @@ namespace P64::Coll {
     if(!collider) return;
     Object *owner = collider->owner_;
 
-    std::vector<RigidBody *> wakeCandidates;
+    std::vector<RigidBody *> &wakeCandidates = wakeCandidateScratch_;
+    wakeCandidates.clear();
     removeCachedConstraints([collider](const ContactConstraint &cc) {
       return cc.colliderA == collider || cc.colliderB == collider;
     }, wakeCandidates);
@@ -433,7 +427,8 @@ namespace P64::Coll {
   void CollisionScene::removeMeshCollider(MeshCollider *mesh) {
     if(!mesh) return;
 
-    std::vector<RigidBody *> wakeCandidates;
+    std::vector<RigidBody *> &wakeCandidates = wakeCandidateScratch_;
+    wakeCandidates.clear();
     removeCachedConstraints([mesh](const ContactConstraint &cc) {
       return cc.meshColliderA == mesh || cc.meshColliderB == mesh;
     }, wakeCandidates);
@@ -710,17 +705,61 @@ namespace P64::Coll {
     }
   }
 
-  void CollisionScene::wakeBodiesTransformedExternally() {
-    std::vector<RigidBody *> wakeCandidates;
 
-    for(RigidBody *body : rigidBodies_) {
-      if(!body || !body->isEnabled_ || !body->isSleeping_) continue;
-      if(!rigidBodyTransformExceededSleepThreshold(body)) continue;
-      wakeCandidates.push_back(body);
+  // Wake everything a moved body can affect. Kinematic bodies are not part of
+  // sleep islands, so wake whatever rests on them instead.
+  void CollisionScene::wakeMovedBody(RigidBody *body) {
+    if(shouldTrackSleepState(body)) {
+      wakeIsland(body);
+      return;
     }
 
-    for(RigidBody *body : wakeCandidates) {
-      wakeIsland(body);
+    for(int i = 0; i < cachedConstraintCount_; ++i) {
+      const ContactConstraint &cc = cachedConstraints_[i];
+      if(!cc.isActive || cc.isTrigger) continue;
+      RigidBody *other = nullptr;
+      if(cc.rigidBodyA == body)      other = cc.rigidBodyB;
+      else if(cc.rigidBodyB == body) other = cc.rigidBodyA;
+      if(other) wakeIsland(other);
+    }
+  }
+
+
+  /// @brief Handle external changes to owner objects and apply them to the physics bodies.
+  /// Scripts may move or rotate an owner object directly: the difference between the
+  /// owner and what the last step wrote back is applied to the body as a teleport
+  /// delta on top of the physics state, so manual changes and the physical response mesh together. 
+  /// Scripts may also change the body state directly (setPosition etc.) or rescale the owner
+  void CollisionScene::syncExternallyMovedBodies() {
+    for(RigidBody *body : rigidBodies_) {
+      if(!body || !body->owner_) continue;
+      Object *owner = body->owner_;
+
+      bool applied = false;
+      if(owner->pos != body->syncedOwnerPos_) {
+        const fm_vec3_t delta = (owner->pos - body->syncedOwnerPos_) * getInvGfxScale();
+        body->position_ += delta;
+        body->previousStepPosition_ += delta;
+        body->syncedOwnerPos_ = owner->pos;
+        applied = true;
+      }
+      if(owner->rot != body->syncedOwnerRot_) {
+        fm_quat_t deltaRot = owner->rot * quatConjugate(body->syncedOwnerRot_);
+        fm_quat_norm(&deltaRot, &deltaRot);
+        body->rotation_ = deltaRot * body->rotation_;
+        fm_quat_norm(&body->rotation_, &body->rotation_);
+        body->previousStepRotation_ = deltaRot * body->previousStepRotation_;
+        body->syncedOwnerRot_ = owner->rot;
+        applied = true;
+      }
+
+      if(!body->isEnabled_) continue;
+
+      if(applied) {
+        wakeMovedBody(body);
+      } else if(body->isSleeping_ && rigidBodyTransformExceededSleepThreshold(body)) {
+        wakeIsland(body);
+      }
     }
   }
 
@@ -1134,6 +1173,15 @@ namespace P64::Coll {
     solverFrictionPoints_.clear();
     solverOrder_.clear();
 
+    // avoid repeated growth reallocations while ramping up by reserving enough space
+    const std::size_t constraintUpperBound = solverConstraints_.size();
+    solverBodies_.reserve(rigidBodies_.size() + 1);
+    solverHeaders_.reserve(constraintUpperBound);
+    solverFrictionHeaders_.reserve(constraintUpperBound);
+    solverPoints_.reserve(constraintUpperBound * MAX_CONTACT_POINTS_PER_PAIR);
+    solverFrictionPoints_.reserve(constraintUpperBound * MAX_CONTACT_POINTS_PER_PAIR);
+    solverOrder_.reserve(constraintUpperBound);
+
     solverBodies_.push_back(SolverBody{}); // index 0: always immovable sentinel
 
     // Reset solver indices on all bodies
@@ -1159,11 +1207,15 @@ namespace P64::Coll {
       // constraint only drops out when neither side has a linear nor an angular way to respond
       if(totalInvMass < FM_EPSILON && !aCanRotate && !bCanRotate) continue;
 
+      // Friction tangent basis derived from the contact normal
+      fm_vec3_t tangentU, tangentV;
+      vec3CalculateTangents(cc.normal, tangentU, tangentV);
+
       // Tangent effective masses for friction
-      const float linearU = (cc.respondsA ? constrainedLinearInvMassAlong(a, cc.tangentU) : 0.0f) +
-                (cc.respondsB ? constrainedLinearInvMassAlong(b, cc.tangentU) : 0.0f);
-      const float linearV = (cc.respondsA ? constrainedLinearInvMassAlong(a, cc.tangentV) : 0.0f) +
-                (cc.respondsB ? constrainedLinearInvMassAlong(b, cc.tangentV) : 0.0f);
+      const float linearU = (cc.respondsA ? constrainedLinearInvMassAlong(a, tangentU) : 0.0f) +
+                (cc.respondsB ? constrainedLinearInvMassAlong(b, tangentU) : 0.0f);
+      const float linearV = (cc.respondsA ? constrainedLinearInvMassAlong(a, tangentV) : 0.0f) +
+                (cc.respondsB ? constrainedLinearInvMassAlong(b, tangentV) : 0.0f);
 
       const uint16_t headerIndex = static_cast<uint16_t>(solverHeaders_.size());
       solverHeaders_.push_back(SolverConstraintHeader{});
@@ -1181,19 +1233,19 @@ namespace P64::Coll {
       if(bRespondsLinear) h.linearResponseB = b->constrainLinearWorld(cc.normal * -b->inverseMass_);
 
       // Building friction header
-      fh.tangentU = cc.tangentU;
-      fh.tangentV = cc.tangentV;
+      fh.tangentU = tangentU;
+      fh.tangentV = tangentV;
       fh.friction = cc.combinedFriction;
       // Friction measures only enabled, non-kinematic bodies
       fh.linearMeasureScaleA = (a && a->isEnabled_ && !a->isKinematic_) ? 1.0f : 0.0f;
       fh.linearMeasureScaleB = (b && b->isEnabled_ && !b->isKinematic_) ? 1.0f : 0.0f;
       if(aRespondsLinear) {
-        fh.linearResponseUA = a->constrainLinearWorld(cc.tangentU * a->inverseMass_);
-        fh.linearResponseVA = a->constrainLinearWorld(cc.tangentV * a->inverseMass_);
+        fh.linearResponseUA = a->constrainLinearWorld(tangentU * a->inverseMass_);
+        fh.linearResponseVA = a->constrainLinearWorld(tangentV * a->inverseMass_);
       }
       if(bRespondsLinear) {
-        fh.linearResponseUB = b->constrainLinearWorld(cc.tangentU * -b->inverseMass_);
-        fh.linearResponseVB = b->constrainLinearWorld(cc.tangentV * -b->inverseMass_);
+        fh.linearResponseUB = b->constrainLinearWorld(tangentU * -b->inverseMass_);
+        fh.linearResponseVB = b->constrainLinearWorld(tangentV * -b->inverseMass_);
       }
 
       // Precompute solver points for each contact point in the constraint
@@ -1201,15 +1253,15 @@ namespace P64::Coll {
         ContactPoint &cp = cc.points[j];
         if(!cp.active) continue;
 
-        // Relative vectors from centers of mass (also consumed by collision events)
-        cp.aToContact = a ? cp.contactA - a->worldCenterOfMass() : VEC3_ZERO;
-        cp.bToContact = b ? cp.contactB - b->worldCenterOfMass() : VEC3_ZERO;
+        // Relative vectors from centers of mass
+        const fm_vec3_t aToContact = a ? cp.contactA - a->worldCenterOfMass() : VEC3_ZERO;
+        const fm_vec3_t bToContact = b ? cp.contactB - b->worldCenterOfMass() : VEC3_ZERO;
 
         // Normal effective mass: 1 / (invMassA + invMassB + (rA×n)·I_A^-1·(rA×n) + ...)
         fm_vec3_t raCrossN;
-        fm_vec3_cross(&raCrossN, &cp.aToContact, &cc.normal);
+        fm_vec3_cross(&raCrossN, &aToContact, &cc.normal);
         fm_vec3_t rbCrossN;
-        fm_vec3_cross(&rbCrossN, &cp.bToContact, &cc.normal);
+        fm_vec3_cross(&rbCrossN, &bToContact, &cc.normal);
 
         fm_vec3_t angularResponseA = VEC3_ZERO;
         fm_vec3_t angularResponseB = VEC3_ZERO;
@@ -1246,9 +1298,9 @@ namespace P64::Coll {
         // Tangent effective masses
         {
           fm_vec3_t raCrossU;
-          fm_vec3_cross(&raCrossU, &cp.aToContact, &cc.tangentU);
+          fm_vec3_cross(&raCrossU, &aToContact, &tangentU);
           fm_vec3_t rbCrossU;
-          fm_vec3_cross(&rbCrossU, &cp.bToContact, &cc.tangentU);
+          fm_vec3_cross(&rbCrossU, &bToContact, &tangentU);
           float angU_A = 0.0f;
           if(aCanRotate) {
             fp.angularResponseUA = a->applyConstrainedWorldInertia(raCrossU);
@@ -1268,9 +1320,9 @@ namespace P64::Coll {
         }
         {
           fm_vec3_t raCrossV;
-          fm_vec3_cross(&raCrossV, &cp.aToContact, &cc.tangentV);
+          fm_vec3_cross(&raCrossV, &aToContact, &tangentV);
           fm_vec3_t rbCrossV;
-          fm_vec3_cross(&rbCrossV, &cp.bToContact, &cc.tangentV);
+          fm_vec3_cross(&rbCrossV, &bToContact, &tangentV);
           float angV_A = 0.0f;
           if(aCanRotate) {
             fp.angularResponseVA = a->applyConstrainedWorldInertia(raCrossV);
@@ -1296,12 +1348,12 @@ namespace P64::Coll {
         fm_vec3_t relVel = VEC3_ZERO;
         if(a) {
           fm_vec3_t aCross;
-          fm_vec3_cross(&aCross, &a->angularVelocity_, &cp.aToContact);
+          fm_vec3_cross(&aCross, &a->angularVelocity_, &aToContact);
           relVel = a->linearVelocity_ + aCross;
         }
         if(b) {
           fm_vec3_t bCross;
-          fm_vec3_cross(&bCross, &b->angularVelocity_, &cp.bToContact);
+          fm_vec3_cross(&bCross, &b->angularVelocity_, &bToContact);
           relVel -= (b->linearVelocity_ + bCross);
         }
         const float relVelN = fm_vec3_dot(&relVel, &cc.normal);
@@ -2096,8 +2148,9 @@ namespace P64::Coll {
     // recalculates world AABBs and marks if transform changed for potential broadphase optimization
     updateMeshColliderWorldStates();
 
-    // Wake sleeping rigid bodies that were moved or rotated externally.
-    wakeBodiesTransformedExternally();
+    // Adopt owner transforms that scripts changed directly and wake sleeping
+    // bodies whose physics state was moved externally (e.g. via setPosition)
+    syncExternallyMovedBodies();
     ticksWakePrep = get_ticks() - stageStart;
 
     stageStart = get_ticks();
@@ -2206,9 +2259,11 @@ namespace P64::Coll {
         body->worldAabb_ = aabbUnion(body->worldAabb_, collider->worldAabb_);
       }
 
-      // Sync visual object with physics position
+      // Sync visual object with physics position and save snapshot, so external changes to the owner can be detected next step
       body->owner_->pos = body->position_ * getGfxScale();
       body->owner_->rot = body->rotation_;
+      body->syncedOwnerPos_ = body->owner_->pos;
+      body->syncedOwnerRot_ = body->owner_->rot;
     }
 
     // Update RigidBody sleep states

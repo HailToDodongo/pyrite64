@@ -3,6 +3,7 @@
 * @license MIT
 */
 #include "sceneGraph.h"
+#include "assetsBrowser.h"
 
 #include <algorithm>
 #include <string>
@@ -23,6 +24,9 @@ namespace
   std::string renameBuffer{};
   bool startingRename{false};
 
+  // Filters the tree by object name; empty means no filtering
+  std::string searchFilter{};
+
   // Set per-frame at the start of draw(). When non-null a prefab is being edited and
   // selection is restricted to its own definition, with everything else dimmed and inert.
   Project::Object* prefabEditObj{nullptr};
@@ -34,6 +38,37 @@ namespace
   };
 
   DragDropTask dragDropTask{};
+
+  struct PrefabDropTask {
+    uint64_t prefabUUID{0};
+    uint32_t targetUUID{0};
+    bool asChild{false};
+  };
+
+  PrefabDropTask prefabDropTask{};
+  ImVec2 lastInsertLineStart{};
+  ImVec2 lastInsertLineEnd{};
+  bool hasInsertLine{false};
+
+  /**
+   * Accepts a prefab asset payload and records where its scene instance should be created.
+   * @param targetUUID Destination object UUID, or zero to add at the scene root.
+   * @param asChild Whether the new instance should become a child of the target.
+   */
+  void acceptPrefabDrop(uint32_t targetUUID, bool asChild)
+  {
+    const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+    if (!payload || !payload->IsDataType("ASSET")) return;
+
+    uint64_t prefabUUID = *static_cast<const uint64_t*>(payload->Data);
+    if (!ctx.project->getAssets().getPrefabByUUID(prefabUUID)) return;
+
+    if (ImGui::AcceptDragDropPayload("ASSET")) {
+      prefabDropTask.prefabUUID = prefabUUID;
+      prefabDropTask.targetUUID = targetUUID;
+      prefabDropTask.asChild = asChild;
+    }
+  }
 
   /**
    * Builds the icon prefix shown before the node name in the scene tree.
@@ -149,6 +184,9 @@ namespace
       cursorScreen.y - (hitHeight / 2) + 3_px
     };
     ImVec2 overlayEnd = ImVec2(cursorScreen.x + fullWidth, cursorScreen.y + hitHeight);
+    lastInsertLineStart = {overlayStart.x, overlayStart.y};
+    lastInsertLineEnd = {overlayEnd.x, overlayStart.y};
+    hasInsertLine = true;
 
     // Push a dummy cursor to draw hit zone *without affecting layout*
     ImGui::SetCursorScreenPos(overlayStart);
@@ -156,7 +194,14 @@ namespace
     ImGui::InvisibleButton("##dropzone", ImVec2(fullWidth, hitHeight));
     bool hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
-    if (hovered) {
+    const ImGuiPayload* activePayload = ImGui::GetDragDropPayload();
+    bool acceptsPayload = activePayload && activePayload->IsDataType("OBJECT");
+    if (activePayload && activePayload->IsDataType("ASSET")) {
+      uint64_t assetUUID = *static_cast<const uint64_t*>(activePayload->Data);
+      acceptsPayload = ctx.project->getAssets().getPrefabByUUID(assetUUID) != nullptr;
+    }
+
+    if (hovered && acceptsPayload) {
       drawList->AddLine(
           ImVec2(overlayStart.x, overlayStart.y),
           ImVec2(overlayEnd.x, overlayStart.y),
@@ -174,6 +219,8 @@ namespace
         dragDropTarget = *((uint32_t*)payload->Data);
         res = true;
       }
+      if (!prefabEditObj)
+        acceptPrefabDrop(uuid, false);
       ImGui::EndDragDropTarget();
     }
     ImGui::PopStyleColor();
@@ -247,7 +294,8 @@ namespace
   // aren't scene objects, so they're shown dimmed and selecting one targets it as a
   // nested override (rootUuid = instance, path = chain of definition-node uuids).
   void drawPrefabDefNode(Project::Object &node, int depth, uint32_t rootUuid,
-                         std::vector<uint32_t> path, bool selectable)
+                         std::vector<uint32_t> path, bool selectable,
+                         bool parentEnabled = true)
   {
     if(depth > 64)return; // guard against self-referencing prefabs
     path.push_back(node.uuid);
@@ -255,7 +303,7 @@ namespace
     Project::Object* src = Editor::SelectionUtils::prefabDefOf(&node);
 
     bool isSelected = (ctx.selObjectUUID == rootUuid && ctx.selSubPath == path);
-    bool dim = prefabEditObj ? !selectable : false;
+    bool dim = (prefabEditObj && !selectable) || !parentEnabled || !node.enabled;
 
     ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow
       | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_FramePadding
@@ -281,10 +329,26 @@ namespace
       // In edit mode we may descend through regular children but stop at nested prefab instances.
       bool childSelectable = prefabEditObj ? (selectable && !node.isPrefabInstance()) : true;
       for(auto &child : src->children) {
-        drawPrefabDefNode(*child, depth + 1, rootUuid, path, childSelectable);
+        drawPrefabDefNode(*child, depth + 1, rootUuid, path, childSelectable,
+                          parentEnabled && node.enabled);
       }
       ImGui::TreePop();
     }
+  }
+
+  /**
+   * Whether an object or any of its descendants matches the current search filter.
+   */
+  bool subtreeMatchesFilter(const Project::Object &obj)
+  {
+    if (ImTable::labelMatchesFilter(obj.name.c_str(), searchFilter))
+      return true;
+
+    for (const auto &child : obj.children) {
+      if (subtreeMatchesFilter(*child))
+        return true;
+    }
+    return false;
   }
 
   void drawObjectNode(
@@ -292,6 +356,13 @@ namespace
     bool parentEnabled = true
   )
   {
+    bool hasSearchFilter = !searchFilter.empty();
+    // Searching and this branch has no match anywhere --> Hide it entirely
+    if (hasSearchFilter && !subtreeMatchesFilter(obj))
+      return;
+
+    bool selfMatchesFilter = !hasSearchFilter || ImTable::labelMatchesFilter(obj.name.c_str(), searchFilter);
+
     ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow
       | ImGuiTreeNodeFlags_OpenOnDoubleClick
       | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_SpanAllColumns;
@@ -304,8 +375,20 @@ namespace
       if(prefab && !prefab->obj.children.empty())prefabDef = &prefab->obj;
     }
 
-    if (obj.children.empty() && !prefabDef) {
+    // While searching, a child only renders if its own branch has a match, so re-check
+    // that here to avoid showing an expandable arrow with nothing visible underneath.
+    bool anyVisibleChild = !hasSearchFilter
+      ? !obj.children.empty()
+      : std::any_of(obj.children.begin(), obj.children.end(),
+          [](const auto &child) { return subtreeMatchesFilter(*child); });
+
+    if (!anyVisibleChild && !prefabDef) {
       flag |= ImGuiTreeNodeFlags_Leaf;
+    }
+
+    // Searching and the match is in a descendant --> Force this node open so it stays visible
+    if (hasSearchFilter && !selfMatchesFilter) {
+      ImGui::SetNextItemOpen(true, ImGuiCond_Always);
     }
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
@@ -326,11 +409,14 @@ namespace
 
     std::string nameID = getNodeIcons(obj) + obj.name + "##" + std::to_string(obj.uuid);
 
-    if(!canSelect)ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    // Set style disabled when editing a prefab or the element or an ancestor is disabled
+    const bool dimNode = !canSelect || !parentEnabled || !obj.enabled;
+    if(dimNode)ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
     bool isOpen = ImGui::TreeNodeEx(nameID.c_str(), flag);
-    if(!canSelect)ImGui::PopStyleColor();
+    if(dimNode)ImGui::PopStyleColor();
     ImGui::PopStyleVar(2);
     ImVec2 nodeRectMin = ImGui::GetItemRectMin();
+    ImVec2 nodeRectMax = ImGui::GetItemRectMax();
 
     // Mark object being edited in prefab-edit mode
     if(ctx.isPrefabEditing(obj.uuid)) {
@@ -365,11 +451,24 @@ namespace
 
     if (obj.parent && ImGui::BeginDragDropTarget()) {
       if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECT")) {
-        dragDropTask.sourceUUID = *((uint32_t*)payload->Data);
+        dragDropTask.sourceUUID = *static_cast<const uint32_t*>(payload->Data);
         dragDropTask.targetUUID = obj.uuid;
         dragDropTask.isInsert = true;
       }
       ImGui::EndDragDropTarget();
+    }
+
+    // Keep prefab child drops in the centre of the row, away from insertion lines
+    if (!prefabEditObj && !obj.isPrefabInstance()) {
+      ImRect prefabTargetRect{nodeRectMin, nodeRectMax};
+      prefabTargetRect.Min.y += 4_px;
+      prefabTargetRect.Max.y -= 4_px;
+      ImGui::PushID(obj.uuid);
+      if (ImGui::BeginDragDropTargetCustom(prefabTargetRect, ImGui::GetID("PrefabChildDrop"))) {
+        acceptPrefabDrop(obj.parent ? obj.uuid : 0, obj.parent != nullptr);
+        ImGui::EndDragDropTarget();
+      }
+      ImGui::PopID();
     }
 
     // Is renaming the object node
@@ -405,12 +504,6 @@ namespace
       ImGui::SetCursorPosY(oldCursorPos.y);
     }
 
-    if(ImGui::IsDragDropActive()) {
-      if(DrawDropTarget(dragDropTask.sourceUUID, obj.uuid)) {
-        dragDropTask.targetUUID = obj.uuid;
-      }
-    }
-
     if (nodeIsClicked && canSelect) {
       bool isCtrlDown = ImGui::GetIO().KeyCtrl;
       if (isCtrlDown) {
@@ -441,7 +534,11 @@ namespace
             // unsafe mid-frame while ImGui draw data still references them.
             auto *scenePtr = &scene;
             uint32_t uuid = obj.uuid;
-            ctx.deferAction([scenePtr, uuid]() { scenePtr->createPrefabFromObject(uuid); });
+            ctx.deferAction([scenePtr, uuid]() {
+              uint64_t prefabUUID = scenePtr->createPrefabFromObject(uuid);
+              if(prefabUUID)
+                Editor::AssetsBrowser::focusPrefab(prefabUUID);
+            });
           }
 
           if (obj.isPrefabInstance() && ImGui::MenuItem(ICON_MDI_PACKAGE_VARIANT " Unpack Prefab")) {
@@ -459,8 +556,24 @@ namespace
         ImGui::EndPopup();
       }
 
-      for(auto &child : obj.children) {
+      // The scene root provides the insertion point before its first object
+      if (obj.parent == nullptr && !obj.children.empty() && ImGui::IsDragDropActive()) {
+        if (DrawDropTarget(dragDropTask.sourceUUID, obj.uuid)) {
+          dragDropTask.targetUUID = obj.uuid;
+        }
+      }
+
+      for(size_t i = 0; i < obj.children.size(); ++i) {
+        auto &child = obj.children[i];
         drawObjectNode(scene, *child, keyDelete, parentEnabled && obj.enabled);
+
+        // Nested lists leave their final boundary to the parent's sibling line
+        bool needsInsertLine = (i + 1 < obj.children.size()) || obj.parent == nullptr;
+        if (needsInsertLine && ImGui::IsDragDropActive()) {
+          if (DrawDropTarget(dragDropTask.sourceUUID, child->uuid)) {
+            dragDropTask.targetUUID = child->uuid;
+          }
+        }
       }
 
       // Prefab definition tree showing nested prefab content under the instance. Nodes are
@@ -468,7 +581,7 @@ namespace
       // editing a prefab, only the edited instance's own definition is selectable.
       if(prefabDef) {
         for(auto &child : prefabDef->children) {
-          drawPrefabDefNode(*child, 0, obj.uuid, {}, canSelect);
+          drawPrefabDefNode(*child, 0, obj.uuid, {}, canSelect, parentEnabled && obj.enabled);
         }
       }
 
@@ -483,6 +596,8 @@ void Editor::SceneGraph::draw()
   if (!scene)return;
 
   dragDropTask = {};
+  prefabDropTask = {};
+  hasInsertLine = false;
   deleteObj = nullptr;
   deleteSelection = false;
   prefabEditObj = Editor::SelectionUtils::getPrefabEditObject(*scene);
@@ -490,10 +605,25 @@ void Editor::SceneGraph::draw()
   // While rename is active, shortcuts stay disabled, so the text field can own the keyboard input
   bool isRenaming = renameObjectUUID != 0;
 
+  // Ctrl+F focuses the search box, matching common scene-tree behavior
+  if (isFocus && !isRenaming && ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_F)) {
+    ImGui::SetKeyboardFocusHere();
+  }
+
+  // Search box to filter the tree by object name; matching branches force their ancestors open
+  ImGui::SetNextItemWidth(-FLT_MIN);
+  ImGui::InputTextWithHint("##sceneGraphSearch", ICON_MDI_MAGNIFY " Search...", &searchFilter,
+    ImGuiInputTextFlags_AutoSelectAll);
+  bool isSearchActive = ImGui::IsItemActive();
+  if (isSearchActive && !searchFilter.empty() && ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+    searchFilter.clear();
+    ImGui::ClearActiveID();
+  }
+
   ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 16.0_px);
-  bool keyDelete = isFocus && !isRenaming && (ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace));
+  bool keyDelete = isFocus && !isRenaming && !isSearchActive && (ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace));
   // F2 starts renaming the current object, matching common scene-tree/file-explorer behavior
-  bool keyRename = isFocus && !isRenaming && ImGui::IsKeyPressed(ImGuiKey_F2);
+  bool keyRename = isFocus && !isRenaming && !isSearchActive && ImGui::IsKeyPressed(ImGuiKey_F2);
 
   if (keyRename) {
     const std::vector<uint32_t> &selectedIds = ctx.getSelectedObjectUUIDs();
@@ -505,7 +635,49 @@ void Editor::SceneGraph::draw()
   }
 
   auto &root = scene->getRootObject();
-  drawObjectNode(*scene, root, keyDelete);
+  if (!searchFilter.empty() && !subtreeMatchesFilter(root)) {
+    ImGui::TextDisabled("No matching objects");
+  } else {
+    drawObjectNode(*scene, root, keyDelete);
+  }
+
+  // Use the remaining tree space as a drop target for root-level prefab instances
+  if (!prefabEditObj && ImGui::IsDragDropActive()) {
+    ImVec2 emptySize = ImGui::GetContentRegionAvail();
+    constexpr float INSERT_DROP_HEIGHT = 8.0f;
+    if (emptySize.x > 0 && emptySize.y > INSERT_DROP_HEIGHT) {
+      ImVec2 emptyStart = ImGui::GetCursorScreenPos();
+      ImVec2 lineStart = hasInsertLine ? lastInsertLineStart : emptyStart;
+      ImVec2 lineEnd = hasInsertLine
+        ? lastInsertLineEnd
+        : ImVec2{ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x, emptyStart.y};
+      ImGui::SetCursorScreenPos({emptyStart.x, emptyStart.y + INSERT_DROP_HEIGHT});
+      emptySize.y -= INSERT_DROP_HEIGHT;
+      ImGui::InvisibleButton("##ScenePrefabDropTarget", emptySize);
+
+      const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+      bool isPrefabPayload = payload && payload->IsDataType("ASSET")
+        && ctx.project->getAssets().getPrefabByUUID(
+          *static_cast<const uint64_t*>(payload->Data)
+        );
+      if (isPrefabPayload && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
+        ImGui::GetWindowDrawList()->AddLine(
+          lineStart,
+          lineEnd,
+          ImGui::GetColorU32(ImGuiCol_DragDropTarget),
+          2_px
+        );
+      }
+
+      // Hide the default full-area frame while preserving the empty-space hit zone
+      ImGui::PushStyleColor(ImGuiCol_DragDropTarget, ImVec4(0, 0, 0, 0));
+      if (ImGui::BeginDragDropTarget()) {
+        acceptPrefabDrop(0, false);
+        ImGui::EndDragDropTarget();
+      }
+      ImGui::PopStyleColor();
+    }
+  }
 
   ImGui::PopStyleVar(1);
 
@@ -528,6 +700,36 @@ void Editor::SceneGraph::draw()
     // Could move --> Add to history
     if (moved)
       UndoRedo::getHistory().markChanged("Move Object");
+  }
+
+  if (prefabDropTask.prefabUUID) {
+    auto &root = scene->getRootObject();
+    bool targetIsRoot = prefabDropTask.targetUUID == root.uuid;
+    std::shared_ptr<Project::Object> target{};
+    if (prefabDropTask.targetUUID && !targetIsRoot) {
+      target = scene->getObjectByUUID(prefabDropTask.targetUUID);
+    }
+
+    bool targetExists = !prefabDropTask.targetUUID || targetIsRoot || target;
+    bool canAddAsChild = !prefabDropTask.asChild || targetIsRoot
+      || (target && !target->isPrefabInstance());
+
+    // A stale target or a child drop on a prefab must not create an instance elsewhere
+    if (targetExists && canAddAsChild) {
+      auto added = scene->addPrefabInstance(prefabDropTask.prefabUUID);
+      if (added) {
+        glm::vec3 position{0.0f};
+        if (prefabDropTask.asChild && target) {
+          position = target->pos.resolve(target->propOverrides);
+          scene->moveObject(added->uuid, target->uuid, true);
+        } else if (prefabDropTask.targetUUID) {
+          scene->moveObject(added->uuid, prefabDropTask.targetUUID, false);
+        }
+        added->pos.resolve(added->propOverrides) = position;
+        ctx.setObjectSelection(added->uuid);
+        UndoRedo::getHistory().markChanged("Add Prefab");
+      }
+    }
   }
 
   if (deleteSelection || deleteObj) {

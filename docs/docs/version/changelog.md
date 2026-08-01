@@ -1,6 +1,104 @@
 # Changelog
 
+## v0.8.0
+
+### Node-Graph
+* Node Graph Rewrite + User defined nodes by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/256
+  * Node Docs: https://hailtododongo.github.io/pyrite64/docs/manual/script/nodeGraph.html
+  * Custom Node Docs: https://hailtododongo.github.io/pyrite64/docs/manual/script/nodeGraphCustom.html
+
+### Features & Engine changes
+* Prefab support for nested objects / other prefabs by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/268
+  * Docs: https://hailtododongo.github.io/pyrite64/docs/manual/editor/prefabs.html
+
+### Physics System
+* Physics API: Add swept-sphere function by @Aaronmac64 in https://github.com/HailToDodongo/pyrite64/pull/276
+* improved collision system heap traffic, introduced better bookkeeping… by @Byterset in https://github.com/HailToDodongo/pyrite64/pull/288
+* big collision optimizations by @Byterset in https://github.com/HailToDodongo/pyrite64/pull/293
+* Auto fit colliders by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/295
+* Change VEC3_FORWARD direction in math.h by @Byterset in https://github.com/HailToDodongo/pyrite64/pull/300
+* fix: let rigidbodies adopt changes from externally changed transforms, prevent visual interpolation leaking into physics by @Byterset in https://github.com/HailToDodongo/pyrite64/pull/301
+* feat: Allow to set the collider colour in the preferences by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/302
+* correctly scale the velocity of the rigidbody by the graphicsscale wh… by @Byterset in https://github.com/HailToDodongo/pyrite64/pull/303
+
+### Editor
+* Editor Themes (dark, light, high-contrast, red & blue dark) by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/261
+* Save and check editor version in Project by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/258
+* Editor for ROM Metadata + Homebrew-Header by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/259
+* Remember and show recently opened Projects by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/263
+* Multiple Viewports + Game-Camera preview by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/264
+* Fix not opening Ares emulator after the second usage of "Build & Run" by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/269
+* Allow to drag&drop a Script to add a Code component by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/272
+* Allow to open the selected Script from the Code component by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/273
+* Project setting to disable Debug-Menu hotkey by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/275
+* Fixed editing parent transforms by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/274
+* Allow to reorder the object components by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/277
+* Implement proper wayland session restoration by @Lilaa3 in https://github.com/HailToDodongo/pyrite64/pull/279
+* Add viewport lock mode for touchpad/laptop navigation by @LlanerasJ in https://github.com/HailToDodongo/pyrite64/pull/278
+* toolchain: Show N64_INST location on Linux to help validate the environment by @thekovic in https://github.com/HailToDodongo/pyrite64/pull/286
+* Add audio preview for sound assets in the asset inspector by @LlanerasJ in https://github.com/HailToDodongo/pyrite64/pull/285
+* Change UI Pos/Rot/Scale order to make it consistent by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/291
+* Fix quote emulator and ROM paths so paths with spaces work by @LlanerasJ in https://github.com/HailToDodongo/pyrite64/pull/290
+* Add projection settings camera component (Ortho / Perspective) by @Byterset in https://github.com/HailToDodongo/pyrite64/pull/304
+
+### Docs & Build
+* Mention MacOS by @seacat17 in https://github.com/HailToDodongo/pyrite64/pull/254
+* Fix typo in docs by @seacat17 in https://github.com/HailToDodongo/pyrite64/pull/260
+
 ## v0.7.0
+
+
+### Material System
+* New Material System / Placeholder and dynamic textures by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/179
+* Additive-Light option in Draw-Layer / Fix point lights by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/226
+
+ Docs: https://hailtododongo.github.io/pyrite64/docs/manual/editor/materials.html
+
+### Physics System
+* New Physics-System + Rigid-Body simulation by @Byterset in https://github.com/HailToDodongo/pyrite64/pull/207
+  * Make applyForceAtPoint actually accumulate force by @andmatand in https://github.com/HailToDodongo/pyrite64/pull/225
+  * Decouple physics scale from visual scale by @andmatand in https://github.com/HailToDodongo/pyrite64/pull/228
+  * Add an applyLinearForce method by @andmatand in https://github.com/HailToDodongo/pyrite64/pull/231
+  * Don't change velocity on hit during swept substep detection by @andmatand in https://github.com/HailToDodongo/pyrite64/pull/232
+  * Add a localCenterOfMassOffset property to RigidBody by @andmatand in https://github.com/HailToDodongo/pyrite64/pull/233
+  * Add method for creating custom collision mesh by @andmatand in https://github.com/HailToDodongo/pyrite64/pull/234 
+  * Fix raycast box hit_face tracking and report origin when starting inside by @andmatand in https://github.com/HailToDodongo/pyrite64/pull/227
+  * Allow a MeshCollider to have no owner by @andmatand in https://github.com/HailToDodongo/pyrite64/pull/238
+  * Add an AABB tree of MeshColliders to speed up several checks by @andmatand in https://github.com/HailToDodongo/pyrite64/pull/239
+
+* Character Body Component by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/247
+  * Docs: https://hailtododongo.github.io/pyrite64/docs/manual/editor/collision/characterBody.html
+
+### Features & Engine changes
+* New Billboard constraint type (Y or XYZ)  by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/200
+* Support for .XM audio files by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/202
+* New Debug Overlay + Allow User defined entries by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/213
+* enable objectRefs, prefabs, and sprite asset refs to be instanced when using a prefab in a scene by @RetroZelda in https://github.com/HailToDodongo/pyrite64/pull/215
+* object will recursivly remove children by default by @RetroZelda in https://github.com/HailToDodongo/pyrite64/pull/217
+* Add ability to temporarily disable a RigidBody by @andmatand in https://github.com/HailToDodongo/pyrite64/pull/242
+* Added check to clamp diagonal movement input length by @Aaronmac64 in https://github.com/HailToDodongo/pyrite64/pull/243
+* Add ability to toggle visibility of Object by @andmatand in https://github.com/HailToDodongo/pyrite64/pull/244
+* Bitmask support in C++ Script props by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/251
+* Refactor Object Events / Lifecycle + Docs by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/223
+  * Docs: https://hailtododongo.github.io/pyrite64/docs/manual/editor/objLifecycle.html
+
+### Editor
+* Enable setting Prefabs in the editor / code-component arguments by @RetroZelda in https://github.com/HailToDodongo/pyrite64/pull/210
+* Disallow dropping an object into a descendant by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/219
+* Move selected object to the position of the 3D viewport camera by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/224
+* Allow to edit the name of an object on the scene tree by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/218
+* Show per-row icons in scene-graph hierarchy, remove lines for cool clean UI by @Prazon in https://github.com/HailToDodongo/pyrite64/pull/237
+* Fixes the start position of the TextBox to edit a tree node by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/240
+* Consistent AABB rendering across component types by @floridaman in https://github.com/HailToDodongo/pyrite64/pull/241
+* 3D Model Thumbnails / Preview in asset browser by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/249
+* Allow to filter in the "Script" ComboBox of the "Code" component by @MoisesMlg in https://github.com/HailToDodongo/pyrite64/pull/245
+* Remove Object ID in editor by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/248
+* Adding option to modify camera move speed while in flycam mode in viewport by @DekeDev in https://github.com/HailToDodongo/pyrite64/pull/204
+
+### Docs & Build
+* Docs: instruct MYSYS2 users install UCRT Python3 by @JordanMajd in https://github.com/HailToDodongo/pyrite64/pull/208
+* fix: update libdragon for Linux build by @cyphercodes in https://github.com/HailToDodongo/pyrite64/pull/230
+* Linux AppImage build by @HailToDodongo in https://github.com/HailToDodongo/pyrite64/pull/250
 
 ## v0.6.0
 
