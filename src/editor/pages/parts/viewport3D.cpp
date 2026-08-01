@@ -1249,8 +1249,10 @@ void Editor::Viewport3D::draw()
 
     // Collect source vertices before dragging and external target vertices while dragging
     iterateObjects(rootObj, [&](Project::Object &candidateObj, Project::Component::Entry *comp) {
+      // Ignore vertices belonging to disabled objects or components
+      if (!candidateObj.enabled || !comp || !comp->enabled.resolve(candidateObj)) return;
       // Not a model of any kind or collider --> Do nothing
-      if (!comp || (comp->id != 1 && comp->id != 5 && comp->id != 10)) return;
+      if (comp->id != 1 && comp->id != 5 && comp->id != 10) return;
       // Is a collider and they are not shown --> Do nothing
       if (comp->id == 5 && !showCollObj) return;
 
