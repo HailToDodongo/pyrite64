@@ -38,7 +38,17 @@ namespace P64
 
       int16_t screenArea[4]{}; // last area set via 'setScreenArea', restored when switching back to screen
 
+      surface_t depthView{};    // sized view into a borrowed depth buffer for surface targets
+      surface_t* currTgtSurf{}; // target resolved by 'attach', valid until 'detach'
+      surface_t* currTgtDepth{};
+
       uint8_t needsProjUpdate{false};
+
+      /**
+       * Prepares rendering into the given surface by fitting the viewport to it.
+       * @param surf target surface
+       */
+      void adjustToSurface(const surface_t &surf);
     public:
       float fov{}; // FOV in radians, only used in perspective mode
       float near{};
@@ -60,7 +70,36 @@ namespace P64
       ~Camera();
 
       void update(float deltaTime);
-      void attach();
+
+      /**
+       * Attaches the camera for rendering, applying its viewport and scissor.
+       * For surface targets this also attaches the surface and a depth buffer.
+       * @return false if the camera renders nothing this frame (no or deleted surface target)
+       */
+      bool attach();
+
+      /**
+       * Counterpart to 'attach', detaches a surface target again.
+       * NOP for cameras rendering to the screen.
+       */
+      void detach();
+
+      /// true if 'attach' redirected rendering into a surface, until 'detach' is called
+      [[nodiscard]] bool isSurfaceAttached() const { return currTgtSurf != nullptr; }
+
+      /**
+       * Records commands to redirect rendering into the camera's attached surface target.
+       * Only needed for command streams outside of 'attach'/'detach', e.g. draw-layers.
+       * NOP if no surface target is attached.
+       */
+      void applyTargetImages();
+
+      /**
+       * Counterpart to 'applyTargetImages', records commands to restore
+       * the render pipeline's framebuffer and depth buffer.
+       * NOP if no surface target is attached.
+       */
+      void restoreTargetImages();
 
       /**
        * Re-applies the scissor-area defined via the viewport.
@@ -155,13 +194,6 @@ namespace P64
        * @return component, or nullptr if none is set or its owner was deleted
        */
       [[nodiscard]] Comp::Surface* resolveTargetSurface() const;
-
-      /**
-       * Prepares rendering into the given surface by fitting the viewport to it.
-       * Called automatically by the scene each frame, no need to call this manually.
-       * @param surf target surface
-       */
-      void adjustToSurface(const surface_t &surf);
 
       /**
        * Sets new camera values based on a look-at transform.

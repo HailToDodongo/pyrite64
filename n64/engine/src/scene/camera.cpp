@@ -9,6 +9,7 @@
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
 #include "scene/components/surface.h"
+#include "renderer/pipeline.h"
 
 namespace
 {
@@ -73,8 +74,68 @@ void P64::Camera::update([[maybe_unused]] float deltaTime)
   t3d_viewport_set_view_matrix(&viewports, &viewMatrix);
 }
 
-void P64::Camera::attach() {
+bool P64::Camera::attach()
+{
+  currTgtSurf = nullptr;
+  currTgtDepth = nullptr;
+
+  if(hasSurfaceTarget())
+  {
+    if(targetSurfPtr) {
+      currTgtSurf = targetSurfPtr;
+      currTgtDepth = targetDepthPtr;
+    } else if(auto surfComp = resolveTargetSurface()) {
+      currTgtSurf = &surfComp->getSurface();
+      currTgtDepth = surfComp->getDepthBuffer();
+    }
+    if(currTgtSurf == nullptr)return false; // no target set (or its owner was deleted)
+
+    adjustToSurface(*currTgtSurf);
+
+    if(currTgtDepth == nullptr) {
+      auto mainDepth = SceneManager::getCurrent().getRenderPipeline<RenderPipeline>()->getCurrDepthSurf();
+      assertf(currTgtSurf->width * 2 * currTgtSurf->height <= mainDepth->stride * mainDepth->height,
+        "Surface target too big to re-use the main depth buffer, enable 'Depth Buffer' on the Surface component");
+      depthView = surface_make(mainDepth->buffer, FMT_RGBA16, currTgtSurf->width, currTgtSurf->height, currTgtSurf->width * 2);
+      currTgtDepth = &depthView;
+    } else if(currTgtDepth->width != currTgtSurf->width || currTgtDepth->height != currTgtSurf->height) {
+      // an over-sized depth buffer is allowed, view it at the color buffer's size
+      depthView = surface_make(currTgtDepth->buffer, FMT_RGBA16, currTgtSurf->width, currTgtSurf->height, currTgtSurf->width * 2);
+      currTgtDepth = &depthView;
+    }
+
+    rdpq_attach(currTgtSurf, currTgtDepth);
+    rdpq_clear_z(ZBUF_MAX);
+  }
+
   t3d_viewport_attach(viewports);
+  return true;
+}
+
+void P64::Camera::detach()
+{
+  if(currTgtSurf) {
+    rdpq_detach();
+    currTgtSurf = nullptr;
+    currTgtDepth = nullptr;
+  }
+}
+
+void P64::Camera::applyTargetImages()
+{
+  if(currTgtSurf == nullptr)return;
+  rdpq_sync_pipe();
+  rdpq_set_color_image(currTgtSurf);
+  rdpq_set_z_image(currTgtDepth);
+}
+
+void P64::Camera::restoreTargetImages()
+{
+  if(currTgtSurf == nullptr)return;
+  auto pipeline = SceneManager::getCurrent().getRenderPipeline<RenderPipeline>();
+  rdpq_sync_pipe();
+  rdpq_set_color_image(pipeline->getCurrColorSurf());
+  rdpq_set_z_image(pipeline->getCurrDepthSurf());
 }
 
 void P64::Camera::setScreenArea(int x, int y, int width, int height) {

@@ -308,52 +308,16 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
   {
     // cameras targeting a surface render into it instead of the framebuffer,
     // with no target set (or its owner deleted) the camera renders nothing
-    surface_t *tgtSurf{};
-    surface_t *tgtDepth{};
-    surface_t depthView{}; // sized view into the main depth buffer if the surface has none
-    if(cam->hasSurfaceTarget())
-    {
-      if(cam->targetSurfPtr) {
-        tgtSurf = cam->targetSurfPtr;
-        tgtDepth = cam->targetDepthPtr;
-      } else if(auto surfComp = cam->resolveTargetSurface()) {
-        tgtSurf = &surfComp->getSurface();
-        tgtDepth = surfComp->getDepthBuffer();
-      }
-      if(!tgtSurf)continue;
-      cam->adjustToSurface(*tgtSurf);
-
-      if(tgtDepth == nullptr) {
-        auto mainDepth = renderPipeline->getCurrDepthSurf();
-        assertf(tgtSurf->width * 2 * tgtSurf->height <= mainDepth->stride * mainDepth->height,
-          "Surface target too big to re-use the main depth buffer, enable 'Depth Buffer' on the Surface component");
-        depthView = surface_make(mainDepth->buffer, FMT_RGBA16, tgtSurf->width, tgtSurf->height, tgtSurf->width * 2);
-        tgtDepth = &depthView;
-      } else if(tgtDepth->width != tgtSurf->width || tgtDepth->height != tgtSurf->height) {
-        // an over-sized depth buffer is allowed, view it at the color buffer's size
-        depthView = surface_make(tgtDepth->buffer, FMT_RGBA16, tgtSurf->width, tgtSurf->height, tgtSurf->width * 2);
-        tgtDepth = &depthView;
-      }
-
-      rdpq_attach(tgtSurf, tgtDepth);
-      rdpq_clear_z(ZBUF_MAX);
-    }
-
+    if(!cam->attach())continue;
     camMain = cam;
-    cam->attach();
 
     lighting.apply();
     t3d_matrix_push_pos(1);
 
-    for(int i=1; i<conf.layerSetup.layerCount3D; ++i) {
+    for(int i=1; i<conf.layerSetup.layerCount3D; ++i) 
+    {
       DrawLayer::use3D(i);
-        if(tgtSurf) {
-          // draw-layers replay after the camera loop, so re-target them in-stream.
-          // ('set_color_image' also resets the scissor to cover the new surface)
-          rdpq_sync_pipe();
-          rdpq_set_color_image(tgtSurf);
-          rdpq_set_z_image(tgtDepth);
-        }
+        cam->applyTargetImages();
         cam->reApplyScissor();
         t3d_matrix_push_pos(1);
       DrawLayer::useDefault();
@@ -393,15 +357,11 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
     for(int i=1; i<conf.layerSetup.layerCount3D; ++i) {
       DrawLayer::use3D(i);
         t3d_matrix_pop(1);
-        if(tgtSurf) {
-          rdpq_sync_pipe();
-          rdpq_set_color_image(renderPipeline->getCurrColorSurf());
-          rdpq_set_z_image(renderPipeline->getCurrDepthSurf());
-        }
+        cam->restoreTargetImages();
       DrawLayer::useDefault();
     }
 
-    if(tgtSurf)rdpq_detach();
+    cam->detach();
   }
 
   auto t = get_user_ticks();
