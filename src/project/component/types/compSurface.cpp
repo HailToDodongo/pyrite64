@@ -28,6 +28,7 @@ namespace Project::Component::Surface
     PROP_S32(format);    // index into FORMAT_VALUES
     PROP_S32(buffering); // buffer count - 1
     PROP_BOOL(clear);
+    PROP_BOOL(depth);
   };
 
   std::shared_ptr<void> init(Object &obj) {
@@ -43,6 +44,7 @@ namespace Project::Component::Surface
       .set(data.format)
       .set(data.buffering)
       .set(data.clear)
+      .set(data.depth)
       .doc;
   }
 
@@ -53,6 +55,7 @@ namespace Project::Component::Surface
     Utils::JSON::readProp(doc, data->format);
     Utils::JSON::readProp(doc, data->buffering);
     Utils::JSON::readProp(doc, data->clear, true);
+    Utils::JSON::readProp(doc, data->depth, false);
     return data;
   }
 
@@ -65,9 +68,13 @@ namespace Project::Component::Surface
     ctx.fileObj.write<uint16_t>(size.x);
     ctx.fileObj.write<uint16_t>(size.y);
     ctx.fileObj.writeRGBA(data.clearColor.resolve(obj));
+    uint8_t flags = 0;
+    if(data.clear.resolve(obj))flags |= 1 << 0;
+    if(data.depth.resolve(obj))flags |= 1 << 1;
+
     ctx.fileObj.write<uint8_t>(FORMAT_VALUES[format]);
     ctx.fileObj.write<uint8_t>(data.buffering.resolve(obj) + 1);
-    ctx.fileObj.write<uint8_t>(data.clear.resolve(obj) ? 1 : 0);
+    ctx.fileObj.write<uint8_t>(flags);
     ctx.fileObj.write<uint8_t>(0); // padding
   }
 
@@ -86,6 +93,7 @@ namespace Project::Component::Surface
       if(data.clear.resolve(obj)) {
         ImTable::addObjProp("Clear Color", data.clearColor);
       }
+      ImTable::addObjProp("Depth Buffer", data.depth);
       ImTable::end();
     }
   }

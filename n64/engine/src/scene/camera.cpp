@@ -5,6 +5,10 @@
 #include "scene/camera.h"
 #include "lib/logger.h"
 #include "scene/globalState.h"
+#include "scene/object.h"
+#include "scene/scene.h"
+#include "scene/sceneManager.h"
+#include "scene/components/surface.h"
 
 namespace
 {
@@ -18,6 +22,43 @@ P64::Camera::Camera() {
 
 P64::Camera::~Camera() {
   t3d_viewport_destroy(&viewports);
+}
+
+void P64::Camera::setTargetScreen()
+{
+  targetType = TargetType::SCREEN;
+  targetObjId = 0;
+  targetSurfPtr = nullptr;
+  targetDepthPtr = nullptr;
+  if(screenArea[2] > 0) {
+    t3d_viewport_set_area(viewports, screenArea[0], screenArea[1], screenArea[2], screenArea[3]);
+  }
+}
+
+void P64::Camera::setTargetSurface(Object* obj)
+{
+  targetType = TargetType::SURFACE;
+  targetSurfPtr = nullptr;
+  targetDepthPtr = nullptr;
+  targetObjId = (obj && obj->getComponent<Comp::Surface>()) ? obj->id : 0;
+}
+
+P64::Comp::Surface* P64::Camera::resolveTargetSurface() const
+{
+  if(targetType != TargetType::SURFACE || targetObjId == 0)return nullptr;
+  auto obj = SceneManager::getCurrent().getObjectById(targetObjId);
+  return obj ? obj->getComponent<Comp::Surface>() : nullptr;
+}
+
+void P64::Camera::adjustToSurface(const surface_t &surf)
+{
+  auto fmt = surface_get_format(&surf);
+  assertf(fmt == FMT_RGBA16 || fmt == FMT_RGBA32 || fmt == FMT_I8 || fmt == FMT_CI8,
+    "Camera target surface must use a renderable format (RGBA16/RGBA32/I8/CI8)");
+
+  if(viewports.size[0] != surf.width || viewports.size[1] != surf.height) {
+    t3d_viewport_set_area(viewports, 0, 0, surf.width, surf.height);
+  }
 }
 
 void P64::Camera::update([[maybe_unused]] float deltaTime)
@@ -37,6 +78,10 @@ void P64::Camera::attach() {
 }
 
 void P64::Camera::setScreenArea(int x, int y, int width, int height) {
+  screenArea[0] = x;
+  screenArea[1] = y;
+  screenArea[2] = width;
+  screenArea[3] = height;
   t3d_viewport_set_area(viewports, x,y, width, height);
 }
 

@@ -23,6 +23,7 @@ namespace P64::Comp
     enum Flags : uint8_t
     {
       FLAG_CLEAR = 1 << 0,
+      FLAG_DEPTH = 1 << 1,
     };
 
     struct InitData
@@ -36,6 +37,7 @@ namespace P64::Comp
     };
 
     surface_t buffers[MAX_BUFFERS]{};
+    surface_t depthBuff{}; // optional, shared by all buffers
     uint64_t clearPattern{};
     uint8_t buffCount{1};
     uint8_t currIdx{};
@@ -60,6 +62,14 @@ namespace P64::Comp
     }
 
     [[nodiscard]] uint32_t getBufferCount() const { return buffCount; }
+
+    /**
+     * @return depth buffer of the surface, or nullptr if not enabled.
+     *         Cameras targeting a surface without one re-use the main depth buffer.
+     */
+    [[nodiscard]] surface_t* getDepthBuffer() {
+      return depthBuff.buffer ? &depthBuff : nullptr;
+    }
 
     /**
      * Clears the current surface with the clear-color, done automatically

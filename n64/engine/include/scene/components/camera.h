@@ -35,6 +35,8 @@ namespace P64::Comp
       Mode mode;
       Projection projection;
       uint8_t visMask;
+      uint8_t targetType;
+      uint16_t targetObjId;
     };
 
     P64::Camera camera{};

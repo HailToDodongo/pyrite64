@@ -11,6 +11,9 @@
 
 namespace P64
 {
+  class Object;
+  namespace Comp { struct Surface; }
+
   class Camera
   {
     public:
@@ -20,12 +23,20 @@ namespace P64
         ORTHOGRAPHIC = 1,
       };
 
+      enum class TargetType : uint8_t
+      {
+        SCREEN = 0,
+        SURFACE = 1,
+      };
+
     private:
       T3DViewport viewports{};
       fm_mat4_t viewMatrix{};
       fm_vec3_t up{0,1,0};
       fm_vec3_t pos{};
       fm_vec3_t target{}; // computed
+
+      int16_t screenArea[4]{}; // last area set via 'setScreenArea', restored when switching back to screen
 
       uint8_t needsProjUpdate{false};
     public:
@@ -39,6 +50,10 @@ namespace P64
       Projection projection{Projection::PERSPECTIVE};
       // Visibility read-mask: only objects whose 'visMask' shares a bit with this are drawn.
       uint8_t visMask{0xFF};
+      TargetType targetType{TargetType::SCREEN};
+      uint16_t targetObjId{0}; // object owning the target Comp::Surface, 0 = none
+      surface_t* targetSurfPtr{}; // raw target surface, takes precedence over 'targetObjId'
+      surface_t* targetDepthPtr{}; // optional depth buffer for 'targetSurfPtr'
 
       Camera();
       CLASS_NO_COPY_MOVE(Camera);
@@ -88,6 +103,65 @@ namespace P64
       }
 
       [[nodiscard]] Projection getProjection() const { return projection; }
+
+      /**
+       * Renders to the screen (framebuffer) again, undoing 'setTargetSurface'.
+       * This also restores the viewport to the last area set via 'setScreenArea'.
+       */
+      void setTargetScreen();
+
+      /**
+       * Renders into the first Surface component of the given object instead of the screen.
+       * If the object is nullptr or has no Surface component, the camera renders nothing.
+       * The surface must be in a format the RDP can render to (RGBA16, RGBA32 or I8/CI8).
+       * @param obj object owning a Surface component, or nullptr to render nothing
+       */
+      void setTargetSurface(Object* obj);
+
+      /**
+       * Renders into the given raw surface instead of the screen.
+       * If nullptr is passed, the camera renders nothing.
+       * The surface must be in a format the RDP can render to (RGBA16, RGBA32 or I8/CI8).
+       * Note: the caller must keep the surfaces alive while they are targeted,
+       * for automatic lifetime handling target an object with a Surface component instead.
+       * @param surf surface to render into, or nullptr to render nothing
+       * @param depth optional depth buffer, must be at least the size of 'surf'.
+       *              If nullptr, the main depth buffer is re-used.
+       */
+      void setTargetSurface(surface_t* surf, surface_t* depth = nullptr) {
+        if(surf && depth) {
+          assertf(depth->width >= surf->width && depth->height >= surf->height,
+            "Depth buffer (%dx%d) must be at least the size of the color buffer (%dx%d)",
+            depth->width, depth->height, surf->width, surf->height);
+        }
+        targetType = TargetType::SURFACE;
+        targetObjId = 0;
+        targetSurfPtr = surf;
+        targetDepthPtr = surf ? depth : nullptr;
+      }
+
+      /// Switches to surface mode without a target, making the camera render nothing.
+      void setTargetSurface(std::nullptr_t) {
+        targetType = TargetType::SURFACE;
+        targetObjId = 0;
+        targetSurfPtr = nullptr;
+        targetDepthPtr = nullptr;
+      }
+
+      [[nodiscard]] bool hasSurfaceTarget() const { return targetType == TargetType::SURFACE; }
+
+      /**
+       * Resolves the current target Surface component.
+       * @return component, or nullptr if none is set or its owner was deleted
+       */
+      [[nodiscard]] Comp::Surface* resolveTargetSurface() const;
+
+      /**
+       * Prepares rendering into the given surface by fitting the viewport to it.
+       * Called automatically by the scene each frame, no need to call this manually.
+       * @param surf target surface
+       */
+      void adjustToSurface(const surface_t &surf);
 
       /**
        * Sets new camera values based on a look-at transform.

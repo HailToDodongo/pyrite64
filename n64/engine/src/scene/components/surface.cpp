@@ -42,6 +42,9 @@ namespace P64::Comp
       for(uint32_t i=0; i<data->buffCount; ++i) {
         surface_free(&data->buffers[i]);
       }
+      if(data->depthBuff.buffer) {
+        surface_free(&data->depthBuff);
+      }
       return;
     }
 
@@ -55,6 +58,10 @@ namespace P64::Comp
     for(uint32_t i=0; i<data->buffCount; ++i) {
       data->buffers[i] = surface_alloc(fmt, initData->width, initData->height);
       data->clear(data->buffers[i]);
+    }
+
+    if(data->flags & FLAG_DEPTH) {
+      data->depthBuff = surface_alloc(FMT_RGBA16, initData->width, initData->height);
     }
   }
 
