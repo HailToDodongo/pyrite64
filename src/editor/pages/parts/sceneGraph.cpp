@@ -372,6 +372,97 @@ namespace
   }
 
   /**
+   * Collects the movable roots represented by a drag operation.
+   *
+   * Dragging a selected object moves the whole flat selection, except for selected nodes
+   * whose ancestor is also selected. Dragging an unselected object only moves that object.
+   *
+   * @param scene Scene containing the dragged objects.
+   * @param draggedUUID UUID of the object where the drag operation started.
+   * @return UUIDs of the independent roots that should be moved, in scene-tree order.
+   */
+  std::vector<uint32_t> collectDragRoots(Project::Scene &scene, uint32_t draggedUUID)
+  {
+    if (!ctx.isObjectSelected(draggedUUID))
+      return {draggedUUID};
+
+    std::vector<uint32_t> roots{};
+    auto visit = [&roots](Project::Object &obj, bool hasSelectedAncestor, auto &visitRef) -> void {
+      const bool selected = ctx.isObjectSelected(obj.uuid);
+      if (selected && !hasSelectedAncestor)
+        roots.push_back(obj.uuid);
+
+      for (auto &child : obj.children)
+        visitRef(*child, hasSelectedAncestor || selected, visitRef);
+    };
+
+    for (auto &child : scene.getRootObject().children)
+      visit(*child, false, visit);
+
+    return roots;
+  }
+
+  /**
+   * Checks the complete multi-object move before changing the scene.
+   *
+   * @param scene Scene containing the objects and destination.
+   * @param roots UUIDs of the independent roots to move.
+   * @param targetUUID UUID of the destination object or scene root.
+   * @return True when every root can be moved to the destination.
+   */
+  bool canMoveDragRoots(
+    Project::Scene &scene, const std::vector<uint32_t> &roots, uint32_t targetUUID
+  )
+  {
+    if (roots.empty()) return false;
+
+    Project::Object &sceneRoot = scene.getRootObject();
+    auto targetRef = scene.getObjectByUUID(targetUUID);
+    Project::Object* target = targetUUID == sceneRoot.uuid ? &sceneRoot : targetRef.get();
+    if (!target) return false;
+
+    for (uint32_t uuid : roots) {
+      auto obj = scene.getObjectByUUID(uuid);
+      if (!obj || !obj->parent) return false;
+
+      // Reject drops onto a moved root or anywhere inside its subtree
+      for (Project::Object* ancestor = target; ancestor; ancestor = ancestor->parent) {
+        if (ancestor->uuid == uuid)
+          return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Moves all independent roots represented by a drag operation.
+   *
+   * @param scene Scene containing the dragged objects.
+   * @param task Drag-and-drop source, destination and placement mode.
+   * @return True when at least one object was moved.
+   */
+  bool moveDraggedSelection(Project::Scene &scene, const DragDropTask &task)
+  {
+    std::vector<uint32_t> roots = collectDragRoots(scene, task.sourceUUID);
+    if (!canMoveDragRoots(scene, roots, task.targetUUID))
+      return false;
+
+    bool moved = false;
+    if (task.isInsert) {
+      for (uint32_t uuid : roots)
+        moved |= scene.moveObject(uuid, task.targetUUID, true);
+    } else {
+      // Every sibling is inserted after the same target, so process them backwards
+      // to preserve their scene-tree order
+      for (auto it = roots.rbegin(); it != roots.rend(); ++it)
+        moved |= scene.moveObject(*it, task.targetUUID, false);
+    }
+
+    return moved;
+  }
+
+  /**
    * Applies a scene-tree click after all visible rows have been collected for the frame.
    * Shift replaces the selection with the anchored range. Ctrl+Shift adds that range, or
    * removes it when the clicked endpoint was already selected.
@@ -516,7 +607,7 @@ namespace
 
     bool nodeIsClicked = ImGui::IsItemHovered()
       && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
-      && !ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+      && !ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left);
     bool nodeIsDoubleClicked = ImGui::IsItemHovered()
       && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
       && !ImGui::IsMouseDragging(ImGuiMouseButton_Left);
@@ -533,7 +624,11 @@ namespace
     if (obj.parent && ImGui::BeginDragDropSource())
     {
       ImGui::SetDragDropPayload("OBJECT", &obj.uuid, sizeof(obj.uuid));
-      ImGui::TextUnformatted(obj.name.c_str());
+      std::vector<uint32_t> dragRoots = collectDragRoots(scene, obj.uuid);
+      if (dragRoots.size() > 1)
+        ImGui::Text("%zu Objects", dragRoots.size());
+      else
+        ImGui::TextUnformatted(obj.name.c_str());
       ImGui::EndDragDropSource();
     }
 
@@ -788,11 +883,7 @@ void Editor::SceneGraph::draw()
 
   if(dragDropTask.sourceUUID && dragDropTask.targetUUID) {
     //printf("dragDropTarget %08X -> %08X (%d)\n", dragDropTask.sourceUUID, dragDropTask.targetUUID, dragDropTask.isInsert);
-    bool moved = scene->moveObject(
-      dragDropTask.sourceUUID,
-      dragDropTask.targetUUID,
-      dragDropTask.isInsert
-    );
+    bool moved = moveDraggedSelection(*scene, dragDropTask);
 
     // Could move --> Add to history
     if (moved)
