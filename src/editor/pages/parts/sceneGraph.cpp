@@ -6,6 +6,7 @@
 #include "assetsBrowser.h"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
@@ -52,6 +53,16 @@ namespace
   };
 
   DragDropTask dragDropTask{};
+
+  /**
+   * A possible sibling insertion point represented by a shared drop margin.
+   */
+  struct DropCandidate {
+    // Object after which the dragged roots would be inserted
+    uint32_t targetUUID{0};
+    // Horizontal position where a row inserted at this level would begin
+    float indentX{0.0f};
+  };
 
   struct AssetDropTask {
     uint64_t assetUUID{0};
@@ -183,35 +194,95 @@ namespace
     }
   }
 
-  bool DrawDropTarget(uint32_t& dragDropTarget, uint32_t uuid, float thickness = 2.0f, float hitHeight = 8.0f)
+  /**
+   * Draws an insertion margin that can represent several hierarchy levels.
+   *
+   * The indentation selects an explicit level. To the right of the deepest indentation,
+   * the upper half selects the deepest destination and the lower half the outermost one.
+   *
+   * @param candidates Destinations ordered from the deepest to the outermost level.
+   * @param thickness Thickness of the insertion preview line.
+   * @param hitHeight Height of the interactive insertion margin.
+   */
+  void DrawDropTarget(const std::vector<DropCandidate> &candidates, float thickness = 2.0f, float hitHeight = 8.0f)
   {
-    // Only show when drag-drop is active
-    if (!ImGui::IsDragDropActive())
-      return false;
+    // Avoid creating an invisible item when there is no active payload or destination
+    if (!ImGui::IsDragDropActive() || candidates.empty())
+      return;
 
-    bool res = false;
+    // Keep the current layout cursor because the hit zone is drawn as an overlay
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     ImVec2 cursorScreen = ImGui::GetCursorScreenPos();
-    float fullWidth = ImGui::GetContentRegionAvail().x;
 
-    // Compute overlay position
+    // Extend the shared hit zone to the usable right edge of the scene graph
+    const float rightX = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+
+    // The last candidate is always the least-indented and outermost destination
+    const float outerX = candidates.back().indentX;
+
+    // Start at the outermost indentation so every explicit level remains reachable
     ImVec2 overlayStart{
-      cursorScreen.x - 4_px,
+      outerX - 4_px,
       cursorScreen.y - (hitHeight / 2) + 3_px
     };
-    ImVec2 overlayEnd = ImVec2(cursorScreen.x + fullWidth, cursorScreen.y + hitHeight);
-    lastInsertLineStart = {overlayStart.x, overlayStart.y};
-    lastInsertLineEnd = {overlayEnd.x, overlayStart.y};
+
+    // Cover the complete insertion margin without consuming layout space
+    ImVec2 overlayEnd{rightX, overlayStart.y + hitHeight};
+
+    // Default to the deepest destination for a margin without ambiguity
+    const ImVec2 mousePos = ImGui::GetMousePos();
+    size_t candidateIndex = 0;
+
+    // A chain with several candidates needs vertical or horizontal disambiguation
+    if (candidates.size() > 1) {
+      // To the right of the deepest indentation all candidates occupy the same space
+      if (mousePos.x > candidates.front().indentX) {
+        // The upper half stays inside the deepest parent while the lower half escapes it
+        candidateIndex = mousePos.y < (overlayStart.y + overlayEnd.y) * 0.5f
+          ? 0
+          : candidates.size() - 1;
+      } else {
+        // Inside the indentation gutter select the hierarchy level nearest to the cursor
+        float closestDistance = FLT_MAX;
+        for (size_t i = 0; i < candidates.size(); ++i) {
+          // Compare against the position where a row at this level would begin
+          float distance = std::abs(mousePos.x - candidates[i].indentX);
+          if (distance < closestDistance) {
+            // Retain both the nearest distance and its corresponding destination
+            closestDistance = distance;
+            candidateIndex = i;
+          }
+        }
+      }
+    }
+
+    // Resolve the destination before drawing and accepting the payload
+    const DropCandidate &candidate = candidates[candidateIndex];
+
+    // Indent the preview line to make the selected hierarchy level visible
+    ImVec2 lineStart{candidate.indentX - 4_px, overlayStart.y};
+    ImVec2 lineEnd{rightX, overlayStart.y};
+
+    // Keep the outermost line for asset drops in the empty area below the tree
+    lastInsertLineStart = {outerX - 4_px, overlayStart.y};
+    lastInsertLineEnd = {rightX, overlayStart.y};
     hasInsertLine = true;
 
-    // Push a dummy cursor to draw hit zone *without affecting layout*
+    // Move the cursor temporarily to create an overlapping hit zone
     ImGui::SetCursorScreenPos(overlayStart);
-    ImGui::PushID(("drop_overlay_" + std::to_string(uuid)).c_str());
-    ImGui::InvisibleButton("##dropzone", ImVec2(fullWidth, hitHeight));
+
+    // The outer target UUID uniquely identifies this boundary in the current tree
+    ImGui::PushID(("drop_overlay_" + std::to_string(candidates.back().targetUUID)).c_str());
+
+    // Register the complete shared margin as one ImGui item
+    ImGui::InvisibleButton("##dropzone", overlayEnd - overlayStart);
     bool hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
+    // Object payloads are always valid for the hierarchy move validation performed later
     const ImGuiPayload* activePayload = ImGui::GetDragDropPayload();
     bool acceptsPayload = activePayload && activePayload->IsDataType("OBJECT");
+
+    // Asset payloads only participate when they can create scene objects
     if (activePayload && activePayload->IsDataType("ASSET")) {
       uint64_t assetUUID = *static_cast<const uint64_t*>(activePayload->Data);
       auto asset = ctx.project->getAssets().getEntryByUUID(assetUUID);
@@ -219,34 +290,39 @@ namespace
         || asset->type == Project::FileType::MODEL_3D);
     }
 
+    // Draw only the line belonging to the destination currently selected by the cursor
     if (hovered && acceptsPayload) {
       drawList->AddLine(
-          ImVec2(overlayStart.x, overlayStart.y),
-          ImVec2(overlayEnd.x, overlayStart.y),
-          ImGui::GetColorU32(ImGuiCol_DragDropTarget),
-          thickness
+        lineStart,
+        lineEnd,
+        ImGui::GetColorU32(ImGuiCol_DragDropTarget),
+        thickness
       );
     }
 
+    // Suppress ImGui's full rectangular target highlight in favour of the insertion line
     ImGui::PushStyleColor(ImGuiCol_DragDropTarget, ImVec4(0,0,0,0));
-    // Accept drag payload
     if (ImGui::BeginDragDropTarget())
     {
+      // Record an object move as a sibling insertion after the chosen target
       if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECT"))
       {
-        dragDropTarget = *((uint32_t*)payload->Data);
-        res = true;
+        dragDropTask.sourceUUID = *static_cast<const uint32_t*>(payload->Data);
+        dragDropTask.targetUUID = candidate.targetUUID;
+        dragDropTask.isInsert = false;
       }
+
+      // Route prefab and model assets through the same chosen hierarchy level
       if (!prefabEditObj)
-        acceptSceneAssetDrop(uuid, false);
+        acceptSceneAssetDrop(candidate.targetUUID, false);
       ImGui::EndDragDropTarget();
     }
     ImGui::PopStyleColor();
 
     ImGui::PopID();
 
+    // Restore the cursor so the following tree row keeps its original position
     ImGui::SetCursorScreenPos(cursorScreen);
-    return res;
   }
 
   /**
@@ -528,7 +604,16 @@ namespace
     ctx.setObjectSelectionList(selection, removeRange ? ctx.selObjectUUID : click.uuid);
   }
 
-  void drawObjectNode(
+  /**
+   * Draws a scene object and returns the destinations available after its visible subtree.
+   *
+   * @param scene Scene containing the object.
+   * @param obj Object to draw.
+   * @param keyDelete Whether the delete shortcut was pressed this frame.
+   * @param parentEnabled Whether every ancestor of the object is enabled.
+   * @return Drop destinations ordered from the deepest visible node to the object itself.
+   */
+  std::vector<DropCandidate> drawObjectNode(
     Project::Scene &scene, Project::Object &obj, bool keyDelete,
     bool parentEnabled = true
   )
@@ -536,7 +621,7 @@ namespace
     bool hasSearchFilter = !searchFilter.empty();
     // Searching and this branch has no match anywhere --> Hide it entirely
     if (hasSearchFilter && !subtreeMatchesFilter(obj))
-      return;
+      return {};
 
     bool selfMatchesFilter = !hasSearchFilter || ImTable::labelMatchesFilter(obj.name.c_str(), searchFilter);
 
@@ -587,6 +672,7 @@ namespace
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
 
     std::string nameID = getNodeIcons(obj) + obj.name + "##" + std::to_string(obj.uuid);
+    const float nodeIndentX = ImGui::GetCursorScreenPos().x;
 
     // Set style disabled when editing a prefab or the element or an ancestor is disabled
     const bool dimNode = !canSelect || !parentEnabled || !obj.enabled;
@@ -697,6 +783,8 @@ namespace
       //ImGui::SetWindowFocus("Graph");
     }
 
+    // A leaf or collapsed object only exposes insertion after the object itself
+    std::vector<DropCandidate> tailCandidates{{obj.uuid, nodeIndentX}};
     if(isOpen)
     {
       if (ImGui::BeginPopupContextItem("NodePopup"))
@@ -740,22 +828,36 @@ namespace
 
       // The scene root provides the insertion point before its first object
       if (obj.parent == nullptr && !obj.children.empty() && ImGui::IsDragDropActive()) {
-        if (DrawDropTarget(dragDropTask.sourceUUID, obj.uuid)) {
-          dragDropTask.targetUUID = obj.uuid;
-        }
+        // Inserting after the root UUID is the special moveObject case for the first row
+        DrawDropTarget({{obj.uuid, ImGui::GetCursorScreenPos().x}});
       }
 
-      for(size_t i = 0; i < obj.children.size(); ++i) {
-        auto &child = obj.children[i];
-        drawObjectNode(scene, *child, keyDelete, parentEnabled && obj.enabled);
+      // Build the exact child sequence displayed by the active search filter
+      std::vector<Project::Object*> visibleChildren{};
+      visibleChildren.reserve(obj.children.size());
+      for (auto &child : obj.children) {
+        // Hidden branches must not create invisible drop destinations
+        if (!hasSearchFilter || subtreeMatchesFilter(*child))
+          visibleChildren.push_back(child.get());
+      }
 
-        // Nested lists leave their final boundary to the parent's sibling line
-        bool needsInsertLine = (i + 1 < obj.children.size()) || obj.parent == nullptr;
-        if (needsInsertLine && ImGui::IsDragDropActive()) {
-          if (DrawDropTarget(dragDropTask.sourceUUID, child->uuid)) {
-            dragDropTask.targetUUID = child->uuid;
-          }
-        }
+      // The final visible child carries the complete tail chain back to its ancestors
+      std::vector<DropCandidate> lastChildTail{};
+      for (size_t i = 0; i < visibleChildren.size(); ++i) {
+        // Recursively collect every valid level after this child's visible subtree
+        std::vector<DropCandidate> childTail = drawObjectNode(
+          scene, *visibleChildren[i], keyDelete, parentEnabled && obj.enabled
+        );
+
+        // Remember the most recent non-empty chain for the margin after this object
+        if (!childTail.empty())
+          lastChildTail = childTail;
+
+        // Non-final children own their following margin directly
+        // Root children also own it because no ancestor will draw a margin for the root
+        bool needsInsertLine = (i + 1 < visibleChildren.size()) || obj.parent == nullptr;
+        if (needsInsertLine)
+          DrawDropTarget(childTail);
       }
 
       // Prefab definition tree showing nested prefab content under the instance. Nodes are
@@ -767,8 +869,20 @@ namespace
         }
       }
 
+      // An expanded object ending in a visible child inherits that child's deeper levels
+      if (!lastChildTail.empty()) {
+        tailCandidates = std::move(lastChildTail);
+
+        // Add insertion after this object as the next outer level in the shared margin
+        // The scene root is excluded because objects cannot become its siblings
+        if (obj.parent)
+          tailCandidates.push_back({obj.uuid, nodeIndentX});
+      }
+
       ImGui::TreePop();
     }
+
+    return tailCandidates;
   }
 }
 
