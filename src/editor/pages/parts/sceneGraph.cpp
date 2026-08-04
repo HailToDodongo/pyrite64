@@ -24,6 +24,20 @@ namespace
   std::string renameBuffer{};
   bool startingRename{false};
 
+  // Range selection is based on the rows actually drawn in the scene graph, so collapsed
+  // branches and objects hidden by the search filter do not become selected unexpectedly.
+  uint32_t rangeSelectionAnchorUUID{0};
+  Project::Scene* rangeSelectionScene{nullptr};
+  std::vector<uint32_t> visibleObjectUUIDs{};
+
+  struct PendingObjectClick {
+    uint32_t uuid{0};
+    bool ctrl{false};
+    bool shift{false};
+  };
+
+  PendingObjectClick pendingObjectClick{};
+
   // Filters the tree by object name; empty means no filtering
   std::string searchFilter{};
 
@@ -326,6 +340,8 @@ namespace
 
     if(selectable && ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen()) {
       ctx.setNestedSelection(rootUuid, path);
+      // Nested prefab targets cannot participate in the flat scene-object selection list
+      rangeSelectionAnchorUUID = 0;
     }
 
     if(isOpen) {
@@ -353,6 +369,72 @@ namespace
         return true;
     }
     return false;
+  }
+
+  /**
+   * Applies a scene-tree click after all visible rows have been collected for the frame.
+   * Shift replaces the selection with the anchored range. Ctrl+Shift adds that range, or
+   * removes it when the clicked endpoint was already selected.
+   */
+  void applyObjectClickSelection(const PendingObjectClick &click)
+  {
+    if (!click.uuid) return;
+
+    auto selectSingleOrToggle = [&click]() {
+      if (click.ctrl)
+        ctx.toggleObjectSelection(click.uuid);
+      else
+        ctx.setObjectSelection(click.uuid);
+      rangeSelectionAnchorUUID = click.uuid;
+    };
+
+    if (!click.shift || !rangeSelectionAnchorUUID) {
+      selectSingleOrToggle();
+      return;
+    }
+
+    auto anchorIt = std::find(
+      visibleObjectUUIDs.begin(), visibleObjectUUIDs.end(), rangeSelectionAnchorUUID
+    );
+    auto clickedIt = std::find(
+      visibleObjectUUIDs.begin(), visibleObjectUUIDs.end(), click.uuid
+    );
+
+    // A stale or currently hidden anchor cannot define a visible range, so treat this as
+    // a fresh click and give the next Shift+Click a useful anchor
+    if (anchorIt == visibleObjectUUIDs.end() || clickedIt == visibleObjectUUIDs.end()) {
+      selectSingleOrToggle();
+      return;
+    }
+
+    auto first = std::min(anchorIt, clickedIt);
+    auto last = std::max(anchorIt, clickedIt) + 1;
+    std::vector<uint32_t> range(first, last);
+
+    if (!click.ctrl) {
+      ctx.setObjectSelectionList(range, click.uuid);
+      return;
+    }
+
+    std::vector<uint32_t> selection = ctx.getSelectedObjectUUIDs();
+    const bool removeRange = ctx.isObjectSelected(click.uuid);
+    if (removeRange) {
+      selection.erase(
+        std::remove_if(selection.begin(), selection.end(), [&range](uint32_t uuid) {
+          return std::find(range.begin(), range.end(), uuid) != range.end();
+        }),
+        selection.end()
+      );
+    } else {
+      for (uint32_t uuid : range) {
+        if (std::find(selection.begin(), selection.end(), uuid) == selection.end())
+          selection.push_back(uuid);
+      }
+    }
+
+    // When adding, the clicked row becomes primary; when removing, retain the current
+    // primary if possible while Context falls back to the final remaining item otherwise
+    ctx.setObjectSelectionList(selection, removeRange ? ctx.selObjectUUID : click.uuid);
   }
 
   void drawObjectNode(
@@ -407,6 +489,8 @@ namespace
     // While editing a prefab, only that instance may be selected here. Its own definition
     // is handled by drawPrefabDefNode. All other scene objects are dimmed and inert.
     bool canSelect = !prefabEditObj || (&obj == prefabEditObj);
+    if (canSelect)
+      visibleObjectUUIDs.push_back(obj.uuid);
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 3_px));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
@@ -509,12 +593,11 @@ namespace
     }
 
     if (nodeIsClicked && canSelect) {
-      bool isCtrlDown = ImGui::GetIO().KeyCtrl;
-      if (isCtrlDown) {
-        ctx.toggleObjectSelection(obj.uuid);
-      } else {
-        ctx.setObjectSelection(obj.uuid);
-      }
+      pendingObjectClick = {
+        .uuid = obj.uuid,
+        .ctrl = ImGui::GetIO().KeyCtrl,
+        .shift = ImGui::GetIO().KeyShift,
+      };
       //ImGui::SetWindowFocus("Object");
       //ImGui::SetWindowFocus("Graph");
     }
@@ -605,6 +688,12 @@ void Editor::SceneGraph::draw()
   deleteObj = nullptr;
   deleteSelection = false;
   prefabEditObj = Editor::SelectionUtils::getPrefabEditObject(*scene);
+  visibleObjectUUIDs.clear();
+  pendingObjectClick = {};
+  if (rangeSelectionScene != scene) {
+    rangeSelectionScene = scene;
+    rangeSelectionAnchorUUID = 0;
+  }
   bool isFocus = ImGui::IsWindowFocused();
   // While rename is active, shortcuts stay disabled, so the text field can own the keyboard input
   bool isRenaming = renameObjectUUID != 0;
@@ -644,6 +733,8 @@ void Editor::SceneGraph::draw()
   } else {
     drawObjectNode(*scene, root, keyDelete);
   }
+
+  applyObjectClickSelection(pendingObjectClick);
 
   // Use the remaining tree space as a drop target for root-level prefab or model objects
   if (!prefabEditObj && ImGui::IsDragDropActive()) {
@@ -692,6 +783,7 @@ void Editor::SceneGraph::draw()
       && ImGui::IsMouseClicked(ImGuiMouseButton_Left)
       && !ImGui::IsAnyItemHovered()) {
     ctx.clearObjectSelection();
+    rangeSelectionAnchorUUID = 0;
   }
 
   if(dragDropTask.sourceUUID && dragDropTask.targetUUID) {
