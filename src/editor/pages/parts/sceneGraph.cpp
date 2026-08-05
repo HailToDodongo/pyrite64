@@ -506,8 +506,14 @@ namespace
     // Directional navigation must update the editor target instead of only moving ImGui's highlight
     const bool focusedByNavigation = wasLastItemFocusedByDirectionalNavigation();
 
-    if(selectable && (focusedByNavigation
-        || (ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen()))) {
+    const bool nodeIsClicked = ImGui::IsItemClicked(ImGuiMouseButton_Left)
+      && !ImGui::IsItemToggledOpen();
+
+    // Modified clicks bypass the regular TreeNode button focus handling
+    if (nodeIsClicked && (ImGui::GetIO().KeyCtrl || ImGui::GetIO().KeyShift))
+      ImGui::SetFocusID(ImGui::GetItemID(), ImGui::GetCurrentWindow());
+
+    if(selectable && (focusedByNavigation || nodeIsClicked)) {
       ctx.setNestedSelection(rootUuid, path);
       // Nested prefab targets cannot participate in the flat scene-object selection list
       rangeSelectionAnchorUUID = 0;
@@ -797,6 +803,11 @@ namespace
     bool nodeIsDoubleClicked = ImGui::IsItemHovered()
       && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
       && !ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+
+    // Make a modified click the starting point for subsequent arrow-key navigation
+    if (nodeIsClicked && (ImGui::GetIO().KeyCtrl || ImGui::GetIO().KeyShift))
+      ImGui::SetFocusID(ImGui::GetItemID(), ImGui::GetCurrentWindow());
+
     if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
       ImGui::OpenPopup("NodePopup");
     }
