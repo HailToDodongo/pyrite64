@@ -64,6 +64,8 @@ namespace
     float indentX{0.0f};
     // Whether insertion occurs before instead of after the target object
     bool insertBefore{false};
+    // Boundary below the previous sibling row
+    float previousSiblingRowBottomY{0.0f};
   };
 
   struct AssetDropTask {
@@ -82,7 +84,7 @@ namespace
    * Accepts a prefab or 3D model asset and records where its scene object should be created.
    * @param targetUUID Destination object UUID, or zero to add at the scene root.
    * @param asChild Whether the new instance should become a child of the target.
-   * @param insertBefore Whether sibling insertion should occur before the target.
+   * @param insertBefore Whether sibling insertion should occur before the target (this is the only way to insert as first child when there are already child elements).
    */
   void acceptSceneAssetDrop(uint32_t targetUUID, bool asChild, bool insertBefore = false)
   {
@@ -325,10 +327,52 @@ namespace
 
     // Draw only the line belonging to the destination currently selected by the cursor
     if (hovered && acceptsPayload) {
+      const ImU32 indicatorColor = ImGui::GetColorU32(ImGuiCol_DragDropTarget);
+
+      // Is an outer destination --> Show guide to identify its target previous sibling
+      if (candidateIndex > 0 && !candidate.insertBefore
+          && candidate.previousSiblingRowBottomY > 0.0f) {
+        // Place the vertical guide in the middel future sibling icon start
+        const float connectorX = lineStart.x + 10_px;
+
+        // Split the vertical guide into short strokes so it does not dominate the insertion line
+        const float dashLength = 4_px;
+        const float dashGap = 3_px;
+        const float guideStartY = std::min(candidate.previousSiblingRowBottomY, lineStart.y);
+        const float guideEndY = std::max(candidate.previousSiblingRowBottomY, lineStart.y);
+
+        // Draw every visible stroke and trim the final one to the available height
+        for (float dashStartY = guideStartY; dashStartY < guideEndY;
+             dashStartY += dashLength + dashGap) {
+          const float dashEndY = std::min(dashStartY + dashLength, guideEndY);
+          drawList->AddLine(
+            {connectorX, dashStartY},
+            {connectorX, dashEndY},
+            indicatorColor,
+            thickness
+          );
+        }
+
+        // Mark the row from which the connector originates
+        drawList->AddCircleFilled(
+          {connectorX, candidate.previousSiblingRowBottomY},
+          2.5_px,
+          indicatorColor
+        );
+
+        // End the horizontal connector in the middle of the first icon of the target sibling
+        drawList->AddLine(
+          {connectorX, lineStart.y},
+          lineStart,
+          indicatorColor,
+          thickness
+        );
+      }
+
       drawList->AddLine(
         lineStart,
         lineEnd,
-        ImGui::GetColorU32(ImGuiCol_DragDropTarget),
+        indicatorColor,
         thickness
       );
     }
@@ -822,7 +866,12 @@ namespace
     }
 
     // A leaf or collapsed object only exposes insertion after the object itself
-    std::vector<DropCandidate> tailCandidates{{obj.uuid, nodeIndentX}};
+    std::vector<DropCandidate> tailCandidates{{
+      obj.uuid,
+      nodeIndentX,
+      false,
+      nodeRectMax.y
+    }};
     if(isOpen)
     {
       if (ImGui::BeginPopupContextItem("NodePopup"))
@@ -917,7 +966,12 @@ namespace
         // Add insertion after this object as the next outer level in the shared margin
         // The scene root is excluded because objects cannot become its siblings
         if (obj.parent)
-          tailCandidates.push_back({obj.uuid, nodeIndentX});
+          tailCandidates.push_back({
+            obj.uuid,
+            nodeIndentX,
+            false,
+            nodeRectMax.y
+          });
       }
 
       ImGui::TreePop();
