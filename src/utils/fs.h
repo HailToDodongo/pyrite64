@@ -38,6 +38,13 @@ namespace Utils::FS
     return true;
   }
 
+  // Only writes if the content differs, this keeps the timestamp stable for generated
+  // source/header files, so make doesn't rebuild everything that includes them.
+  inline bool saveTextFileIfChanged(const fs::path &path, const std::string &content) {
+    if(fs::exists(path) && loadTextFile(path) == content)return true;
+    return saveTextFile(path, content);
+  }
+
   std::vector<std::string> scanDirs(const std::string &basePath);
 
   void ensureFile(const fs::path &path, const fs::path &pathTemplate);

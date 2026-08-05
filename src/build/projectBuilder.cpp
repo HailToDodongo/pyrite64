@@ -177,9 +177,9 @@ bool Build::buildProject(const std::string &configPath)
     {"{{SCENE_MAP}}", sceneMapStr},
     {"{{SCENE_COUNT}}", std::to_string(scenes.size())}
   });
-  Utils::FS::saveTextFile(project.getPath() + "/src/p64/sceneTable.h", sceneTableHeader);
+  Utils::FS::saveTextFileIfChanged(project.getPath() + "/src/p64/sceneTable.h", sceneTableHeader);
 
-  Utils::FS::saveTextFile(project.getPath() + "/src/p64/sceneTable.cpp",
+  Utils::FS::saveTextFileIfChanged(project.getPath() + "/src/p64/sceneTable.cpp",
     "#include \"sceneTable.h\"\n"
     "\n"
     "namespace P64::SceneManager {\n"
@@ -200,7 +200,7 @@ bool Build::buildProject(const std::string &configPath)
     Utils::FS::loadTextFile("data/scripts/assetTable.h"),
     "{{ASSET_MAP}}", sceneCtx.assetFileMap
   );
-  Utils::FS::saveTextFile(project.getPath() + "/src/p64/assetTable.h", assetTableCode);
+  Utils::FS::saveTextFileIfChanged(project.getPath() + "/src/p64/assetTable.h", assetTableCode);
 
   // Asset table
   Utils::BinaryFile fileList{};
