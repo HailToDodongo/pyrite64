@@ -6,7 +6,6 @@
 #include "assetsBrowser.h"
 
 #include <algorithm>
-#include <cmath>
 #include <string>
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
@@ -217,12 +216,26 @@ namespace
     // Extend the shared hit zone to the usable right edge of the scene graph
     const float rightX = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
 
+    // Match the right edge used by the row controls instead of the complete window width
+    const ImGuiStyle &style = ImGui::GetStyle();
+    const float rowControlsWidth = 16_px * 2 + style.ItemInnerSpacing.x;
+    const float controlsEndX = rightX - calcRightControlAreaWidth() + rowControlsWidth;
+
+    // Reuse original margin position and advance it by one hierarchy level
+    const float iconStartOffset = style.IndentSpacing - 4_px;
+
     // The last candidate is always the least-indented and outermost destination
     const float outerX = candidates.back().indentX;
 
-    // Start at the outermost indentation so every explicit level remains reachable
+    // Shared margins begin at their outermost visual line while a terminal node keeps
+    // the wider target that reaches into the indentation gutter
+    const float overlayLeftX = candidates.size() == 1
+      ? outerX - 4_px
+      : outerX + iconStartOffset;
+
+    // Keep the terminal-node exception without offsetting multi-level hit zones
     ImVec2 overlayStart{
-      outerX - 4_px,
+      overlayLeftX,
       cursorScreen.y - (hitHeight / 2) + 3_px
     };
 
@@ -235,22 +248,28 @@ namespace
 
     // A chain with several candidates needs vertical or horizontal disambiguation
     if (candidates.size() > 1) {
-      // To the right of the deepest indentation all candidates occupy the same space
-      if (mousePos.x > candidates.front().indentX) {
+      // Use the same horizontal position as the deepest visible insertion line
+      const float deepestLineStartX = candidates.front().indentX + iconStartOffset;
+
+      // To the right of the deepest line all candidates occupy the same space
+      if (mousePos.x > deepestLineStartX) {
         // The upper half stays inside the deepest parent while the lower half escapes it
         candidateIndex = mousePos.y < (overlayStart.y + overlayEnd.y) * 0.5f
           ? 0
           : candidates.size() - 1;
       } else {
-        // Inside the indentation gutter select the hierarchy level nearest to the cursor
-        float closestDistance = FLT_MAX;
+        // Start with the outermost level for the left edge of the shared margin
+        candidateIndex = candidates.size() - 1;
+
+        // Each level owns the interval from its visible line to the next deeper line
         for (size_t i = 0; i < candidates.size(); ++i) {
-          // Compare against the position where a row at this level would begin
-          float distance = std::abs(mousePos.x - candidates[i].indentX);
-          if (distance < closestDistance) {
-            // Retain both the nearest distance and its corresponding destination
-            closestDistance = distance;
+          // Calculate the exact left edge shown by this candidate's indicator
+          const float candidateLineStartX = candidates[i].indentX + iconStartOffset;
+
+          // The first line to the left of the cursor is the deepest valid level
+          if (mousePos.x >= candidateLineStartX) {
             candidateIndex = i;
+            break;
           }
         }
       }
@@ -259,13 +278,21 @@ namespace
     // Resolve the destination before drawing and accepting the payload
     const DropCandidate &candidate = candidates[candidateIndex];
 
-    // Indent the preview line to make the selected hierarchy level visible
-    ImVec2 lineStart{candidate.indentX - 4_px, overlayStart.y};
-    ImVec2 lineEnd{rightX, overlayStart.y};
+    // Start where row icons would begin after the space reserved for the tree arrow
+    ImVec2 lineStart{
+      candidate.indentX + iconStartOffset,
+      overlayStart.y
+    };
+
+    // Stop where row button group ends so the indicator reads as an insertion line
+    ImVec2 lineEnd{controlsEndX, overlayStart.y};
 
     // Keep the outermost line for asset drops in the empty area below the tree
-    lastInsertLineStart = {outerX - 4_px, overlayStart.y};
-    lastInsertLineEnd = {rightX, overlayStart.y};
+    lastInsertLineStart = {
+      outerX + iconStartOffset,
+      overlayStart.y
+    };
+    lastInsertLineEnd = {controlsEndX, overlayStart.y};
     hasInsertLine = true;
 
     // Move the cursor temporarily to create an overlapping hit zone
