@@ -49,6 +49,7 @@ namespace
     uint32_t sourceUUID{0};
     uint32_t targetUUID{0};
     bool isInsert{false};
+    bool insertBefore{false};
   };
 
   DragDropTask dragDropTask{};
@@ -61,12 +62,15 @@ namespace
     uint32_t targetUUID{0};
     // Horizontal position where a row inserted at this level would begin
     float indentX{0.0f};
+    // Whether insertion occurs before instead of after the target object
+    bool insertBefore{false};
   };
 
   struct AssetDropTask {
     uint64_t assetUUID{0};
     uint32_t targetUUID{0};
     bool asChild{false};
+    bool insertBefore{false};
   };
 
   AssetDropTask assetDropTask{};
@@ -78,8 +82,9 @@ namespace
    * Accepts a prefab or 3D model asset and records where its scene object should be created.
    * @param targetUUID Destination object UUID, or zero to add at the scene root.
    * @param asChild Whether the new instance should become a child of the target.
+   * @param insertBefore Whether sibling insertion should occur before the target.
    */
-  void acceptSceneAssetDrop(uint32_t targetUUID, bool asChild)
+  void acceptSceneAssetDrop(uint32_t targetUUID, bool asChild, bool insertBefore = false)
   {
     const ImGuiPayload* payload = ImGui::GetDragDropPayload();
     if (!payload || !payload->IsDataType("ASSET")) return;
@@ -93,6 +98,7 @@ namespace
       assetDropTask.assetUUID = assetUUID;
       assetDropTask.targetUUID = targetUUID;
       assetDropTask.asChild = asChild;
+      assetDropTask.insertBefore = insertBefore;
     }
   }
 
@@ -337,11 +343,12 @@ namespace
         dragDropTask.sourceUUID = *static_cast<const uint32_t*>(payload->Data);
         dragDropTask.targetUUID = candidate.targetUUID;
         dragDropTask.isInsert = false;
+        dragDropTask.insertBefore = candidate.insertBefore;
       }
 
       // Route prefab and model assets through the same chosen hierarchy level
       if (!prefabEditObj)
-        acceptSceneAssetDrop(candidate.targetUUID, false);
+        acceptSceneAssetDrop(candidate.targetUUID, false, candidate.insertBefore);
       ImGui::EndDragDropTarget();
     }
     ImGui::PopStyleColor();
@@ -555,6 +562,10 @@ namespace
     if (task.isInsert) {
       for (uint32_t uuid : roots)
         moved |= scene.moveObject(uuid, task.targetUUID, true);
+    } else if (task.insertBefore) {
+      // Repeated insertion before one target naturally preserves forward tree order
+      for (uint32_t uuid : roots)
+        moved |= scene.moveObject(uuid, task.targetUUID, false, true);
     } else {
       // Every sibling is inserted after the same target, so process them backwards
       // to preserve their scene-tree order
@@ -853,12 +864,6 @@ namespace
         ImGui::EndPopup();
       }
 
-      // The scene root provides the insertion point before its first object
-      if (obj.parent == nullptr && !obj.children.empty() && ImGui::IsDragDropActive()) {
-        // Inserting after the root UUID is the special moveObject case for the first row
-        DrawDropTarget({{obj.uuid, ImGui::GetCursorScreenPos().x}});
-      }
-
       // Build the exact child sequence displayed by the active search filter
       std::vector<Project::Object*> visibleChildren{};
       visibleChildren.reserve(obj.children.size());
@@ -866,6 +871,15 @@ namespace
         // Hidden branches must not create invisible drop destinations
         if (!hasSearchFilter || subtreeMatchesFilter(*child))
           visibleChildren.push_back(child.get());
+      }
+
+      // The margin before the first visible child inserts at the beginning of this parent
+      if (!visibleChildren.empty()) {
+        DrawDropTarget({{
+          visibleChildren.front()->uuid,
+          ImGui::GetCursorScreenPos().x,
+          true
+        }});
       }
 
       // The final visible child carries the complete tail chain back to its ancestors
@@ -1062,7 +1076,7 @@ void Editor::SceneGraph::draw()
           // It is being set as a child of another object --> Set same global position
           if (target && target->parent)
             position = target->parent->pos.resolve(target->parent->propOverrides);
-          scene->moveObject(added->uuid, assetDropTask.targetUUID, false);
+          scene->moveObject(added->uuid, assetDropTask.targetUUID, false, assetDropTask.insertBefore);
         }
         // Apply the position after moving the object to its final place in the tree
         added->pos.resolve(added->propOverrides) = position;

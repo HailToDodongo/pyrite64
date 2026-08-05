@@ -196,7 +196,7 @@ void Project::Scene::removeAllObjects() {
   root.children.clear();
 }
 
-bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild)
+bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild, bool insertBefore)
 {
   if(uuidObject == uuidTarget) {
     return false;
@@ -242,7 +242,7 @@ bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool a
       // Add as sibling to target
       auto parent = target->parent;
       if (parent) {
-        // insert after target
+        // Insert before or after the target
         auto &siblings = parent->children;
         auto it = std::find_if(
           siblings.begin(), siblings.end(),
@@ -250,7 +250,7 @@ bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool a
         );
         if (it != siblings.end())
         {
-          siblings.insert(it + 1, obj);
+          siblings.insert(insertBefore ? it : it + 1, obj);
           obj->parent = parent;
         }
       }
