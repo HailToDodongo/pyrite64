@@ -179,6 +179,17 @@ namespace
   }
 
   /**
+   * Checks whether directional navigation has just moved to the last submitted ImGui item.
+   * @return True when the last item has newly received directional navigation focus.
+   */
+  bool wasLastItemFocusedByDirectionalNavigation()
+  {
+    const ImGuiContext* imguiContext = ImGui::GetCurrentContext();
+    return imguiContext->NavJustMovedToId == ImGui::GetItemID()
+      && !imguiContext->NavJustMovedToIsTabbing;
+  }
+
+  /**
    * Starts inline renaming for an object.
    *
    * @param objectUUID UUID of the object to rename
@@ -492,7 +503,11 @@ namespace
     if(dim)ImGui::PopStyleColor();
     ImGui::PopStyleVar(2);
 
-    if(selectable && ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen()) {
+    // Directional navigation must update the editor target instead of only moving ImGui's highlight
+    const bool focusedByNavigation = wasLastItemFocusedByDirectionalNavigation();
+
+    if(selectable && (focusedByNavigation
+        || (ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen()))) {
       ctx.setNestedSelection(rootUuid, path);
       // Nested prefab targets cannot participate in the flat scene-object selection list
       rangeSelectionAnchorUUID = 0;
@@ -765,6 +780,9 @@ namespace
     ImVec2 nodeRectMin = ImGui::GetItemRectMin();
     ImVec2 nodeRectMax = ImGui::GetItemRectMax();
 
+    // Capture navigation focus before later row controls replace ImGui's last item
+    const bool focusedByNavigation = wasLastItemFocusedByDirectionalNavigation();
+
     // Mark object being edited in prefab-edit mode
     if(ctx.isPrefabEditing(obj.uuid)) {
       ImVec2 bgMax = ImGui::GetItemRectMax();
@@ -855,11 +873,11 @@ namespace
       ImGui::SetCursorPosY(oldCursorPos.y);
     }
 
-    if (nodeIsClicked && canSelect) {
+    if ((nodeIsClicked || focusedByNavigation) && canSelect) {
       pendingObjectClick = {
         .uuid = obj.uuid,
-        .ctrl = ImGui::GetIO().KeyCtrl,
-        .shift = ImGui::GetIO().KeyShift,
+        .ctrl = nodeIsClicked && ImGui::GetIO().KeyCtrl,
+        .shift = nodeIsClicked && ImGui::GetIO().KeyShift,
       };
       //ImGui::SetWindowFocus("Object");
       //ImGui::SetWindowFocus("Graph");
