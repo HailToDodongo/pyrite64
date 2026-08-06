@@ -10,14 +10,14 @@
 #include "debug/debugMenu.h"
 #include "scene/scene.h"
 #include "vi/swapChain.h"
-#include "audio/audioManager.h"
+#include "audio/audio.h"
 
 #include <vector>
 #include <string>
 #include <filesystem>
 
 #include "../../include/debug/menu.h"
-#include "../audio/audioManagerPrivate.h"
+#include "../audio/audioPrivate.h"
 #include "lib/memory.h"
 
 namespace P64::SceneManager
@@ -60,6 +60,9 @@ namespace {
   bool showBarRAM = true;
 
   bool isVisible = false;
+
+  float dbgMasterVol = 1.0f;
+  float dbgMasterVolLast = 1.0f;
 }
 
 void P64::Debug::Overlay::toggle()
@@ -112,7 +115,7 @@ void P64::Debug::Overlay::init()
 
   menuAudio.onDraw = ovlAudio;
   menuAudio.add("Freq.", scene.getConf().audioFreq, 8000, 48000, 0);
-  menuAudio.add("Volume", P64::AudioManager::masterVol, 0.0f, 1.0f, 0.05f);
+  menuAudio.add("Volume", dbgMasterVol, 0.0f, 1.0f, 0.05f);
 
   menuMemory.onDraw = ovlMemory;
   menuCPU.onDraw = ovlCPU;
@@ -174,6 +177,11 @@ void P64::Debug::Overlay::draw(surface_t* surf)
   Debug::draw(surf);
   menu.update();
 
+  if(dbgMasterVol != dbgMasterVolLast) {
+    dbgMasterVolLast = dbgMasterVol;
+    Audio::engine().setMasterGain(dbgMasterVol);
+  }
+
   collScene.debugDraw(showCollMesh, showColliders);
 
   Debug::printStart();
@@ -210,7 +218,7 @@ void P64::Debug::Overlay::draw(surface_t* surf)
     addBarSection(scene.ticksGlobalUpdate, COLOR_GLOBAL_UPDATE);
     addBarSection(scene.ticksDraw - scene.ticksGlobalDraw, COLOR_SCENE_DRAW);
     addBarSection(scene.ticksGlobalDraw, COLOR_GLOBAL_DRAW);
-    addBarSection(P64::AudioManager::ticksUpdate, COLOR_AUDIO);
+    addBarSection(P64::Audio::ticksUpdate, COLOR_AUDIO);
 
     // Measure self-time
     float timeSelf = usToWidth(TICKS_TO_US(ticksSelf));

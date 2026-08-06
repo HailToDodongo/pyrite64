@@ -95,7 +95,18 @@ void Editor::SceneInspector::draw() {
       { 48000, "48000 Hz" },
     }, scene->conf.audioFreq.value);
 
+    ImTable::add("Master Volume", scene->conf.audioMasterVolume.value);
+
+    ImTable::add("Reverb", scene->conf.audioReverb.value);
+    if (scene->conf.audioReverb.value) {
+      ImTable::add("Rev. Gain", scene->conf.audioReverbGain.value);
+      ImTable::add("Rev. Feedback", scene->conf.audioReverbFeedback.value);
+      ImTable::add("Rev. Cross", scene->conf.audioReverbCross.value);
+      ImTable::add("Rev. Send Scale", scene->conf.audioReverbSendScale.value);
+    }
+
     ImTable::end();
+    ImGui::TextDisabled("Applied only scene load");
   }
 
   if (ImGui::CollapsingHeader("Physics", ImGuiTreeNodeFlags_DefaultOpen))

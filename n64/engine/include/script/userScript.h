@@ -10,7 +10,7 @@
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
 #include "assets/assetManager.h"
-#include "audio/audioManager.h"
+#include "audio/audio.h"
 #include "lib/math.h"
 #include "collision/shapes.h"
 #include "renderer/drawLayer.h"

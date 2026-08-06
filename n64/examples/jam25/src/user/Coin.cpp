@@ -82,9 +82,8 @@ namespace P64::Script::CFEEDEA8CF251F94
     if(event.otherObject->id != User::ctx.controlledId)return;
     ++User::ctx.coins;
 
-    auto sfx = AudioManager::play2D("sfx/CoinGet.wav64"_asset);
-    sfx.setVolume(0.3f);
-    sfx.setSpeed(1.0f - Math::rand01()*0.1f);
+    auto sfx = Audio::sfx->playNote(Audio::sample("sfx/CoinGet.tsw"_asset), 60, 127, 0.0f, 0.0f, 0.3f);
+    Audio::sfx->setPitch(sfx, -Math::rand01() * 1.8f);
 
     obj.getScene().addObject("ParticlesCoin"_prefab, obj.pos);
     obj.remove();

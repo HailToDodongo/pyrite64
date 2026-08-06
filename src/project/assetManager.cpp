@@ -90,6 +90,7 @@ namespace
       Utils::JSON::readProp(doc, conf.wavForceMono);
       Utils::JSON::readProp(doc, conf.wavResampleRate);
       Utils::JSON::readProp(doc, conf.wavCompression);
+      Utils::JSON::readProp(doc, conf.wavLoop);
       Utils::JSON::readProp(doc, conf.fontId);
       Utils::JSON::readProp(doc, conf.fontCharset);
 
@@ -116,10 +117,13 @@ namespace
       }
     } else if (ext == ".wav" || ext == ".mp3") {
       type = Project::FileType::AUDIO;
-      outPath = changeExt(outPath, ".wav64");
-    } else if (ext == ".xm") {
-      type = Project::FileType::MUSIC_XM;
-      outPath = changeExt(outPath, ".xm64");
+      outPath = changeExt(outPath, ".tsw"); // may become .wav64 after the conf is known
+    } else if (ext == ".xm" || ext == ".mid") {
+      type = Project::FileType::SEQUENCE;
+      outPath = changeExt(outPath, ".tsq");
+    } else if (ext == ".sf2") {
+      type = Project::FileType::SOUND_FONT;
+      outPath = changeExt(outPath, ".tsf");
     } else if (ext == ".glb" || ext == ".gltf") {
       type = Project::FileType::MODEL_3D;
       outPath = changeExt(outPath, ".t3dm");
@@ -154,6 +158,19 @@ namespace
     pathMeta += ".conf";
     if (fs::exists(pathMeta)) {
       deserialize(entry.conf, pathMeta);
+    }
+
+    // opus/ulc audio stays a streamed .wav64, everything else is a .tsw sample.
+    // mp3 can only go through audioconv64, so force a streamed compression for it
+    if (type == Project::FileType::AUDIO) {
+      if (ext == ".mp3" && !Project::WavCompression::isStreamed(entry.conf.wavCompression.value)) {
+        entry.conf.wavCompression.value = Project::WavCompression::OPUS;
+      }
+      if (Project::WavCompression::isStreamed(entry.conf.wavCompression.value)) {
+        entry.outPath = changeExt(entry.outPath, ".wav64");
+        entry.romPath = entry.outPath;
+        entry.romPath.replace(0, std::string{"filesystem/"}.length(), "rom:/");
+      }
     }
 
     bool forceSave = false;
@@ -236,6 +253,7 @@ std::string Project::AssetConf::serialize() const {
     .set(wavForceMono)
     .set(wavResampleRate)
     .set(wavCompression)
+    .set(wavLoop)
     .set(fontId)
     .set(fontCharset)
     .set("exclude", exclude)

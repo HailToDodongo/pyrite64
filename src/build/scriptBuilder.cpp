@@ -143,15 +143,17 @@ void Build::buildGlobalScripts(Project::Project &project, SceneCtx &sceneCtx)
 
   // asset specific settings
   sceneCtx.needsOpus = false;
+  sceneCtx.needsUlc = false;
   for(auto &asset : project.getAssets().getTypeEntries(Project::FileType::AUDIO))
   {
-    if(asset.conf.wavCompression.value == 3) // Opus
-    {
-      sceneCtx.needsOpus = true;
-    }
+    if(asset.conf.wavCompression.value == Project::WavCompression::OPUS)sceneCtx.needsOpus = true;
+    if(asset.conf.wavCompression.value == Project::WavCompression::ULC)sceneCtx.needsUlc = true;
   }
 
   // global game-init
+  if(sceneCtx.needsUlc) {
+    nameMap["onGameInit"] += " wav64_init_compression(2); \n";
+  }
   if(sceneCtx.needsOpus) {
     nameMap["onGameInit"] += " wav64_init_compression(3); \n";
   }

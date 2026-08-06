@@ -254,6 +254,8 @@ add_executable(pyrite64 src/main.cpp
         src/build/tools/bci.h
         src/build/audioBuilder.cpp
         src/project/component/types/compAudio2d.cpp
+        src/project/component/types/compAudio3d.cpp
+        src/project/component/types/compAudioListener.cpp
         src/editor/pages/parts/layerInspector.cpp
         src/build/prefabBuilder.cpp
         src/project/component/types/compConstraint.cpp

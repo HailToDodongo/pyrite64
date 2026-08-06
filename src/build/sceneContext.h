@@ -43,6 +43,7 @@ namespace Build
     uint32_t nextRuntimeId{1};
 
     bool needsOpus{false};
+    bool needsUlc{false};
 
     void addAsset(const Project::AssetManagerEntry &entry);
   };

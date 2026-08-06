@@ -4,7 +4,7 @@
 */
 #include "screenFade.h"
 #include <libdragon.h>
-#include <audio/audioManager.h>
+#include <audio/audio.h>
 #include <lib/types.h>
 #include <lib/math.h>
 #include <vi/swapChain.h>
@@ -58,8 +58,7 @@ void P64::User::ScreenFade::fadeOut(int type, float time)
   fadeStep = 1.0f / time;
   fadeTimeTarget = 1.0f;
 
-  AudioManager::play2D("sfx/FadeOut.wav64"_asset)
-    .setVolume(FADE_VOLUME);
+  Audio::sfx->playNote(Audio::sample("sfx/FadeOut.tsw"_asset), 60, 127, 0.0f, 0.0f, FADE_VOLUME);
 
   if(coro_get_current()) {
     while(!isDone())coro_yield();
@@ -72,8 +71,7 @@ void P64::User::ScreenFade::fadeIn(int type, float time)
   fadeStep = -1.0f / time;
   fadeTimeTarget = 0.0f;
 
-  AudioManager::play2D("sfx/FadeIn.wav64"_asset)
-    .setVolume(FADE_VOLUME);
+  Audio::sfx->playNote(Audio::sample("sfx/FadeIn.tsw"_asset), 60, 127, 0.0f, 0.0f, FADE_VOLUME);
 
   if(coro_get_current()) {
     while(!isDone())coro_yield();
@@ -94,7 +92,7 @@ bool P64::User::ScreenFade::isDone()
 
 void P64::User::ScreenFade::draw()
 {
-  AudioManager::setMasterVolume(1.0f - fadeTime);
+  Audio::engine().setMasterGain(1.0f - fadeTime);
   float deltaTime = VI::SwapChain::getDeltaTime();
   if(fadeStep != 0.0f)
   {

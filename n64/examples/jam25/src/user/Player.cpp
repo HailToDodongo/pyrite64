@@ -158,9 +158,8 @@ namespace P64::Script::C17EA8EAB6CF1DEB
         data->isJumpEnd = false;
         data->isMidJump = true;
 
-        auto sfx = AudioManager::play2D("sfx/PlayerJump00.wav64"_asset);
-        sfx.setSpeed(1.0f - (P64::Math::rand01() * 0.1f));
-        sfx.setVolume(0.35f);
+        auto sfx = Audio::sfx->playNote(Audio::sample("sfx/PlayerJump00.tsw"_asset), 60, 127, 0.0f, 0.0f, 0.35f);
+        Audio::sfx->setPitch(sfx, -P64::Math::rand01() * 1.8f);
       }
 
       // Stylized arc: past the peak / after release, add extra downward gravity
@@ -316,13 +315,12 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     {
       if (data->stepSFXCooldown == 0 && onFloor) {
         uint32_t sfxPool[3] {
-          "sfx/StepStone00.wav64"_asset,
-          "sfx/StepStone01.wav64"_asset,
-          "sfx/StepStone02.wav64"_asset
+          "sfx/StepStone00.tsw"_asset,
+          "sfx/StepStone01.tsw"_asset,
+          "sfx/StepStone02.tsw"_asset
         };
-        auto sfx = AudioManager::play2D(sfxPool[rand() % 3]);
-        sfx.setSpeed(1.0f - (P64::Math::rand01() * 0.21f));
-        sfx.setVolume(0.3f);
+        auto sfx = Audio::sfx->playNote(Audio::sample(sfxPool[rand() % 3]), 60, 127, 0.0f, 0.0f, 0.3f);
+        Audio::sfx->setPitch(sfx, -P64::Math::rand01() * 4.0f);
 
         data->stepSFXCooldown = 10 + (rand() % 4);
       }
@@ -395,9 +393,8 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     bool justLanded = onFloor && !data->wasOnFloor;
     if (justLanded) {
       if (data->landSFXCooldown == 0) {
-        auto sfx = AudioManager::play2D("sfx/StepStone00.wav64"_asset);
-        sfx.setSpeed(1.0f - (P64::Math::rand01() * 0.21f));
-        sfx.setVolume(0.45f);
+        auto sfx = Audio::sfx->playNote(Audio::sample("sfx/StepStone00.tsw"_asset), 60, 127, 0.0f, 0.0f, 0.45f);
+        Audio::sfx->setPitch(sfx, -P64::Math::rand01() * 4.0f);
         data->landSFXCooldown = 30;
       }
       data->hasHitFloor = 1;

@@ -95,7 +95,9 @@ void Editor::MemoryDashboard::scanBuildOutputs()
             switch(asset.type) {
               case Project::FileType::IMAGE:       cat = AssetCategory::Textures; break;
               case Project::FileType::MODEL_3D:    cat = AssetCategory::Models; break;
-              case Project::FileType::AUDIO:       cat = AssetCategory::Audio; break;
+              case Project::FileType::AUDIO:
+              case Project::FileType::SEQUENCE:
+              case Project::FileType::SOUND_FONT:  cat = AssetCategory::Audio; break;
               case Project::FileType::FONT:        cat = AssetCategory::Fonts; break;
               case Project::FileType::CODE_OBJ:
               case Project::FileType::CODE_GLOBAL:

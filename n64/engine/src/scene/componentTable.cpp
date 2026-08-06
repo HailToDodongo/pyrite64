@@ -14,6 +14,8 @@
 #include "scene/components/collBody.h"
 #include "scene/components/rigidBody.h"
 #include "scene/components/audio2d.h"
+#include "scene/components/audio3d.h"
+#include "scene/components/audioListener.h"
 #include "scene/components/constraint.h"
 #include "scene/components/culling.h"
 #include "scene/components/nodeGraph.h"
@@ -71,5 +73,7 @@ namespace P64
     SET_COMP(RigidBody),
     SET_COMP(CharBody),
     SET_COMP(Surface),
+    SET_COMP(Audio3D),
+    SET_COMP(AudioListener),
   };
 }

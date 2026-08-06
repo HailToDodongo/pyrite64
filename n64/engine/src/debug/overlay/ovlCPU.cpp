@@ -3,7 +3,7 @@
 * @license MIT
 */
 #include "../overlay.h"
-#include "audio/audioManager.h"
+#include "../../audio/audioPrivate.h"
 #include "debug/debugDraw.h"
 #include "lib/matrixManager.h"
 #include "scene/scene.h"
@@ -118,7 +118,7 @@ void P64::Debug::Overlay::ovlCPU()
   sw_updMisc.push(scene.ticksGlobalUpdate);
   sw_drawObj.push(scene.ticksDraw - scene.ticksGlobalDraw);
   sw_drawMisc.push(scene.ticksGlobalDraw);
-  sw_audio.push(P64::AudioManager::ticksUpdate);
+  sw_audio.push(P64::Audio::ticksUpdate);
   sw_debug.push(ticksSelf);
 
   sw_wake.push(collScene.ticksWakePrep);

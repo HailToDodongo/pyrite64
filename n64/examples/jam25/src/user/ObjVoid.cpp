@@ -111,9 +111,8 @@ namespace P64::Script::CD43F65D4883D4A8
       });
 
       if(!data->sfxPlayed && data->fadeTimer >= 0.8f) {
-        auto sfx = AudioManager::play2D("sfx/BoxBreak.wav64"_asset);
-        sfx.setSpeed(0.8f);
-        sfx.setVolume(0.25f);
+        auto sfx = Audio::sfx->playNote(Audio::sample("sfx/BoxBreak.tsw"_asset), 60, 127, 0.0f, 0.0f, 0.25f);
+        Audio::sfx->setPitch(sfx, -3.9f);
         data->sfxPlayed = 1;
       }
 

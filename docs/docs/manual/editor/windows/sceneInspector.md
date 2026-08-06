@@ -28,9 +28,19 @@ requires fixed values.
 
 ## Audio
 
+These are start values applied once when the scene loads.\
+At runtime scripts can change everything through the tinySQ API (e.g.
+`Audio::engine().setReverbBus(...)` or `setMasterGain(...)`).
+
 | Option | Description |
 |--------|-------------|
-| **Mixer Freq.** | The audio mixer sample rate, from 8000 Hz up to 48000 Hz. |
+| **Mixer Freq.** | The audio output sample rate, from 8000 Hz up to 48000 Hz. |
+| **Master Volume** | Initial master volume of the whole mix. |
+| **Reverb** | Enables the shared reverb bus. Sounds decide how much they send into it (see the Audio components). |
+| **Rev. Gain** | Return gain of the reverb bus. |
+| **Rev. Feedback** | Reverb feedback, higher values give a longer tail. |
+| **Rev. Cross** | Left/right cross-feed, widens the reverb tail. |
+| **Rev. Send Scale** | Global scale on every sound's reverb send. |
 
 ## Physics
 

@@ -205,7 +205,7 @@ void Editor::AssetsBrowser::draw() {
     },
     TabDef{
       .name = ICON_MDI_FILE "  Assets",
-      .fileTypes = {FileType::IMAGE, FileType::AUDIO, FileType::MUSIC_XM, FileType::MODEL_3D, FileType::FONT}
+      .fileTypes = {FileType::IMAGE, FileType::AUDIO, FileType::SEQUENCE, FileType::SOUND_FONT, FileType::MODEL_3D, FileType::FONT}
     },
     TabDef{
       .name = ICON_MDI_SCRIPT_OUTLINE "  Scripts",
@@ -626,7 +626,9 @@ void Editor::AssetsBrowser::draw() {
         }
       } else if (asset.type == FileType::AUDIO) {
         iconTxt = ICON_MDI_MUSIC;
-      } else if (asset.type == FileType::MUSIC_XM) {
+      } else if (asset.type == FileType::SEQUENCE) {
+        iconTxt = ICON_MDI_MUSIC_CLEF_TREBLE;
+      } else if (asset.type == FileType::SOUND_FONT) {
         iconTxt = ICON_MDI_PIANO;
       } else if (asset.type == FileType::FONT) {
         iconTxt = ICON_MDI_FORMAT_FONT;

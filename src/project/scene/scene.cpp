@@ -75,6 +75,12 @@ nlohmann::json Project::SceneConf::serialize() const {
     .set(frameLimit)
     .set(filter)
     .set(audioFreq)
+    .set(audioMasterVolume)
+    .set(audioReverb)
+    .set(audioReverbGain)
+    .set(audioReverbFeedback)
+    .set(audioReverbCross)
+    .set(audioReverbSendScale)
     .set(physicsTickRate)
     .set(gravity)
     .set(visualUnitsPerMeter)
@@ -470,6 +476,12 @@ void Project::Scene::deserialize(const std::string &data)
     Utils::JSON::readProp(docConf, conf.frameLimit, 0);
     Utils::JSON::readProp(docConf, conf.filter, 0);
     Utils::JSON::readProp(docConf, conf.audioFreq, 32000);
+    Utils::JSON::readProp(docConf, conf.audioMasterVolume, 1.0f);
+    Utils::JSON::readProp(docConf, conf.audioReverb, false);
+    Utils::JSON::readProp(docConf, conf.audioReverbGain, 0.5f);
+    Utils::JSON::readProp(docConf, conf.audioReverbFeedback, 0.5f);
+    Utils::JSON::readProp(docConf, conf.audioReverbCross, 0.0f);
+    Utils::JSON::readProp(docConf, conf.audioReverbSendScale, 1.0f);
     Utils::JSON::readProp(docConf, conf.physicsTickRate, 50);
     Utils::JSON::readProp(docConf, conf.gravity, glm::vec3{0.0f, -9.81f, 0.0f});
     Utils::JSON::readProp(docConf, conf.visualUnitsPerMeter, 100.0f);

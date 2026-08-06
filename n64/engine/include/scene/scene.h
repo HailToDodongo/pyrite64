@@ -68,6 +68,14 @@ namespace P64
     bool interpolatePhysicsTransforms{};
     uint8_t padding2[1]{};
 
+    bool audioReverb{};
+    uint8_t padding3[3]{};
+    float reverbGain{};
+    float reverbFeedback{};
+    float reverbCross{};
+    float reverbSendScale{};
+    float masterVolume{1.0f};
+
     DrawLayer::Setup layerSetup{};
   };
 

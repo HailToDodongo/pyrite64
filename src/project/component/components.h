@@ -85,6 +85,8 @@ namespace Project::Component
   MAKE_COMP(CollBody)
   MAKE_COMP(RigidBody)
   MAKE_COMP(Audio2D)
+  MAKE_COMP(Audio3D)
+  MAKE_COMP(AudioListener)
   MAKE_COMP(Constraint)
   MAKE_COMP(Culling)
   MAKE_COMP(NodeGraph)
@@ -318,6 +320,32 @@ namespace Project::Component
       .funcSerialize = Surface::serialize,
       .funcDeserialize = Surface::deserialize,
       .funcBuild = Surface::build,
+      .funcGetAABB = nullptr
+    },
+    CompInfo{
+      .id = 14,
+      .icon = ICON_MDI_SURROUND_SOUND " ",
+      .name = "Audio (3D)",
+      .docSlug = "/manual/editor/components/audio3d",
+      .funcInit = Audio3D::init,
+      .funcDraw = Audio3D::draw,
+      .funcDrawPost3D = Audio3D::draw3D,
+      .funcSerialize = Audio3D::serialize,
+      .funcDeserialize = Audio3D::deserialize,
+      .funcBuild = Audio3D::build,
+      .funcGetAABB = nullptr
+    },
+    CompInfo{
+      .id = 15,
+      .icon = ICON_MDI_EAR_HEARING " ",
+      .name = "Audio Listener",
+      .docSlug = "/manual/editor/components/audioListener",
+      .funcInit = AudioListener::init,
+      .funcDraw = AudioListener::draw,
+      .funcDrawPost3D = AudioListener::draw3D,
+      .funcSerialize = AudioListener::serialize,
+      .funcDeserialize = AudioListener::deserialize,
+      .funcBuild = AudioListener::build,
       .funcGetAABB = nullptr
     },
   };

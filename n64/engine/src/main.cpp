@@ -12,7 +12,7 @@
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
 #include "scene/globalState.h"
-#include "./audio/audioManagerPrivate.h"
+#include "./audio/audioPrivate.h"
 #include "assets/assetManager.h"
 #include "libdragon/utils.h"
 #include "renderer/drawLayer.h"
@@ -62,7 +62,7 @@ int main()
   joypad_init();
 
   P64::AssetManager::init();
-  P64::AudioManager::init();
+  P64::Audio::init();
 
 	P64::Log::info("Starting Game");
 

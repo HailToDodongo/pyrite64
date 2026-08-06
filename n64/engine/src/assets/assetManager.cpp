@@ -5,6 +5,8 @@
 #include "assets/assetManager.h"
 
 #include <libdragon.h>
+#include <tsq/sfxSample.h>
+#include <tsq/soundBank.h>
 
 #include "assets/assetTypes.h"
 #include "lib/logger.h"
@@ -62,19 +64,28 @@ namespace
 
   namespace AssetType = P64::Assets::Type;
 
-  wav64_t* wav64Load(const char* path) {
-    return wav64_load(path, nullptr);
+  void* sampleLoad(const char* path) {
+    auto* sample = new TSQ::SfxSample();
+    if(!sample->loadTsw(path)) {
+      delete sample;
+      assertf(false, "Failed to load sample: %s", path);
+      return nullptr;
+    }
+    return sample;
   }
 
-  xm64player_t *xmLoad(const char* path) {
-    auto* player = new xm64player_t;
-    xm64player_open(player, path);
-    return player;
+  void sampleFree(void* data) {
+    auto* sample = (TSQ::SfxSample*)data;
+    sample->unload();
+    delete sample;
   }
 
-  void xmFree(xm64player_t *player) {
-    xm64player_close(player);
-    delete player;
+  void* bankLoad(const char* path) {
+    return TSQ::SoundBank::load(path);
+  }
+
+  void bankFree(void* data) {
+    delete (TSQ::SoundBank*)data;
   }
 
   void* assetLoad(const char* path) {
@@ -82,16 +93,19 @@ namespace
   }
 
   AssetHandler assetHandler[] = {
-    [AssetType::UNKNOWN]     = {(LoadFunc)assetLoad,      (FreeFunc)free          },
-    [AssetType::IMAGE]       = {(LoadFunc)sprite_load,    (FreeFunc)sprite_free   },
-    [AssetType::AUDIO]       = {(LoadFunc)wav64Load,      (FreeFunc)wav64_close   },
-    [AssetType::FONT]        = {(LoadFunc)rdpq_font_load, (FreeFunc)rdpq_font_free},
-    [AssetType::MODEL_3D]    = {(LoadFunc)t3d_model_load, (FreeFunc)t3d_model_free},
-    [AssetType::CODE_OBJ]    = {nullptr,                  nullptr                 },
-    [AssetType::CODE_GLOBAL] = {nullptr,                  nullptr                 },
-    [AssetType::PREFAB]      = {(LoadFunc)assetLoad,      (FreeFunc)free          },
-    [AssetType::NODE_GRAPH]  = {P64::NodeGraph::load,     (FreeFunc)free          },
-    [AssetType::MUSIC_XM]    = {(LoadFunc)xmLoad,         (FreeFunc)xmFree        },
+    [AssetType::UNKNOWN]      = {(LoadFunc)assetLoad,      (FreeFunc)free          },
+    [AssetType::IMAGE]        = {(LoadFunc)sprite_load,    (FreeFunc)sprite_free   },
+    [AssetType::AUDIO]        = {(LoadFunc)sampleLoad,     (FreeFunc)sampleFree    },
+    [AssetType::FONT]         = {(LoadFunc)rdpq_font_load, (FreeFunc)rdpq_font_free},
+    [AssetType::MODEL_3D]     = {(LoadFunc)t3d_model_load, (FreeFunc)t3d_model_free},
+    [AssetType::CODE_OBJ]     = {nullptr,                  nullptr                 },
+    [AssetType::CODE_GLOBAL]  = {nullptr,                  nullptr                 },
+    [AssetType::PREFAB]       = {(LoadFunc)assetLoad,      (FreeFunc)free          },
+    [AssetType::NODE_GRAPH]   = {P64::NodeGraph::load,     (FreeFunc)free          },
+    // sequences and streams are path-only: their players open the file themselves
+    [AssetType::SEQUENCE]     = {nullptr,                  nullptr                 },
+    [AssetType::SOUND_FONT]   = {(LoadFunc)bankLoad,       (FreeFunc)bankFree      },
+    [AssetType::AUDIO_STREAM] = {nullptr,                  nullptr                 },
   };
 
   constinit AssetTable* assetTable{nullptr};

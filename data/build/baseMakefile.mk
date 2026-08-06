@@ -12,6 +12,7 @@ export N64_INST={{N64_INST}}
 
 include $(N64_INST)/include/n64.mk
 include $(N64_INST)/include/t3d.mk
+include $(N64_INST)/include/tinysq.mk
 
 # recursive wildcard
 rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
@@ -36,8 +37,6 @@ $(src): $(ENGINE_DIR)/build/engine.a
 $(ENGINE_DIR)/build/engine.a: FORCE
 	$(MAKE) -C $(ENGINE_DIR)
 FORCE: ;
-
-AUDIOCONV_FLAGS = --wav-resample 24000 --wav-compress 1
 
 assets_conv = {{ASSET_LIST}}
 assets_conv += filesystem/p64/font.ia4.sprite

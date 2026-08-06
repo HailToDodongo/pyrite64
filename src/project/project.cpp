@@ -29,6 +29,8 @@ namespace
   int copyChangedEngineFiles(const fs::path& src, const fs::path& dst) {
 
     if (!fs::exists(src)) return 0;
+    // never sync build artifacts to avoid wrong builds
+    if (src.filename() == "build") return 0;
     if (fs::is_directory(src)) {
       fs::create_directories(dst);
       int count = 0;

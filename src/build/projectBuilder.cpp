@@ -49,7 +49,13 @@ void Build::SceneCtx::addAsset(const Project::AssetManagerEntry &entry)
     flags |= 0x01; // KEEP_LOADED
   }
 
-  assetList.push_back({entry.romPath, stringOffset, (uint32_t)entry.type, flags});
+  
+  uint32_t engineType = (uint32_t)entry.type;
+  if(entry.type == AT::AUDIO && entry.outPath.ends_with(".wav64")) {
+    engineType = Project::ENGINE_TYPE_AUDIO_STREAM;
+  }
+
+  assetList.push_back({entry.romPath, stringOffset, engineType, flags});
   stringOffset += entry.romPath.size() + 1;
 }
 

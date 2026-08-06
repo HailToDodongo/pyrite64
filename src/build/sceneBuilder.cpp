@@ -226,6 +226,16 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
   ctx.fileScene.write<uint8_t>(sc->conf.interpolatePhysicsTransforms.value ? 1 : 0);
   ctx.fileScene.write<uint8_t>(0); // padding
 
+  ctx.fileScene.write<uint8_t>(sc->conf.audioReverb.value ? 1 : 0);
+  ctx.fileScene.write<uint8_t>(0); // padding
+  ctx.fileScene.write<uint8_t>(0);
+  ctx.fileScene.write<uint8_t>(0);
+  ctx.fileScene.write<float>(std::clamp(sc->conf.audioReverbGain.value, 0.0f, 1.0f));
+  ctx.fileScene.write<float>(std::clamp(sc->conf.audioReverbFeedback.value, 0.0f, 1.0f));
+  ctx.fileScene.write<float>(std::clamp(sc->conf.audioReverbCross.value, 0.0f, 1.0f));
+  ctx.fileScene.write<float>(std::clamp(sc->conf.audioReverbSendScale.value, 0.0f, 1.0f));
+  ctx.fileScene.write<float>(std::clamp(sc->conf.audioMasterVolume.value, 0.0f, 1.0f));
+
   // Layer::Setup
   ctx.fileScene.write<uint8_t>(sc->conf.layers3D.size());
   ctx.fileScene.write<uint8_t>(sc->conf.layersPtx.size());

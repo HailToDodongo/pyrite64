@@ -21,8 +21,8 @@
 #include "lib/logger.h"
 #include "lib/matrixManager.h"
 #include "assets/assetManager.h"
-#include "audio/audioManager.h"
-#include "../audio/audioManagerPrivate.h"
+#include "audio/audio.h"
+#include "../audio/audioPrivate.h"
 #include "../debug/overlay.h"
 #include "debug/debugMenu.h"
 
@@ -74,7 +74,10 @@ P64::Scene::Scene(uint16_t sceneId, Scene** ref)
   Debug::Overlay::init();
 
   loadSceneConfig();
-  P64::AudioManager::init(conf.audioFreq);
+  P64::Audio::init(conf.audioFreq);
+  P64::Audio::engine().setReverbBus(conf.audioReverb, conf.reverbGain, conf.reverbFeedback, conf.reverbCross);
+  P64::Audio::engine().setReverbSendScale(conf.reverbSendScale);
+  P64::Audio::engine().setMasterGain(conf.masterVolume);
 
   DrawLayer::init(conf.layerSetup);
 
@@ -141,7 +144,7 @@ P64::Scene::~Scene()
     free(obj);
   }
 
-  AudioManager::stopAll();
+  Audio::sceneReset();
   MatrixManager::reset();
   AssetManager::freeAll();
   Debug::destroy();
@@ -158,9 +161,9 @@ void P64::Scene::update(float deltaTime)
   ticksActorUpdate = 0;
   ticksDraw = 0;
   ticksGlobalDraw = 0;
-  AudioManager::ticksUpdate = 0;
+  Audio::ticksUpdate = 0;
 
-  AudioManager::update();
+  Audio::update();
 
   lighting.reset();
 
@@ -291,7 +294,7 @@ void P64::Scene::update(float deltaTime)
   }
   pendingObjDelete.clear();
 
-  AudioManager::update();
+  Audio::update();
   VI::SwapChain::nextFrame();
 }
 

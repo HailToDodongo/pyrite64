@@ -86,14 +86,14 @@ namespace P64::Script::C0CC4367B29A36ED
     {
       if(upDown == JOYPAD_8WAY_UP) {
         data->selOption = (data->selOption + 1) % 2;
-        AudioManager::play2D("sfx/UiSelect.wav64"_asset).setVolume(0.3f);
+        Audio::sfx->playNote(Audio::sample("sfx/UiSelect.tsw"_asset), 60, 127, 0.0f, 0.0f, 0.3f);
       } else if(upDown == JOYPAD_8WAY_DOWN) {
         data->selOption = (data->selOption + 1) % 2;
-        AudioManager::play2D("sfx/UiSelect.wav64"_asset).setVolume(0.3f);
+        Audio::sfx->playNote(Audio::sample("sfx/UiSelect.tsw"_asset), 60, 127, 0.0f, 0.0f, 0.3f);
       } else
       {
         if(pressed.start || pressed.a) {
-          AudioManager::play2D("sfx/UiOk.wav64"_asset).setVolume(0.3f);
+          Audio::sfx->playNote(Audio::sample("sfx/UiOk.tsw"_asset), 60, 127, 0.0f, 0.0f, 0.3f);
           graphComp->run(data->selOption);
         }
       }

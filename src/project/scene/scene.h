@@ -39,6 +39,12 @@ namespace Project
     PROP_S32(frameLimit);
     PROP_S32(filter);
     PROP_S32(audioFreq);
+    PROP_FLOAT(audioMasterVolume);
+    PROP_BOOL(audioReverb);
+    PROP_FLOAT(audioReverbGain);
+    PROP_FLOAT(audioReverbFeedback);
+    PROP_FLOAT(audioReverbCross);
+    PROP_FLOAT(audioReverbSendScale);
     PROP_S32(physicsTickRate);
     PROP_VEC3(gravity);
     PROP_FLOAT(visualUnitsPerMeter);

@@ -34,17 +34,33 @@ namespace Project
   {
     UNKNOWN = 0,
     IMAGE,
-    AUDIO,
+    AUDIO,       // .wav/.mp3 -> .tsw sample or .wav64 stream
     FONT,
     MODEL_3D,
     CODE_OBJ,
     CODE_GLOBAL,
     PREFAB,
     NODE_GRAPH,
-    MUSIC_XM,
+    SEQUENCE,    // .mid/.xm -> .tsq (XM also .tsf)
+    SOUND_FONT,  // .sf2 -> .tsf
 
     _SIZE
   };
+
+  // engine-only asset type for streamed .wav64 audio (FileType::AUDIO + Opus/ULC)
+  constexpr uint32_t ENGINE_TYPE_AUDIO_STREAM = 11;
+
+  namespace WavCompression
+  {
+    constexpr int32_t NONE = 0;    // .tsw, 16-bit PCM
+    constexpr int32_t VADPCM = 1;  // .tsw, 4-bit VADPCM
+    constexpr int32_t ULC = 2;     // .wav64 stream (audioconv64)
+    constexpr int32_t OPUS = 3;    // .wav64 stream (audioconv64)
+    constexpr int32_t VADPCM2 = 4; // .tsw, 2-bit VADPCM
+    constexpr int32_t PCM8 = 5;    // .tsw, 8-bit PCM
+
+    constexpr bool isStreamed(int32_t c) { return c == ULC || c == OPUS; }
+  }
 
   struct AssetConf
   {
@@ -59,6 +75,7 @@ namespace Project
     PROP_BOOL(wavForceMono);
     PROP_U32(wavResampleRate);
     PROP_S32(wavCompression);
+    PROP_BOOL(wavLoop);
 
     PROP_U32(fontId);
     PROP_STRING(fontCharset);

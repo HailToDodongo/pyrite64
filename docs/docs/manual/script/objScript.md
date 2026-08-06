@@ -392,7 +392,7 @@ and then removes itself after colliding.
 ```cpp
 void onCollision(Object& obj, Data *data, const Coll::CollEvent& event)
 {
-  AudioManager::play2D("sfx/CoinGet.wav64"_asset);
+  Audio::sfx->playNote(Audio::sample("sfx/CoinGet.tsw"_asset), 60);
   obj.getScene().addObject("ParticlesCoin.pf"_asset, obj.pos);
   obj.remove();
 }

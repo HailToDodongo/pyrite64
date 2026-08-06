@@ -31,20 +31,30 @@ namespace
     snprintf(out, outSize, "%d:%02d", total / 60, total % 60);
   }
 
-  // Estimated size of the converted wav64 in ROM, mirroring what audioconv64
-  // produces for each compression type at the current asset settings.
+  // Estimated size of the converted audio in ROM, mirroring what the
+  // converters produce for each compression type at the current asset settings.
   double estimateAudioRomSize(const Editor::AudioPreview::Info &info, const Project::AssetConf &conf)
   {
-    double rate = conf.wavResampleRate.value != 0 ? conf.wavResampleRate.value : info.sampleRate;
+    namespace WavCompr = Project::WavCompression;
+    // only streamed .wav64 goes through a resampler, .tsw keeps the native rate
+    double rate = (WavCompr::isStreamed(conf.wavCompression.value) && conf.wavResampleRate.value != 0)
+      ? conf.wavResampleRate.value : info.sampleRate;
     double channels = conf.wavForceMono.value ? 1 : info.channels;
 
     double bytesPerSec;
     switch (conf.wavCompression.value)
     {
-      case 1: // VADPCM: 16 samples -> 9 bytes per channel
+      case WavCompr::VADPCM: // 16 samples -> 9 bytes per channel
         bytesPerSec = rate * channels * (9.0 / 16.0);
         break;
-      case 3: // Opus: audioconv64's automatic "good quality" bitrate
+      case WavCompr::VADPCM2: // 16 samples -> 5 bytes per channel
+        bytesPerSec = rate * channels * (5.0 / 16.0);
+        break;
+      case WavCompr::PCM8:
+        bytesPerSec = rate * channels;
+        break;
+      case WavCompr::ULC:
+      case WavCompr::OPUS: // audioconv64's automatic "good quality" bitrate
         bytesPerSec = (60.0 * 50.0 + rate * channels) / 8.0;
         break;
       default: // uncompressed 16-bit PCM
@@ -154,29 +164,60 @@ void Editor::AssetInspector::draw() {
     }
     else if (asset->type == FileType::AUDIO)
     {
+      namespace WavCompr = Project::WavCompression;
+      bool isMp3 = asset->path.ends_with(".mp3");
+      bool isStreamed = WavCompr::isStreamed(asset->conf.wavCompression.value);
+
       ImTable::addProp("Force-Mono", asset->conf.wavForceMono);
 
-      //ImTable::addProp("Sample-Rate", asset->conf.wavResampleRate);
-      ImTable::addVecComboBox<ImTable::ComboEntry>("Sample-Rate", {
+      if (isMp3) {
+        // mp3 only converts through audioconv64, so it always streams
+        ImTable::addVecComboBox<ImTable::ComboEntry>("Compression", {
+            { WavCompr::OPUS, "Opus (streamed)" },
+            { WavCompr::ULC, "ULC (streamed)" },
+          }, asset->conf.wavCompression.value
+        );
+      } else {
+        ImTable::addVecComboBox<ImTable::ComboEntry>("Compression", {
+            { WavCompr::NONE, "None (PCM16)" },
+            { WavCompr::PCM8, "PCM8" },
+            { WavCompr::VADPCM, "VADPCM" },
+            { WavCompr::VADPCM2, "VADPCM2" },
+            { WavCompr::OPUS, "Opus (streamed)" },
+            { WavCompr::ULC, "ULC (streamed)" },
+          }, asset->conf.wavCompression.value
+        );
+      }
+
+      if (isStreamed) {
+        ImTable::addVecComboBox<ImTable::ComboEntry>("Sample-Rate", {
+            { 0, "Original" },
+            { 8000, "8000 Hz" },
+            { 11025, "11025 Hz" },
+            { 16000, "16000 Hz" },
+            { 22050, "22050 Hz" },
+            { 32000, "32000 Hz" },
+            { 44100, "44100 Hz" },
+          }, asset->conf.wavResampleRate.value
+        );
+      } else {
+        ImTable::addProp("Loop", asset->conf.wavLoop);
+      }
+    }
+    else if (asset->type == FileType::SOUND_FONT)
+    {
+      // downsamples any bank sample above this rate
+      ImTable::addVecComboBox<ImTable::ComboEntry>("Max Rate", {
           { 0, "Original" },
-          { 8000, "8000 Hz" },
-          { 11025, "11025 Hz" },
           { 16000, "16000 Hz" },
           { 22050, "22050 Hz" },
           { 32000, "32000 Hz" },
-          { 44100, "44100 Hz" },
         }, asset->conf.wavResampleRate.value
-      );
-
-      ImTable::addVecComboBox<ImTable::ComboEntry>("Compression", {
-          { 0, "None" },
-          { 1, "VADPCM" },
-          { 3, "Opus" },
-        }, asset->conf.wavCompression.value
       );
     }
 
-    if (asset->type != FileType::AUDIO && asset->type != FileType::MUSIC_XM)
+    if (asset->type != FileType::AUDIO && asset->type != FileType::SEQUENCE
+      && asset->type != FileType::SOUND_FONT)
     {
       int compression = (int)asset->conf.compression;
       if(ImTable::addComboBox("Compression", compression, {
@@ -272,8 +313,8 @@ void Editor::AssetInspector::draw() {
     if (asset->type == FileType::AUDIO) {
       drawAudioPreview(asset);
     }
-    if (asset->type == FileType::MUSIC_XM) {
-      ImGui::TextDisabled("No preview available for XM modules");
+    if (asset->type == FileType::SEQUENCE || asset->type == FileType::SOUND_FONT) {
+      ImGui::TextDisabled("No preview available");
     }
   }
 }

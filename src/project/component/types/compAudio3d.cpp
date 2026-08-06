@@ -1,5 +1,5 @@
 /**
-* @copyright 2025 - Max Bebök
+* @copyright 2026 - Max Bebök
 * @license MIT
 */
 #include "../components.h"
@@ -15,27 +15,34 @@
 #include "../../../renderer/scene.h"
 #include "../../../utils/meshGen.h"
 
-namespace Project::Component::Audio2D
+namespace Project::Component::Audio3D
 {
-  // playback modes, mirrored in the engine's Comp::Audio2D
-  constexpr uint8_t MODE_SAMPLE = 0;
-  constexpr uint8_t MODE_SEQUENCE = 1;
-  constexpr uint8_t MODE_STREAM = 2;
-  constexpr uint8_t MODE_SHIFT = 2;
-
   struct Data
   {
     PROP_U64(audioUUID);
-    PROP_U64(bankUUID);
     PROP_FLOAT(volume);
     PROP_FLOAT(pitch);
     PROP_BOOL(loop);
     PROP_BOOL(autoPlay);
+    PROP_FLOAT(nearDist);
+    PROP_FLOAT(maxDist);
+    PROP_FLOAT(rolloff);
+    PROP_FLOAT(doppler);
+    PROP_FLOAT(lowPassStart);
+    PROP_FLOAT(reverbNear);
+    PROP_FLOAT(reverbFar);
   };
 
   std::shared_ptr<void> init(Object &obj) {
     auto data = std::make_shared<Data>();
     data->volume.value = 1.0f;
+    data->nearDist.value = 1.0f;
+    data->maxDist.value = 50.0f;
+    data->rolloff.value = 1.0f;
+    data->doppler.value = 0.0f;
+    data->lowPassStart.value = 1.0f;
+    data->reverbNear.value = 0.0f;
+    data->reverbFar.value = 0.0f;
     return data;
   }
 
@@ -43,22 +50,34 @@ namespace Project::Component::Audio2D
     Data &data = *static_cast<Data*>(entry.data.get());
     Utils::JSON::Builder builder{};
     builder.set(data.audioUUID);
-    builder.set(data.bankUUID);
     builder.set(data.volume);
     builder.set(data.pitch);
     builder.set(data.loop);
     builder.set(data.autoPlay);
+    builder.set(data.nearDist);
+    builder.set(data.maxDist);
+    builder.set(data.rolloff);
+    builder.set(data.doppler);
+    builder.set(data.lowPassStart);
+    builder.set(data.reverbNear);
+    builder.set(data.reverbFar);
     return builder.doc;
   }
 
   std::shared_ptr<void> deserialize(nlohmann::json &doc) {
     auto data = std::make_shared<Data>();
     Utils::JSON::readProp(doc, data->audioUUID);
-    Utils::JSON::readProp(doc, data->bankUUID);
     Utils::JSON::readProp(doc, data->volume, 1.0f);
     Utils::JSON::readProp(doc, data->pitch, 0.0f);
     Utils::JSON::readProp(doc, data->loop);
     Utils::JSON::readProp(doc, data->autoPlay);
+    Utils::JSON::readProp(doc, data->nearDist, 1.0f);
+    Utils::JSON::readProp(doc, data->maxDist, 50.0f);
+    Utils::JSON::readProp(doc, data->rolloff, 1.0f);
+    Utils::JSON::readProp(doc, data->doppler, 0.0f);
+    Utils::JSON::readProp(doc, data->lowPassStart, 1.0f);
+    Utils::JSON::readProp(doc, data->reverbNear, 0.0f);
+    Utils::JSON::readProp(doc, data->reverbFar, 0.0f);
     return data;
   }
 
@@ -69,41 +88,33 @@ namespace Project::Component::Audio2D
     auto res = ctx.assetUUIDToIdx.find(data.audioUUID.value);
     uint16_t id = 0xDEAD;
     if (res == ctx.assetUUIDToIdx.end()) {
-      Utils::Logger::log("Component Audio2D: Audio UUID not found: " + std::to_string(entry.uuid), Utils::Logger::LEVEL_ERROR);
+      Utils::Logger::log("Component Audio3D: Audio UUID not found: " + std::to_string(entry.uuid), Utils::Logger::LEVEL_ERROR);
     } else {
       id = res->second;
     }
 
     auto asset = ctx.project->getAssets().getEntryByUUID(data.audioUUID.value);
-
-    uint8_t mode = MODE_SAMPLE;
-    uint16_t bankId = 0xFFFF;
-    if (asset) {
-      if (asset->type == FileType::SEQUENCE) {
-        mode = MODE_SEQUENCE;
-        // a MIDI needs an explicit sound-font, an XM ships its own companion bank
-        if (asset->path.ends_with(".mid")) {
-          auto bankRes = ctx.assetUUIDToIdx.find(data.bankUUID.value);
-          if (bankRes == ctx.assetUUIDToIdx.end()) {
-            Utils::Logger::log("Component Audio2D: MIDI sequence without sound-font: " + std::to_string(entry.uuid), Utils::Logger::LEVEL_ERROR);
-          } else {
-            bankId = bankRes->second;
-          }
-        }
-      } else if (asset->type == FileType::AUDIO && asset->outPath.ends_with(".wav64")) {
-        mode = MODE_STREAM;
-      }
+    if (asset && !(asset->type == FileType::AUDIO && asset->outPath.ends_with(".tsw"))) {
+      Utils::Logger::log("Component Audio3D: only .tsw samples can be positioned: " + asset->name, Utils::Logger::LEVEL_ERROR);
     }
 
-    uint8_t flags = (uint8_t)(mode << MODE_SHIFT);
+    uint8_t flags = 0;
     if(data.loop.value)flags |= 1 << 0;
     if(data.autoPlay.value)flags |= 1 << 1;
 
     ctx.fileObj.write<uint16_t>(id);
-    ctx.fileObj.write<uint16_t>(bankId);
     ctx.fileObj.write<uint16_t>((uint16_t)(data.volume.value * 0xFFFF));
     ctx.fileObj.write<uint8_t>(flags);
     ctx.fileObj.write<uint8_t>(0); // padding
+    ctx.fileObj.write<uint8_t>(0);
+    ctx.fileObj.write<uint8_t>(0);
+    ctx.fileObj.write<float>(data.nearDist.value);
+    ctx.fileObj.write<float>(data.maxDist.value);
+    ctx.fileObj.write<float>(data.rolloff.value);
+    ctx.fileObj.write<float>(data.doppler.value);
+    ctx.fileObj.write<float>(data.lowPassStart.value);
+    ctx.fileObj.write<float>(data.reverbNear.value);
+    ctx.fileObj.write<float>(data.reverbFar.value);
     ctx.fileObj.write<float>(data.pitch.value);
   }
 
@@ -113,36 +124,30 @@ namespace Project::Component::Audio2D
     if (ImTable::start("Comp", &obj)) {
       ImTable::add("Name", entry.name);
 
-      // @TODO: allow multi-type select-boxes
+      // only non-streamed samples can be spatialized
       auto audioList = ctx.project->getAssets().getTypeEntries(FileType::AUDIO);
-      auto &listSeq = ctx.project->getAssets().getTypeEntries(FileType::SEQUENCE);
-      audioList.insert(audioList.end(), listSeq.begin(), listSeq.end());
+      std::erase_if(audioList, [](const auto &e) { return !e.outPath.ends_with(".tsw"); });
 
       ImTable::addAssetVecComboBox("Audio", audioList, data.audioUUID.resolve(obj), [](auto){});
-
-      auto asset = ctx.project->getAssets().getEntryByUUID(data.audioUUID.value);
-      if (asset && asset->type == FileType::SEQUENCE && asset->path.ends_with(".mid")) {
-        auto &bankList = ctx.project->getAssets().getTypeEntries(FileType::SOUND_FONT);
-        ImTable::addAssetVecComboBox("Sound-Font", bankList, data.bankUUID.resolve(obj), [](auto){});
-      }
-
       ImTable::addObjProp("Volume", data.volume);
-
-      // pitch shifts the sample's playback rate, sequences/streams play at their own rate
-      bool isSample = asset && asset->type == FileType::AUDIO && asset->outPath.ends_with(".tsw");
-      if (isSample) {
-        ImTable::addObjProp("Pitch", data.pitch);
-      }
-
+      ImTable::addObjProp("Pitch", data.pitch);
       ImTable::addObjProp("Loop", data.loop);
 
       // a looping sample needs its loop point baked into the .tsw
-      if (isSample && data.loop.value && !asset->conf.wavLoop.value) {
+      auto asset = ctx.project->getAssets().getEntryByUUID(data.audioUUID.value);
+      if (asset && data.loop.value && !asset->conf.wavLoop.value) {
         ImTable::add("");
         ImGui::TextDisabled("enable \"Loop\" on the asset,\nor this plays one-shot");
       }
 
       ImTable::addObjProp("Auto-Play", data.autoPlay);
+      ImTable::addObjProp("Near Dist.", data.nearDist);
+      ImTable::addObjProp("Max Dist.", data.maxDist);
+      ImTable::addObjProp("Rolloff", data.rolloff);
+      ImTable::addObjProp("Doppler", data.doppler);
+      ImTable::addObjProp("Low-Pass Start", data.lowPassStart);
+      ImTable::addObjProp("Reverb Near", data.reverbNear);
+      ImTable::addObjProp("Reverb Far", data.reverbFar);
 
       ImTable::end();
     }
