@@ -27,11 +27,30 @@
 
 namespace Project::Component::AnimModel
 {
+  constexpr size_t LAYER_COUNT = 4; // layer 0 = base
+  constexpr uint8_t ANIM_FLAG_LOOP     = 1 << 0;
+  constexpr uint8_t ANIM_FLAG_AUTOPLAY = 1 << 1;
+
+  // One animation layer: an animation, optionally blended with a second one.
+  // 'active' marks overlay layers the user has created (layer 0 is always shown).
+  struct AnimEntry
+  {
+    std::string anim{};   // animation played on this layer
+    std::string blend{};  // optional second animation blended over the first
+    float blendFactor{0.0f};
+    bool loop{true};
+    bool autoplay{true};
+    float speed{1.0f};
+    bool active{false};
+  };
+
   struct Data
   {
     PROP_U64(model);
     PROP_S32(layerIdx);
-    PROP_STRING(previewAnimName);
+    PROP_STRING(previewAnimName); // legacy, migrated into animEntries[0]
+
+    std::array<AnimEntry, LAYER_COUNT> animEntries{};
 
     Shared::MaterialInstance material{};
     std::shared_ptr<Renderer::Skeleton> skeleton{nullptr};
@@ -55,10 +74,34 @@ namespace Project::Component::AnimModel
   nlohmann::json serialize(const Entry &entry)
   {
     Data &data = *static_cast<Data*>(entry.data.get());
+
+    // write layer 0 (base) plus every active overlay, contiguous so their
+    // array position maps back to a layer index on load
+    size_t count = 0;
+    for (size_t i = 1; i < LAYER_COUNT; ++i) {
+      if (data.animEntries[i].active) count = i + 1;
+    }
+    if (count == 0 && (!data.animEntries[0].anim.empty() || !data.animEntries[0].blend.empty())) {
+      count = 1;
+    }
+
+    nlohmann::json anims = nlohmann::json::array();
+    for (size_t i = 0; i < count; ++i) {
+      const auto &e = data.animEntries[i];
+      anims.push_back({
+        {"anim", e.anim},
+        {"blend", e.blend},
+        {"factor", e.blendFactor},
+        {"loop", e.loop},
+        {"autoplay", e.autoplay},
+        {"speed", e.speed},
+      });
+    }
+
     return Utils::JSON::Builder{}
       .set(data.model)
       .set(data.layerIdx)
-      .set(data.previewAnimName)
+      .set("animations", anims)
       .set("material", data.material.serialize())
       .doc;
   }
@@ -68,6 +111,24 @@ namespace Project::Component::AnimModel
     Utils::JSON::readProp(doc, data->layerIdx);
     Utils::JSON::readProp(doc, data->previewAnimName);
     Utils::JSON::readProp(doc, data->model);
+
+    if (doc.contains("animations")) {
+      size_t i = 0;
+      for (auto &e : doc["animations"]) {
+        if (i >= LAYER_COUNT) break;
+        auto &entry = data->animEntries[i++];
+        entry.anim = e.value("anim", e.value("name", std::string{})); // "name" = legacy key
+        entry.blend = e.value("blend", std::string{});
+        entry.blendFactor = e.value("factor", 0.0f);
+        entry.loop = e.value("loop", true);
+        entry.autoplay = e.value("autoplay", true);
+        entry.speed = e.value("speed", 1.0f);
+        entry.active = true; // present in the saved array => this layer exists
+      }
+    } else if (!data->previewAnimName.value.empty() && data->previewAnimName.value != "<Default Pose>") {
+      // migrate the old preview-only setting into the base animation layer
+      data->animEntries[0].anim = data->previewAnimName.value;
+    }
 
     data->material.deserialize(
       doc.value("material", nlohmann::json::object())
@@ -90,6 +151,32 @@ namespace Project::Component::AnimModel
     ctx.fileObj.write<uint16_t>(id);
     ctx.fileObj.write<uint8_t>(data.layerIdx.resolve(obj));
     ctx.fileObj.write<uint8_t>(0); // flags, unused
+
+    // animation layers, names resolved to indices in the model's anim list
+    auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
+    auto resolveAnim = [&](const std::string &name) -> uint8_t {
+      if (name.empty() || !asset) return 0xFF;
+      const auto &anims = asset->model.t3dm.animations;
+      for (size_t i = 0; i < anims.size(); ++i) {
+        if (anims[i].name == name) return (uint8_t)i;
+      }
+      Utils::Logger::log(
+        "Component AnimModel: animation '" + name + "' not found in model",
+        Utils::Logger::LEVEL_ERROR
+      );
+      return 0xFF;
+    };
+
+    for (const auto &e : data.animEntries) {
+      uint8_t animFlags = (e.loop ? ANIM_FLAG_LOOP : 0)
+                        | (e.autoplay ? ANIM_FLAG_AUTOPLAY : 0);
+      ctx.fileObj.write<uint8_t>(resolveAnim(e.anim));
+      ctx.fileObj.write<uint8_t>(resolveAnim(e.blend));
+      ctx.fileObj.write<uint8_t>(animFlags);
+      ctx.fileObj.write<uint8_t>(0); // padding
+      ctx.fileObj.write<float>(e.speed);
+      ctx.fileObj.write<float>(e.blendFactor);
+    }
 
     data.material.validateWithModel(
       ctx.project->getAssets().getEntryByUUID(data.model.value)->model
@@ -124,29 +211,107 @@ namespace Project::Component::AnimModel
           return ImGui::Combo("##", layer, layerNames.data(), layerNames.size());
         }, nullptr);
 
+      ImTable::end();
+
       auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
       if (asset && asset->mesh3D)
       {
-          int selIdx = 0;
+          const auto &animList = asset->model.t3dm.animations;
           std::vector<const char*> animNames{};
-          animNames.push_back("<Default Pose>");
-          for(auto &anim : asset->model.t3dm.animations) {
-            if(selIdx == 0 && anim.name == data.previewAnimName.value) {
-              selIdx = animNames.size();
-            }
+          animNames.push_back("<None>");
+          for(auto &anim : animList) {
             animNames.push_back(anim.name.c_str());
           }
 
-          ImTable::add("Preview Anim.");
+          auto drawAnimCombo = [&](std::string &name) {
+            int selIdx = 0;
+            for(size_t a = 0; a < animList.size(); ++a) {
+              if(animList[a].name == name) { selIdx = (int)a + 1; break; }
+            }
+            if(ImGui::Combo("##anim", &selIdx, animNames.data(), animNames.size())) {
+              name = (selIdx <= 0) ? "" : animList[selIdx - 1].name;
+              return true;
+            }
+            return false;
+          };
 
-          ImGui::Combo("##", &selIdx, animNames.data(), animNames.size());
-          if(selIdx >= 0 && selIdx < (int)animNames.size()) {
-            data.previewAnimName.value = animNames[selIdx];
+          // one collapsible section per layer, each holding a main + optional
+          // blend animation. Layer 0 is the always-present base layer.
+          auto drawLayerBody = [&](AnimEntry &e) {
+            ImTable::add("Animation");
+            drawAnimCombo(e.anim);
+
+            ImTable::add("Blend With");
+            ImGui::PushID("blend");
+            drawAnimCombo(e.blend);
+            ImGui::PopID();
+            if(!e.blend.empty()) {
+              ImTable::add("Blend Factor");
+              ImGui::SliderFloat("##blendFactor", &e.blendFactor, 0.0f, 1.0f, "%.2f");
+            }
+
+            ImTable::add("Playback");
+            ImGui::Checkbox("Loop", &e.loop);
+            ImGui::SameLine();
+            ImGui::Checkbox("Play", &e.autoplay);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(52_px);
+            ImGui::DragFloat("##speed", &e.speed, 0.01f, 0.0f, 10.0f, "%.2f");
+            ImGui::SetItemTooltip("Playback speed");
+          };
+
+          if(ImGui::CollapsingSubHeader("Base Layer", ImGuiTreeNodeFlags_DefaultOpen)) {
+            if(ImTable::start("animBase", &obj)) {
+              drawLayerBody(data.animEntries[0]);
+              ImTable::end();
+            }
+          }
+
+          int removeIdx = -1;
+          for(size_t i = 1; i < LAYER_COUNT; ++i) {
+            auto &e = data.animEntries[i];
+            if(!e.active) continue;
+
+            ImGui::PushID((int)i);
+            std::string title = "Layer " + std::to_string(i);
+            ImGui::SetNextItemAllowOverlap();
+            bool open = ImGui::CollapsingSubHeader(title.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
+
+            const float btnSize = 19_px;
+            ImGui::SameLine(ImGui::GetContentRegionMax().x - btnSize - 4_px);
+            if(ImGui::Button(ICON_MDI_TRASH_CAN "##rm", {btnSize, btnSize})) {
+              removeIdx = (int)i;
+            }
+            ImGui::SetItemTooltip("Remove layer");
+
+            if(open) {
+              if(ImTable::start(("animL" + std::to_string(i)).c_str(), &obj)) {
+                drawLayerBody(e);
+                ImTable::end();
+              }
+            }
+            ImGui::PopID();
+          }
+
+          // remove: shift overlay layers down so they stay contiguous
+          if(removeIdx >= 1) {
+            for(size_t i = (size_t)removeIdx; i + 1 < LAYER_COUNT; ++i) {
+              data.animEntries[i] = data.animEntries[i + 1];
+            }
+            data.animEntries[LAYER_COUNT - 1] = {};
+          }
+
+          int freeSlot = -1;
+          for(size_t i = 1; i < LAYER_COUNT; ++i) {
+            if(!data.animEntries[i].active) { freeSlot = (int)i; break; }
+          }
+          if(freeSlot >= 1) {
+            if(ImGui::Button(ICON_MDI_PLUS " Add Layer")) {
+              data.animEntries[freeSlot] = {};
+              data.animEntries[freeSlot].active = true;
+            }
           }
       }
-
-
-      ImTable::end();
 
       Editor::MatInstanceEditor::draw(data.material, obj, data.model.value);
       ImGui::Dummy({0,4});
@@ -200,8 +365,8 @@ namespace Project::Component::AnimModel
 
     for(auto &anim : asset->model.t3dm.animations)
     {
-      if(anim.name == data.previewAnimName.value) {
-        float deltaTime = ImGui::GetIO().DeltaTime;
+      if(anim.name == data.animEntries[0].anim) {
+        float deltaTime = ImGui::GetIO().DeltaTime * data.animEntries[0].speed;
         data.anim.update(anim, data.skeleton, deltaTime);
         break;
       }
