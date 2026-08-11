@@ -137,6 +137,7 @@
                   "size": 50.0,
                   "type": 0
                 },
+                "enabled": true,
                 "id": 2,
                 "name": "Light",
                 "uuid": 16497944062403456447
@@ -181,6 +182,7 @@
                   "size": 50.0,
                   "type": 1
                 },
+                "enabled": true,
                 "id": 2,
                 "name": "Light",
                 "uuid": 605723811929282716
@@ -275,6 +277,8 @@
               "fov": 70.0,
               "mode": 0,
               "near": 15.0,
+              "orthoSize": 300.0,
+              "projection": 0,
               "vpOffset": [
                 0,
                 0
@@ -284,6 +288,7 @@
                 240
               ]
             },
+            "enabled": true,
             "id": 3,
             "name": "Camera",
             "uuid": 591397515709753079
@@ -297,9 +302,31 @@
               },
               "script": 13839274486650143791
             },
+            "enabled": true,
             "id": 0,
             "name": "Code",
             "uuid": 16684835660557819158
+          },
+          {
+            "data": {
+              "buffering": 0,
+              "clear": false,
+              "clearColor": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "format": 5,
+              "size": [
+                64,
+                64
+              ]
+            },
+            "enabled": true,
+            "id": 13,
+            "name": "Surface",
+            "uuid": 18209808745287008887
           }
         ],
         "enabled": true,
@@ -364,6 +391,7 @@
               "meshFilter": "",
               "model": 67300967874118795
             },
+            "enabled": true,
             "id": 1,
             "name": "Model",
             "uuid": 3016539882722051056
@@ -375,6 +403,7 @@
               "meshFilter": "",
               "modelUUID": 67300967874118795
             },
+            "enabled": true,
             "id": 4,
             "name": "Collision-Mesh",
             "uuid": 5341013048573841396
@@ -386,6 +415,7 @@
               "loop": true,
               "volume": 0.4000000059604645
             },
+            "enabled": true,
             "id": 6,
             "name": "Audio (2D)",
             "uuid": 16000442309288945905
@@ -437,6 +467,7 @@
               ],
               "type": 0
             },
+            "enabled": true,
             "id": 5,
             "name": "Collision-Body",
             "uuid": 3733423422123521706
@@ -449,6 +480,7 @@
               },
               "script": 14843118101605764375
             },
+            "enabled": true,
             "id": 0,
             "name": "Loading Zone",
             "uuid": 6984550955041411183
@@ -548,6 +580,7 @@
               "meshFilter": "",
               "model": 14061694646240479583
             },
+            "enabled": true,
             "id": 1,
             "name": "Model",
             "uuid": 17528814242325218933
@@ -559,6 +592,7 @@
               "meshFilter": "",
               "modelUUID": 14061694646240479583
             },
+            "enabled": true,
             "id": 4,
             "name": "Collision-Mesh",
             "uuid": 3907054344854827222
@@ -574,6 +608,7 @@
                 "timer": 4.0
               }
             },
+            "enabled": true,
             "id": 9,
             "name": "Node Graph",
             "uuid": 1520357154097024818
@@ -1074,6 +1109,7 @@
                   "meshFilter": "model",
                   "model": 244801699526709921
                 },
+                "enabled": true,
                 "id": 1,
                 "name": "Model",
                 "uuid": 17528814242325218933
@@ -1097,6 +1133,7 @@
                   ],
                   "type": 0
                 },
+                "enabled": true,
                 "id": 5,
                 "name": "Collision-Body",
                 "uuid": 7581312690790611521
@@ -1197,6 +1234,7 @@
                   "meshFilter": "",
                   "model": 14061694646240479583
                 },
+                "enabled": true,
                 "id": 1,
                 "name": "Model",
                 "uuid": 17528814242325218933
@@ -1208,6 +1246,7 @@
                   "meshFilter": "",
                   "modelUUID": 14061694646240479583
                 },
+                "enabled": true,
                 "id": 4,
                 "name": "Collision-Mesh",
                 "uuid": 3907054344854827222
@@ -1223,6 +1262,7 @@
                   },
                   "script": 14223520606171785222
                 },
+                "enabled": true,
                 "id": 0,
                 "name": "Code",
                 "uuid": 10469320593810992953
@@ -1290,6 +1330,7 @@
                   "meshFilter": "",
                   "model": 11061195382390923948
                 },
+                "enabled": true,
                 "id": 1,
                 "name": "Model",
                 "uuid": 17528814242325218933
@@ -1313,6 +1354,7 @@
                   ],
                   "type": 0
                 },
+                "enabled": true,
                 "id": 5,
                 "name": "Collision-Body",
                 "uuid": 7581312690790611521
@@ -1386,6 +1428,7 @@
               },
               "script": 14399702542144614172
             },
+            "enabled": true,
             "id": 0,
             "name": "Code",
             "uuid": 10795665830210700616
@@ -1453,6 +1496,7 @@
               "meshFilter": "model",
               "model": 244801699526709921
             },
+            "enabled": true,
             "id": 1,
             "name": "Model",
             "uuid": 17528814242325218933
@@ -1476,6 +1520,7 @@
               ],
               "type": 0
             },
+            "enabled": true,
             "id": 5,
             "name": "Collision-Body",
             "uuid": 7581312690790611521
@@ -1484,9 +1529,9 @@
         "enabled": true,
         "name": "Platform (2)",
         "pos": [
-          407.4170837402344,
+          410.0,
           130.0,
-          58.23176574707031
+          60.0
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -1543,6 +1588,7 @@
               "meshFilter": "",
               "model": 14061694646240479583
             },
+            "enabled": true,
             "id": 1,
             "name": "Model",
             "uuid": 17528814242325218933
@@ -1554,6 +1600,7 @@
               "meshFilter": "",
               "modelUUID": 14061694646240479583
             },
+            "enabled": true,
             "id": 4,
             "name": "Collision-Mesh",
             "uuid": 3907054344854827222
@@ -1569,6 +1616,7 @@
               },
               "script": 14223520606171785222
             },
+            "enabled": true,
             "id": 0,
             "name": "Code",
             "uuid": 10469320593810992953
@@ -1667,6 +1715,7 @@
               "meshFilter": "",
               "model": 11518526630657837768
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 1407738769175999758
@@ -1679,6 +1728,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 8540802513302835434
@@ -1746,6 +1796,7 @@
               "meshFilter": "",
               "model": 1759778765960336656
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 1407738769175999758
@@ -1758,6 +1809,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 8540802513302835434
@@ -1825,6 +1877,7 @@
               "meshFilter": "",
               "model": 11518526630657837768
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 1407738769175999758
@@ -1837,6 +1890,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 8540802513302835434
@@ -1904,6 +1958,7 @@
               "meshFilter": "",
               "model": 11518526630657837768
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 1407738769175999758
@@ -1916,6 +1971,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 8540802513302835434
@@ -1983,6 +2039,7 @@
               "meshFilter": "",
               "model": 1759778765960336656
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 1407738769175999758
@@ -1995,6 +2052,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 8540802513302835434
@@ -2062,6 +2120,7 @@
               "meshFilter": "",
               "model": 1759778765960336656
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 1407738769175999758
@@ -2074,6 +2133,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 8540802513302835434
@@ -2141,6 +2201,7 @@
               "meshFilter": "",
               "model": 1759778765960336656
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 1407738769175999758
@@ -2153,6 +2214,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 8540802513302835434
@@ -2220,6 +2282,7 @@
               "meshFilter": "",
               "model": 1759778765960336656
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 1407738769175999758
@@ -2232,6 +2295,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 8540802513302835434
@@ -2299,6 +2363,7 @@
               "meshFilter": "",
               "model": 1759778765960336656
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 1407738769175999758
@@ -2311,6 +2376,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 8540802513302835434
@@ -2378,6 +2444,7 @@
               "meshFilter": "",
               "model": 1759778765960336656
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 1407738769175999758
@@ -2390,6 +2457,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 8540802513302835434
@@ -2457,6 +2525,7 @@
               "meshFilter": "",
               "model": 1759778765960336656
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 1407738769175999758
@@ -2469,6 +2538,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 8540802513302835434
@@ -2536,6 +2606,7 @@
               "meshFilter": "",
               "model": 14061694646240479583
             },
+            "enabled": true,
             "id": 1,
             "name": "Model",
             "uuid": 17528814242325218933
@@ -2547,6 +2618,7 @@
               "meshFilter": "",
               "modelUUID": 14061694646240479583
             },
+            "enabled": true,
             "id": 4,
             "name": "Collision-Mesh",
             "uuid": 3907054344854827222
@@ -2562,6 +2634,7 @@
                 "timer": 4.0
               }
             },
+            "enabled": true,
             "id": 9,
             "name": "Node Graph",
             "uuid": 1520357154097024818

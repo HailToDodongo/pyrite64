@@ -21,6 +21,8 @@
 namespace
 {
   constexpr float DEF_MODEL_SCALE = 1.0f;
+  constexpr int COMP_ID_MODEL_STATIC = 1;
+  constexpr int COMP_ID_MODEL_ANIMATED = 10;
 
   /**
    * Checks whether a target object belongs to the subtree of a given ancestor.
@@ -158,6 +160,27 @@ std::shared_ptr<Project::Object> Project::Scene::addPrefabInstance(uint64_t pref
   return addObject(root, obj);
 }
 
+std::shared_ptr<Project::Object> Project::Scene::addModelObject(uint64_t modelUUID)
+{
+  AssetManagerEntry* asset = ctx.project->getAssets().getEntryByUUID(modelUUID);
+  if (!asset || asset->type != FileType::MODEL_3D) return nullptr;
+
+  std::shared_ptr<Object> obj = addObject(root);
+  obj->name = std::filesystem::path{asset->name}.stem().string();
+
+  // Models containing animation clips use the animated component automatically
+  bool isAnimated = !asset->model.t3dm.animations.empty();
+  obj->addComponent(isAnimated ? COMP_ID_MODEL_ANIMATED : COMP_ID_MODEL_STATIC);
+
+  Component::Entry &component = obj->components.back();
+  if (isAnimated)
+    Component::AnimModel::setModel(component, modelUUID);
+  else
+    Component::Model::setModel(component, modelUUID);
+
+  return obj;
+}
+
 void Project::Scene::removeObject(Object &obj) {
   ctx.removeObjectSelection(obj.uuid);
 
@@ -173,7 +196,7 @@ void Project::Scene::removeAllObjects() {
   root.children.clear();
 }
 
-bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild)
+bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild, bool insertBefore)
 {
   if(uuidObject == uuidTarget) {
     return false;
@@ -219,7 +242,7 @@ bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool a
       // Add as sibling to target
       auto parent = target->parent;
       if (parent) {
-        // insert after target
+        // Insert before or after the target
         auto &siblings = parent->children;
         auto it = std::find_if(
           siblings.begin(), siblings.end(),
@@ -227,7 +250,7 @@ bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool a
         );
         if (it != siblings.end())
         {
-          siblings.insert(it + 1, obj);
+          siblings.insert(insertBefore ? it : it + 1, obj);
           obj->parent = parent;
         }
       }

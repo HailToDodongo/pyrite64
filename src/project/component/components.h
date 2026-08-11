@@ -93,6 +93,7 @@ namespace Project::Component
   MAKE_COMP(NodeGraph)
   MAKE_COMP(AnimModel)
   MAKE_COMP(CharBody)
+  MAKE_COMP(Surface)
 
   namespace Camera
   {
@@ -118,6 +119,13 @@ namespace Project::Component
   namespace Model
   {
     /**
+     * Assigns a 3D model asset to a static Model component.
+     * @param entry Static Model component entry to update.
+     * @param modelUUID UUID of the 3D model asset.
+     */
+    void setModel(Entry &entry, uint64_t modelUUID);
+
+    /**
      * Appends the visible model vertices in object-local coordinates.
      * @param obj Object used to resolve component properties and mesh filters.
      * @param entry Model component entry.
@@ -128,6 +136,13 @@ namespace Project::Component
 
   namespace AnimModel
   {
+    /**
+     * Assigns a 3D model asset to an animated Model component.
+     * @param entry Animated Model component entry to update.
+     * @param modelUUID UUID of the 3D model asset.
+     */
+    void setModel(Entry &entry, uint64_t modelUUID);
+
     /**
      * Appends the model vertices in object-local coordinates.
      * @param obj Object used to resolve component properties.
@@ -320,6 +335,19 @@ namespace Project::Component
       .funcSerialize = CharBody::serialize,
       .funcDeserialize = CharBody::deserialize,
       .funcBuild = CharBody::build,
+      .funcGetAABB = nullptr
+    },
+    CompInfo{
+      .id = 13,
+      .prio = -1, // surfaces must exist before scripts/components that may fetch them in init
+      .icon = ICON_MDI_TEXTURE " ",
+      .name = "Surface",
+      .docSlug = "/manual/editor/components/surface",
+      .funcInit = Surface::init,
+      .funcDraw = Surface::draw,
+      .funcSerialize = Surface::serialize,
+      .funcDeserialize = Surface::deserialize,
+      .funcBuild = Surface::build,
       .funcGetAABB = nullptr
     },
   };

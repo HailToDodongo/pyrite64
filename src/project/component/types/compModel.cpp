@@ -45,6 +45,13 @@ namespace Project::Component::Model
     return std::make_shared<Data>();
   }
 
+  void setModel(Entry &entry, uint64_t modelUUID)
+  {
+    Data &data = *static_cast<Data*>(entry.data.get());
+    data.model.value = modelUUID;
+    data.obj3D.removeMesh();
+  }
+
   nlohmann::json serialize(const Entry &entry)
   {
     Data &data = *static_cast<Data*>(entry.data.get());

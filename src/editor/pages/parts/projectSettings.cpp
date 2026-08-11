@@ -213,6 +213,18 @@ bool Editor::ProjectSettings::draw()
     ImTable::end();
   }
 
+  if (ImGui::CollapsingHeader("Visibility", ImGuiTreeNodeFlags_DefaultOpen))
+  {
+    ImTable::start("Visibility");
+
+    ImTable::add("Layer Names");
+    for(int i=0; i<8; ++i) {
+      ImTable::add("Layer " + std::to_string(i));
+      ImGui::InputText(("##vis" + std::to_string(i)).c_str(), &ctx.project->conf.visLayerNames[i]);
+    }
+    ImTable::end();
+  }
+
   if (ImGui::CollapsingHeader("ROM Header")) {
     drawRomHeader();
   }

@@ -13,8 +13,12 @@ export N64_INST={{N64_INST}}
 include $(N64_INST)/include/n64.mk
 include $(N64_INST)/include/t3d.mk
 
+# recursive wildcard
+rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
+
 N64_CXXFLAGS += -std=gnu++20 -fno-exceptions -O3 -Isrc -Isrc/user \
-	-I$(ENGINE_DIR)/include
+	-I$(ENGINE_DIR)/include \
+	-MP
 
 # Allow custom attributes, otherwise GCC (rightfully) complains unknown ones
 $(BUILD_DIR)/src/user/%.o: N64_CXXFLAGS += -Wno-attributes
@@ -67,6 +71,7 @@ clean:
 p64:
 	{{P64_SELF_PATH}} --cli --cmd build {{PROJECT_SELF_PATH}}
 
--include $(wildcard $(BUILD_DIR)/src/*.d)
+# header dependencies (.d files are emitted next to each .o, in all subdirs)
+-include $(call rwildcard,$(BUILD_DIR)/src,*.d)
 
 .PHONY: all clean

@@ -79,10 +79,26 @@ namespace Project
 
       std::shared_ptr<Object> addPrefabInstance(uint64_t prefabUUID);
 
+      /**
+       * Creates an object with a static or animated Model component for a 3D model asset.
+       * @param modelUUID UUID of the 3D model asset.
+       * @return Created scene object, or null when the asset is not a 3D model.
+       */
+      std::shared_ptr<Object> addModelObject(uint64_t modelUUID);
+
       void removeObject(Object &obj);
       void removeAllObjects();
 
-      bool moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild);
+      /**
+       * Moves an object relative to another scene object or the scene root.
+       *
+       * @param uuidObject UUID of the object to move.
+       * @param uuidTarget UUID of the destination object or scene root.
+       * @param asChild Whether to append the object as a child of the destination.
+       * @param insertBefore Whether sibling insertion should occur before the destination (this is the only way to insert as first child when there are already child elements).
+       * @return True when the object was moved.
+       */
+      bool moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild, bool insertBefore = false);
 
       std::shared_ptr<Object> getObjectByUUID(uint32_t uuid) {
         if (objectsMap.contains(uuid)) {

@@ -603,6 +603,9 @@ void Editor::ObjectInspector::draw() {
             }
           }
         }
+
+        ImTable::addMultiSelectMask8("Visibility", obj->visMask.resolve(obj->propOverrides),
+          ctx.project->conf.visLayerNames, "<Hidden>");
       }
 
       ImTable::end();
@@ -883,8 +886,17 @@ void Editor::ObjectInspector::draw() {
     const char* addLabel = ICON_MDI_PLUS_BOX_OUTLINE " Add Component";
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 4_px);
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(addLabel).x) * 0.5f - 4_px);
+
+    const bool compLimitReached = srcObj->components.size() >= Project::Object::MAX_COMPONENTS;
+    if (compLimitReached) ImGui::BeginDisabled();
     if (ImGui::Button(addLabel)) {
       ImGui::OpenPopup("CompSelect");
+    }
+    if (compLimitReached) {
+      ImGui::EndDisabled();
+      if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+        ImGui::SetTooltip("Component limit reached (max. 255)");
+      }
     }
 
     const ImVec2 windowPos = ImGui::GetWindowPos();

@@ -33,6 +33,7 @@
 #include "debug/debugDraw.h"
 #include "renderer/drawLayer.h"
 #include "scene/componentTable.h"
+#include "scene/components/surface.h"
 #include "script/globalScript.h"
 
 namespace
@@ -305,14 +306,18 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
   // 3D Pass, for every active camera
   for(auto &cam : cameras)
   {
+    // cameras targeting a surface render into it instead of the framebuffer,
+    // with no target set (or its owner deleted) the camera renders nothing
+    if(!cam->attach())continue;
     camMain = cam;
-    cam->attach();
 
     lighting.apply();
     t3d_matrix_push_pos(1);
 
-    for(int i=1; i<conf.layerSetup.layerCount3D; ++i) {
+    for(int i=1; i<conf.layerSetup.layerCount3D; ++i) 
+    {
       DrawLayer::use3D(i);
+        cam->applyTargetImages();
         cam->reApplyScissor();
         t3d_matrix_push_pos(1);
       DrawLayer::useDefault();
@@ -325,6 +330,7 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
     {
       //debugf(" - %d\n", obj->id);
       if(!obj->isEnabled())continue;
+      if(!(obj->visMask & cam->visMask))continue;
       auto compRefs = obj->getCompRefs();
 
       for (uint32_t i=0; i<obj->compCount; ++i)
@@ -351,8 +357,11 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
     for(int i=1; i<conf.layerSetup.layerCount3D; ++i) {
       DrawLayer::use3D(i);
         t3d_matrix_pop(1);
+        cam->restoreTargetImages();
       DrawLayer::useDefault();
     }
+
+    cam->detach();
   }
 
   auto t = get_user_ticks();

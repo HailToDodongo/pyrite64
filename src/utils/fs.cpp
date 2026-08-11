@@ -11,7 +11,7 @@ std::vector<std::string> Utils::FS::scanDirs(const std::string &basePath)
   for (const auto &entry : fs::recursive_directory_iterator(basePath))
   {
     if (entry.is_directory()) {
-      auto relPath = fs::relative(entry.path(), basePath).string();
+      auto relPath = toUnixPath(fs::relative(entry.path(), basePath).string());
       dirs.push_back(relPath);
     }
   }

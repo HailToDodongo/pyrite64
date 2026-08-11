@@ -58,7 +58,8 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
   ctx.fileObj.write<uint16_t>(objFlags); // @TODO type
   ctx.fileObj.write<uint16_t>(runtimeId);
   ctx.fileObj.write<uint16_t>(parentRuntimeId);
-  ctx.fileObj.write<uint16_t>(0); // padding
+  ctx.fileObj.write<uint8_t>(srcObj->visMask.resolve(obj.propOverrides));
+  ctx.fileObj.write<uint8_t>(0); // padding
 
   glm::vec3 lpos   = srcObj->pos.resolve(obj.propOverrides);
   glm::vec3 lscale = srcObj->scale.resolve(obj.propOverrides);

@@ -19,6 +19,11 @@ namespace
 {
   constexpr int PROJ_PERSPECTIVE = 0;
   constexpr int PROJ_ORTHOGRAPHIC = 1;
+
+  constexpr int TARGET_FRAMEBUFFER = 0;
+  constexpr int TARGET_SURFACE = 1;
+
+  constexpr int COMP_ID_SURFACE = 13;
 }
 
 namespace Project::Component::Camera
@@ -34,6 +39,9 @@ namespace Project::Component::Camera
     PROP_FLOAT(orthoSize);
     PROP_S32(mode);
     PROP_S32(projection);
+    PROP_S32(targetMode);
+    PROP_U32(targetObjUUID);
+    Property<uint32_t> visMask{"visMask", 0xFF};
   };
 
   std::shared_ptr<void> init(Object &obj) {
@@ -62,6 +70,9 @@ namespace Project::Component::Camera
       .set(data.orthoSize)
       .set(data.mode)
       .set(data.projection)
+      .set(data.targetMode)
+      .set(data.targetObjUUID)
+      .set(data.visMask)
       .doc;
   }
 
@@ -76,6 +87,9 @@ namespace Project::Component::Camera
     Utils::JSON::readProp(doc, data->orthoSize, 300.0f);
     Utils::JSON::readProp(doc, data->mode, 0);
     Utils::JSON::readProp(doc, data->projection, PROJ_PERSPECTIVE);
+    Utils::JSON::readProp(doc, data->targetMode, TARGET_FRAMEBUFFER);
+    Utils::JSON::readProp(doc, data->targetObjUUID);
+    Utils::JSON::readProp(doc, data->visMask, 0xFFu);
     return data;
   }
 
@@ -90,8 +104,18 @@ namespace Project::Component::Camera
     ctx.fileObj.write<float>(data.far.resolve(obj));
     ctx.fileObj.write<float>(data.aspect.resolve(obj));
     ctx.fileObj.write<float>(data.orthoSize.resolve(obj));
+    auto targetMode = data.targetMode.resolve(obj);
+    uint16_t targetObjId = 0;
+    if(targetMode == TARGET_SURFACE && ctx.scene) {
+      auto objRef = ctx.scene->getObjectByUUID(data.targetObjUUID.resolve(obj));
+      targetObjId = objRef ? objRef->runtimeId : 0;
+    }
+
     ctx.fileObj.write<uint8_t>(data.mode.resolve(obj));
     ctx.fileObj.write<uint8_t>(data.projection.resolve(obj));
+    ctx.fileObj.write<uint8_t>(data.visMask.resolve(obj));
+    ctx.fileObj.write<uint8_t>(targetMode);
+    ctx.fileObj.write<uint16_t>(targetObjId);
   }
 
   void update(Object &obj, Entry &entry)
@@ -118,7 +142,7 @@ namespace Project::Component::Camera
 
     if (ImTable::start("Comp", &obj))
     {
-      [[maybe_unused]] auto scene = ctx.project->getScenes().getLoadedScene();
+      auto scene = ctx.project->getScenes().getLoadedScene();
       assert(scene);
 
       ImTable::add("Name", entry.name);
@@ -131,6 +155,36 @@ namespace Project::Component::Camera
         "Perspective", "Orthographic"
       });
 
+      ImTable::addComboBox("Target", data.targetMode.resolve(obj), {
+        "Framebuffer", "Surface"
+      });
+
+      if(data.targetMode.resolve(obj) == TARGET_SURFACE)
+      {
+        // objects that have a Surface component to render into,
+        // with no selection the camera renders nothing at runtime
+        std::vector<ImTable::ComboEntry> objList;
+        objList.push_back({0, "<None>"});
+        for (auto &[id, object] : scene->objectsMap) {
+          for (auto &comp : object->components) {
+            if(comp.id == COMP_ID_SURFACE) {
+              objList.push_back({.value = object->uuid, .name = object->name});
+              break;
+            }
+          }
+        }
+
+        ImTable::addObjProp<uint32_t>("Surface Object", data.targetObjUUID, [&objList](uint32_t *val) -> bool {
+          uint32_t proxy = *val;
+          ImGui::VectorComboBox("##", objList, proxy);
+          if (proxy == *val) {
+            return false;
+          }
+          *val = proxy;
+          return true;
+        }, nullptr);
+      }
+
       ImTable::addObjProp("Offset", data.vpOffset);
       ImTable::addObjProp("Size", data.vpSize);
       if(data.projection.resolve(obj) == PROJ_ORTHOGRAPHIC) {
@@ -141,6 +195,8 @@ namespace Project::Component::Camera
       ImTable::addObjProp("Near", data.near);
       ImTable::addObjProp("Far", data.far);
       ImTable::addObjProp("Aspect", data.aspect);
+      ImTable::addMultiSelectMask8("Sees Layers", data.visMask.resolve(obj),
+        ctx.project->conf.visLayerNames, "<Nothing>");
       ImTable::end();
     }
   }
