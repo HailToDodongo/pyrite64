@@ -74,6 +74,7 @@ nlohmann::json Editor::Input::Keymap::serialize(KeymapPreset preset) const {
   writeKey("gizmoScale",     gizmoScale,     defaultKeymap.gizmoScale);
   writeKey("deleteObject",   deleteObject,   defaultKeymap.deleteObject);
   writeKey("snapObject",     snapObject,     defaultKeymap.snapObject);
+  writeKey("snapVertices",   snapVertices,   defaultKeymap.snapVertices);
   return json.doc;
 }
 
@@ -116,6 +117,7 @@ void Editor::Input::Keymap::deserialize(const nlohmann::json& parent, KeymapPres
   gizmoScale     = readKey("gizmoScale",     defaultKeymap.gizmoScale);
   deleteObject   = readKey("deleteObject",   defaultKeymap.deleteObject);
   snapObject     = readKey("snapObject",     defaultKeymap.snapObject);
+  snapVertices   = readKey("snapVertices",   defaultKeymap.snapVertices);
 }
 
 std::string Editor::Input::GetKeyChordName(ImGuiKeyChord key_chord)

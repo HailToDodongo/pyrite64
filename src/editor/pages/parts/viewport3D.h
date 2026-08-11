@@ -5,6 +5,7 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include "json.hpp"
 
 #include "../../../renderer/camera.h"
@@ -70,6 +71,16 @@ namespace Editor
 
       int gizmoOp{0};
       bool gizmoTransformActive{false};
+
+      // State preserved between frames while dragging a model vertex
+      bool vertexSnapActive{false};
+      bool vertexSnapMoved{false};
+      glm::vec3 vertexSnapSourceWorld{0.0f};
+      glm::vec3 vertexSnapDelta{0.0f};
+
+      // Original object state used to apply an absolute shared delta and create one undo entry
+      std::unordered_map<uint32_t, glm::vec3> vertexSnapStartPositions{};
+      std::unordered_map<uint32_t, bool> vertexSnapHadPositionOverrides{};
       bool overRotGizmo{false};
       bool inputActive{false};    // this viewport captured the camera drag (started inside it)
       bool viewGizmoOwned{false}; // this viewport owns the active orientation-cube drag

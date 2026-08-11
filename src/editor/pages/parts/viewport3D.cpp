@@ -848,6 +848,18 @@ void Editor::Viewport3D::draw()
   if(isShiftDown)moveSpeed *= 4.0f;
 
   bool hasSelection = !ctx.getSelectedObjectUUIDs().empty();
+
+  // The assigned key enables vertex snapping globally unless a text field is receiving keyboard input
+  bool vertexSnapMode = vertexSnapActive || (
+    hasSelection && ctx.selSubPath.empty() && !ImGui::GetIO().WantTextInput
+    && ImGui::IsKeyDown(ctx.prefs.keymap.snapVertices)
+  );
+
+  // Vertex dragging owns the left mouse button and must not start a box selection
+  if (vertexSnapMode) {
+    selectionPending = false;
+    selectionDragging = false;
+  }
   // Query under this viewport's gizmo id, else IsUsing()/IsOver() read the wrong id
   ImGuizmo::PushID((int)winId);
   bool overGizmo = hasSelection && ImGuizmo::IsOver();
@@ -858,7 +870,7 @@ void Editor::Viewport3D::draw()
   bool leftReleased = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
   bool rightClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Right);
 
-  if (!navLocked && !overGizmo && isMouseHover && leftClicked && !isAltDown && !overRotGizmo) {
+  if (!vertexSnapMode && !navLocked && !overGizmo && isMouseHover && leftClicked && !isAltDown && !overRotGizmo) {
     selectionPending = true;
     selectionDragging = false;
     selectionStart = mousePos;
@@ -1196,6 +1208,186 @@ void Editor::Viewport3D::draw()
 
   isMouseHover = ImGui::IsItemHovered();
 
+  // Projected vertex data needed for hover comparison and foreground drawing
+  struct VertexCandidate {
+    glm::vec3 world{};
+    ImVec2 screen{};
+    float depth{1.0f};
+  };
+
+  std::optional<VertexCandidate> hoveredSource{};
+  std::optional<VertexCandidate> hoveredTarget{};
+
+  // Scan vertices while hovering the viewport and keep scanning if an active drag leaves its bounds
+  if (vertexSnapMode && (isMouseHover || vertexSnapActive)) {
+    constexpr float HOVER_RADIUS = 11.0f;
+    const ImVec2 pointer = ImGui::GetMousePos();
+    const glm::vec4 viewport{0.0f, 0.0f, currSize.x, currSize.y};
+    float sourceDistanceSq = HOVER_RADIUS * HOVER_RADIUS;
+    float targetDistanceSq = HOVER_RADIUS * HOVER_RADIUS;
+
+    // A model belongs to the moving selection when it is on a selected object or descendant
+    auto hasSelectedAncestor = [](Project::Object &object) {
+      for (auto *ancestor = &object; ancestor; ancestor = ancestor->parent) {
+        if (ctx.isObjectSelected(ancestor->uuid)) return true;
+      }
+      auto nested = nestedPickReg.find(object.uuid);
+      return nested != nestedPickReg.end() && ctx.isObjectSelected(nested->second.first);
+    };
+
+    // Keep the closest projected vertex inside the screen-space hover radius
+    auto testVertex = [&](const glm::vec3 &world, bool source) {
+      glm::vec3 projected = glm::project(world, uniGlobal.cameraMat, uniGlobal.projMat, viewport);
+      if (projected.z < 0.0f || projected.z > 1.0f) return;
+
+      ImVec2 screen{
+        currPos.x + projected.x,
+        currPos.y + currSize.y - projected.y
+      };
+      float dx = screen.x - pointer.x;
+      float dy = screen.y - pointer.y;
+      float distanceSq = dx * dx + dy * dy;
+      float &bestDistanceSq = source ? sourceDistanceSq : targetDistanceSq;
+      auto &best = source ? hoveredSource : hoveredTarget;
+      if (distanceSq > bestDistanceSq) return;
+      if (best && distanceSq == bestDistanceSq && projected.z >= best->depth) return;
+
+      bestDistanceSq = distanceSq;
+      best = VertexCandidate{world, screen, projected.z};
+    };
+
+    // Collect source vertices before dragging and external target vertices while dragging
+    iterateObjects(rootObj, [&](Project::Object &candidateObj, Project::Component::Entry *comp) {
+      // Ignore vertices belonging to disabled objects or components
+      if (!candidateObj.enabled || !comp || !comp->enabled.resolve(candidateObj)) return;
+      // Not a model of any kind or collider --> Do nothing
+      if (comp->id != 1 && comp->id != 5 && comp->id != 10) return;
+      // Is a collider and they are not shown --> Do nothing
+      if (comp->id == 5 && !showCollObj) return;
+
+      bool isSourceObject = hasSelectedAncestor(candidateObj);
+      bool excludedTarget = isSourceObject;
+      if ((!vertexSnapActive && !isSourceObject) || (vertexSnapActive && excludedTarget)) return;
+
+      std::vector<glm::vec3> localVertices{};
+      PropScope::Dispatch dispatchScope(candidateObj.propOverrides, comp->uuid);
+      // Is a model
+      if (comp->id == 1) {
+        Project::Component::Model::collectVertices(candidateObj, *comp, localVertices);
+      // Is an anim model
+      } else if (comp->id == 10) {
+        Project::Component::AnimModel::collectVertices(candidateObj, *comp, localVertices);
+      // Is a collider
+      } else if (comp->id == 5) {
+        Project::Component::CollBody::collectVertices(candidateObj, *comp, localVertices);
+      }
+      if (localVertices.empty()) return;
+
+      // Transform each local component vertex exactly as its rendered geometry
+      glm::vec3 skew{0.0f};
+      glm::vec4 perspective{0.0f, 0.0f, 0.0f, 1.0f};
+      glm::mat4 modelMatrix = glm::recompose(
+        candidateObj.scale.resolve(candidateObj.propOverrides),
+        candidateObj.rot.resolve(candidateObj.propOverrides),
+        candidateObj.pos.resolve(candidateObj.propOverrides),
+        skew, perspective
+      );
+      for (const glm::vec3 &local : localVertices) {
+        testVertex(glm::vec3(modelMatrix * glm::vec4(local, 1.0f)), !vertexSnapActive);
+      }
+    });
+
+    // Begin the operation from the highlighted source vertex and snapshot every moved object
+    if (!vertexSnapActive && hoveredSource && leftClicked) {
+      vertexSnapActive = true;
+      vertexSnapMoved = false;
+      vertexSnapSourceWorld = hoveredSource->world;
+      vertexSnapDelta = glm::vec3{0.0f};
+      vertexSnapStartPositions.clear();
+      vertexSnapHadPositionOverrides.clear();
+      // Scene children store world positions, so they must receive the same Cartesian delta
+      auto captureObjectTree = [&](auto &&self, Project::Object &object) -> void {
+        vertexSnapStartPositions[object.uuid] = object.pos.resolve(object.propOverrides);
+        vertexSnapHadPositionOverrides[object.uuid] = object.hasPropOverride(object.pos);
+        for (auto &child : object.children) self(self, *child);
+      };
+      for (auto *selected : Editor::SelectionUtils::collectSelectedObjects(*scene)) {
+        captureObjectTree(captureObjectTree, *selected);
+      }
+      selectionPending = false;
+      selectionDragging = false;
+    }
+
+    // Recalculate positions from their initial values to avoid accumulating floating-point drift
+    if (vertexSnapActive && hoveredTarget && leftDown) {
+      glm::vec3 nextDelta = hoveredTarget->world - vertexSnapSourceWorld;
+      glm::vec3 deltaChange = nextDelta - vertexSnapDelta;
+      if (glm::dot(deltaChange, deltaChange) > 0.000001f || !vertexSnapMoved) {
+        vertexSnapDelta = nextDelta;
+        for (auto &[uuid, startPosition] : vertexSnapStartPositions) {
+          auto movedObject = scene->getObjectByUUID(uuid);
+          if (!movedObject) continue;
+          if (movedObject->isPrefabInstance() && !ctx.isPrefabEditing(movedObject->uuid)) {
+            ensurePropertyOverride(movedObject.get(), movedObject->pos);
+          }
+          movedObject->pos.resolve(movedObject->propOverrides) = startPosition + vertexSnapDelta;
+        }
+        vertexSnapMoved = glm::dot(vertexSnapDelta, vertexSnapDelta) > 0.000001f;
+      }
+    }
+
+    // Draw through the foreground list so markers remain visible over geometry and gizmos
+    ImDrawList *vertexDrawList = ImGui::GetForegroundDrawList();
+    vertexDrawList->PushClipRect(currPos, currPos + currSize, true);
+    auto drawVertex = [&](ImVec2 position, ImU32 fill) {
+      vertexDrawList->AddCircleFilled(position, 9.0f, IM_COL32(0, 0, 0, 230), 20);
+      vertexDrawList->AddCircleFilled(position, 6.0f, fill, 20);
+      vertexDrawList->AddCircle(position, 11.0f, IM_COL32(255, 255, 255, 255), 20, 2.0f);
+      vertexDrawList->AddLine(position - ImVec2(14.0f, 0.0f), position + ImVec2(14.0f, 0.0f), fill, 2.0f);
+      vertexDrawList->AddLine(position - ImVec2(0.0f, 14.0f), position + ImVec2(0.0f, 14.0f), fill, 2.0f);
+    };
+
+    // Dragging vertex --> Show displaced source vertex and its current target connection
+    if (vertexSnapActive) {
+      glm::vec3 snappedSource = vertexSnapSourceWorld + vertexSnapDelta;
+      glm::vec3 projected = glm::project(snappedSource, uniGlobal.cameraMat, uniGlobal.projMat, viewport);
+      if (projected.z >= 0.0f && projected.z <= 1.0f) {
+        ImVec2 sourceScreen{currPos.x + projected.x, currPos.y + currSize.y - projected.y};
+        drawVertex(sourceScreen, IM_COL32(255, 190, 32, 255));
+        if (hoveredTarget)
+          vertexDrawList->AddLine(sourceScreen, hoveredTarget->screen, IM_COL32(64, 255, 192, 220), 2.0f);
+      }
+      if (hoveredTarget)
+        drawVertex(hoveredTarget->screen, IM_COL32(64, 255, 192, 255));
+    } else if (hoveredSource) {
+      drawVertex(hoveredSource->screen, IM_COL32(255, 190, 32, 255));
+    }
+    vertexDrawList->PopClipRect();
+  }
+
+  // Commit the whole drag as one history operation only when the mouse is released
+  if (vertexSnapActive && leftReleased) {
+    if (vertexSnapMoved) {
+      UndoRedo::getHistory().markChanged("Vertex Snap");
+    } else {
+      // Returning to the starting point must not leave an empty prefab override behind
+      for (auto &[uuid, startPosition] : vertexSnapStartPositions) {
+        auto movedObject = scene->getObjectByUUID(uuid);
+        if (!movedObject) continue;
+        if (movedObject->isPrefabInstance() && !vertexSnapHadPositionOverrides[uuid]) {
+          movedObject->removePropOverride(movedObject->pos);
+        } else {
+          movedObject->pos.resolve(movedObject->propOverrides) = startPosition;
+        }
+      }
+    }
+    vertexSnapActive = false;
+    vertexSnapMoved = false;
+    vertexSnapDelta = glm::vec3{0.0f};
+    vertexSnapStartPositions.clear();
+    vertexSnapHadPositionOverrides.clear();
+  }
+
   if (selectionDragging) {
     glm::vec2 rectMin = glm::min(selectionStart, selectionEnd);
     glm::vec2 rectMax = glm::max(selectionStart, selectionEnd);
@@ -1223,6 +1415,8 @@ void Editor::Viewport3D::draw()
   // Snap settings (per gizmo mode, Ctrl to enable) plus the Manipulate call, shared by both
   // selection paths below. Returns true while the gizmo is being dragged.
   auto manipulateGizmo = [&](glm::mat4 &mat) -> bool {
+    // The transform gizmo must not compete with the vertex snap interaction
+    if (vertexSnapMode) return false;
     glm::vec3 snap(10.0f);
     if (gizmoOp == 1) snap = glm::vec3(90.0f / 4.0f);
     else if (gizmoOp == 2) snap = glm::vec3(0.125f);

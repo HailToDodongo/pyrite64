@@ -97,6 +97,7 @@ bool Editor::PreferenceOverlay::draw()
       ImTable::addKeybind("Gizmo Scale",     ctx.prefs.keymap.gizmoScale,     defaults.gizmoScale);
       ImTable::addKeybind("Delete Object",   ctx.prefs.keymap.deleteObject,   defaults.deleteObject);
       ImTable::addKeybind("Snap Object",     ctx.prefs.keymap.snapObject,     defaults.snapObject);
+      ImTable::addKeybind("Snap Vertices",   ctx.prefs.keymap.snapVertices,   defaults.snapVertices);
       ImTable::end();
       ImGui::TreePop();
     }

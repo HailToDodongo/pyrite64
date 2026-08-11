@@ -44,6 +44,7 @@ namespace Editor::Input {
     // Actions
     ImGuiKey deleteObject   = ImGuiKey_Delete;
     ImGuiKey snapObject     = ImGuiKey_S;
+    ImGuiKey snapVertices   = ImGuiKey_V;
 
     nlohmann::json serialize(KeymapPreset preset) const;
     void deserialize(const nlohmann::json& parent, KeymapPreset preset);

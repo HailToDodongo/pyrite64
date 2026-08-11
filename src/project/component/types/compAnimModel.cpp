@@ -23,6 +23,8 @@
 #include "../../../renderer/skeleton.h"
 #include "glm/gtx/matrix_decompose.hpp"
 
+#include <unordered_set>
+
 #include "../shared/meshFilter.h"
 
 namespace Project::Component::AnimModel
@@ -248,5 +250,30 @@ namespace Project::Component::AnimModel
       }
     }
     return aabb;
+  }
+
+  void collectVertices(Object &obj, Entry &entry, std::vector<glm::vec3> &vertices)
+  {
+    Data &data = *static_cast<Data*>(entry.data.get());
+
+    // Resolve the model asset through the object's property overrides
+    auto asset = ctx.project->getAssets().getEntryByUUID(data.model.resolve(obj));
+    if (!asset) return;
+
+    // T3DM triangles repeat shared vertices, so keep each local position only once
+    std::unordered_set<uint64_t> uniqueVertices{};
+    for (const auto &model : asset->model.t3dm.models) {
+      for (const auto &triangle : model.triangles) {
+        for (const auto &vertex : triangle.vert) {
+          // Pack the coordinates into a stable position key
+          uint64_t key = static_cast<uint16_t>(vertex.pos[0])
+            | (static_cast<uint64_t>(static_cast<uint16_t>(vertex.pos[1])) << 16)
+            | (static_cast<uint64_t>(static_cast<uint16_t>(vertex.pos[2])) << 32);
+          if (uniqueVertices.insert(key).second) {
+            vertices.emplace_back(vertex.pos[0], vertex.pos[1], vertex.pos[2]);
+          }
+        }
+      }
+    }
   }
 }
