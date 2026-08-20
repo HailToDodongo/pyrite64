@@ -164,6 +164,40 @@ The viewport fly and zoom speeds are stored in meters now. Their preference keys
 existing settings fall back to the new defaults. Re-adjust them under *Preferences* if you had
 them customized.
 
+### Changing colliders in C++
+
+`Coll::Collider` now owns the geometry of a collider and is the only place that changes it.
+Dimensions and the offset are in the object's local space (the same values the editor shows), the
+object-scaled result the collision runs on is derived, read-only and named `world...`.
+
+Writing to a shape used to leave the broadphase with the old size, so the non-const shape
+accessors were replaced by setters that keep the world AABB, the mass properties of an attached
+rigid body and the sleep state in sync:
+
+```cpp
+// Before:
+auto &coll = obj.getComponent<Comp::CollBody>()->collider;
+coll.cylinderShape().halfHeight = 2.0f;             // object-scaled, silently stale broadphase
+
+// Now:
+auto halfExtend = coll.halfExtend();                // local, like the editor
+halfExtend.y = 2.0f;
+coll.setHalfExtend(halfExtend);
+// or, size and type in one call:
+coll.setCylinderShape(coll.halfExtend().x, 2.0f);
+```
+
+Note that `set{SHAPE}Shape()` will also change the shape type if the collider was not of this
+shape before.
+
+Reading the object-scaled dimensions, e.g. inside a collision callback, gained a `world` prefix:
+`sphereShape()` became `worldSphereShape()`, `boxShape()` became `worldBoxShape()`, and so on.
+
+`Comp::CollBody` is a plain holder now, it creates the collider from the editor values and
+registers it with the collision scene. `orgScale` and its half extend / shape / scale helpers are
+gone, use the `collider` member for all of it. `Collider::setShapeType()` no longer resets the
+dimensions to zero, it keeps the size and folds it into the new shape.
+
 ## v0.7.0
 
 This version completely reworked the material system as well as the collision/physics system.<br>

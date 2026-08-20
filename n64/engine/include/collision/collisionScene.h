@@ -282,6 +282,7 @@ namespace P64::Coll {
 
     void wakeIsland(RigidBody *rigidBody);
     void wakeMovedBody(RigidBody *body);
+    void wakeChangedCollider(Collider *collider);
     void syncExternallyMovedBodies();
     void updateSleepStates();
     void refreshContacts();

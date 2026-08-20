@@ -209,15 +209,15 @@ namespace P64::Coll {
 
     const fm_vec3_t fallbackInertia = rigidBody->getDefaultLocalInertiaTensor();
 
-    const std::vector<Collider *> *ownerColliders = findCollidersForOwner(rigidBody->owner_);
-    if(!ownerColliders || ownerColliders->empty()) {
+    const std::vector<Collider *> &ownerColliders = rigidBody->attachedColliders_;
+    if(ownerColliders.empty()) {
       rigidBody->applyCompoundProperties(rigidBody->localCenterOfMassOffset_, fallbackInertia, rigidBody->owner_->scale);
       return;
     }
 
     int count = 0;
     fm_vec3_t worldCenterSum = VEC3_ZERO;
-    for(Collider *collider : *ownerColliders) {
+    for (Collider *collider : ownerColliders) {
       if(!collider) continue;
       worldCenterSum = worldCenterSum + collider->worldCenter_;
       ++count;
@@ -242,7 +242,7 @@ namespace P64::Coll {
     const float massPerCollider = rigidBody->getMass() * invCount;
     fm_vec3_t compoundInertia = VEC3_ZERO;
 
-    for(Collider *collider : *ownerColliders) {
+    for (Collider *collider : ownerColliders) {
       if(!collider) continue;
 
       fm_vec3_t colliderInertia = collider->inertiaTensor(massPerCollider);
@@ -707,17 +707,45 @@ namespace P64::Coll {
   // Wake everything a moved body can affect. Kinematic bodies are not part of
   // sleep islands, so wake whatever rests on them instead.
   void CollisionScene::wakeMovedBody(RigidBody *body) {
+
+    // If the body is a dynamic non-kinematic body, wake its island. Otherwise, wake any bodies that are in contact with it.
     if(shouldTrackSleepState(body)) {
       wakeIsland(body);
       return;
     }
 
+    // Wake any bodies that are in contact with the moved non-dynamic body.
     for(int i = 0; i < cachedConstraintCount_; ++i) {
       const ContactConstraint &cc = cachedConstraints_[i];
       if(!cc.isActive || cc.isTrigger) continue;
       RigidBody *other = nullptr;
       if(cc.rigidBodyA == body)      other = cc.rigidBodyB;
       else if(cc.rigidBodyB == body) other = cc.rigidBodyA;
+      if(other) wakeIsland(other);
+    }
+  }
+
+  // Same idea as wakeMovedBody(), but triggered by a collider whose size or offset changed
+  // instead of a moved body: it could now overlap or no longer support its neighbours, so they
+  // have to re-evaluate.
+  // The collider may not have a rigid body at all, in which case we wake any bodies that are in contact with it.
+  void CollisionScene::wakeChangedCollider(Collider *collider) {
+    if(!collider) return;
+
+    // If the collider has a dynamic non-kinematic rigid body, wake its island. Otherwise, wake any bodies that are in contact with it.
+    RigidBody *body = collider->rigidBody_;
+    if(shouldTrackSleepState(body)) {
+      wakeIsland(body);
+      return;
+    }
+
+    // Wake any bodies that are in contact with the changed collider.
+    for(int i = 0; i < cachedConstraintCount_; ++i) {
+      const ContactConstraint &cc = cachedConstraints_[i];
+      if(!cc.isActive || cc.isTrigger) continue;
+      if(cc.colliderA != collider && cc.colliderB != collider) continue;
+
+      RigidBody *other = cc.colliderA == collider ? cc.rigidBodyB : cc.rigidBodyA;
       if(other) wakeIsland(other);
     }
   }
@@ -2152,7 +2180,8 @@ namespace P64::Coll {
     ticksWakePrep = get_ticks() - stageStart;
 
     stageStart = get_ticks();
-    // Refresh collider world state
+
+    // Refresh collider world state and move AABB tree nodes if needed. Wake any rigidbodies who are affected by changes
     for(Collider *collider : colliders_) {
       if(!collider) continue;
 
@@ -2161,6 +2190,8 @@ namespace P64::Coll {
       RigidBody *rb = collider->rigidBody_;
       const bool changed = rb ? collider->syncFromRigidBody(rb->position_, rb->rotation_)
                               : collider->syncWorldState();
+
+      if(collider->consumeGeometryChanged()) wakeChangedCollider(collider);
 
       if(!changed || collider->aabbTreeNodeId_ == NULL_NODE) continue;
 

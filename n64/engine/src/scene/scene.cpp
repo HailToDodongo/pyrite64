@@ -267,6 +267,8 @@ void P64::Scene::update(float deltaTime)
 
     for (uint32_t i=0; i<obj->compCount; ++i) {
       const auto &compDef = COMP_TABLE[compRefs[i].type];
+      if(!compDef.update) continue;
+
       char* dataPtr = (char*)obj + compRefs[i].offset;
       compDef.update(*obj, dataPtr, deltaTime);
     }
