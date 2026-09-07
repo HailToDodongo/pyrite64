@@ -189,8 +189,8 @@ namespace P64::Coll {
     ticksFinalize = 0;
     ticksTotal = 0;
 
-    colliderAABBTree.init(32); // Initial capacity (will grow as needed)
-    meshColliderAABBTree.init(32);
+    colliderAABBTree.init(32, AABBTREE_MIN_MARGIN); // Initial capacity (will grow as needed)
+    meshColliderAABBTree.init(32, AABBTREE_MIN_MARGIN);
   }
 
   RigidBody *CollisionScene::findRigidBodyByOwner(const Object *owner) const {
@@ -1689,20 +1689,19 @@ namespace P64::Coll {
       mesh->transformChanged_ = mesh->hasOwnerTransformChanged();
       if(!mesh->transformChanged_ && mesh->hasCachedOwnerTransform_) continue;
 
-      fm_vec3_t prevOwnerPhysicsPos = mesh->owner_ ? mesh->owner_->pos : VEC3_ZERO;
+      // Movement since the last update, used to extend the tree box along the direction of travel so
+      // a moving mesh does not fall out of it again next step.
+      fm_vec3_t ownerDisplacement = VEC3_ZERO;
+      if (mesh->owner_ && mesh->hasCachedOwnerTransform_) {
+        ownerDisplacement = mesh->owner_->pos - mesh->lastOwnerPosition_;
+      }
 
       // Snapshot first: recalculateWorldAabb() branches on the cached has*() properties
       mesh->syncOwnerTransform();
       mesh->recalculateWorldAabb();
 
       if (mesh->aabbTreeNodeId_ != NULL_NODE) {
-        if (mesh->owner_) {
-          fm_vec3_t ownerPhysicsPos = mesh->owner_->pos;
-          const fm_vec3_t disp = ownerPhysicsPos - prevOwnerPhysicsPos;
-          meshColliderAABBTree.moveNode(mesh->aabbTreeNodeId_, mesh->worldAabb_, disp);
-        } else {
-          meshColliderAABBTree.moveNode(mesh->aabbTreeNodeId_, mesh->worldAabb_, VEC3_ZERO);
-        }
+        meshColliderAABBTree.moveNode(mesh->aabbTreeNodeId_, mesh->worldAabb_, ownerDisplacement);
       }
     }
   }

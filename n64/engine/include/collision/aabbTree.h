@@ -16,8 +16,12 @@ namespace P64::Coll {
   using NodeProxy = int16_t;
   constexpr NodeProxy NULL_NODE = -1;
   // Multiplier for how much to fatten AABBs when inserting/moving nodes. This helps avoid frequent reinsertion for small movements.
-  constexpr float AABB_DISPLACEMENT_MULTIPLIER = 10.0f;
-  constexpr int AABB_QUERY_STACK_SIZE = 256;
+  constexpr float AABBTREE_DISPLACEMENT_MULTIPLIER = 10.0f;
+  // Fattening margin as a fraction of the aabb's own size.
+  constexpr float AABBTREE_MARGIN_RATIO = 0.1f;
+  // Absolute floor for that margin on dynamic trees.
+  constexpr float AABBTREE_MIN_MARGIN = 0.05f;
+  constexpr int AABBTREE_QUERY_STACK_SIZE = 256;
 
   // Forward declare Raycast for ray queries
   struct Raycast;
@@ -40,7 +44,10 @@ namespace P64::Coll {
     AABBTree() = default;
     ~AABBTree();
 
-    void init(int capacity);
+    /// @brief Initializes the tree with a given capacity and minimum margin for fattening AABBs.
+    /// @param capacity initial number of nodes to allocate; will grow as needed.
+    /// @param minMargin absolute floor for the fattening margin; leave at 0 for static trees.
+    void init(int capacity, float minMargin = 0.0f);
     void destroy();
 
     NodeProxy createNode(const AABB &bounds, void *data);
@@ -77,12 +84,14 @@ namespace P64::Coll {
     NodeProxy root{NULL_NODE};
 
   private:
+    fm_vec3_t fattenExtent(const AABB &bounds) const;
     NodeProxy allocateNode();
     void freeNode(NodeProxy node);
     NodeProxy insertLeaf(NodeProxy leaf);
     void rotateNode(NodeProxy node);
 
     std::unique_ptr<AABBTreeNode[]> nodes_;
+    float minMargin_{0.0f};
     int16_t nodeCount_{0};
     int16_t nodeCapacity_{0};
     NodeProxy freeList_{NULL_NODE};
