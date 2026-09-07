@@ -534,7 +534,7 @@
               {
                 "data": {
                   "maskRead": 0,
-                  "maskWrite": 8,
+                  "maskWrite": 9,
                   "meshFilter": "",
                   "modelUUID": 6985508143550202785
                 },
@@ -763,7 +763,7 @@
               {
                 "data": {
                   "maskRead": 0,
-                  "maskWrite": 8,
+                  "maskWrite": 9,
                   "meshFilter": "",
                   "modelUUID": 15813250936274457379
                 },
@@ -795,9 +795,9 @@
             "enabled": true,
             "name": "Planet",
             "pos": [
-              0.6392070055007935,
-              -5.139157772064209,
-              -3.270711660385132
+              0.6000000238418579,
+              -5.099999904632568,
+              -3.299999952316284
             ],
             "propOverrides": {},
             "proportionalScale": false,
@@ -936,7 +936,7 @@
           {
             "data": {
               "maskRead": 0,
-              "maskWrite": 8,
+              "maskWrite": 9,
               "meshFilter": "",
               "modelUUID": 18042696417486669443
             },
@@ -1053,8 +1053,8 @@
           },
           {
             "data": {
-              "maskRead": 255,
-              "maskWrite": 255,
+              "maskRead": 240,
+              "maskWrite": 249,
               "meshFilter": "",
               "modelUUID": 18042696417486669443
             },
@@ -1087,8 +1087,8 @@
         "name": "platform",
         "pos": [
           -1.5,
-          4.699999809265137,
-          12.394628524780273
+          4.700000286102295,
+          12.40000057220459
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -1154,7 +1154,7 @@
           {
             "data": {
               "maskRead": 0,
-              "maskWrite": 8,
+              "maskWrite": 9,
               "meshFilter": "",
               "modelUUID": 18042696417486669443
             },
@@ -1254,7 +1254,7 @@
           {
             "data": {
               "maskRead": 0,
-              "maskWrite": 8,
+              "maskWrite": 9,
               "meshFilter": "",
               "modelUUID": 18042696417486669443
             },

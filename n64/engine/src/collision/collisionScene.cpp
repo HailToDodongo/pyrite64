@@ -1722,6 +1722,8 @@ namespace P64::Coll {
       for(int m = 0; m < meshCount; ++m) {
         const MeshCollider* mesh = static_cast<const MeshCollider*>(meshColliderAABBTree.getNodeData(meshCandidates[m]));
         if(!mesh || mesh->triangleCount_ == 0) continue;
+        // ray only hits what it reads.
+        if((mesh->writeMask_ & ray.readMask) == 0) continue;
         Raycast localRay = ray;
         if(mesh->hasScale()) {
           const fm_vec3_t &scale = mesh->owner_->scale;
@@ -1763,7 +1765,6 @@ namespace P64::Coll {
           currentHit.distance = fm_vec3_len(&hitDelta);
           currentHit.hitObjectId = mesh->owner_ ? mesh->owner_->id : 0;
 
-          hit.didHit = true;
           if(currentHit.didHit && currentHit.distance < hit.distance && currentHit.distance <= ray.maxDistance) {
             hit = currentHit;
           }
@@ -1883,6 +1884,7 @@ namespace P64::Coll {
         const MeshCollider* mesh = static_cast<const MeshCollider*>(
           meshColliderAABBTree.getNodeData(meshCandidates[m]));
         if (!mesh || mesh->triangleCount() == 0 || !mesh->ownerObject()) continue;
+        if ((mesh->writeMask() & readMask) == 0) continue;
 
         AABB localSweptBox = mesh->worldAabbToLocal(sweptBox);
         int triCount = mesh->queryTriangleNodes(localSweptBox, triCandidates, MAX_TRI);
@@ -2050,6 +2052,7 @@ namespace P64::Coll {
         const MeshCollider* mesh = static_cast<const MeshCollider*>(
                 meshColliderAABBTree.getNodeData(meshCandidates[m]));
         if (!mesh || mesh->triangleCount() == 0 || !mesh->ownerObject()) continue;
+        if ((mesh->writeMask() & readMask) == 0) continue;
 
         AABB localSweptBox = mesh->worldAabbToLocal(sweptBox);
         int triCount = mesh->queryTriangleNodes(localSweptBox, triCandidates, MAX_TRI);
