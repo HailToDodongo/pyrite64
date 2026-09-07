@@ -56,14 +56,6 @@ namespace P64::Coll {
 
   // ── Matrix utilities ──────────────────────────────────────────────
 
-  fm_vec3_t matrix3Vec3Mul(const Matrix3x3 &mat, const fm_vec3_t &v) {
-    return fm_vec3_t{{
-      mat.m[0][0] * v.x + mat.m[0][1] * v.y + mat.m[0][2] * v.z,
-      mat.m[1][0] * v.x + mat.m[1][1] * v.y + mat.m[1][2] * v.z,
-      mat.m[2][0] * v.x + mat.m[2][1] * v.y + mat.m[2][2] * v.z
-    }};
-  }
-
   float matrix3Determinant(const Matrix3x3 &matrix) {
     return matrix.m[0][0] * (matrix.m[1][1] * matrix.m[2][2] - matrix.m[1][2] * matrix.m[2][1])
          - matrix.m[0][1] * (matrix.m[1][0] * matrix.m[2][2] - matrix.m[1][2] * matrix.m[2][0])
@@ -90,49 +82,7 @@ namespace P64::Coll {
     return inverse;
   }
 
-  Matrix3x3 matrix3Mul(const Matrix3x3 &a, const Matrix3x3 &b) {
-    Matrix3x3 r{};
-    for(int i = 0; i < 3; ++i) {
-      for(int j = 0; j < 3; ++j) {
-        r.m[i][j] = a.m[i][0] * b.m[0][j]
-                   + a.m[i][1] * b.m[1][j]
-                   + a.m[i][2] * b.m[2][j];
-      }
-    }
-    return r;
-  }
-
-  Matrix3x3 matrix3Transpose(const Matrix3x3 &m) {
-    Matrix3x3 r{};
-    for(int i = 0; i < 3; ++i) {
-      for(int j = 0; j < 3; ++j) {
-        r.m[i][j] = m.m[j][i];
-      }
-    }
-    return r;
-  }
-
-  Matrix3x3 quatToMatrix3(const fm_quat_t &q) {
-    float xx = q.x * q.x, yy = q.y * q.y, zz = q.z * q.z;
-    float xy = q.x * q.y, xz = q.x * q.z, yz = q.y * q.z;
-    float wx = q.w * q.x, wy = q.w * q.y, wz = q.w * q.z;
-
-    Matrix3x3 r{};
-    r.m[0][0] = 1.0f - 2.0f * (yy + zz);
-    r.m[0][1] = 2.0f * (xy - wz);
-    r.m[0][2] = 2.0f * (xz + wy);
-
-    r.m[1][0] = 2.0f * (xy + wz);
-    r.m[1][1] = 1.0f - 2.0f * (xx + zz);
-    r.m[1][2] = 2.0f * (yz - wx);
-
-    r.m[2][0] = 2.0f * (xz - wy);
-    r.m[2][1] = 2.0f * (yz + wx);
-    r.m[2][2] = 1.0f - 2.0f * (xx + yy);
-    return r;
-  }
-
-  // ── RigidBody ─────────────────────────────────────────────────
+        // ── RigidBody ─────────────────────────────────────────────────
 
   void RigidBody::init(P64::Object *object, float m) {
     assertf(m > 0.0f, "Mass must be greater than zero");
@@ -450,16 +400,34 @@ namespace P64::Coll {
   }
 
   void RigidBody::updateWorldInertia() {
-    Matrix3x3 newRotationMatrix = quatToMatrix3(rotation_);
-    Matrix3x3 newInverseRotationMatrix = quatToMatrix3(quatConjugate(rotation_));
+    // Called twice per body per step (once before integration, once when applying the results), 
+    // and the second call is usually a no-op
+    if(worldInertiaCacheValid_ &&
+       quatIsIdentical(&rotation_, &worldInertiaCacheRotation_) &&
+       position_ == worldInertiaCachePosition_ &&
+       invLocalInertiaTensor_ == worldInertiaCacheLocalInv_ &&
+       localCenterOfMass_ == worldInertiaCacheLocalCom_) {
+      return;
+    }
 
-    const Matrix3x3 localInv = diagonalMatrix(invLocalInertiaTensor_);
-    Matrix3x3 newInvWorldInertiaTensor = matrix3Mul(matrix3Mul(newRotationMatrix, localInv), matrix3Transpose(newRotationMatrix));
+    Matrix3x3 newRotationMatrix = quatToMatrix3(rotation_);
+    Matrix3x3 newInverseRotationMatrix = matrix3Transpose(newRotationMatrix);
+
+    const fm_vec3_t &d = invLocalInertiaTensor_;
+    Matrix3x3 newInvWorldInertiaTensor{};
+    for(int i = 0; i < 3; ++i) {
+      for(int j = i; j < 3; ++j) {
+        const float v = newRotationMatrix.m[i][0] * d.x * newRotationMatrix.m[j][0]
+                      + newRotationMatrix.m[i][1] * d.y * newRotationMatrix.m[j][1]
+                      + newRotationMatrix.m[i][2] * d.z * newRotationMatrix.m[j][2];
+        newInvWorldInertiaTensor.m[i][j] = v;
+        newInvWorldInertiaTensor.m[j][i] = v;
+      }
+    }
 
     const fm_vec3_t worldOffset = matrix3Vec3Mul(newRotationMatrix, localCenterOfMass_);
     const fm_vec3_t newWorldCenterOfMass = position_ + worldOffset;
     const bool transformChanged = !matrix3Equals(rotationMatrix_, newRotationMatrix) ||
-                    !matrix3Equals(inverseRotationMatrix_, newInverseRotationMatrix) ||
                     !matrix3Equals(invWorldInertiaTensor_, newInvWorldInertiaTensor) ||
                                   fm_vec3_distance2(&worldCenterOfMass_, &newWorldCenterOfMass) > FM_EPSILON * FM_EPSILON;
 
@@ -473,6 +441,12 @@ namespace P64::Coll {
     if(transformChanged) {
       ++transformVersion_;
     }
+
+    worldInertiaCacheRotation_ = rotation_;
+    worldInertiaCachePosition_ = position_;
+    worldInertiaCacheLocalInv_ = invLocalInertiaTensor_;
+    worldInertiaCacheLocalCom_ = localCenterOfMass_;
+    worldInertiaCacheValid_ = true;
   }
 
   fm_vec3_t RigidBody::toWorldSpace(const fm_vec3_t &localPoint) const {

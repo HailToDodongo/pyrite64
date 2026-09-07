@@ -183,21 +183,6 @@ void AABBTree::removeLeaf(NodeProxy leaf, bool freeIt) {
   if(freeIt) freeNode(leaf);
 }
 
-void *AABBTree::getNodeData(NodeProxy node) const {
-  assert(node >= 0 && node < nodeCapacity_);
-  return nodes_[node].data;
-}
-
-const AABB *AABBTree::getNodeBounds(NodeProxy node) const {
-  assert(node >= 0 && node < nodeCapacity_);
-  return &nodes_[node].bounds;
-}
-
-bool AABBTree::isLeaf(NodeProxy node) const {
-  assert(node >= 0 && node < nodeCapacity_);
-  return nodes_[node].left == NULL_NODE && nodes_[node].right == NULL_NODE;
-}
-
 // ── Leaf insertion (SAH) ────────────────────────────────────────────
 
 NodeProxy AABBTree::insertLeaf(NodeProxy leaf) {
@@ -364,6 +349,7 @@ void AABBTree::rotateNode(NodeProxy node) {
 
 int AABBTree::queryBounds(const AABB &queryBox, NodeProxy *results, int maxResults) const {
   if(root == NULL_NODE) return 0;
+  if(!aabbOverlap(nodes_[root].bounds, queryBox)) return 0;
 
   NodeProxy stack[AABB_QUERY_STACK_SIZE];
   int stackCount = 0;
@@ -372,18 +358,21 @@ int AABBTree::queryBounds(const AABB &queryBox, NodeProxy *results, int maxResul
   stack[stackCount++] = root;
 
   while(stackCount > 0 && resultCount < maxResults) {
-    NodeProxy current = stack[--stackCount];
-    if(current == NULL_NODE) continue;
+    const NodeProxy current = stack[--stackCount];
+    const AABBTreeNode &node = nodes_[current];
 
-    if(!aabbOverlap(nodes_[current].bounds, queryBox)) continue;
-
-    if(isLeaf(current)) {
+    if(node.left == NULL_NODE && node.right == NULL_NODE) {
       results[resultCount++] = current;
-    } else {
-      if(stackCount < AABB_QUERY_STACK_SIZE - 1) {
-        stack[stackCount++] = nodes_[current].left;
-        stack[stackCount++] = nodes_[current].right;
-      }
+      continue;
+    }
+
+    if(node.left != NULL_NODE && stackCount < AABB_QUERY_STACK_SIZE &&
+       aabbOverlap(nodes_[node.left].bounds, queryBox)) {
+      stack[stackCount++] = node.left;
+    }
+    if(node.right != NULL_NODE && stackCount < AABB_QUERY_STACK_SIZE &&
+       aabbOverlap(nodes_[node.right].bounds, queryBox)) {
+      stack[stackCount++] = node.right;
     }
   }
   return resultCount;
@@ -391,6 +380,7 @@ int AABBTree::queryBounds(const AABB &queryBox, NodeProxy *results, int maxResul
 
 int AABBTree::queryPoint(const fm_vec3_t &point, NodeProxy *results, int maxResults) const {
   if(root == NULL_NODE) return 0;
+  if(!aabbContainsPoint(nodes_[root].bounds, point)) return 0;
 
   NodeProxy stack[AABB_QUERY_STACK_SIZE];
   int stackCount = 0;
@@ -399,18 +389,21 @@ int AABBTree::queryPoint(const fm_vec3_t &point, NodeProxy *results, int maxResu
   stack[stackCount++] = root;
 
   while(stackCount > 0 && resultCount < maxResults) {
-    NodeProxy current = stack[--stackCount];
-    if(current == NULL_NODE) continue;
+    const NodeProxy current = stack[--stackCount];
+    const AABBTreeNode &node = nodes_[current];
 
-    if(!aabbContainsPoint(nodes_[current].bounds, point)) continue;
-
-    if(isLeaf(current)) {
+    if(node.left == NULL_NODE && node.right == NULL_NODE) {
       results[resultCount++] = current;
-    } else {
-      if(stackCount < AABB_QUERY_STACK_SIZE - 1) {
-        stack[stackCount++] = nodes_[current].left;
-        stack[stackCount++] = nodes_[current].right;
-      }
+      continue;
+    }
+
+    if(node.left != NULL_NODE && stackCount < AABB_QUERY_STACK_SIZE &&
+       aabbContainsPoint(nodes_[node.left].bounds, point)) {
+      stack[stackCount++] = node.left;
+    }
+    if(node.right != NULL_NODE && stackCount < AABB_QUERY_STACK_SIZE &&
+       aabbContainsPoint(nodes_[node.right].bounds, point)) {
+      stack[stackCount++] = node.right;
     }
   }
   return resultCount;
@@ -419,6 +412,7 @@ int AABBTree::queryPoint(const fm_vec3_t &point, NodeProxy *results, int maxResu
 int AABBTree::queryRay(const Raycast &ray, NodeProxy *results, int maxResults) const
 {
   if(root == NULL_NODE) return 0;
+  if(!aabbIntersectsRay(nodes_[root].bounds, ray)) return 0;
 
   NodeProxy stack[AABB_QUERY_STACK_SIZE];
   int stackCount = 0;
@@ -427,18 +421,21 @@ int AABBTree::queryRay(const Raycast &ray, NodeProxy *results, int maxResults) c
   stack[stackCount++] = root;
 
   while(stackCount > 0 && resultCount < maxResults) {
-    NodeProxy current = stack[--stackCount];
-    if(current == NULL_NODE) continue;
+    const NodeProxy current = stack[--stackCount];
+    const AABBTreeNode &node = nodes_[current];
 
-    if(!aabbIntersectsRay(nodes_[current].bounds, ray)) continue;
-
-    if(isLeaf(current)) {
+    if(node.left == NULL_NODE && node.right == NULL_NODE) {
       results[resultCount++] = current;
-    } else {
-      if(stackCount < AABB_QUERY_STACK_SIZE - 1) {
-        stack[stackCount++] = nodes_[current].left;
-        stack[stackCount++] = nodes_[current].right;
-      }
+      continue;
+    }
+
+    if(node.left != NULL_NODE && stackCount < AABB_QUERY_STACK_SIZE &&
+       aabbIntersectsRay(nodes_[node.left].bounds, ray)) {
+      stack[stackCount++] = node.left;
+    }
+    if(node.right != NULL_NODE && stackCount < AABB_QUERY_STACK_SIZE &&
+       aabbIntersectsRay(nodes_[node.right].bounds, ray)) {
+      stack[stackCount++] = node.right;
     }
   }
   return resultCount;

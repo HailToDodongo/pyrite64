@@ -162,6 +162,8 @@ namespace P64::Coll {
     colliders_.clear();
     ownerColliders_.clear();
     meshColliders_.clear();
+    meshReadMaskUnion_ = 0;
+    meshWriteMaskUnion_ = 0;
     cachedConstraintCount_ = 0;
     cachedConstraints_.clear();
     cachedConstraintLookup_.clear();
@@ -415,8 +417,8 @@ namespace P64::Coll {
     if(!mesh) return;
 
     mesh->computeLocalRootAabb();
-    mesh->recalculateWorldAabb();
     mesh->syncOwnerTransform();
+    mesh->recalculateWorldAabb();
 
     meshColliders_.push_back(mesh);
 
@@ -1142,6 +1144,11 @@ namespace P64::Coll {
 
       if (!collider->isTrigger_ && rigidBodyA && rigidBodyA->isSleeping_) continue;
 
+      // If this fails for the union off all mesh masks then we can skip the mesh query entirely
+      // since there can be no interaction with any mesh collider.
+      if ((collider->readMask_ & meshWriteMaskUnion_) == 0 &&
+          (meshReadMaskUnion_ & collider->writeMask_) == 0) continue;
+
       const int candidateCount = meshColliderAABBTree.queryBounds(
           collider->worldAabb_,
           candidateMeshColliders.data(),
@@ -1666,17 +1673,27 @@ namespace P64::Coll {
 
   /// @brief Recalculate the world-space AABBs of all Mesh Colliders in the Collision Scene.
   void CollisionScene::updateMeshColliderWorldStates() {
+    // Rebuilt from scratch each step so runtime changes to a mesh's masks are picked up without the
+    // scene having to observe every setCollisionMask() call. detectAllContacts() uses these to skip
+    // mesh-tree queries for colliders that cannot match any mesh.
+    meshReadMaskUnion_ = 0;
+    meshWriteMaskUnion_ = 0;
+
     for(std::size_t i = 0; i < meshColliders_.size(); ++i) {
       MeshCollider *mesh = meshColliders_[i];
       if(!mesh) continue;
+
+      meshReadMaskUnion_ |= mesh->readMask_;
+      meshWriteMaskUnion_ |= mesh->writeMask_;
 
       mesh->transformChanged_ = mesh->hasOwnerTransformChanged();
       if(!mesh->transformChanged_ && mesh->hasCachedOwnerTransform_) continue;
 
       fm_vec3_t prevOwnerPhysicsPos = mesh->owner_ ? mesh->owner_->pos : VEC3_ZERO;
 
-      mesh->recalculateWorldAabb();
+      // Snapshot first: recalculateWorldAabb() branches on the cached has*() properties
       mesh->syncOwnerTransform();
+      mesh->recalculateWorldAabb();
 
       if (mesh->aabbTreeNodeId_ != NULL_NODE) {
         if (mesh->owner_) {

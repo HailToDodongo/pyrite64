@@ -47,9 +47,20 @@ namespace P64::Coll {
     bool moveNode(NodeProxy node, const AABB &aabb, const fm_vec3_t &displacement);
     void removeLeaf(NodeProxy leaf, bool freeIt);
 
-    [[nodiscard]] void *getNodeData(NodeProxy node) const;
-    [[nodiscard]] const AABB *getNodeBounds(NodeProxy node) const;
-    [[nodiscard]] bool isLeaf(NodeProxy node) const;
+    [[nodiscard]] void *getNodeData(NodeProxy node) const {
+      assert(node >= 0 && node < nodeCapacity_);
+      return nodes_[node].data;
+    }
+
+    [[nodiscard]] const AABB *getNodeBounds(NodeProxy node) const {
+      assert(node >= 0 && node < nodeCapacity_);
+      return &nodes_[node].bounds;
+    }
+
+    [[nodiscard]] bool isLeaf(NodeProxy node) const {
+      assert(node >= 0 && node < nodeCapacity_);
+      return nodes_[node].left == NULL_NODE && nodes_[node].right == NULL_NODE;
+    }
 
     int queryBounds(const AABB &queryBox, NodeProxy *results, int maxResults) const;
     int queryPoint(const fm_vec3_t &point, NodeProxy *results, int maxResults) const;

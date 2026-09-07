@@ -83,7 +83,7 @@ namespace P64::Coll {
     fm_vec3_t worldNormal = localNormal;
     if(owner_) {
       worldNormal = worldNormal * vec3ReciprocalScaleComponents(owner_->scale);
-      if(hasRotation()) {
+      if(hasRotation_) {
         worldNormal = owner_->rot * worldNormal;
       }
     }
@@ -103,29 +103,28 @@ namespace P64::Coll {
   // ── MeshCollider transform ────────────────────────────────────────
 
   fm_vec3_t MeshCollider::toWorldSpace(const fm_vec3_t &localPoint) const {
-    fm_vec3_t position = owner_ ? owner_->pos : VEC3_ZERO;
-    fm_quat_t rotation = owner_ ? owner_->rot : QUAT_IDENTITY;
-    fm_vec3_t scale = owner_ ? owner_->scale : fm_vec3_t{{1.0f, 1.0f, 1.0f}};
-    fm_vec3_t scaled = localPoint * scale;
-    if(!quatIsIdentical(&rotation, &QUAT_IDENTITY)) {
-      scaled = rotation * scaled;
+    if(!owner_) return localPoint;
+    fm_vec3_t p = localPoint * owner_->scale;
+    if(hasRotation_) {
+      p = owner_->rot * p;
     }
-    if(fm_vec3_len2(&position) > FM_EPSILON * FM_EPSILON) {
-      scaled = scaled + position;
+    if(hasPosition_) {
+      p = p + owner_->pos;
     }
-    return scaled;
+    return p;
   }
 
   fm_vec3_t MeshCollider::toLocalSpace(const fm_vec3_t &worldPoint) const {
     fm_vec3_t p = worldPoint;
-    fm_vec3_t scale = owner_ ? owner_->scale : fm_vec3_t{{1.0f, 1.0f, 1.0f}};
-    if(hasPosition()) {
+    if(!owner_) return p;
+    if(hasPosition_) {
       p = p - owner_->pos;
     }
-    if(hasRotation()) {
+    if(hasRotation_) {
       p = quatConjugate(owner_->rot) * p;
     }
-    if(hasScale()) {
+    if(hasScale_) {
+      const fm_vec3_t &scale = owner_->scale;
       if(fabsf(scale.x) > FM_EPSILON) p.x /= scale.x;
       if(fabsf(scale.y) > FM_EPSILON) p.y /= scale.y;
       if(fabsf(scale.z) > FM_EPSILON) p.z /= scale.z;
@@ -135,41 +134,21 @@ namespace P64::Coll {
 
   fm_vec3_t MeshCollider::rotateToWorld(const fm_vec3_t &localDir) const {
     fm_vec3_t worldDirection = localDir;
-    if(hasScale() && owner_) 
+    if(hasScale_ && owner_)
       worldDirection = worldDirection * owner_->scale;
-    if(hasRotation()) 
+    if(hasRotation_)
       worldDirection = owner_->rot * worldDirection;
     return worldDirection;
   }
 
   fm_vec3_t MeshCollider::rotateToLocal(const fm_vec3_t &worldDir) const {
     fm_vec3_t localDirection = worldDir;
-    if(hasRotation()) 
+    if(hasRotation_)
       localDirection = quatConjugate(owner_->rot) * worldDir;
-    if (hasScale())
+    if(hasScale_)
       localDirection = localDirection * vec3ReciprocalScaleComponents(owner_->scale);
 
     return localDirection;
-  }
-
-  bool MeshCollider::hasTransform() const {
-    return (hasRotation() || hasPosition() || hasScale());
-  }
-
-  bool MeshCollider::hasRotation() const {
-    if(!owner_) return false;
-    return !quatIsIdentical(&owner_->rot, &QUAT_IDENTITY);
-  }
-
-  bool MeshCollider::hasPosition() const {
-    if(!owner_) return false;
-    fm_vec3_t ownerPhysicsPos = owner_->pos;
-    return fm_vec3_len2(&ownerPhysicsPos) > FM_EPSILON * FM_EPSILON;
-  }
-
-  bool MeshCollider::hasScale() const {
-    if(!owner_) return false;
-    return (fabsf(owner_->scale.x - 1.0f) > FM_EPSILON) || (fabsf(owner_->scale.y - 1.0f) > FM_EPSILON) || (fabsf(owner_->scale.z - 1.0f) > FM_EPSILON);
   }
 
   bool MeshCollider::readsCollider(const Collider *other) const {
@@ -202,6 +181,17 @@ namespace P64::Coll {
       lastOwnerRotation_ = owner_->rot;
       lastOwnerScale_ = owner_->scale;
     }
+
+    // Cached because they are used frequently in the hot loops. They only say
+    // whether a transform component is present, so lagging behind the owner potentially transforming by at most
+    // one physics step is harmless. Anything that needs the actual transform reads the owner.
+    hasRotation_ = owner_ && !quatIsIdentical(&lastOwnerRotation_, &QUAT_IDENTITY);
+    hasPosition_ = owner_ && fm_vec3_len2(&lastOwnerPosition_) > FM_EPSILON * FM_EPSILON;
+    hasScale_ = owner_ && ((fabsf(lastOwnerScale_.x - 1.0f) > FM_EPSILON) ||
+                           (fabsf(lastOwnerScale_.y - 1.0f) > FM_EPSILON) ||
+                           (fabsf(lastOwnerScale_.z - 1.0f) > FM_EPSILON));
+    hasTransform_ = hasRotation_ || hasPosition_ || hasScale_;
+
     inverseRotationMatrix_ = quatToMatrix3(quatConjugate(lastOwnerRotation_));
     hasCachedOwnerTransform_ = true;
     ++worldTransformVersion_;
@@ -227,49 +217,68 @@ namespace P64::Coll {
   }
 
   void MeshCollider::recalculateWorldAabb() {
-    // Transform all 8 corners of the local AABB to world space and take the enclosing AABB
-    fm_vec3_t corners[8] = {
-      fm_vec3_t{{localRootAabb_.min.x, localRootAabb_.min.y, localRootAabb_.min.z}},
-      fm_vec3_t{{localRootAabb_.max.x, localRootAabb_.min.y, localRootAabb_.min.z}},
-      fm_vec3_t{{localRootAabb_.min.x, localRootAabb_.max.y, localRootAabb_.min.z}},
-      fm_vec3_t{{localRootAabb_.max.x, localRootAabb_.max.y, localRootAabb_.min.z}},
-      fm_vec3_t{{localRootAabb_.min.x, localRootAabb_.min.y, localRootAabb_.max.z}},
-      fm_vec3_t{{localRootAabb_.max.x, localRootAabb_.min.y, localRootAabb_.max.z}},
-      fm_vec3_t{{localRootAabb_.min.x, localRootAabb_.max.y, localRootAabb_.max.z}},
-      fm_vec3_t{{localRootAabb_.max.x, localRootAabb_.max.y, localRootAabb_.max.z}},
-    };
+    // The AABB of an affine-transformed box:
+    // For M = R * diag(scale) this is the min/max over the 8 transformed corners
+    // (Ericson, Real-Time Collision Detection 4.2.6)
+    const fm_vec3_t localCenter = (localRootAabb_.min + localRootAabb_.max) * 0.5f;
+    const fm_vec3_t localHalf   = (localRootAabb_.max - localRootAabb_.min) * 0.5f;
 
-    fm_vec3_t worldMin = toWorldSpace(corners[0]);
-    fm_vec3_t worldMax = worldMin;
-    for(int i = 1; i < 8; ++i) {
-      fm_vec3_t w = toWorldSpace(corners[i]);
-      worldMin = vec3Min(worldMin, w);
-      worldMax = vec3Max(worldMax, w);
+    const fm_vec3_t worldCenter = toWorldSpace(localCenter);
+    const fm_vec3_t scale = owner_ ? owner_->scale : fm_vec3_t{{1.0f, 1.0f, 1.0f}};
+
+    fm_vec3_t worldHalf;
+    if(hasRotation_) {
+      const Matrix3x3 r = quatToMatrix3(owner_->rot);
+      worldHalf = fm_vec3_t{{
+        fabsf(r.m[0][0] * scale.x) * localHalf.x + fabsf(r.m[0][1] * scale.y) * localHalf.y + fabsf(r.m[0][2] * scale.z) * localHalf.z,
+        fabsf(r.m[1][0] * scale.x) * localHalf.x + fabsf(r.m[1][1] * scale.y) * localHalf.y + fabsf(r.m[1][2] * scale.z) * localHalf.z,
+        fabsf(r.m[2][0] * scale.x) * localHalf.x + fabsf(r.m[2][1] * scale.y) * localHalf.y + fabsf(r.m[2][2] * scale.z) * localHalf.z
+      }};
+    } else {
+      worldHalf = fm_vec3_t{{
+        fabsf(scale.x) * localHalf.x,
+        fabsf(scale.y) * localHalf.y,
+        fabsf(scale.z) * localHalf.z
+      }};
     }
-    worldAabb_ = {worldMin, worldMax};
+
+    worldAabb_ = {worldCenter - worldHalf, worldCenter + worldHalf};
   }
 
   AABB MeshCollider::worldAabbToLocal(const AABB &worldAabb) const {
-    // Transform all 8 corners of the world AABB into local space
-    fm_vec3_t corners[8] = {
-      fm_vec3_t{{worldAabb.min.x, worldAabb.min.y, worldAabb.min.z}},
-      fm_vec3_t{{worldAabb.max.x, worldAabb.min.y, worldAabb.min.z}},
-      fm_vec3_t{{worldAabb.min.x, worldAabb.max.y, worldAabb.min.z}},
-      fm_vec3_t{{worldAabb.max.x, worldAabb.max.y, worldAabb.min.z}},
-      fm_vec3_t{{worldAabb.min.x, worldAabb.min.y, worldAabb.max.z}},
-      fm_vec3_t{{worldAabb.max.x, worldAabb.min.y, worldAabb.max.z}},
-      fm_vec3_t{{worldAabb.min.x, worldAabb.max.y, worldAabb.max.z}},
-      fm_vec3_t{{worldAabb.max.x, worldAabb.max.y, worldAabb.max.z}},
-    };
+    // Same |M| construction as recalculateWorldAabb(), on the inverse map M^-1 = diag(1/scale) * R^T.
+    // Identical box to transforming all 8 corners through toLocalSpace().
+    const fm_vec3_t center = (worldAabb.min + worldAabb.max) * 0.5f;
+    const fm_vec3_t half   = (worldAabb.max - worldAabb.min) * 0.5f;
 
-    fm_vec3_t localMin = toLocalSpace(corners[0]);
-    fm_vec3_t localMax = localMin;
-    for(int i = 1; i < 8; ++i) {
-      fm_vec3_t l = toLocalSpace(corners[i]);
-      localMin = vec3Min(localMin, l);
-      localMax = vec3Max(localMax, l);
+    const fm_vec3_t localCenter = toLocalSpace(center);
+
+    // Degenerate axes stay at 1 so they pass through
+    fm_vec3_t invScale{{1.0f, 1.0f, 1.0f}};
+    if(hasScale_ && owner_) {
+      const fm_vec3_t &scale = owner_->scale;
+      if(fabsf(scale.x) > FM_EPSILON) invScale.x = 1.0f / scale.x;
+      if(fabsf(scale.y) > FM_EPSILON) invScale.y = 1.0f / scale.y;
+      if(fabsf(scale.z) > FM_EPSILON) invScale.z = 1.0f / scale.z;
     }
-    return {localMin, localMax};
+
+    fm_vec3_t localHalf;
+    if(hasRotation_) {
+      const Matrix3x3 ri = quatToMatrix3(quatConjugate(owner_->rot));
+      localHalf = fm_vec3_t{{
+        fabsf(invScale.x) * (fabsf(ri.m[0][0]) * half.x + fabsf(ri.m[0][1]) * half.y + fabsf(ri.m[0][2]) * half.z),
+        fabsf(invScale.y) * (fabsf(ri.m[1][0]) * half.x + fabsf(ri.m[1][1]) * half.y + fabsf(ri.m[1][2]) * half.z),
+        fabsf(invScale.z) * (fabsf(ri.m[2][0]) * half.x + fabsf(ri.m[2][1]) * half.y + fabsf(ri.m[2][2]) * half.z)
+      }};
+    } else {
+      localHalf = fm_vec3_t{{
+        fabsf(invScale.x) * half.x,
+        fabsf(invScale.y) * half.y,
+        fabsf(invScale.z) * half.z
+      }};
+    }
+
+    return {localCenter - localHalf, localCenter + localHalf};
   }
 
   // ── Load Mesh Collider from Raw Data and build AABB Tree ────────────────────────────────────────
@@ -353,6 +362,8 @@ namespace P64::Coll {
     }
 
     collider->computeLocalRootAabb();
+    // syncOwnerTransform() first because recalculateWorldAabb() depends on the cached has*() properties
+    collider->syncOwnerTransform();
     collider->recalculateWorldAabb();
   }
 
