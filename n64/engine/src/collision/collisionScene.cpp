@@ -162,6 +162,8 @@ namespace P64::Coll {
     colliders_.clear();
     ownerColliders_.clear();
     meshColliders_.clear();
+    meshReadMaskUnion_ = 0;
+    meshWriteMaskUnion_ = 0;
     cachedConstraintCount_ = 0;
     cachedConstraints_.clear();
     cachedConstraintLookup_.clear();
@@ -187,8 +189,8 @@ namespace P64::Coll {
     ticksFinalize = 0;
     ticksTotal = 0;
 
-    colliderAABBTree.init(32); // Initial capacity (will grow as needed)
-    meshColliderAABBTree.init(32);
+    colliderAABBTree.init(32, AABBTREE_MIN_MARGIN); // Initial capacity (will grow as needed)
+    meshColliderAABBTree.init(32, AABBTREE_MIN_MARGIN);
   }
 
   RigidBody *CollisionScene::findRigidBodyByOwner(const Object *owner) const {
@@ -415,8 +417,8 @@ namespace P64::Coll {
     if(!mesh) return;
 
     mesh->computeLocalRootAabb();
-    mesh->recalculateWorldAabb();
     mesh->syncOwnerTransform();
+    mesh->recalculateWorldAabb();
 
     meshColliders_.push_back(mesh);
 
@@ -1142,6 +1144,11 @@ namespace P64::Coll {
 
       if (!collider->isTrigger_ && rigidBodyA && rigidBodyA->isSleeping_) continue;
 
+      // If this fails for the union off all mesh masks then we can skip the mesh query entirely
+      // since there can be no interaction with any mesh collider.
+      if ((collider->readMask_ & meshWriteMaskUnion_) == 0 &&
+          (meshReadMaskUnion_ & collider->writeMask_) == 0) continue;
+
       const int candidateCount = meshColliderAABBTree.queryBounds(
           collider->worldAabb_,
           candidateMeshColliders.data(),
@@ -1666,26 +1673,35 @@ namespace P64::Coll {
 
   /// @brief Recalculate the world-space AABBs of all Mesh Colliders in the Collision Scene.
   void CollisionScene::updateMeshColliderWorldStates() {
+    // Rebuilt from scratch each step so runtime changes to a mesh's masks are picked up without the
+    // scene having to observe every setCollisionMask() call. detectAllContacts() uses these to skip
+    // mesh-tree queries for colliders that cannot match any mesh.
+    meshReadMaskUnion_ = 0;
+    meshWriteMaskUnion_ = 0;
+
     for(std::size_t i = 0; i < meshColliders_.size(); ++i) {
       MeshCollider *mesh = meshColliders_[i];
       if(!mesh) continue;
 
+      meshReadMaskUnion_ |= mesh->readMask_;
+      meshWriteMaskUnion_ |= mesh->writeMask_;
+
       mesh->transformChanged_ = mesh->hasOwnerTransformChanged();
       if(!mesh->transformChanged_ && mesh->hasCachedOwnerTransform_) continue;
 
-      fm_vec3_t prevOwnerPhysicsPos = mesh->owner_ ? mesh->owner_->pos : VEC3_ZERO;
+      // Movement since the last update, used to extend the tree box along the direction of travel so
+      // a moving mesh does not fall out of it again next step.
+      fm_vec3_t ownerDisplacement = VEC3_ZERO;
+      if (mesh->owner_ && mesh->hasCachedOwnerTransform_) {
+        ownerDisplacement = mesh->owner_->pos - mesh->lastOwnerPosition_;
+      }
 
-      mesh->recalculateWorldAabb();
+      // Snapshot first: recalculateWorldAabb() branches on the cached has*() properties
       mesh->syncOwnerTransform();
+      mesh->recalculateWorldAabb();
 
       if (mesh->aabbTreeNodeId_ != NULL_NODE) {
-        if (mesh->owner_) {
-          fm_vec3_t ownerPhysicsPos = mesh->owner_->pos;
-          const fm_vec3_t disp = ownerPhysicsPos - prevOwnerPhysicsPos;
-          meshColliderAABBTree.moveNode(mesh->aabbTreeNodeId_, mesh->worldAabb_, disp);
-        } else {
-          meshColliderAABBTree.moveNode(mesh->aabbTreeNodeId_, mesh->worldAabb_, VEC3_ZERO);
-        }
+        meshColliderAABBTree.moveNode(mesh->aabbTreeNodeId_, mesh->worldAabb_, ownerDisplacement);
       }
     }
   }
@@ -1706,6 +1722,8 @@ namespace P64::Coll {
       for(int m = 0; m < meshCount; ++m) {
         const MeshCollider* mesh = static_cast<const MeshCollider*>(meshColliderAABBTree.getNodeData(meshCandidates[m]));
         if(!mesh || mesh->triangleCount_ == 0) continue;
+        // ray only hits what it reads.
+        if((mesh->writeMask_ & ray.readMask) == 0) continue;
         Raycast localRay = ray;
         if(mesh->hasScale()) {
           const fm_vec3_t &scale = mesh->owner_->scale;
@@ -1747,7 +1765,6 @@ namespace P64::Coll {
           currentHit.distance = fm_vec3_len(&hitDelta);
           currentHit.hitObjectId = mesh->owner_ ? mesh->owner_->id : 0;
 
-          hit.didHit = true;
           if(currentHit.didHit && currentHit.distance < hit.distance && currentHit.distance <= ray.maxDistance) {
             hit = currentHit;
           }
@@ -1867,6 +1884,7 @@ namespace P64::Coll {
         const MeshCollider* mesh = static_cast<const MeshCollider*>(
           meshColliderAABBTree.getNodeData(meshCandidates[m]));
         if (!mesh || mesh->triangleCount() == 0 || !mesh->ownerObject()) continue;
+        if ((mesh->writeMask() & readMask) == 0) continue;
 
         AABB localSweptBox = mesh->worldAabbToLocal(sweptBox);
         int triCount = mesh->queryTriangleNodes(localSweptBox, triCandidates, MAX_TRI);
@@ -2034,6 +2052,7 @@ namespace P64::Coll {
         const MeshCollider* mesh = static_cast<const MeshCollider*>(
                 meshColliderAABBTree.getNodeData(meshCandidates[m]));
         if (!mesh || mesh->triangleCount() == 0 || !mesh->ownerObject()) continue;
+        if ((mesh->writeMask() & readMask) == 0) continue;
 
         AABB localSweptBox = mesh->worldAabbToLocal(sweptBox);
         int triCount = mesh->queryTriangleNodes(localSweptBox, triCandidates, MAX_TRI);

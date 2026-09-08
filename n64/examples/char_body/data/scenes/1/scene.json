@@ -115,6 +115,8 @@
               "near": 1.0,
               "orthoSize": 0.029999999329447746,
               "projection": 0,
+              "targetMode": 0,
+              "targetObjUUID": 0,
               "visMask": 255,
               "vpOffset": [
                 0,
@@ -305,7 +307,7 @@
           },
           {
             "data": {
-              "maskRead": 1,
+              "maskRead": 0,
               "maskWrite": 1,
               "meshFilter": "",
               "modelUUID": 5647511519455702462
@@ -386,7 +388,7 @@
           },
           {
             "data": {
-              "maskRead": 1,
+              "maskRead": 0,
               "maskWrite": 1,
               "meshFilter": "",
               "modelUUID": 4514132608101242667

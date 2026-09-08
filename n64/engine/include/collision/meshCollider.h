@@ -101,15 +101,16 @@ namespace P64::Coll {
     /// Transform a world-space AABB into a conservative local-space AABB for tree queries
     AABB worldAabbToLocal(const AABB &worldAabb) const;
 
+    // These are cached properties for the owner transform to avoid comparing the same stuff multiple times in the step
+    // They are taken once per step in syncOwnerTransform()
     /// Returns true if the mesh has a non-identity transform
-    bool hasTransform() const;
-
+    bool hasTransform() const { return hasTransform_; }
     /// Returns true if the mesh has a non-identity rotation
-    bool hasRotation() const;
+    bool hasRotation() const { return hasRotation_; }
     /// Returns true if the mesh has a non-zero position
-    bool hasPosition() const;
+    bool hasPosition() const { return hasPosition_; }
     /// Returns true if the mesh has a non-uniform (1,1,1) scale
-    bool hasScale() const;
+    bool hasScale() const { return hasScale_; }
 
     bool readsCollider(const Collider *other) const;
     bool readsMeshCollider(const MeshCollider *other) const;
@@ -163,6 +164,10 @@ namespace P64::Coll {
     uint8_t writeMask_{0x00};
     bool hasCachedOwnerTransform_{false};
     bool transformChanged_{false};
+    bool hasRotation_{false};
+    bool hasPosition_{false};
+    bool hasScale_{false};
+    bool hasTransform_{false};
   };
 
 } // namespace P64::Coll

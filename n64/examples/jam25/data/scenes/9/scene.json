@@ -242,8 +242,8 @@
           },
           {
             "data": {
-              "maskRead": 255,
-              "maskWrite": 255,
+              "maskRead": 240,
+              "maskWrite": 241,
               "meshFilter": "",
               "modelUUID": 6985508143550202785
             },
@@ -424,8 +424,8 @@
           },
           {
             "data": {
-              "maskRead": 255,
-              "maskWrite": 255,
+              "maskRead": 240,
+              "maskWrite": 241,
               "meshFilter": "",
               "modelUUID": 15813250936274457379
             },

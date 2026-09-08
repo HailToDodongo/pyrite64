@@ -215,6 +215,13 @@ namespace P64::Coll {
     bool hasAngularConstraints_{false};
     bool compoundPropertiesDirty_{true};
 
+    // Inputs updateWorldInertia() last ran on, so it can early out if nothing changed.
+    fm_quat_t worldInertiaCacheRotation_{};
+    fm_vec3_t worldInertiaCachePosition_{};
+    fm_vec3_t worldInertiaCacheLocalInv_{};
+    fm_vec3_t worldInertiaCacheLocalCom_{};
+    bool worldInertiaCacheValid_{false};
+
     /// Index into the CollisionScene's per-step solver body array (-1 = not participating).
     /// Only valid while the scene builds and runs the contact solvers.
     int16_t solverIndex_{-1};

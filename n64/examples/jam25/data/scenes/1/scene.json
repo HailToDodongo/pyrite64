@@ -408,7 +408,7 @@
           {
             "data": {
               "maskRead": 0,
-              "maskWrite": 8,
+              "maskWrite": 9,
               "meshFilter": "",
               "modelUUID": 67300967874118795
             },
@@ -600,7 +600,7 @@
           {
             "data": {
               "maskRead": 0,
-              "maskWrite": 8,
+              "maskWrite": 9,
               "meshFilter": "",
               "modelUUID": 14061694646240479583
             },
@@ -1271,7 +1271,7 @@
               {
                 "data": {
                   "maskRead": 0,
-                  "maskWrite": 8,
+                  "maskWrite": 9,
                   "meshFilter": "",
                   "modelUUID": 14061694646240479583
                 },
@@ -1630,7 +1630,7 @@
           {
             "data": {
               "maskRead": 0,
-              "maskWrite": 8,
+              "maskWrite": 9,
               "meshFilter": "",
               "modelUUID": 14061694646240479583
             },
@@ -2661,7 +2661,7 @@
           {
             "data": {
               "maskRead": 0,
-              "maskWrite": 8,
+              "maskWrite": 9,
               "meshFilter": "",
               "modelUUID": 14061694646240479583
             },

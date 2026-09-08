@@ -198,6 +198,16 @@ registers it with the collision scene. `orgScale` and its half extend / shape / 
 gone, use the `collider` member for all of it. `Collider::setShapeType()` no longer resets the
 dimensions to zero, it keeps the size and folds it into the new shape.
 
+### Bugfix in Ray, Capsule & SphereCasts
+
+Previously Ray and Shapecasts would not take into consideration if the Cast-Readmask and a mesh colliders write mask would match,
+thus all mesh colliders were always matched if they were hit, regardless of what the mask said.
+This can affect existing projects if you are using Raycasts or Shapecasts or using the CharacterBody Component which uses those under the hood.
+If e.g. your Level geometry does not set the write mask bits that the CharacterBody reads your character might fall through the geometry.
+The fix here is to set the masks accordingly.<br>
+
+Note that it is strongly recommended to only use the mask bits you actually need per collider to avoid unnecessary collision tests.
+
 ## v0.7.0
 
 This version completely reworked the material system as well as the collision/physics system.<br>

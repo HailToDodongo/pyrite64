@@ -8,6 +8,7 @@
 #include "vecMath.h"
 #include <cmath>
 #include "aabb.h"
+#include "matrix3x3.h"
 
 namespace P64::Coll {
 
@@ -25,6 +26,10 @@ namespace P64::Coll {
     }
 
     AABB boundingBox(const fm_quat_t * /*rotation*/) const {
+      return {fm_vec3_t{{-radius, -radius, -radius}}, fm_vec3_t{{radius, radius, radius}}};
+    }
+
+    AABB boundingBox(const Matrix3x3 & /*rotation*/) const {
       return {fm_vec3_t{{-radius, -radius, -radius}}, fm_vec3_t{{radius, radius, radius}}};
     }
 
@@ -49,6 +54,8 @@ namespace P64::Coll {
     }
 
     AABB boundingBox(const fm_quat_t *q) const;
+    /// Same box as the quaternion overload, for callers that already hold the rotation matrix.
+    AABB boundingBox(const Matrix3x3 &rotation) const;
     fm_vec3_t inertiaTensor(float mass) const;
   };
 
@@ -69,6 +76,8 @@ namespace P64::Coll {
     }
 
     AABB boundingBox(const fm_quat_t *q) const;
+    /// Same box as the quaternion overload, for callers that already hold the rotation matrix.
+    AABB boundingBox(const Matrix3x3 &rotation) const;
     fm_vec3_t inertiaTensor(float mass) const;
   };
 
@@ -81,6 +90,8 @@ namespace P64::Coll {
 
     fm_vec3_t support(const fm_vec3_t &dir) const;
     AABB boundingBox(const fm_quat_t *q) const;
+    /// Same box as the quaternion overload, for callers that already hold the rotation matrix.
+    AABB boundingBox(const Matrix3x3 &rotation) const;
     fm_vec3_t inertiaTensor(float mass) const;
   };
 
@@ -94,6 +105,8 @@ namespace P64::Coll {
 
     fm_vec3_t support(const fm_vec3_t &dir) const;
     AABB boundingBox(const fm_quat_t *q) const;
+    /// Same box as the quaternion overload, for callers that already hold the rotation matrix.
+    AABB boundingBox(const Matrix3x3 &rotation) const;
     fm_vec3_t inertiaTensor(float mass) const;
   };
 
@@ -109,6 +122,8 @@ namespace P64::Coll {
 
     fm_vec3_t support(const fm_vec3_t &dir) const;
     AABB boundingBox(const fm_quat_t *q) const;
+    /// Same box as the quaternion overload, for callers that already hold the rotation matrix.
+    AABB boundingBox(const Matrix3x3 &rotation) const;
     fm_vec3_t inertiaTensor(float mass) const;
   };
 

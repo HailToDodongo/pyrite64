@@ -15,25 +15,21 @@ namespace {
 
 // ── Box ─────────────────────────────────────────────────────────────
 
+// boundingBox() callers that already hold the rotation matrix use the
+// matrix overload directly and skip rebuilding it.
+
 AABB BoxShape::boundingBox(const fm_quat_t *q) const {
-  float ex, ey, ez;
-
   if(!q) {
-    ex = halfSize.x; ey = halfSize.y; ez = halfSize.z;
-  } else {
-    float x = q->x, y = q->y, z = q->z, w = q->w;
-    float xx = x*x, yy = y*y, zz = z*z;
-    float xy = x*y, xz = x*z, yz = y*z;
-    float wx = w*x, wy = w*y, wz = w*z;
-
-    float r00 = 1 - 2*(yy+zz), r01 = 2*(xy-wz), r02 = 2*(xz+wy);
-    float r10 = 2*(xy+wz), r11 = 1 - 2*(xx+zz), r12 = 2*(yz-wx);
-    float r20 = 2*(xz-wy), r21 = 2*(yz+wx), r22 = 1 - 2*(xx+yy);
-
-    ex = halfSize.x*fabsf(r00) + halfSize.y*fabsf(r01) + halfSize.z*fabsf(r02);
-    ey = halfSize.x*fabsf(r10) + halfSize.y*fabsf(r11) + halfSize.z*fabsf(r12);
-    ez = halfSize.x*fabsf(r20) + halfSize.y*fabsf(r21) + halfSize.z*fabsf(r22);
+    return {fm_vec3_t{{-halfSize.x, -halfSize.y, -halfSize.z}},
+            fm_vec3_t{{ halfSize.x,  halfSize.y,  halfSize.z}}};
   }
+  return boundingBox(quatToMatrix3(*q));
+}
+
+AABB BoxShape::boundingBox(const Matrix3x3 &r) const {
+  const float ex = halfSize.x*fabsf(r.m[0][0]) + halfSize.y*fabsf(r.m[0][1]) + halfSize.z*fabsf(r.m[0][2]);
+  const float ey = halfSize.x*fabsf(r.m[1][0]) + halfSize.y*fabsf(r.m[1][1]) + halfSize.z*fabsf(r.m[1][2]);
+  const float ez = halfSize.x*fabsf(r.m[2][0]) + halfSize.y*fabsf(r.m[2][1]) + halfSize.z*fabsf(r.m[2][2]);
 
   return {fm_vec3_t{{-ex, -ey, -ez}}, fm_vec3_t{{ex, ey, ez}}};
 }
@@ -54,28 +50,21 @@ fm_vec3_t BoxShape::inertiaTensor(float mass) const {
 // ── Capsule ─────────────────────────────────────────────────────────
 
 AABB CapsuleShape::boundingBox(const fm_quat_t *q) const {
-  fm_vec3_t r{};
-
   if(!q) {
-    r = fm_vec3_t{{0.0f, innerHalfHeight, 0.0f}};
-  } else {
-    float x = q->x, y = q->y, z = q->z, w = q->w;
-    float xx = x*x, yy = y*y, zz = z*z;
-    float xy = x*y, xz = x*z, yz = y*z;
-    float wx = w*x, wy = w*y, wz = w*z;
-
-    float r01 = 2*(xy-wz);
-    float r11 = 1 - 2*(xx+zz);
-    float r21 = 2*(yz+wx);
-
-    r.x = r01 * innerHalfHeight;
-    r.y = r11 * innerHalfHeight;
-    r.z = r21 * innerHalfHeight;
+    const float absY = fabsf(innerHalfHeight);
+    return {
+      fm_vec3_t{{-radius, -absY - radius, -radius}},
+      fm_vec3_t{{ radius,  absY + radius,  radius}}
+    };
   }
+  return boundingBox(quatToMatrix3(*q));
+}
 
-  float absX = fabsf(r.x);
-  float absY = fabsf(r.y);
-  float absZ = fabsf(r.z);
+AABB CapsuleShape::boundingBox(const Matrix3x3 &r) const {
+  // Only the rotated local up axis matters, the caps are spherical
+  const float absX = fabsf(r.m[0][1] * innerHalfHeight);
+  const float absY = fabsf(r.m[1][1] * innerHalfHeight);
+  const float absZ = fabsf(r.m[2][1] * innerHalfHeight);
 
   return {
     fm_vec3_t{{-absX - radius, -absY - radius, -absZ - radius}},
@@ -140,30 +129,18 @@ fm_vec3_t CylinderShape::support(const fm_vec3_t &dir) const {
 }
 
 AABB CylinderShape::boundingBox(const fm_quat_t *q) const {
-  float ex = radius, ey = halfHeight, ez = radius;
-
   if(!q) {
-    return {fm_vec3_t{{-ex, -ey, -ez}}, fm_vec3_t{{ex, ey, ez}}};
+    return {fm_vec3_t{{-radius, -halfHeight, -radius}}, fm_vec3_t{{radius, halfHeight, radius}}};
   }
+  return boundingBox(quatToMatrix3(*q));
+}
 
-  float x = q->x, y = q->y, z = q->z, w = q->w;
-  float xx = x*x, yy = y*y, zz = z*z;
-  float xy = x*y, xz = x*z, yz = y*z;
-  float wx = w*x, wy = w*y, wz = w*z;
+AABB CylinderShape::boundingBox(const Matrix3x3 &r) const {
+  const float ex = radius, ey = halfHeight, ez = radius;
 
-  float r00 = 1.0f - 2.0f*(yy+zz);
-  float r01 =        2.0f*(xy-wz);
-  float r02 =        2.0f*(xz+wy);
-  float r10 =        2.0f*(xy+wz);
-  float r11 = 1.0f - 2.0f*(xx+zz);
-  float r12 =        2.0f*(yz-wx);
-  float r20 =        2.0f*(xz-wy);
-  float r21 =        2.0f*(yz+wx);
-  float r22 = 1.0f - 2.0f*(xx+yy);
-
-  float wxe = fabsf(r00)*ex + fabsf(r01)*ey + fabsf(r02)*ez;
-  float wye = fabsf(r10)*ex + fabsf(r11)*ey + fabsf(r12)*ez;
-  float wze = fabsf(r20)*ex + fabsf(r21)*ey + fabsf(r22)*ez;
+  const float wxe = fabsf(r.m[0][0])*ex + fabsf(r.m[0][1])*ey + fabsf(r.m[0][2])*ez;
+  const float wye = fabsf(r.m[1][0])*ex + fabsf(r.m[1][1])*ey + fabsf(r.m[1][2])*ez;
+  const float wze = fabsf(r.m[2][0])*ex + fabsf(r.m[2][1])*ey + fabsf(r.m[2][2])*ez;
 
   return {fm_vec3_t{{-wxe, -wye, -wze}}, fm_vec3_t{{wxe, wye, wze}}};
 }
@@ -208,21 +185,15 @@ AABB ConeShape::boundingBox(const fm_quat_t *q) const {
   if(!q) {
     return {fm_vec3_t{{-radius, -halfHeight, -radius}}, fm_vec3_t{{radius, halfHeight, radius}}};
   }
+  return boundingBox(quatToMatrix3(*q));
+}
 
-  float x = q->x, y = q->y, z = q->z, w = q->w;
-  float xx = x*x, yy = y*y, zz = z*z;
-  float xy = x*y, xz = x*z, yz = y*z;
-  float wx = w*x, wy = w*y, wz = w*z;
-
-  float r00 = 1 - 2*(yy+zz), r01 = 2*(xy-wz), r02 = 2*(xz+wy);
-  float r10 = 2*(xy+wz), r11 = 1 - 2*(xx+zz), r12 = 2*(yz-wx);
-  float r20 = 2*(xz-wy), r21 = 2*(yz+wx), r22 = 1 - 2*(xx+yy);
-
+AABB ConeShape::boundingBox(const Matrix3x3 &r) const {
   auto rotate = [&](float px, float py, float pz) -> fm_vec3_t {
     return fm_vec3_t{{
-      r00*px + r01*py + r02*pz,
-      r10*px + r11*py + r12*pz,
-      r20*px + r21*py + r22*pz
+      r.m[0][0]*px + r.m[0][1]*py + r.m[0][2]*pz,
+      r.m[1][0]*px + r.m[1][1]*py + r.m[1][2]*pz,
+      r.m[2][0]*px + r.m[2][1]*py + r.m[2][2]*pz
     }};
   };
 
@@ -273,24 +244,17 @@ fm_vec3_t PyramidShape::support(const fm_vec3_t &dir) const {
 }
 
 AABB PyramidShape::boundingBox(const fm_quat_t *q) const {
-  float ex, ey, ez;
-
   if(!q) {
-    ex = baseHalfWidthX; ey = halfHeight; ez = baseHalfWidthZ;
-  } else {
-    float x = q->x, y = q->y, z = q->z, w = q->w;
-    float xx = x*x, yy = y*y, zz = z*z;
-    float xy = x*y, xz = x*z, yz = y*z;
-    float wx = w*x, wy = w*y, wz = w*z;
-
-    float r00 = 1 - 2*(yy+zz), r01 = 2*(xy-wz), r02 = 2*(xz+wy);
-    float r10 = 2*(xy+wz), r11 = 1 - 2*(xx+zz), r12 = 2*(yz-wx);
-    float r20 = 2*(xz-wy), r21 = 2*(yz+wx), r22 = 1 - 2*(xx+yy);
-
-    ex = baseHalfWidthX*fabsf(r00) + halfHeight*fabsf(r01) + baseHalfWidthZ*fabsf(r02);
-    ey = baseHalfWidthX*fabsf(r10) + halfHeight*fabsf(r11) + baseHalfWidthZ*fabsf(r12);
-    ez = baseHalfWidthX*fabsf(r20) + halfHeight*fabsf(r21) + baseHalfWidthZ*fabsf(r22);
+    return {fm_vec3_t{{-baseHalfWidthX, -halfHeight, -baseHalfWidthZ}},
+            fm_vec3_t{{ baseHalfWidthX,  halfHeight,  baseHalfWidthZ}}};
   }
+  return boundingBox(quatToMatrix3(*q));
+}
+
+AABB PyramidShape::boundingBox(const Matrix3x3 &r) const {
+  const float ex = baseHalfWidthX*fabsf(r.m[0][0]) + halfHeight*fabsf(r.m[0][1]) + baseHalfWidthZ*fabsf(r.m[0][2]);
+  const float ey = baseHalfWidthX*fabsf(r.m[1][0]) + halfHeight*fabsf(r.m[1][1]) + baseHalfWidthZ*fabsf(r.m[1][2]);
+  const float ez = baseHalfWidthX*fabsf(r.m[2][0]) + halfHeight*fabsf(r.m[2][1]) + baseHalfWidthZ*fabsf(r.m[2][2]);
 
   return {fm_vec3_t{{-ex, -ey, -ez}}, fm_vec3_t{{ex, ey, ez}}};
 }

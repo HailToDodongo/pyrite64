@@ -76,6 +76,18 @@ AABB Collider::boundingBox(const fm_quat_t *rotation) const {
   __builtin_unreachable();
 }
 
+AABB Collider::boundingBox(const Matrix3x3 &rotation) const {
+  switch(type_) {
+    case ShapeType::Sphere:   return sphere_.boundingBox(rotation);
+    case ShapeType::Box:      return box_.boundingBox(rotation);
+    case ShapeType::Capsule:  return capsule_.boundingBox(rotation);
+    case ShapeType::Cylinder: return cylinder_.boundingBox(rotation);
+    case ShapeType::Cone:     return cone_.boundingBox(rotation);
+    case ShapeType::Pyramid:  return pyramid_.boundingBox(rotation);
+  }
+  __builtin_unreachable();
+}
+
 fm_vec3_t Collider::inertiaTensor(float mass) const {
   switch(type_) {
     case ShapeType::Sphere:   return sphere_.inertiaTensor(mass);
@@ -128,7 +140,8 @@ void Collider::syncOwnerTransform() {
   }
 
   rotationMatrix_ = quatToMatrix3(lastOwnerRotation_);
-  inverseRotationMatrix_ = quatToMatrix3(quatConjugate(lastOwnerRotation_));
+  // A rotation matrix's inverse is its transpose
+  inverseRotationMatrix_ = matrix3Transpose(rotationMatrix_);
   hasCachedOwnerTransform_ = true;
 }
 
@@ -148,12 +161,13 @@ bool Collider::syncFromRigidBody(const fm_vec3_t& rbPosition, const fm_quat_t& r
   lastOwnerScale_ = owner_ ? owner_->scale : fm_vec3_t{{1,1,1}};
   if(scaleChanged) refreshWorldShape();
   rotationMatrix_ = quatToMatrix3(lastOwnerRotation_);
-  inverseRotationMatrix_ = quatToMatrix3(quatConjugate(lastOwnerRotation_));
+  inverseRotationMatrix_ = matrix3Transpose(rotationMatrix_);
   hasCachedOwnerTransform_ = true;
 
   worldCenter_ = lastOwnerPosition_ + matrix3Vec3Mul(rotationMatrix_, parentOffset_ * lastOwnerScale_);
 
-  const AABB local = boundingBox(&lastOwnerRotation_);
+  // Pass the matrix we just built: the quaternion overload would rebuild it from lastOwnerRotation_
+  const AABB local = boundingBox(rotationMatrix_);
   worldAabb_.min = local.min + worldCenter_;
   worldAabb_.max = local.max + worldCenter_;
   ++worldStateVersion_;
@@ -175,7 +189,7 @@ bool Collider::syncWorldState() {
   if(scaleChanged) refreshWorldShape();
   worldCenter_ = lastOwnerPosition_ + matrix3Vec3Mul(rotationMatrix_, parentOffset_ * lastOwnerScale_);
 
-  const AABB local = boundingBox(&lastOwnerRotation_);
+  const AABB local = boundingBox(rotationMatrix_);
   worldAabb_.min = local.min + worldCenter_;
   worldAabb_.max = local.max + worldCenter_;
   ++worldStateVersion_;

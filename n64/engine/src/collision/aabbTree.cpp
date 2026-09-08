@@ -17,8 +17,9 @@ AABBTree::~AABBTree() {
   destroy();
 }
 
-void AABBTree::init(int capacity) {
+void AABBTree::init(int capacity, float minMargin) {
   assert(capacity > 0);
+  minMargin_ = minMargin;
   assert(capacity <= std::numeric_limits<int16_t>::max());
   nodeCapacity_ = static_cast<int16_t>(capacity);
   nodeCount_ = 0;
@@ -102,10 +103,20 @@ void AABBTree::freeNode(NodeProxy node) {
 
 // ── Public API ──────────────────────────────────────────────────────
 
+// Fatten the AABB so small moves don't cause reinsertion
+// a fraction of the box's own size, but not less than the trees floor.
+fm_vec3_t AABBTree::fattenExtent(const AABB &bounds) const {
+  const fm_vec3_t size = bounds.max - bounds.min;
+  return fm_vec3_t{{
+    fmaxf(size.x * AABBTREE_MARGIN_RATIO, minMargin_),
+    fmaxf(size.y * AABBTREE_MARGIN_RATIO, minMargin_),
+    fmaxf(size.z * AABBTREE_MARGIN_RATIO, minMargin_)
+  }};
+}
+
 NodeProxy AABBTree::createNode(const AABB &bounds, void *data) {
   NodeProxy id = allocateNode();
-  // Fatten the AABB by some margin so small moves don't cause reinsertion.
-  fm_vec3_t extent = (bounds.max - bounds.min) * 0.1f;
+  const fm_vec3_t extent = fattenExtent(bounds);
   nodes_[id].bounds.min = bounds.min - extent;
   nodes_[id].bounds.max = bounds.max + extent;
   nodes_[id].data = data;
@@ -125,12 +136,12 @@ bool AABBTree::moveNode(NodeProxy node, const AABB &aabb, const fm_vec3_t &displ
   removeLeaf(node, false);
 
   // Recompute fattened bounds.
-  fm_vec3_t extent = (aabb.max - aabb.min) * 0.1f;
+  const fm_vec3_t extent = fattenExtent(aabb);
   nodes_[node].bounds.min = aabb.min - extent;
   nodes_[node].bounds.max = aabb.max + extent;
 
   // Extend in the direction of movement.
-  fm_vec3_t disp = displacement * AABB_DISPLACEMENT_MULTIPLIER;
+  fm_vec3_t disp = displacement * AABBTREE_DISPLACEMENT_MULTIPLIER;
   aabbExtendDirection(nodes_[node].bounds, disp, nodes_[node].bounds);
 
   insertLeaf(node);
@@ -162,13 +173,16 @@ void AABBTree::removeLeaf(NodeProxy leaf, bool freeIt) {
     nodes_[sibling].parent = grandParent;
     freeNode(parent);
 
-    // Walk up and refit ancestor bounds.
+    // Walk up and refit ancestor bounds. Once a node's refit leaves its bounds unchanged, every
+    // ancestor above it is unchanged too and we can stop
     NodeProxy idx = grandParent;
     while(idx != NULL_NODE) {
       NodeProxy l = nodes_[idx].left;
       NodeProxy r = nodes_[idx].right;
       if(l != NULL_NODE && r != NULL_NODE) {
-        nodes_[idx].bounds = aabbUnion(nodes_[l].bounds, nodes_[r].bounds);
+        const AABB refitted = aabbUnion(nodes_[l].bounds, nodes_[r].bounds);
+        if(aabbIdentical(refitted, nodes_[idx].bounds)) break;
+        nodes_[idx].bounds = refitted;
       }
       idx = nodes_[idx].parent;
     }
@@ -183,21 +197,6 @@ void AABBTree::removeLeaf(NodeProxy leaf, bool freeIt) {
   if(freeIt) freeNode(leaf);
 }
 
-void *AABBTree::getNodeData(NodeProxy node) const {
-  assert(node >= 0 && node < nodeCapacity_);
-  return nodes_[node].data;
-}
-
-const AABB *AABBTree::getNodeBounds(NodeProxy node) const {
-  assert(node >= 0 && node < nodeCapacity_);
-  return &nodes_[node].bounds;
-}
-
-bool AABBTree::isLeaf(NodeProxy node) const {
-  assert(node >= 0 && node < nodeCapacity_);
-  return nodes_[node].left == NULL_NODE && nodes_[node].right == NULL_NODE;
-}
-
 // ── Leaf insertion (SAH) ────────────────────────────────────────────
 
 NodeProxy AABBTree::insertLeaf(NodeProxy leaf) {
@@ -209,16 +208,17 @@ NodeProxy AABBTree::insertLeaf(NodeProxy leaf) {
 
   // Stage 1 — find the best sibling using a branch-and-bound SAH walk.
   AABB leafBounds = nodes_[leaf].bounds;
+  const float leafArea = aabbArea(leafBounds);
   NodeProxy bestSibling = root;
   float bestCost = aabbArea(aabbUnion(nodes_[root].bounds, leafBounds));
 
   // Candidate stack for the branch-and-bound search.
   struct Candidate { NodeProxy index; float inheritedCost; };
-  Candidate stack[AABB_QUERY_STACK_SIZE];
+  Candidate stack[AABBTREE_QUERY_STACK_SIZE];
   int stackCount = 0;
 
   auto pushCandidate = [&](NodeProxy idx, float inherited) {
-    if(idx != NULL_NODE && stackCount < AABB_QUERY_STACK_SIZE) {
+    if(idx != NULL_NODE && stackCount < AABBTREE_QUERY_STACK_SIZE) {
       stack[stackCount++] = {idx, inherited};
     }
   };
@@ -241,7 +241,7 @@ NodeProxy AABBTree::insertLeaf(NodeProxy leaf) {
 
     // Lower bound on cost for children of this candidate.
     float childInherited = inherited + directCost - aabbArea(nodes_[candidate].bounds);
-    float lowerBound = aabbArea(leafBounds) + childInherited;
+    float lowerBound = leafArea + childInherited;
     if(lowerBound < bestCost && !isLeaf(candidate)) {
       pushCandidate(nodes_[candidate].left, childInherited);
       pushCandidate(nodes_[candidate].right, childInherited);
@@ -304,23 +304,25 @@ void AABBTree::rotateNode(NodeProxy node) {
   float costs[4];
   int numCandidates = 0;
 
-  auto tryRotation = [&](NodeProxy parent, NodeProxy swapWith, NodeProxy child, NodeProxy other) {
+  auto tryRotation = [&](NodeProxy parent, float parentArea, NodeProxy swapWith, NodeProxy child, NodeProxy other) {
     if(child == NULL_NODE) return;
     // Cost of the new parent after the swap = union of (swapWith, other).
     AABB newBounds = aabbUnion(nodes_[swapWith].bounds, nodes_[other].bounds);
-    float costReduction = aabbArea(nodes_[parent].bounds) - aabbArea(newBounds);
+    float costReduction = parentArea - aabbArea(newBounds);
     candidates[numCandidates] = {parent, child, other, swapWith};
     costs[numCandidates] = costReduction;
     ++numCandidates;
   };
 
   if(!isLeaf(right)) {
-    tryRotation(right, left, nodes_[right].left, nodes_[right].right);
-    tryRotation(right, left, nodes_[right].right, nodes_[right].left);
+    const float rightArea = aabbArea(nodes_[right].bounds);
+    tryRotation(right, rightArea, left, nodes_[right].left, nodes_[right].right);
+    tryRotation(right, rightArea, left, nodes_[right].right, nodes_[right].left);
   }
   if(!isLeaf(left)) {
-    tryRotation(left, right, nodes_[left].left, nodes_[left].right);
-    tryRotation(left, right, nodes_[left].right, nodes_[left].left);
+    const float leftArea = aabbArea(nodes_[left].bounds);
+    tryRotation(left, leftArea, right, nodes_[left].left, nodes_[left].right);
+    tryRotation(left, leftArea, right, nodes_[left].right, nodes_[left].left);
   }
 
   // Pick the rotation with the greatest cost reduction.
@@ -364,26 +366,30 @@ void AABBTree::rotateNode(NodeProxy node) {
 
 int AABBTree::queryBounds(const AABB &queryBox, NodeProxy *results, int maxResults) const {
   if(root == NULL_NODE) return 0;
+  if(!aabbOverlap(nodes_[root].bounds, queryBox)) return 0;
 
-  NodeProxy stack[AABB_QUERY_STACK_SIZE];
+  NodeProxy stack[AABBTREE_QUERY_STACK_SIZE];
   int stackCount = 0;
   int resultCount = 0;
 
   stack[stackCount++] = root;
 
   while(stackCount > 0 && resultCount < maxResults) {
-    NodeProxy current = stack[--stackCount];
-    if(current == NULL_NODE) continue;
+    const NodeProxy current = stack[--stackCount];
+    const AABBTreeNode &node = nodes_[current];
 
-    if(!aabbOverlap(nodes_[current].bounds, queryBox)) continue;
-
-    if(isLeaf(current)) {
+    if(node.left == NULL_NODE && node.right == NULL_NODE) {
       results[resultCount++] = current;
-    } else {
-      if(stackCount < AABB_QUERY_STACK_SIZE - 1) {
-        stack[stackCount++] = nodes_[current].left;
-        stack[stackCount++] = nodes_[current].right;
-      }
+      continue;
+    }
+
+    if(node.left != NULL_NODE && stackCount < AABBTREE_QUERY_STACK_SIZE &&
+       aabbOverlap(nodes_[node.left].bounds, queryBox)) {
+      stack[stackCount++] = node.left;
+    }
+    if(node.right != NULL_NODE && stackCount < AABBTREE_QUERY_STACK_SIZE &&
+       aabbOverlap(nodes_[node.right].bounds, queryBox)) {
+      stack[stackCount++] = node.right;
     }
   }
   return resultCount;
@@ -391,26 +397,30 @@ int AABBTree::queryBounds(const AABB &queryBox, NodeProxy *results, int maxResul
 
 int AABBTree::queryPoint(const fm_vec3_t &point, NodeProxy *results, int maxResults) const {
   if(root == NULL_NODE) return 0;
+  if(!aabbContainsPoint(nodes_[root].bounds, point)) return 0;
 
-  NodeProxy stack[AABB_QUERY_STACK_SIZE];
+  NodeProxy stack[AABBTREE_QUERY_STACK_SIZE];
   int stackCount = 0;
   int resultCount = 0;
 
   stack[stackCount++] = root;
 
   while(stackCount > 0 && resultCount < maxResults) {
-    NodeProxy current = stack[--stackCount];
-    if(current == NULL_NODE) continue;
+    const NodeProxy current = stack[--stackCount];
+    const AABBTreeNode &node = nodes_[current];
 
-    if(!aabbContainsPoint(nodes_[current].bounds, point)) continue;
-
-    if(isLeaf(current)) {
+    if(node.left == NULL_NODE && node.right == NULL_NODE) {
       results[resultCount++] = current;
-    } else {
-      if(stackCount < AABB_QUERY_STACK_SIZE - 1) {
-        stack[stackCount++] = nodes_[current].left;
-        stack[stackCount++] = nodes_[current].right;
-      }
+      continue;
+    }
+
+    if(node.left != NULL_NODE && stackCount < AABBTREE_QUERY_STACK_SIZE &&
+       aabbContainsPoint(nodes_[node.left].bounds, point)) {
+      stack[stackCount++] = node.left;
+    }
+    if(node.right != NULL_NODE && stackCount < AABBTREE_QUERY_STACK_SIZE &&
+       aabbContainsPoint(nodes_[node.right].bounds, point)) {
+      stack[stackCount++] = node.right;
     }
   }
   return resultCount;
@@ -419,26 +429,30 @@ int AABBTree::queryPoint(const fm_vec3_t &point, NodeProxy *results, int maxResu
 int AABBTree::queryRay(const Raycast &ray, NodeProxy *results, int maxResults) const
 {
   if(root == NULL_NODE) return 0;
+  if(!aabbIntersectsRay(nodes_[root].bounds, ray)) return 0;
 
-  NodeProxy stack[AABB_QUERY_STACK_SIZE];
+  NodeProxy stack[AABBTREE_QUERY_STACK_SIZE];
   int stackCount = 0;
   int resultCount = 0;
 
   stack[stackCount++] = root;
 
   while(stackCount > 0 && resultCount < maxResults) {
-    NodeProxy current = stack[--stackCount];
-    if(current == NULL_NODE) continue;
+    const NodeProxy current = stack[--stackCount];
+    const AABBTreeNode &node = nodes_[current];
 
-    if(!aabbIntersectsRay(nodes_[current].bounds, ray)) continue;
-
-    if(isLeaf(current)) {
+    if(node.left == NULL_NODE && node.right == NULL_NODE) {
       results[resultCount++] = current;
-    } else {
-      if(stackCount < AABB_QUERY_STACK_SIZE - 1) {
-        stack[stackCount++] = nodes_[current].left;
-        stack[stackCount++] = nodes_[current].right;
-      }
+      continue;
+    }
+
+    if(node.left != NULL_NODE && stackCount < AABBTREE_QUERY_STACK_SIZE &&
+       aabbIntersectsRay(nodes_[node.left].bounds, ray)) {
+      stack[stackCount++] = node.left;
+    }
+    if(node.right != NULL_NODE && stackCount < AABBTREE_QUERY_STACK_SIZE &&
+       aabbIntersectsRay(nodes_[node.right].bounds, ray)) {
+      stack[stackCount++] = node.right;
     }
   }
   return resultCount;

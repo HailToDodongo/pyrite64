@@ -226,6 +226,10 @@ namespace P64::Coll {
 
     // Multiple mesh colliders
     std::vector<MeshCollider *> meshColliders_{};
+    // OR of every mesh collider's read/write mask, refreshed each step in updateMeshColliderWorldStates().
+    // Lets detectAllContacts() reject a collider before querying the mesh tree at all.
+    uint8_t meshReadMaskUnion_{0};
+    uint8_t meshWriteMaskUnion_{0};
 
     float fixedDt_{DEFAULT_FIXED_DT};
     fm_vec3_t gravity_{DEFAULT_GRAVITY};

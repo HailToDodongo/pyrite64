@@ -46,6 +46,15 @@ namespace P64::Coll {
       return (p.x >= box.min.x) && (p.x <= box.max.x) && (p.y >= box.min.y) && (p.y <= box.max.y) && (p.z >= box.min.z) && (p.z <= box.max.z);
   }
 
+  /// @brief Determines if two AABBs are identical
+  /// @param a 
+  /// @param b 
+  /// @return 
+  inline bool aabbIdentical(const AABB &a, const AABB &b)
+  {
+      return a.min == b.min && a.max == b.max;
+  }
+
   /// @brief Returns the union of two AABBs that contains them both
   /// @param a 
   /// @param b 

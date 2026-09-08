@@ -122,6 +122,8 @@ namespace P64::Coll {
 
     fm_vec3_t support(const fm_vec3_t &dir) const;
     AABB boundingBox(const fm_quat_t *rotation) const;
+    /// Same box as the quaternion overload, for callers that already hold the rotation matrix.
+    AABB boundingBox(const Matrix3x3 &rotation) const;
     fm_vec3_t inertiaTensor(float mass) const;
     fm_vec3_t toWorldSpace(const fm_vec3_t &localPoint) const;
     fm_vec3_t toLocalSpace(const fm_vec3_t &worldPoint) const;
