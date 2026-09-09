@@ -7,25 +7,22 @@
 #include "collision/colliderShape.h"
 #include "scene/object.h"
 #include "collision/epa.h"
+#include "collision/meshBvhBuilder.h"
 
 namespace P64::Coll {
 
   namespace {
-    struct RawCollisionHeader {
-      uint32_t triCount;
-      uint32_t vertCount;
-      float collScale;
-      uint32_t vertexPtr;
-      uint32_t normalsPtr;
-      uint32_t bvhPtr;
-    };
+    static_assert(sizeof(fm_vec3_t) == 3 * sizeof(float));
+    static_assert(alignof(fm_vec3_t) <= 4);
+    static_assert(sizeof(MeshTriangleIndices) == 3 * sizeof(uint16_t));
 
-    struct PackedNormal {
-      int16_t v[3];
-    };
+    const char *alignPtr(const char *ptr, size_t alignment) {
+      return reinterpret_cast<const char *>((reinterpret_cast<uintptr_t>(ptr) + alignment - 1) & ~(alignment - 1));
+    }
 
-    char *alignPtr(char *ptr, size_t alignment) {
-      return reinterpret_cast<char *>((reinterpret_cast<uintptr_t>(ptr) + alignment - 1) & ~(alignment - 1));
+    AABB nodeBounds(const MeshBvhNode &node) {
+      return {fm_vec3_t{{node.min[0], node.min[1], node.min[2]}},
+              fm_vec3_t{{node.max[0], node.max[1], node.max[2]}}};
     }
   }
 
@@ -198,12 +195,9 @@ namespace P64::Coll {
   }
 
   void MeshCollider::computeLocalRootAabb() {
-    if(aabbTree_.root != NULL_NODE) {
-      const AABB *rootBounds = aabbTree_.getNodeBounds(aabbTree_.root);
-      if(rootBounds) {
-        localRootAabb_ = *rootBounds;
-        return;
-      }
+    if(triangleBvh_) {
+      localRootAabb_ = nodeBounds(triangleBvh_[0]);
+      return;
     }
     // Fallback: compute from vertices
     if(vertexCount_ == 0) return;
@@ -281,90 +275,61 @@ namespace P64::Coll {
     return {localCenter - localHalf, localCenter + localHalf};
   }
 
-  // ── Load Mesh Collider from Raw Data and build AABB Tree ────────────────────────────────────────
+  int MeshCollider::queryTriangles(const AABB &localBounds, uint16_t *outCandidates, int maxCandidates) const {
+    return queryMeshBvh(triangleBvh_, meshBvhNodeCount(triangleCount_), outCandidates, maxCandidates,
+      [&](const MeshBvhNode &node) { return aabbOverlap(nodeBounds(node), localBounds); });
+  }
 
-  MeshCollider *MeshCollider::createFromRawData(void *rawData, Object *obj) {
+  int MeshCollider::queryTriangles(const Raycast &localRay, uint16_t *outCandidates, int maxCandidates) const {
+    return queryMeshBvh(triangleBvh_, meshBvhNodeCount(triangleCount_), outCandidates, maxCandidates,
+      [&](const MeshBvhNode &node) { return aabbIntersectsRay(nodeBounds(node), localRay); });
+  }
+
+  // ── Load Mesh Collider with the BVH built by the Pyrite Editor ──────────────────────────────────
+
+  MeshCollider *MeshCollider::createFromRawData(const void *rawData, Object *obj) {
     if(!rawData) return nullptr;
     if(!obj) return nullptr;
 
-    auto *header = static_cast<RawCollisionHeader *>(rawData);
+    auto *header = static_cast<const RawCollisionHeader *>(rawData);
     if(header->triCount == 0 || header->vertCount == 0) return nullptr;
     if(header->triCount > 0xFFFFu || header->vertCount > 0xFFFFu) return nullptr;
 
-    char *data = reinterpret_cast<char *>(header + 1);
+    const char *data = reinterpret_cast<const char *>(header + 1);
 
-    auto *indexData = reinterpret_cast<uint16_t *>(data);
-    data += header->triCount * sizeof(uint16_t) * 3;
+    auto *indexData = reinterpret_cast<const MeshTriangleIndices *>(data);
+    data += header->triCount * sizeof(MeshTriangleIndices);
 
     data = alignPtr(data, 4);
-    auto *normalData = reinterpret_cast<PackedNormal *>(data);
+    auto *normalData = reinterpret_cast<const fm_vec3_t *>(data);
 
-    data += header->triCount * sizeof(PackedNormal);
+    data += header->triCount * sizeof(fm_vec3_t);
     data = alignPtr(data, 4);
-    auto *vertexData = reinterpret_cast<fm_vec3_t *>(data);
+    auto *vertexData = reinterpret_cast<const fm_vec3_t *>(data);
+
+    data += header->vertCount * sizeof(fm_vec3_t);
+    data = alignPtr(data, 4);
+    // Reject pre-BVH and packed-normal assets; rebuilding the ROM generates the current layout.
+    if(header->bvhOffset != static_cast<uint32_t>(data - static_cast<const char *>(rawData))) return nullptr;
 
     auto *collider = new MeshCollider();
 
     collider->triangleCount_ = static_cast<uint16_t>(header->triCount);
     collider->vertexCount_ = static_cast<uint16_t>(header->vertCount);
 
-    // Copy vertex data
-    collider->vertices_ = new fm_vec3_t[header->vertCount];
-    for(uint32_t i = 0; i < header->vertCount; ++i) {
-      collider->vertices_[i] = vertexData[i];
-    }
-
-    // Copy triangle indices
-    collider->triangles_ = new MeshTriangleIndices[header->triCount];
-    for(uint32_t t = 0; t < header->triCount; ++t) {
-      collider->triangles_[t].indices[0] = indexData[t * 3 + 0];
-      collider->triangles_[t].indices[1] = indexData[t * 3 + 1];
-      collider->triangles_[t].indices[2] = indexData[t * 3 + 2];
-    }
-
-    // Convert packed normals (int16_t scaled by 32767) to fm_vec3_t
-    constexpr float NORM_SCALE = 1.0f / 32767.0f;
-    collider->normals_ = new fm_vec3_t[header->triCount];
-    for(uint32_t t = 0; t < header->triCount; ++t) {
-      collider->normals_[t] = fm_vec3_t{{
-        static_cast<float>(normalData[t].v[0]) * NORM_SCALE,
-        static_cast<float>(normalData[t].v[1]) * NORM_SCALE,
-        static_cast<float>(normalData[t].v[2]) * NORM_SCALE
-      }};
-    }
+    collider->vertices_ = vertexData;
+    collider->triangles_ = indexData;
+    collider->normals_ = normalData;
 
     // Bind to owner object
     collider->owner_ = obj;
 
-    buildAabbTree(collider);
-    collider->syncOwnerTransform();
-
-    return collider;
-  }
-
-  // Build AABB tree from triangle bounding boxes
-  // Need 2*N-1 internal nodes for N leaves, plus some margin
-  void MeshCollider::buildAabbTree(MeshCollider* collider) {
-    int treeCapacity = static_cast<int>(collider->triangleCount_) * 2 + 1;
-    collider->aabbTree_.init(treeCapacity);
-
-    for(uint32_t t = 0; t < collider->triangleCount_; ++t) {
-      const fm_vec3_t &v0 = collider->vertices_[collider->triangles_[t].indices[0]];
-      const fm_vec3_t &v1 = collider->vertices_[collider->triangles_[t].indices[1]];
-      const fm_vec3_t &v2 = collider->vertices_[collider->triangles_[t].indices[2]];
-
-      AABB triAABB;
-      triAABB.min = vec3Min(vec3Min(v0, v1), v2);
-      triAABB.max = vec3Max(vec3Max(v0, v1), v2);
-
-      // Store triangle index + 1 as data pointer (index 0 would be nullptr and get skipped)
-      collider->aabbTree_.createNode(triAABB, reinterpret_cast<void *>(static_cast<intptr_t>(t + 1)));
-    }
-
+    collider->triangleBvh_ = reinterpret_cast<const MeshBvhNode *>(data);
     collider->computeLocalRootAabb();
-    // syncOwnerTransform() first because recalculateWorldAabb() depends on the cached has*() properties
     collider->syncOwnerTransform();
     collider->recalculateWorldAabb();
+
+    return collider;
   }
 
   MeshCollider* MeshCollider::create(fm_vec3_t* vertices, uint16_t vertexCount, MeshTriangleIndices* triangleIndices, uint16_t triangleCount, Object *owner) {
@@ -376,27 +341,41 @@ namespace P64::Coll {
     collider->triangles_ = triangleIndices;
     collider->triangleCount_ = triangleCount;
     collider->owner_ = owner;
+    collider->ownsGeometry_ = true;
 
-    collider->normals_ = new fm_vec3_t[triangleCount];
+    auto *normals = new fm_vec3_t[triangleCount];
+    collider->normals_ = normals;
     for (uint16_t t = 0; t < triangleCount; ++t) {
       const auto& indices = triangleIndices[t].indices;
       fm_vec3_t v0 = vertices[indices[0]];
       fm_vec3_t v1 = vertices[indices[1]];
       fm_vec3_t v2 = vertices[indices[2]];
-      collider->normals_[t] = triangleNormalFromVertices(v0, v1, v2);
+      normals[t] = triangleNormalFromVertices(v0, v1, v2);
     }
 
-    buildAabbTree(collider);
+    collider->ownedTriangleBvh_ = buildMeshBvh(triangleCount, [&](uint16_t t) {
+      const auto &indices = triangleIndices[t].indices;
+      const auto minV = vec3Min(vec3Min(vertices[indices[0]], vertices[indices[1]]), vertices[indices[2]]);
+      const auto maxV = vec3Max(vec3Max(vertices[indices[0]], vertices[indices[1]]), vertices[indices[2]]);
+      return MeshBvhNode{{minV.x, minV.y, minV.z}, {maxV.x, maxV.y, maxV.z}, 0};
+    });
+    collider->triangleBvh_ = collider->ownedTriangleBvh_.get();
+    collider->computeLocalRootAabb();
     collider->syncOwnerTransform();
+    collider->recalculateWorldAabb();
 
     return collider;
   }
 
   void MeshCollider::destroyData() {
-    aabbTree_.destroy();
-    delete[] vertices_;
-    delete[] triangles_;
-    delete[] normals_;
+    ownedTriangleBvh_.reset();
+    triangleBvh_ = nullptr;
+    if(ownsGeometry_) {
+      delete[] vertices_;
+      delete[] triangles_;
+      delete[] normals_;
+    }
+    ownsGeometry_ = false;
     vertices_ = nullptr;
     triangles_ = nullptr;
     normals_ = nullptr;

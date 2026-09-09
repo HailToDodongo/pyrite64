@@ -2,25 +2,18 @@
 * @copyright 2025 - Max Bebök
 * @license MIT
 */
-#include "projectBuilder.h"
+#include <vector>
+#include <unordered_set>
 #include "../utils/binaryFile.h"
-#include "../utils/fs.h"
-#include "../project/assets/collision.h"
+#include "tiny3d/tools/gltf_importer/src/math/mat4.h"
 #include "tiny3d/tools/gltf_importer/src/cgltfHelper.h"
-#include "tiny3d/tools/gltf_importer/src/parser.h"
 #include "tiny3d/tools/gltf_importer/src/lib/cgltf.h"
-#include "tiny3d/tools/gltf_importer/src/optimizer/optimizer.h"
+#include "../../n64/engine/include/collision/meshBvhBuilder.h"
+#include <cstddef>
+#include <cmath>
 
 namespace
 {
-  struct CollisionMesh
-  {
-    std::vector<glm::vec3> verticesFloat{};
-    std::vector<glm::i16vec3> vertices{};
-    std::vector<glm::i16vec3> normals{};
-    std::vector<uint16_t> indices{};
-  };
-
   namespace {
     Mat4 parseNodeMatrix(const cgltf_node *node, const Vec3 &posScale)
     {
@@ -74,8 +67,7 @@ namespace
     cgltf_load_buffers(&options, data, gltfPath);
 
     std::vector<Vec3> verticesFloat{};
-    std::vector<glm::i16vec3> vertices{};
-    std::vector<glm::i16vec3> normals{};
+    std::vector<Vec3> normals{};
     std::vector<uint16_t> indices{};
 
     for(size_t i=0; i<data->nodes_count; ++i)
@@ -97,8 +89,7 @@ namespace
 
       for(size_t j = 0; j < mesh->primitives_count; j++)
       {
-        int baseIndex = vertices.size();
-        assert(baseIndex < 0x10000);
+        const size_t baseIndex = verticesFloat.size();
 
         auto prim = &mesh->primitives[j];
 
@@ -110,7 +101,9 @@ namespace
           auto elemSize = Gltf::getDataSize(acc->component_type);
 
           for(size_t k = 0; k < acc->count; k++) {
-            indices.push_back(baseIndex + Gltf::readAsU32(basePtr, acc->component_type));
+            const size_t index = baseIndex + Gltf::readAsU32(basePtr, acc->component_type);
+            if(index >= 0xFFFFu) throw std::runtime_error("Collision mesh exceeds 65535 vertices!");
+            indices.push_back(static_cast<uint16_t>(index));
             basePtr += elemSize;
           }
         }
@@ -129,11 +122,10 @@ namespace
 
               // collision geometry is exported in meters
               verticesFloat.push_back({vert[0], vert[1], vert[2]});
-              vertices.push_back({
-                (int16_t)vert[0],
-                (int16_t)vert[1],
-                (int16_t)vert[2]
-              });
+              if(verticesFloat.size() > 0xFFFFu) throw std::runtime_error("Collision mesh exceeds 65535 vertices!");
+              if(!std::isfinite(vert[0]) || !std::isfinite(vert[1]) || !std::isfinite(vert[2])) {
+                throw std::runtime_error("Collision mesh contains non-finite vertices!");
+              }
               basePtr += Gltf::getDataSize(acc->component_type) * 3;
             }
           }
@@ -141,6 +133,13 @@ namespace
 
       } // primitives
     } // nodes
+
+    if(indices.size() % 3 != 0 || indices.size() / 3 > 0xFFFFu) {
+      throw std::runtime_error("Collision mesh requires complete triangles and at most 65535 triangles!");
+    }
+    for(uint16_t index : indices) {
+      if(index >= verticesFloat.size()) throw std::runtime_error("Collision mesh has an invalid vertex index!");
+    }
 
     // generate normals
     for(size_t v=0; v<indices.size(); v+=3) {
@@ -160,31 +159,33 @@ namespace
 
       Vec3 normal = edge1.cross(edge2);
       normal = normal * (1.0f / normal.length());
-      normals.push_back({
-        (int16_t)(normal[0] * 32767.0f),
-        (int16_t)(normal[1] * 32767.0f),
-        (int16_t)(normal[2] * 32767.0f)
-      });
+      normals.push_back(normal);
     }
 
-    assert(indices.size() % 3 == 0);
+    const auto triangleCount = static_cast<uint16_t>(indices.size() / 3);
+    auto bvh = P64::Coll::buildMeshBvh(triangleCount, [&](uint16_t triangle) {
+      P64::Coll::MeshBvhNode bounds{};
+      for(int axis = 0; axis < 3; ++axis) {
+        const float a = verticesFloat[indices[triangle * 3]][axis];
+        const float b = verticesFloat[indices[triangle * 3 + 1]][axis];
+        const float c = verticesFloat[indices[triangle * 3 + 2]][axis];
+        bounds.min[axis] = std::min({a, b, c});
+        bounds.max[axis] = std::max({a, b, c});
+      }
+      return bounds;
+    });
 
-    // printf("Vert/Index count: %lu %lu\n", vertices.size(), indices.size());
-
+    const uint32_t headerPos = file.getPos();
     file.write<uint32_t>(indices.size() / 3);
-    file.write<uint32_t>(vertices.size());
+    file.write<uint32_t>(verticesFloat.size());
     file.write<float>(1.0f);
-    file.write<uint32_t>(0); // vertex pointer
-    file.write<uint32_t>(0); // normals pointer
-    file.write<uint32_t>(0); // BVH pointer (unused for now)
+    file.write<uint32_t>(0); // patched to the BVH offset below
 
     file.writeArray(indices.data(), indices.size());
     file.align(4);
 
     for(auto& n : normals) {
-      file.write(n.x);
-      file.write(n.y);
-      file.write(n.z);
+      file.writeArray(n.data, 3);
     }
     file.align(4);
 
@@ -192,6 +193,16 @@ namespace
       file.writeArray(v.data, 3);
     }
     file.align(4);
+
+    const uint32_t bvhOffset = file.getPos() - headerPos;
+    file.atPos(headerPos + offsetof(P64::Coll::RawCollisionHeader, bvhOffset), [&] {
+      file.write(bvhOffset);
+    });
+    for(uint32_t i = 0; i < P64::Coll::meshBvhNodeCount(triangleCount); ++i) {
+      file.writeArray(bvh[i].min, 3);
+      file.writeArray(bvh[i].max, 3);
+      file.write(bvh[i].escapeOrTriangle);
+    }
   }
 }
 

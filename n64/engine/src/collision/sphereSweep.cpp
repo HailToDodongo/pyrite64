@@ -3,8 +3,6 @@
 * @license MIT
 */
 #include "collision/sphereSweep.h"
-#include "collision/meshCollider.h"
-#include "collision/aabb.h"
 #include "collision/vecMath.h"
 
 #include <cmath>
@@ -162,9 +160,9 @@ bool sphereSweepTriangle(
   const fm_vec3_t& triNormal,
   SphereSweepHit& hit
 ) {
-  float dist = sqrtf(fm_vec3_len2(&displacement));
+  const float dist = sqrtf(fm_vec3_len2(&displacement));
   if (dist < SWEEP_EPS) return false;
-  fm_vec3_t dir = displacement / dist;
+  const fm_vec3_t dir = displacement / dist;
 
   float     bestT     = std::numeric_limits<float>::max();
   float     bestDepth = 0.0f;
