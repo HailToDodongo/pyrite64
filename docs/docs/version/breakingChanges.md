@@ -208,6 +208,17 @@ The fix here is to set the masks accordingly.<br>
 
 Note that it is strongly recommended to only use the mask bits you actually need per collider to avoid unnecessary collision tests.
 
+### Mesh Collision Assets
+
+Mesh Collision BVHs are now statically built during ROM build instead of dynamically during Scene load. This change reduces memory usage a little and marginally improves performance and scene loading speed (depending on the usage of mesh colliders).<br>
+This means that projects using mesh colliders need to be rebuilt so the assets contain the necessary information.
+
+Collision assets also store normals as three floats. Mesh colliders now share the asset's vertices, triangle indices,
+normals and BVH instead of allocating geometry copies for each instance.<br>
+Assets using packed normals must be rebuilt.
+Manually created mesh colliders still take ownership of their supplied arrays and generate their own normals and BVH;
+`destroyData()` frees owned data and only detaches borrowed asset data.
+
 ## v0.7.0
 
 This version completely reworked the material system as well as the collision/physics system.<br>

@@ -8,7 +8,9 @@
 #include "vecMath.h"
 #include "matrix3x3.h"
 #include "aabbTree.h"
+#include "meshBvh.h"
 #include <cstdint>
+#include <memory>
 
 namespace P64 { class Object; }
 
@@ -65,12 +67,9 @@ namespace P64::Coll {
     const fm_vec3_t &vertex(uint16_t index) const { return vertices_[index]; }
     const MeshTriangleIndices &triangleIndices(uint16_t index) const { return triangles_[index]; }
     const fm_vec3_t &triangleNormal(uint16_t index) const { return normals_[index]; }
-    int queryTriangleNodes(const AABB &localBounds, NodeProxy *outCandidates, int maxCandidates) const { return aabbTree_.queryBounds(localBounds, outCandidates, maxCandidates); }
-    int queryTriangleNodes(const Raycast &localRay, NodeProxy *outCandidates, int maxCandidates) const { return aabbTree_.queryRay(localRay, outCandidates, maxCandidates); }
-    int triangleIndexForNode(NodeProxy node) const {
-      void *data = aabbTree_.getNodeData(node);
-      return data ? static_cast<int>(reinterpret_cast<intptr_t>(data)) - 1 : -1;
-    }
+    /// Query the static local-space BVH, returning triangle indices directly.
+    int queryTriangles(const AABB &localBounds, uint16_t *outCandidates, int maxCandidates) const;
+    int queryTriangles(const Raycast &localRay, uint16_t *outCandidates, int maxCandidates) const;
 
     const AABB &localRootAabb() const { return localRootAabb_; }
     const AABB &worldAabb() const { return worldAabb_; }
@@ -116,13 +115,14 @@ namespace P64::Coll {
     bool readsMeshCollider(const MeshCollider *other) const;
 
     /// Create a MeshCollider directly from collision asset raw data, binding to the given Object's transform.
-    /// The returned collider owns newly allocated arrays (vertices, triangles, normals).
-    /// Call destroyData() to free them.
-    static MeshCollider *createFromRawData(void *rawData, Object *obj);
+    /// Borrows immutable vertices, triangles, float normals and BVH from the asset.
+    /// rawData must outlive the collider (as scene assets do).
+    static MeshCollider *createFromRawData(const void *rawData, Object *obj);
 
     /// Create a MeshCollider from manually defined geometry. If a non-null owner Object is given, the
     /// MeshCollider's transform will be synced to that of the owner.
     /// Coordinates must use internal physics scale (i.e. 1 unit = 1 meter).
+    /// Builds the immutable triangle BVH once; geometry must not change afterwards.
     /// Ownership of the given arrays (vertices, triangleIndices) is transferred to the returned MeshCollider
     /// object; call destroyData() to free them.
     static MeshCollider* create(fm_vec3_t* vertices, uint16_t vertexCount, MeshTriangleIndices* triangleIndices, uint16_t triangleCount, Object *owner = nullptr);
@@ -136,17 +136,17 @@ namespace P64::Coll {
       return vec3NormalizeOrFallback(normal, VEC3_UP);
     }
 
-    /// Free owned vertex/triangle/normal arrays and destroy the AABB tree.
+    /// Free owned geometry and BVH for manually defined geometry; detach borrowed asset data.
     void destroyData();
 
   private:
     friend class CollisionScene;
 
-    AABBTree aabbTree_{};
-    static void buildAabbTree(MeshCollider* collider);
-    fm_vec3_t *vertices_{nullptr};
-    MeshTriangleIndices *triangles_{nullptr};
-    fm_vec3_t *normals_{nullptr};
+    const MeshBvhNode *triangleBvh_{nullptr};
+    std::unique_ptr<MeshBvhNode[]> ownedTriangleBvh_{};
+    const fm_vec3_t *vertices_{nullptr};
+    const MeshTriangleIndices *triangles_{nullptr};
+    const fm_vec3_t *normals_{nullptr};
     P64::Object *owner_{nullptr};
     AABB localRootAabb_{};
     AABB worldAabb_{};
@@ -168,6 +168,7 @@ namespace P64::Coll {
     bool hasPosition_{false};
     bool hasScale_{false};
     bool hasTransform_{false};
+    bool ownsGeometry_{false};
   };
 
 } // namespace P64::Coll

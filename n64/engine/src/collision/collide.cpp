@@ -1460,8 +1460,8 @@ namespace P64::Coll {
 
     // Query local-space mesh AABB tree for candidate triangles
     constexpr int MAX_CANDIDATES = 20; // arbitrary limit to avoid extreme cases
-    NodeProxy candidates[MAX_CANDIDATES];
-    int count = mesh.queryTriangleNodes(queryAABB, candidates, MAX_CANDIDATES);
+    uint16_t candidates[MAX_CANDIDATES];
+    int count = mesh.queryTriangles(queryAABB, candidates, MAX_CANDIDATES);
 
     if(count <= 0) return false;
 
@@ -1500,8 +1500,7 @@ namespace P64::Coll {
 
     // For every candidate triangle perform precise collision test
     for(int i = 0; i < count; ++i) {
-      int triIndex = mesh.triangleIndexForNode(candidates[i]);
-      if(triIndex < 0) continue;
+      const int triIndex = candidates[i];
 
       // If there is a collision between the collider and the current triangle and the collider is a Trigger
       // we can skip the rest of the candidates since triggers just need to report that a collision happened

@@ -3,8 +3,6 @@
 * @license MIT
 */
 #include "collision/capsuleSweep.h"
-#include "collision/meshCollider.h"
-#include "collision/aabb.h"
 #include "collision/vecMath.h"
 
 #include <cmath>
@@ -75,55 +73,6 @@ static float sphereFaceTest(
   return t;
 }
 
-static float sphereEdgeTest(
-  const fm_vec3_t& S, float r, const fm_vec3_t& dir, float t_max,
-  const fm_vec3_t& E0, const fm_vec3_t& E1,
-  fm_vec3_t& outN, fm_vec3_t& outP, float& outDepth
-) {
-  fm_vec3_t edge   = E1 - E0;
-  float     elen2  = fm_vec3_len2(&edge);
-  if (elen2 < SWEEP_EPS * SWEEP_EPS) return std::numeric_limits<float>::max();
-  float     elen   = sqrtf(elen2);
-  fm_vec3_t u_hat  = edge / elen;
-
-  fm_vec3_t ce     = S - E0;
-  float     ce_u   = fm_vec3_dot(&ce, &u_hat);
-  fm_vec3_t c0     = ce - u_hat * ce_u;          // perp component of (S-E0)
-  float     d_u    = fm_vec3_dot(&dir, &u_hat);
-  fm_vec3_t d_perp = dir - u_hat * d_u;          // perp component of dir
-
-  float c0len2 = fm_vec3_len2(&c0);
-  float c_val  = c0len2 - r * r;
-  float a      = fm_vec3_len2(&d_perp);
-  float b      = fm_vec3_dot(&d_perp, &c0);
-
-  float t;
-  if (c_val < 0.0f) {
-    // already within r of the infinite edge line
-    float proj = ce_u;
-    if (proj < 0.0f || proj > elen) return std::numeric_limits<float>::max();
-    t        = 0.0f;
-    outDepth = r - sqrtf(c0len2);
-  } else {
-    if (a < SWEEP_EPS * SWEEP_EPS) return std::numeric_limits<float>::max();
-    float disc = b * b - a * c_val;
-    if (disc < 0.0f) return std::numeric_limits<float>::max();
-    t = (-b - sqrtf(disc)) / a;
-    if (t < 0.0f) return std::numeric_limits<float>::max();
-    if (t > t_max) return std::numeric_limits<float>::max();
-    outDepth = 0.0f;
-  }
-
-  fm_vec3_t C_t = S + dir * t;
-  fm_vec3_t C_t_rel = C_t - E0;
-  float proj = fm_vec3_dot(&C_t_rel, &u_hat);
-  if (proj < 0.0f || proj > elen) return std::numeric_limits<float>::max();
-
-  outP = E0 + u_hat * proj;
-  outN = vec3NormalizeOrFallback(C_t - outP, -dir);
-  return t;
-}
-
 static float sphereVertexTest(
   const fm_vec3_t& S, float r, const fm_vec3_t& dir, float t_max,
   const fm_vec3_t& V,
@@ -156,114 +105,6 @@ static float sphereVertexTest(
 // These only fire when the contact is strictly interior to the capsule segment
 // (not at either end cap), so they do not overlap with the sphere tests.
 
-static float cylinderEdgeTest(
-  const fm_vec3_t& P1, const fm_vec3_t& P2, float r,
-  const fm_vec3_t& dir, float t_max,
-  const fm_vec3_t& E0, const fm_vec3_t& E1,
-  fm_vec3_t& outN, fm_vec3_t& outP, float& outDepth
-) {
-  fm_vec3_t d1 = P2 - P1; // capsule axis
-  fm_vec3_t d2 = E1 - E0; // triangle edge
-
-  float a     = fm_vec3_len2(&d1);
-  float e_val = fm_vec3_len2(&d2);
-  float b     = fm_vec3_dot(&d1, &d2);
-  float denom = a * e_val - b * b;
-
-  if (denom < SWEEP_EPS * SWEEP_EPS) return std::numeric_limits<float>::max();
-
-  fm_vec3_t n_cross;
-  fm_vec3_cross(&n_cross, &d1, &d2);
-  float n_len = sqrtf(denom);
-  fm_vec3_t n_hat = n_cross / n_len;
-
-  fm_vec3_t r0    = P1 - E0;
-  float r0_dot    = fm_vec3_dot(&r0, &n_hat);
-  float vel_dot   = fm_vec3_dot(&dir, &n_hat); // dir is unit length
-
-  // Helper: verify both segment parameters are interior at a given t
-  auto resolve = [&](float t_phys) -> bool {
-    fm_vec3_t r0_t  = r0 + dir * t_phys;
-    float c_t       = fm_vec3_dot(&d1, &r0_t);
-    float f_t       = fm_vec3_dot(&d2, &r0_t);
-    float s_star    = (b * f_t - c_t * e_val) / denom; // [0,1] for interior
-    float u_star    = (a * f_t - b * c_t) / denom;      // [0,1] for interior
-    if (s_star <= PARAM_EPS || s_star >= 1.0f - PARAM_EPS) return false;
-    if (u_star < 0.0f || u_star > 1.0f) return false;
-    outP = E0 + d2 * u_star;
-    outN = (r0_dot >= 0.0f) ? n_hat : -n_hat;
-    return true;
-  };
-
-  if (fabsf(r0_dot) < r) {
-    if (!resolve(0.0f)) return std::numeric_limits<float>::max();
-    outDepth = r - fabsf(r0_dot);
-    return 0.0f;
-  }
-
-  if (fabsf(vel_dot) < SWEEP_EPS) return std::numeric_limits<float>::max();
-
-  float sign  = (r0_dot > 0.0f) ? 1.0f : -1.0f;
-  float t     = (sign * r - r0_dot) / vel_dot;
-  if (t < 0.0f || t > t_max) return std::numeric_limits<float>::max();
-  if (!resolve(t)) return std::numeric_limits<float>::max();
-  outDepth = 0.0f;
-  return t;
-}
-
-static float cylinderVertexTest(
-  const fm_vec3_t& P1, const fm_vec3_t& P2, float r,
-  const fm_vec3_t& dir, float t_max,
-  const fm_vec3_t& V,
-  fm_vec3_t& outN, fm_vec3_t& outP, float& outDepth
-) {
-  fm_vec3_t d1    = P2 - P1;
-  float d1_len2   = fm_vec3_len2(&d1);
-  if (d1_len2 < SWEEP_EPS * SWEEP_EPS) return std::numeric_limits<float>::max();
-  float d1_len    = sqrtf(d1_len2);
-  fm_vec3_t d1hat = d1 / d1_len;
-
-  // Decompose relative to capsule axis
-  fm_vec3_t w        = V - P1; // from P1 to vertex
-  float w_along      = fm_vec3_dot(&w, &d1hat);
-  fm_vec3_t w_perp   = w - d1hat * w_along;
-
-  float dir_along    = fm_vec3_dot(&dir, &d1hat);
-  fm_vec3_t dir_perp = dir - d1hat * dir_along;
-
-  float A      = fm_vec3_len2(&dir_perp);
-  float wperp2 = fm_vec3_len2(&w_perp);
-
-  float t;
-  if (wperp2 < r * r) {
-    // already within r of the capsule axis line
-    t = 0.0f;
-    outDepth = r - sqrtf(wperp2);
-  } else {
-    if (A < SWEEP_EPS * SWEEP_EPS) return std::numeric_limits<float>::max();
-    // dist_perp²(t) = |w_perp - t*dir_perp|²
-    float B    = fm_vec3_dot(&w_perp, &dir_perp);
-    float C    = wperp2 - r * r;
-    float disc = B * B - A * C;
-    if (disc < 0.0f) return std::numeric_limits<float>::max();
-    t = (B - sqrtf(disc)) / A; // smallest root
-    if (t < 0.0f) t = (B + sqrtf(disc)) / A;
-    if (t < 0.0f || t > t_max) return std::numeric_limits<float>::max();
-    outDepth = 0.0f;
-  }
-
-  // Verify s is strictly interior (not at end caps)
-  fm_vec3_t w_t = w - dir * t; // V - P1(t)
-  float s       = fm_vec3_dot(&w_t, &d1hat);
-  if (s <= PARAM_EPS || s >= d1_len - PARAM_EPS)
-    return std::numeric_limits<float>::max();
-
-  fm_vec3_t axis_pt = P1 + dir * t + d1hat * s;
-  outP = V;
-  outN = vec3NormalizeOrFallback(axis_pt - V, -dir);
-  return t;
-}
-
 // ── Public: capsule vs. one triangle ─────────────────────────────────────────
 
 bool capsuleSweepTriangle(
@@ -276,12 +117,23 @@ bool capsuleSweepTriangle(
   const fm_vec3_t& triNormal,
   CapsuleSweepHit& hit
 ) {
-  float dist = sqrtf(fm_vec3_len2(&displacement));
+  const float dist = sqrtf(fm_vec3_len2(&displacement));
   if (dist < SWEEP_EPS) return false;
-  fm_vec3_t dir = displacement / dist;
+  const fm_vec3_t dir = displacement / dist;
+  const fm_vec3_t P1 = center - axisUp * innerHalfHeight;
+  const fm_vec3_t P2 = center + axisUp * innerHalfHeight;
 
-  fm_vec3_t P1 = center - axisUp * innerHalfHeight;
-  fm_vec3_t P2 = center + axisUp * innerHalfHeight;
+  // Reuse the capsule-axis projections across all cylinder sub-tests.
+  const fm_vec3_t axis = P2 - P1;
+  const float axisLength2 = fm_vec3_len2(&axis);
+  float axisLength = 0.0f, dirPerpLength2 = 0.0f;
+  fm_vec3_t axisUnit{}, dirPerp{};
+  if (axisLength2 >= SWEEP_EPS * SWEEP_EPS) {
+    axisLength = sqrtf(axisLength2);
+    axisUnit = axis / axisLength;
+    dirPerp = dir - axisUnit * fm_vec3_dot(&dir, &axisUnit);
+    dirPerpLength2 = fm_vec3_len2(&dirPerp);
+  }
 
   float     bestT     = std::numeric_limits<float>::max();
   float     bestDepth = 0.0f;
@@ -302,12 +154,161 @@ bool capsuleSweepTriangle(
   fm_vec3_t n{}, p{};
   float depth = 0.0f;
 
+  // Both sphere caps use the same triangle-edge projections.
+  fm_vec3_t edgeUnits[3]{}, edgeDirPerps[3]{};
+  float edgeLengths[3]{}, edgeDirPerpLength2[3]{};
+  for (int i = 0; i < 3; ++i) {
+    const fm_vec3_t edge = *verts[(i + 1) % 3] - *verts[i];
+    const float length2 = fm_vec3_len2(&edge);
+    if (length2 < SWEEP_EPS * SWEEP_EPS) continue;
+    edgeLengths[i] = sqrtf(length2);
+    edgeUnits[i] = edge / edgeLengths[i];
+    edgeDirPerps[i] = dir - edgeUnits[i] * fm_vec3_dot(&dir, &edgeUnits[i]);
+    edgeDirPerpLength2[i] = fm_vec3_len2(&edgeDirPerps[i]);
+  }
+
+  auto sphereEdgeTest = [&](const fm_vec3_t &S, int i,
+    fm_vec3_t &outN, fm_vec3_t &outP, float &outDepth) -> float {
+    const fm_vec3_t &E0 = *verts[i];
+    if (edgeLengths[i] == 0.0f) return std::numeric_limits<float>::max();
+    float     elen   = edgeLengths[i];
+    const fm_vec3_t &u_hat = edgeUnits[i];
+
+    fm_vec3_t ce     = S - E0;
+    float     ce_u   = fm_vec3_dot(&ce, &u_hat);
+    fm_vec3_t c0     = ce - u_hat * ce_u;          // perp component of (S-E0)
+    const fm_vec3_t &d_perp = edgeDirPerps[i];
+
+    float c0len2 = fm_vec3_len2(&c0);
+    float c_val  = c0len2 - radius * radius;
+    float a      = edgeDirPerpLength2[i];
+    float b      = fm_vec3_dot(&d_perp, &c0);
+
+    float t;
+    if (c_val < 0.0f) {
+      // already within radius of the infinite edge line
+      float proj = ce_u;
+      if (proj < 0.0f || proj > elen) return std::numeric_limits<float>::max();
+      t        = 0.0f;
+      outDepth = radius - sqrtf(c0len2);
+    } else {
+      if (a < SWEEP_EPS * SWEEP_EPS) return std::numeric_limits<float>::max();
+      float disc = b * b - a * c_val;
+      if (disc < 0.0f) return std::numeric_limits<float>::max();
+      t = (-b - sqrtf(disc)) / a;
+      if (t < 0.0f) return std::numeric_limits<float>::max();
+      if (t > dist) return std::numeric_limits<float>::max();
+      outDepth = 0.0f;
+    }
+
+    fm_vec3_t C_t = S + dir * t;
+    fm_vec3_t C_t_rel = C_t - E0;
+    float proj = fm_vec3_dot(&C_t_rel, &u_hat);
+    if (proj < 0.0f || proj > elen) return std::numeric_limits<float>::max();
+
+    outP = E0 + u_hat * proj;
+    outN = vec3NormalizeOrFallback(C_t - outP, -dir);
+    return t;
+  };
+
+  auto cylinderEdgeTest = [&](const fm_vec3_t &E0, const fm_vec3_t &E1,
+    fm_vec3_t &outN, fm_vec3_t &outP, float &outDepth) -> float {
+    fm_vec3_t d2 = E1 - E0; // triangle edge
+
+    float a     = axisLength2;
+    float e_val = fm_vec3_len2(&d2);
+    float b     = fm_vec3_dot(&axis, &d2);
+    float denom = a * e_val - b * b;
+
+    if (denom < SWEEP_EPS * SWEEP_EPS) return std::numeric_limits<float>::max();
+
+    fm_vec3_t n_cross;
+    fm_vec3_cross(&n_cross, &axis, &d2);
+    float n_len = sqrtf(denom);
+    fm_vec3_t n_hat = n_cross / n_len;
+
+    fm_vec3_t r0    = P1 - E0;
+    float r0_dot    = fm_vec3_dot(&r0, &n_hat);
+    float vel_dot   = fm_vec3_dot(&dir, &n_hat); // dir is unit length
+
+    // Helper: verify both segment parameters are interior at a given t
+    auto resolve = [&](float t_phys) -> bool {
+      fm_vec3_t r0_t  = r0 + dir * t_phys;
+      float c_t       = fm_vec3_dot(&axis, &r0_t);
+      float f_t       = fm_vec3_dot(&d2, &r0_t);
+      float s_star    = (b * f_t - c_t * e_val) / denom; // [0,1] for interior
+      float u_star    = (a * f_t - b * c_t) / denom;      // [0,1] for interior
+      if (s_star <= PARAM_EPS || s_star >= 1.0f - PARAM_EPS) return false;
+      if (u_star < 0.0f || u_star > 1.0f) return false;
+      outP = E0 + d2 * u_star;
+      outN = (r0_dot >= 0.0f) ? n_hat : -n_hat;
+      return true;
+    };
+
+    if (fabsf(r0_dot) < radius) {
+      if (!resolve(0.0f)) return std::numeric_limits<float>::max();
+      outDepth = radius - fabsf(r0_dot);
+      return 0.0f;
+    }
+
+    if (fabsf(vel_dot) < SWEEP_EPS) return std::numeric_limits<float>::max();
+
+    float sign  = (r0_dot > 0.0f) ? 1.0f : -1.0f;
+    float t     = (sign * radius - r0_dot) / vel_dot;
+    if (t < 0.0f || t > dist) return std::numeric_limits<float>::max();
+    if (!resolve(t)) return std::numeric_limits<float>::max();
+    outDepth = 0.0f;
+    return t;
+  };
+
+  auto cylinderVertexTest = [&](const fm_vec3_t &V,
+    fm_vec3_t &outN, fm_vec3_t &outP, float &outDepth) -> float {
+    if (axisLength2 < SWEEP_EPS * SWEEP_EPS) return std::numeric_limits<float>::max();
+
+    // Decompose relative to capsule axis
+    fm_vec3_t w        = V - P1; // from P1 to vertex
+    float w_along      = fm_vec3_dot(&w, &axisUnit);
+    fm_vec3_t w_perp   = w - axisUnit * w_along;
+
+    float A      = dirPerpLength2;
+    float wperp2 = fm_vec3_len2(&w_perp);
+
+    float t;
+    if (wperp2 < radius * radius) {
+      // already within radius of the capsule axis line
+      t = 0.0f;
+      outDepth = radius - sqrtf(wperp2);
+    } else {
+      if (A < SWEEP_EPS * SWEEP_EPS) return std::numeric_limits<float>::max();
+      // dist_perp²(t) = |w_perp - t*dirPerp|²
+      float B    = fm_vec3_dot(&w_perp, &dirPerp);
+      float C    = wperp2 - radius * radius;
+      float disc = B * B - A * C;
+      if (disc < 0.0f) return std::numeric_limits<float>::max();
+      t = (B - sqrtf(disc)) / A; // smallest root
+      if (t < 0.0f) t = (B + sqrtf(disc)) / A;
+      if (t < 0.0f || t > dist) return std::numeric_limits<float>::max();
+      outDepth = 0.0f;
+    }
+
+    // Verify s is strictly interior (not at end caps)
+    fm_vec3_t w_t = w - dir * t; // V - P1(t)
+    float s       = fm_vec3_dot(&w_t, &axisUnit);
+    if (s <= PARAM_EPS || s >= axisLength - PARAM_EPS)
+      return std::numeric_limits<float>::max();
+
+    fm_vec3_t axis_pt = P1 + dir * t + axisUnit * s;
+    outP = V;
+    outN = vec3NormalizeOrFallback(axis_pt - V, -dir);
+    return t;
+  };
+
   for (const fm_vec3_t* S : {&P1, &P2}) {
     float t = sphereFaceTest(*S, radius, dir, dist, v0, v1, v2, triNormal, n, p, depth);
     update(t, n, p, depth);
 
     for (int i = 0; i < 3; ++i) {
-      t = sphereEdgeTest(*S, radius, dir, dist, *verts[i], *verts[(i+1)%3], n, p, depth);
+      t = sphereEdgeTest(*S, i, n, p, depth);
       update(t, n, p, depth);
     }
 
@@ -318,12 +319,12 @@ bool capsuleSweepTriangle(
   }
 
   for (int i = 0; i < 3; ++i) {
-    float t = cylinderEdgeTest(P1, P2, radius, dir, dist, *verts[i], *verts[(i+1)%3], n, p, depth);
+    float t = cylinderEdgeTest(*verts[i], *verts[(i+1)%3], n, p, depth);
     update(t, n, p, depth);
   }
 
   for (const fm_vec3_t* V : verts) {
-    float t = cylinderVertexTest(P1, P2, radius, dir, dist, *V, n, p, depth);
+    float t = cylinderVertexTest(*V, n, p, depth);
     update(t, n, p, depth);
   }
 

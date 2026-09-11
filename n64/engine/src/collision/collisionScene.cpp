@@ -1740,13 +1740,10 @@ namespace P64::Coll {
         }};
 
 
-        NodeProxy triCandidates[RAYCAST_MAX_TRIANGLE_TESTS];
-        int triCount = mesh->aabbTree_.queryRay(localRay, triCandidates, RAYCAST_MAX_TRIANGLE_TESTS);
+        uint16_t triCandidates[RAYCAST_MAX_TRIANGLE_TESTS];
+        int triCount = mesh->queryTriangles(localRay, triCandidates, RAYCAST_MAX_TRIANGLE_TESTS);
         for(int i = 0; i < triCount; ++i) {
-          void *data = mesh->aabbTree_.getNodeData(triCandidates[i]);
-          if(!data) continue;
-          int triIdx = static_cast<int>(reinterpret_cast<intptr_t>(data)) - 1; // stored as index+1
-          if(triIdx < 0 || triIdx >= mesh->triangleCount_) continue;
+          const int triIdx = triCandidates[i];
 
           const MeshTriangleIndices &tri = mesh->triangles_[triIdx];
 
@@ -1875,7 +1872,7 @@ namespace P64::Coll {
     // ── Mesh colliders ──────────────────────────────────────────────────────
     if (doMesh) {
       constexpr int MAX_TRI = 64;
-      NodeProxy triCandidates[MAX_TRI];
+      uint16_t triCandidates[MAX_TRI];
       constexpr int MAX_MESH_CANDIDATES = 32;
       NodeProxy meshCandidates[MAX_MESH_CANDIDATES];
 
@@ -1887,11 +1884,10 @@ namespace P64::Coll {
         if ((mesh->writeMask() & readMask) == 0) continue;
 
         AABB localSweptBox = mesh->worldAabbToLocal(sweptBox);
-        int triCount = mesh->queryTriangleNodes(localSweptBox, triCandidates, MAX_TRI);
+        int triCount = mesh->queryTriangles(localSweptBox, triCandidates, MAX_TRI);
 
         for (int i = 0; i < triCount; ++i) {
-          int triIdx = mesh->triangleIndexForNode(triCandidates[i]);
-          if (triIdx < 0 || triIdx >= static_cast<int>(mesh->triangleCount())) continue;
+          const int triIdx = triCandidates[i];
 
           const MeshTriangleIndices& tri = mesh->triangleIndices(triIdx);
 
@@ -2043,7 +2039,7 @@ namespace P64::Coll {
     // ── Mesh colliders ──────────────────────────────────────────────────────
     if (doMesh) {
       constexpr int MAX_TRI = 64;
-      NodeProxy triCandidates[MAX_TRI];
+      uint16_t triCandidates[MAX_TRI];
       constexpr int MAX_MESH_CANDIDATES = 32;
       NodeProxy meshCandidates[MAX_MESH_CANDIDATES];
 
@@ -2055,11 +2051,10 @@ namespace P64::Coll {
         if ((mesh->writeMask() & readMask) == 0) continue;
 
         AABB localSweptBox = mesh->worldAabbToLocal(sweptBox);
-        int triCount = mesh->queryTriangleNodes(localSweptBox, triCandidates, MAX_TRI);
+        int triCount = mesh->queryTriangles(localSweptBox, triCandidates, MAX_TRI);
 
         for (int i = 0; i < triCount; ++i) {
-          int triIdx = mesh->triangleIndexForNode(triCandidates[i]);
-          if (triIdx < 0 || triIdx >= static_cast<int>(mesh->triangleCount())) continue;
+          const int triIdx = triCandidates[i];
 
           const MeshTriangleIndices& tri = mesh->triangleIndices(triIdx);
 
@@ -2069,8 +2064,7 @@ namespace P64::Coll {
           fm_vec3_t wn  = mesh->hasTransform() ? mesh->localNormalToWorld(mesh->triangleNormal(triIdx)) : mesh->triangleNormal(triIdx);
 
           candidate = SphereSweepHit{};
-          if (!sphereSweepTriangle(center, radius,
-                                    displacement, wv0, wv1, wv2, wn, candidate))
+          if (!sphereSweepTriangle(center, radius, displacement, wv0, wv1, wv2, wn, candidate))
             continue;
 
           if (!hit.didHit || candidate.t < hit.t ||
