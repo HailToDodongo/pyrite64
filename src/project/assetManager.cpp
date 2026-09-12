@@ -71,6 +71,15 @@ namespace
     return pathAbs;
   }
 
+  std::string getProjectRelPath(const std::string &path, const std::string &basePath)
+  {
+    auto pathAbs = Utils::FS::toUnixPath(fs::absolute(path));
+    if (pathAbs.length() <= basePath.length()) return pathAbs;
+    pathAbs = pathAbs.substr(basePath.length());
+    if (!pathAbs.empty() && pathAbs.front() == '/') pathAbs.erase(pathAbs.begin());
+    return pathAbs;
+  }
+
   std::string changeExt(const std::string &path, const std::string &newExt)
   {
     auto p = fs::path(path);
@@ -146,6 +155,7 @@ namespace
     entry = Project::AssetManagerEntry{
       .name = path.filename().string(),
       .path = path.string(),
+      .projectPath = getProjectRelPath(path.string(), projectBase),
       .outPath = outPath,
       .romPath = romPath,
       .type = type,
@@ -186,7 +196,7 @@ namespace
     return true;
   }
 
-  bool buildCodeEntry(const fs::path &path, Project::AssetManagerEntry &entry)
+  bool buildCodeEntry(Project::Project *project, const fs::path &path, Project::AssetManagerEntry &entry)
   {
     auto code = Utils::FS::loadTextFile(path);
 
@@ -219,6 +229,7 @@ namespace
     entry = Project::AssetManagerEntry{
       .name = path.filename().string(),
       .path = path.string(),
+      .projectPath = getProjectRelPath(path.string(), fs::absolute(project->getPath()).string()),
       .type = type,
       .params = Utils::CPP::parseDataStruct(code, "Data")
     };
@@ -401,7 +412,7 @@ void Project::AssetManager::reload() {
 
       watchFiles[path.string()] = Utils::FS::getFileAge(path);
       AssetManagerEntry codeEntry{};
-      if (!buildCodeEntry(path, codeEntry)) {
+      if (!buildCodeEntry(project, path, codeEntry)) {
         continue;
       }
 
@@ -573,7 +584,7 @@ bool Project::AssetManager::pollWatch()
   // Rebuild a single script entry
   auto addOrUpdateCode = [&](const std::string &pathStr) {
     AssetManagerEntry newEntry{};
-    if (!buildCodeEntry(fs::path{pathStr}, newEntry)) {
+    if (!buildCodeEntry(project, fs::path{pathStr}, newEntry)) {
       return;
     }
 
