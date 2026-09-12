@@ -170,6 +170,7 @@ add_executable(pyrite64 src/main.cpp
         src/editor/imgui/theme.h
         src/editor/imgui/theme.cpp
         src/editor/imgui/helper.h
+        src/editor/imgui/mathInput.h
         src/utils/filePicker.h
         src/utils/filePicker.cpp
         src/editor/pages/parts/viewport3D.h
@@ -252,7 +253,7 @@ add_executable(pyrite64 src/main.cpp
         src/project/component/types/compLight.cpp
         src/project/component/types/compCamera.cpp
         src/editor/imgui/helper.cpp
-        src/editor/imgui/helper.cpp
+        src/editor/imgui/mathInput.cpp
         n64/engine/include/scene/objectFlags.h
         src/utils/fs.cpp
         src/project/component/types/compCollMesh.cpp
