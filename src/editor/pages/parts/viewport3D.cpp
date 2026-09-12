@@ -157,6 +157,11 @@ namespace
   };
 
   using IterCallback = std::function<void(Project::Object&, Project::Component::Entry*)>;
+  // Runs once per object before its components are drawn, to evaluate obj.display
+  // (see Object::display). `seed` is the transform the object is actually drawn at when
+  // the caller already composed one (nested prefab nodes), null to take the object's own.
+  using IterPreCallback = std::function<
+    void(Project::Object&, Project::Object& src, const Project::Object::Trans* seed)>;
 
   // Maps a generated pick id -> (instance uuid, path) so nested objects can be picked
   // in the viewport (they share definition uuids across instances). Rebuilt each render.
@@ -178,7 +183,8 @@ namespace
    */
   void renderNestedPrefab(Project::Object& node, const EditorWorldTrans& parentWorld,
                           const IterCallback& callback, int depth,
-                          uint32_t rootUuid, std::vector<uint32_t> path)
+                          uint32_t rootUuid, std::vector<uint32_t> path,
+                          const IterPreCallback* pre = nullptr)
   {
     if(depth > (int)PropScope::MAX_DEPTH || !node.enabled)return; // self-referencing prefabs
     path.push_back(node.uuid);
@@ -208,6 +214,11 @@ namespace
 
     {
       NestedRenderPlacement place{node, pickId, world};
+      // Seed from `world` rather than letting the callback resolve the node's transform:
+      // a scene-level override on a nested node resolves to its local placement, not the
+      // composed world one NestedRenderPlacement just wrote.
+      Project::Object::Trans nodeSeed{world.pos, world.rot, world.scale};
+      if(pre)(*pre)(node, *src, &nodeSeed);
       for(auto &comp : src->components) {
         PropScope::Path compPath(comp.uuid); // so scene-instance overrides on nested props resolve
         if (!comp.enabled.resolve(node)) continue;
@@ -220,11 +231,12 @@ namespace
     // resolves for its exact target. Matches the build and lets nested-prefab overrides show.
     for(auto &child : src->children) {
       PropScope::Path childPath(child->uuid);
-      renderNestedPrefab(*child, world, callback, depth + 1, rootUuid, path);
+      renderNestedPrefab(*child, world, callback, depth + 1, rootUuid, path, pre);
     }
   }
 
-  void iterateObjects(Project::Object& parent, const IterCallback& callback)
+  void iterateObjects(Project::Object& parent, const IterCallback& callback,
+                      const IterPreCallback* pre = nullptr)
   {
     for(auto& child : parent.children)
     {
@@ -237,6 +249,7 @@ namespace
         if(prefab) { srcObj = &prefab->obj; isInstance = true; }
       }
 
+      if(pre)(*pre)(*child, *srcObj, nullptr);
       for(auto &comp : srcObj->components) {
         PropScope::Dispatch enabledScope(child->propOverrides, comp.uuid);
         if (!comp.enabled.resolve(*child)) continue;
@@ -256,11 +269,11 @@ namespace
         PropScope::PrefabLayer sceneLayer(child->propOverrides);
         for(auto &defChild : srcObj->children) {
           PropScope::Path nodePath(defChild->uuid);
-          renderNestedPrefab(*defChild, instWorld, callback, 0, child->uuid, {});
+          renderNestedPrefab(*defChild, instWorld, callback, 0, child->uuid, {}, pre);
         }
       }
 
-      iterateObjects(*child, callback);
+      iterateObjects(*child, callback, pre);
     }
   }
 
@@ -440,6 +453,7 @@ nlohmann::json Editor::Viewport3D::saveState() const
     {"showCollMesh", showCollMesh},
     {"showCollObj", showCollObj},
     {"showIcons", showIcons},
+    {"previewTransforms", previewTransforms},
     {"boundCam", boundCameraUUID},
     {"camRes", useCameraRes},
   };
@@ -451,6 +465,7 @@ void Editor::Viewport3D::loadState(const nlohmann::json &j)
   showCollMesh = j.value("showCollMesh", showCollMesh);
   showCollObj = j.value("showCollObj", showCollObj);
   showIcons = j.value("showIcons", showIcons);
+  previewTransforms = j.value("previewTransforms", previewTransforms);
   boundCameraUUID = j.value("boundCam", (uint64_t)0);
   useCameraRes = j.value("camRes", false);
 }
@@ -529,6 +544,32 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
 
   if(ctx.debugMode)SDL_PushGPUDebugGroup(cmdBuff, "3D Objects");
 
+  // Resolve what each object is drawn at this frame. Seeded from the authored transform
+  // (already the world one here, nested prefab nodes are placed by NestedRenderPlacement),
+  // then components with funcEvalTransform adjust it in place and compose in order.
+  Project::Component::EvalCtx evalCtx{
+    .camPos = camera.pos,
+    .camRot = camera.rot,
+    .camViewDir = glm::normalize(camera.rot * glm::vec3{0,0,-1}),
+    .deltaTime = ImGui::GetIO().DeltaTime,
+    .scene = scene,
+  };
+
+  IterPreCallback evalPre = [&](Project::Object &obj, Project::Object &src,
+                                const Project::Object::Trans *seed) {
+    obj.display = seed ? *seed : obj.getAuthoredTrans();
+    obj.displayActive = previewTransforms;
+    if(!previewTransforms)return;
+
+    for(auto &comp : src.components) {
+      auto &def = Project::Component::TABLE[comp.id];
+      if(!def.funcEvalTransform)continue;
+      PropScope::Dispatch dispatchScope(obj.propOverrides, comp.uuid);
+      if(!comp.enabled.resolve(obj))continue;
+      def.funcEvalTransform(obj, comp, evalCtx);
+    }
+  };
+
   bool hadDraw = false;
   iterateObjects(rootObj, [&](Project::Object &obj, Project::Component::Entry *comp) {
     // Don't draw the camera we are looking through: its icon/frustum sits on the lens.
@@ -556,7 +597,7 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
       def.funcDraw3D(obj, *comp, *this, cmdBuff, renderPass3D);
       hadDraw = true;
     }
-  });
+  }, &evalPre);
 
   iterateObjects(rootObj, [&](Project::Object &obj, Project::Component::Entry *comp) {
     if(!comp)return;
@@ -571,7 +612,7 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
       PropScope::Dispatch dispatchScope(obj.propOverrides, comp->uuid);
       def.funcDrawPost3D(obj, *comp, *this, cmdBuff, renderPass3D);
     }
-  });
+  }, &evalPre);
 
   if(ctx.debugMode)SDL_PopGPUDebugGroup(cmdBuff);
 
@@ -1065,6 +1106,14 @@ void Editor::Viewport3D::draw()
     showCollObj = !showCollObj;
   }
   ImGui::SetItemTooltip("%s Collision Bodies", showCollObj ? "Hide" : "Show");
+
+  ImGui::SameLine();
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4_px);
+  if(ConnectedToggleButton(ICON_MDI_LINK, previewTransforms, true, true, ImVec2(32_px, 24_px))) {
+    previewTransforms = !previewTransforms;
+  }
+  ImGui::SetItemTooltip("%s Constraints (billboards, copy transform)",
+    previewTransforms ? "Ignore" : "Preview");
 
   ImGui::SameLine();
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4_px);

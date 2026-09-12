@@ -92,9 +92,14 @@ void Renderer::N64Mesh::draw(
 
   uint32_t flagsGlobal = uniforms.mat.flags & LIGHT_MODE_ADD;
 
+  int boundPipeline = -1;
+
   auto drawPart = [&](MeshPart &part)
   {
     uint32_t blender = uniforms.mat.blender.x;
+
+    bool depthRead = ref.layerDepthRead;
+    bool depthWrite = ref.layerDepthWrite;
 
     uint32_t slotIdx = 0;
     auto matEntry = ref.model->materials.find(part.materialName);
@@ -125,6 +130,22 @@ void Renderer::N64Mesh::draw(
         resolveTex(mat.tex1, 1);
         N64Material::convert(part, mat);
       }
+
+      if(mat.zmodeSet.value) {
+        depthRead  = mat.zmode.value & 0b01;
+        depthWrite = mat.zmode.value & 0b10;
+      }
+    }
+
+    if(ref.matInstance && ref.matInstance->setDepth.resolve(ref.obj)) {
+      auto zmode = ref.matInstance->depth.resolve(ref.obj);
+      depthRead  = zmode & 0b01;
+      depthWrite = zmode & 0b10;
+    }
+
+    if(int idx = Scene::n64PipelineIdx(depthRead, depthWrite); idx != boundPipeline) {
+      scene->getN64Pipeline(depthRead, depthWrite).bind(pass);
+      boundPipeline = idx;
     }
 
 

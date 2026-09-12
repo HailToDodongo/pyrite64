@@ -13,9 +13,19 @@
 #include "../../../editor/pages/parts/viewport3D.h"
 #include "../../../renderer/scene.h"
 #include "../../../utils/meshGen.h"
+#include "../../scene/scene.h"
+#include "glm/gtc/constants.hpp"
+#include <cmath>
 
 namespace
 {
+  // objectUUID 0 means "<Parent>", matching the engine's refObjId 0 -> obj.group
+  Project::Object* resolveRefObject(Project::Object &obj, uint32_t refUUID, Project::Scene *scene)
+  {
+    if(refUUID == 0)return obj.parent;
+    return scene ? scene->getObjectByUUID(refUUID).get() : nullptr;
+  }
+
   constexpr uint32_t TYPE_COPY_OBJ = 0;
   constexpr uint32_t TYPE_REL_OFFSET = 1;
   constexpr uint32_t TYPE_COPY_CAM = 2;
@@ -134,6 +144,41 @@ namespace Project::Component::Constraint
       }
 
       ImTable::end();
+    }
+  }
+
+  void evalTransform(Object &obj, Entry &entry, const EvalCtx &evalCtx)
+  {
+    Data &data = *static_cast<Data*>(entry.data.get());
+
+    switch(data.type.value)
+    {
+      case TYPE_BILLBOARD_Y:
+      {
+        // same formula as the engine, so the preview and the ROM agree
+        float angle = std::atan2(evalCtx.camViewDir.x, evalCtx.camViewDir.z) + glm::pi<float>();
+        obj.display.rot = glm::angleAxis(angle, glm::vec3{0,1,0});
+      } break;
+
+      case TYPE_BILLBOARD_XYZ:
+        obj.display.rot = evalCtx.camRot;
+        break;
+
+      case TYPE_COPY_CAM:
+        if(data.usePos.resolve(obj))obj.display.pos = evalCtx.camPos;
+        break;
+
+      case TYPE_COPY_OBJ:
+      {
+        auto *ref = resolveRefObject(obj, data.objectUUID.value, evalCtx.scene);
+        if(!ref)break;
+        auto refTrans = ref->getDisplayTrans();
+        if(data.usePos.resolve(obj))  obj.display.pos   = refTrans.pos;
+        if(data.useScale.resolve(obj))obj.display.scale = refTrans.scale;
+        if(data.useRot.resolve(obj))  obj.display.rot   = refTrans.rot;
+      } break;
+
+      default: break;
     }
   }
 

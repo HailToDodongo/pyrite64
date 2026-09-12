@@ -200,12 +200,23 @@ namespace Project::Component::AnimModel
       }
     }
 
+    bool layerDepthRead = true;
+    bool layerDepthWrite = true;
+    auto &layers = ctx.project->getScenes().getLoadedScene()->conf.layers3D;
+    auto layerIdx = data.layerIdx.resolve(obj);
+    if(layerIdx >= 0 && layerIdx < (int)layers.size()) {
+      layerDepthRead = layers[layerIdx].depthCompare.resolve(obj);
+      layerDepthWrite = layers[layerIdx].depthWrite.resolve(obj);
+    }
+
     data.skeleton->use(pass);
     data.obj3D.draw(pass, cmdBuff, {
       .partsIndices = {},
       .model = &asset->model,
       .matInstance = &data.material,
-      .obj = obj
+      .obj = obj,
+      .layerDepthRead = layerDepthRead,
+      .layerDepthWrite = layerDepthWrite
     });
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);

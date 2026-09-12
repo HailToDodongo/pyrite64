@@ -211,10 +211,14 @@ namespace Project::Component::Model
     data.obj3D.uniform.modelMat = makeModelMatrix(obj, asset ? 1.0f / asset->model.autoBaseScale : 1.0f);
 
     // get draw layer
+    bool layerDepthRead = true;
+    bool layerDepthWrite = true;
     auto &layers = ctx.project->getScenes().getLoadedScene()->conf.layers3D;
     auto layerIdx = data.layerIdx.resolve(obj);
     if(layerIdx >= 0 && layerIdx < (int)layers.size()) {
       auto &layer = layers[layerIdx];
+      layerDepthRead = layer.depthCompare.resolve(obj);
+      layerDepthWrite = layer.depthWrite.resolve(obj);
       data.obj3D.uniform.mat.blender.x = layer.blender.resolve(obj);
       data.obj3D.uniform.mat.blender.y = data.obj3D.uniform.mat.blender.x;
       data.obj3D.uniform.mat.flags &= ~LIGHT_MODE_ADD;
@@ -231,7 +235,9 @@ namespace Project::Component::Model
       .partsIndices = meshes,
       .model = &asset->model,
       .matInstance = &data.material,
-      .obj = obj
+      .obj = obj,
+      .layerDepthRead = layerDepthRead,
+      .layerDepthWrite = layerDepthWrite
     });
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
