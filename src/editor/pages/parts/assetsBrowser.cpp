@@ -253,11 +253,15 @@ void Editor::AssetsBrowser::draw() {
   fs::path basePath{};
   fs::path basePathAbs{};
   const char* baseLabel = nullptr;
+  // same dir as basePath, but project-relative to match AssetManagerEntry::projectPath
+  std::string baseRelPrefix{};
   if (activeTab == TAB_IDX_ASSETS || activeTab == TAB_IDX_PREFABS) {
     basePath = fs::path(ctx.project->getPath()) / "assets";
+    baseRelPrefix = "assets/";
     baseLabel = ICON_MDI_FOLDER " Assets";
   } else if (activeTab == TAB_IDX_SCRIPTS) {
     basePath = fs::path(ctx.project->getPath()) / "src" / "user";
+    baseRelPrefix = "src/user/";
     baseLabel = ICON_MDI_FOLDER " Scripts";
   }
   if (baseLabel) {
@@ -469,35 +473,31 @@ void Editor::AssetsBrowser::draw() {
     {
       for (const auto &asset : ctx.project->getAssets().getTypeEntries(type))
       {
-        std::error_code ec;
-        std::error_code absEc;
-        auto assetPathAbs = fs::absolute(fs::path(asset.path), absEc);
-        if (absEc) {
-          assetPathAbs = fs::path(asset.path);
-        }
-        auto rel = assetPathAbs.lexically_relative(basePathAbs);
-        if (ec) continue;
-        auto relStr = rel.generic_string();
-        if (relStr == ".") continue;
-        if (relStr.starts_with("..")) {
+        // projectPath is precomputed, doing this with fs::path here costs ~1us per
+        // asset and runs every frame, which adds up fast on sprite-heavy projects.
+        std::string_view relStr{asset.projectPath};
+        if (!relStr.starts_with(baseRelPrefix)) {
+          // outside this tab's base dir (e.g. node graphs live under assets/)
           if (dirState.empty()) {
             assets.push_back(&asset);
           }
           continue;
         }
+        relStr.remove_prefix(baseRelPrefix.size());
+        if (relStr.empty()) continue;
 
         if (!dirState.empty()) {
-          auto prefix = dirState + "/";
-          if (!relStr.starts_with(prefix)) {
+          if (relStr.size() <= dirState.size() ||
+              !relStr.starts_with(dirState) || relStr[dirState.size()] != '/') {
             continue;
           }
-          relStr = relStr.substr(prefix.size());
+          relStr.remove_prefix(dirState.size() + 1);
         }
 
         // Split into folders vs files at the current depth
         auto slashPos = relStr.find('/');
-        if (slashPos != std::string::npos) {
-          auto folder = relStr.substr(0, slashPos);
+        if (slashPos != std::string_view::npos) {
+          std::string folder{relStr.substr(0, slashPos)};
           if (folderSet.insert(folder).second) {
             folders.push_back(folder);
           }
@@ -614,7 +614,9 @@ void Editor::AssetsBrowser::draw() {
     const char* iconTxt = ICON_MDI_FILE_OUTLINE;
     uint64_t scrubUUID = 0;
     if (asset.texture) {
-      icon = ImTextureRef(asset.texture->getGPUTex());
+      icon = ImGui::IsRectVisible({imageSize, imageSize})
+        ? ImTextureRef(asset.texture->getGPUTex())
+        : ImTextureRef(ctx.project->getAssets().getFallbackTexture()->getGPUTex());
     } else {
       if (asset.type == FileType::MODEL_3D) {
         SDL_GPUTexture* thumb = ctx.thumbnails ? ctx.thumbnails->getModelTexture(asset.getUUID()) : nullptr;

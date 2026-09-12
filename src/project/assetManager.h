@@ -76,6 +76,8 @@ namespace Project
   {
     std::string name{};
     std::string path{};
+    // path relative to the project root, unix separators (e.g. "assets/img/x.png")
+    std::string projectPath{};
     std::string outPath{};
     std::string romPath{};
     FileType type{};
