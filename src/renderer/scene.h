@@ -3,6 +3,7 @@
 * @license MIT
 */
 #pragma once
+#include <array>
 #include <functional>
 #include <memory>
 #include <SDL3/SDL.h>
@@ -40,7 +41,8 @@ namespace Renderer
       std::unique_ptr<Shader> shaderLines{};
       std::unique_ptr<Shader> shaderSprites{};
 
-      std::unique_ptr<Pipeline> pipelineN64{};
+      // one per z-mode combination, indexed by n64PipelineIdx()
+      std::array<std::unique_ptr<Pipeline>, 4> pipelineN64{};
       std::unique_ptr<Pipeline> pipelineLines{};
       std::unique_ptr<Pipeline> pipelineSprites{};
 
@@ -68,8 +70,19 @@ namespace Renderer
 
       void addOneTimeCopyPass(const CbCopyPass& pass) { copyPassesOneTime.push_back(pass); }
 
+      // N64 z-mode packed as bit0 = read, bit1 = write
+      static constexpr int n64PipelineIdx(bool depthRead, bool depthWrite) {
+        return (depthRead ? 0b01 : 0) | (depthWrite ? 0b10 : 0);
+      }
+
+      // N64 pipeline for one z-mode. Depth test/write are fixed-function, so unlike the
+      // other render modes they can't be emulated in the shader and need a variant each.
+      Pipeline& getN64Pipeline(bool depthRead, bool depthWrite) const {
+        return *pipelineN64[n64PipelineIdx(depthRead, depthWrite)];
+      }
+
       Pipeline& getPipeline(const std::string &name) const {
-        if (name == "n64") return *pipelineN64;
+        if (name == "n64") return getN64Pipeline(true, true);
         if (name == "lines") return *pipelineLines;
         if (name == "sprites") return *pipelineSprites;
         throw std::runtime_error("Pipeline not found: " + name);

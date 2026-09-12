@@ -12,6 +12,8 @@
 #include "../../build/sceneContext.h"
 #include "../../utils/aabb.h"
 #include "../../utils/prop.h"
+#include "glm/vec3.hpp"
+#include "glm/gtc/quaternion.hpp"
 
 namespace Editor
 {
@@ -22,7 +24,7 @@ struct SDL_GPUCommandBuffer;
 struct SDL_GPUGraphicsPipeline;
 struct SDL_GPURenderPass;
 
-namespace Project { class Object; }
+namespace Project { class Object; class Scene; }
 
 namespace Project::Component
 {
@@ -35,6 +37,17 @@ namespace Project::Component
     std::shared_ptr<void> data{};
   };
 
+  // Everything transform evaluation is allowed to depend on. Filled once per frame by
+  // the viewport, so previews follow the camera you are actually looking through.
+  struct EvalCtx
+  {
+    glm::vec3 camPos{};
+    glm::quat camRot{glm::vec3(0.0f)};
+    glm::vec3 camViewDir{0,0,-1};
+    float deltaTime{0};
+    Scene *scene{nullptr};
+  };
+
   typedef void(*FuncCompDraw)(Object&, Entry &entry);
   typedef void(*FuncCompDraw3D)(Object&, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPURenderPass* pass);
   typedef void(*FuncCompCopyPass)(Object&, Entry &entry, Editor::Viewport3D &vp, SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass* pass);
@@ -43,6 +56,9 @@ namespace Project::Component
   typedef std::shared_ptr<void>(*FuncCompDeserial)(nlohmann::json &doc);
   typedef void(*FuncCompBuild)(Object&, Entry &entry, Build::SceneCtx &ctx);
   typedef Utils::AABB(*FuncCompGetAABB)(Object&, Entry &entry);
+  // Adjusts obj.display for this frame. Runs before any drawing, never touches the
+  // authored transform. See Object::display.
+  typedef void(*FuncCompEvalTransform)(Object&, Entry &entry, const EvalCtx &evalCtx);
   // UUID of the 3D model asset a component references, 0 if it references none
   typedef uint64_t(*FuncCompGetModelUUID)(const Entry &entry);
 
@@ -63,6 +79,7 @@ namespace Project::Component
     FuncCompDeserial funcDeserialize{};
     FuncCompBuild funcBuild{};
     FuncCompGetAABB funcGetAABB{};
+    FuncCompEvalTransform funcEvalTransform{};
     FuncCompGetModelUUID funcGetModelUUID{};
   };
 
@@ -78,6 +95,7 @@ namespace Project::Component
       std::shared_ptr<void> deserialize(nlohmann::json &doc); \
       void build(Object&, Entry &entry, Build::SceneCtx &ctx); \
       Utils::AABB getAABB(Object &obj, Entry &entry); \
+      void evalTransform(Object &obj, Entry &entry, const EvalCtx &evalCtx); \
       uint64_t getModelUUID(const Entry &entry); \
     }
 
@@ -250,7 +268,8 @@ namespace Project::Component
       .funcSerialize = Constraint::serialize,
       .funcDeserialize = Constraint::deserialize,
       .funcBuild = Constraint::build,
-      .funcGetAABB = nullptr
+      .funcGetAABB = nullptr,
+      .funcEvalTransform = Constraint::evalTransform
     },
     CompInfo{
       .id = 8,

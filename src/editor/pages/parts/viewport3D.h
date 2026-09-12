@@ -58,6 +58,7 @@ namespace Editor
       bool showCollMesh{false};
       bool showCollObj{true};
       bool showIcons{true};
+      bool previewTransforms{true};
       bool iconsVisible{true}; 
       bool cleanPreview{false};
 

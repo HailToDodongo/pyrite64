@@ -15,11 +15,8 @@ namespace Project::Component
     glm::vec4 persp{0,0,0,1};
     // Vertices are quantized model units, the scene works in meters, so the model's
     // vertex scale is folded into the object scale here.
-    return glm::recompose(
-      obj.scale.resolve(obj.propOverrides) * vertexScale,
-      obj.rot.resolve(obj.propOverrides),
-      obj.pos.resolve(obj.propOverrides),
-      skew, persp);
+    auto trans = obj.getDisplayTrans();
+    return glm::recompose(trans.scale * vertexScale, trans.rot, trans.pos, skew, persp);
   }
 }
 

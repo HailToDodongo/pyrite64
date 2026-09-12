@@ -44,6 +44,16 @@ namespace Project
       // visibility layer mask, cameras only draw objects matching their own mask
       Property<uint32_t> visMask{"visMask", 1};
 
+      struct Trans
+      {
+        glm::vec3 pos{0,0,0};
+        glm::quat rot{glm::vec3(0.0f)};
+        glm::vec3 scale{1,1,1};
+      };
+
+      Trans display{};
+      bool displayActive{false};
+
       bool proportionalScale{false};
       bool enabled{true};
       bool selectable{true};
@@ -105,6 +115,18 @@ namespace Project
         return propOverrides.contains(prop.id);
       }
 
+      Trans getAuthoredTrans() {
+        return {
+          pos.resolve(propOverrides),
+          rot.resolve(propOverrides),
+          scale.resolve(propOverrides)
+        };
+      }
+
+      Trans getDisplayTrans() {
+        return displayActive ? display : getAuthoredTrans();
+      }
+
       Utils::AABB getLocalAABB() const {
         Utils::AABB aabb{};
         bool hasVolume = false;
@@ -131,10 +153,8 @@ namespace Project
 
       Utils::AABB getWorldAABB() {
         Utils::AABB aabb = getLocalAABB();
-        glm::vec3 t = pos.resolve(propOverrides);
-        glm::quat r = rot.resolve(propOverrides);
-        glm::vec3 s = scale.resolve(propOverrides);
-        aabb.transform(t, r, s);
+        Trans t = getDisplayTrans();
+        aabb.transform(t.pos, t.rot, t.scale);
         return aabb;
       }
   };
