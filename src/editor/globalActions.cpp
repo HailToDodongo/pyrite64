@@ -217,15 +217,30 @@ namespace Editor::Actions
       }
       
       // copy example project as template
-      fs::copy("n64/examples/empty", newPath, 
+      std::string templateName = args.value("template", "empty");
+      fs::path templatePath = fs::path{"n64/examples"} / templateName;
+      if(templateName.empty() || templateName.find_first_of("/\\.") != std::string::npos
+        || !fs::exists(templatePath / "project.p64proj"))
+      {
+        Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to create project, invalid template: " + templateName);
+        return false;
+      }
+
+      fs::copy(templatePath, newPath,
         fs::copy_options::recursive | fs::copy_options::overwrite_existing
       );
 
-      // clear some temp files
-      fs::remove(newPath / "p64_project.z64");
+      // clear build outputs the template may contain
+      for(auto &entry : fs::directory_iterator{newPath}) {
+        auto ext = entry.path().extension();
+        if(ext == ".z64" || ext == ".pak" || ext == ".ram")fs::remove(entry.path());
+      }
       fs::remove(newPath / "Makefile");
       fs::remove_all(newPath / "build");
       fs::remove_all(newPath / "filesystem");
+      fs::remove_all(newPath / "metadata");
+      fs::remove_all(newPath / ".vscode");
+      fs::remove_all(newPath / "engine" / "build");
 
       // open project.json and patch name
       auto configPath = (newPath / "project.p64proj").string();

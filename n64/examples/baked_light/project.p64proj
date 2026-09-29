@@ -34,7 +34,7 @@
       }
     ]
   },
-  "name": "baked_light",
+  "name": "Baked Light",
   "pathEmu": "ares",
   "pathN64Inst": "",
   "romHeader": {

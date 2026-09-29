@@ -4,11 +4,18 @@
 */
 #include "createProjectOverlay.h"
 #include "../../../utils/proc.h"
+#include "json.hpp"
+#include "../../../utils/fs.h"
 #include "../../actions.h"
 #include "../../imgui/helper.h"
 #include "../../imgui/notification.h"
 #include <iostream>
 #include <cstdlib>
+#include <algorithm>
+#include <filesystem>
+#include <vector>
+
+namespace fs = std::filesystem;
 
 namespace
 {
@@ -17,6 +24,36 @@ namespace
   std::string projectName{};
   std::string projectSafeName{};
   std::string projectPath{};
+
+  struct Template
+  {
+    std::string dir{};
+    std::string name{};
+  };
+  std::vector<Template> templates{};
+  int templateIdx{0};
+
+  void scanTemplates()
+  {
+    templates.clear();
+    templateIdx = 0;
+    std::error_code ec{};
+    for(auto &entry : fs::directory_iterator{"n64/examples", ec}) {
+      auto confPath = entry.path() / "project.p64proj";
+      if(!fs::exists(confPath))continue;
+
+      Template t{.dir = entry.path().filename().string()};
+      try {
+        t.name = nlohmann::json::parse(Utils::FS::loadTextFile(confPath)).value("name", "");
+      } catch(...) {}
+      templates.push_back(t);
+    }
+
+    std::sort(templates.begin(), templates.end(), [](const Template &a, const Template &b) {
+      if((a.dir == "empty") != (b.dir == "empty"))return a.dir == "empty";
+      return a.name < b.name;
+    });
+  }
 
   std::string makeNameSafe(const std::string &name)
   {
@@ -57,6 +94,7 @@ void Editor::CreateProjectOverlay::open()
   projectName = "New Project";
   projectSafeName = makeNameSafe(projectName);
   projectPath = Utils::Proc::getProjectsPath().string();
+  scanTemplates();
 }
 
 bool Editor::CreateProjectOverlay::draw()
@@ -64,7 +102,7 @@ bool Editor::CreateProjectOverlay::draw()
   // set width/height
   ImGuiIO &io = ImGui::GetIO();
   ImGui::SetNextWindowPos({io.DisplaySize.x / 2, io.DisplaySize.y / 2}, ImGuiCond_Always, {0.5f, 0.5f});
-  ImGui::SetNextWindowSize({400_px, 300_px}, ImGuiCond_Always);
+  ImGui::SetNextWindowSize({420_px, 360_px}, ImGuiCond_Always);
 
   if (ImGui::BeginPopupModal("Create Project", nullptr,
     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
@@ -85,6 +123,16 @@ bool Editor::CreateProjectOverlay::draw()
     ImGui::Text("Project Name:");
     if(ImGui::InputText("##name", &projectName)) {
       projectSafeName = makeNameSafe(projectName);
+    }
+    ImGui::Dummy({0, 4_px});
+
+    ImGui::Text("Template:");
+    const char* templatePreview = templates.empty() ? "" : templates[templateIdx].name.c_str();
+    if(ImGui::BeginCombo("##template", templatePreview)) {
+      for(int i=0; i<(int)templates.size(); ++i) {
+        if(ImGui::Selectable(templates[i].name.c_str(), i == templateIdx))templateIdx = i;
+      }
+      ImGui::EndCombo();
     }
     ImGui::Dummy({0, 4_px});
 
@@ -132,13 +180,14 @@ bool Editor::CreateProjectOverlay::draw()
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.85f, 0.50f, 0.10f, 0.8f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-    bool canCreate = isValid && !projectName.empty() && !projectPath.empty();
+    bool canCreate = isValid && !projectName.empty() && !projectPath.empty() && !templates.empty();
     if(!canCreate)ImGui::BeginDisabled();
     if (ImGui::Button("Create", {100_px, 0})) {
       nlohmann::json args{};
       args["path"] = fullPath;
       args["name"] = projectName;
       args["rom"] = projectSafeName;
+      args["template"] = templates[templateIdx].dir;
 
       if(Editor::Actions::call(Actions::Type::PROJECT_CREATE, args.dump())) {
         projectName.clear();

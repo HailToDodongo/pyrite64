@@ -34,7 +34,7 @@
       }
     ]
   },
-  "name": "material_test",
+  "name": "Material Test-Scene",
   "pathEmu": "ares",
   "pathN64Inst": "",
   "romHeader": {
