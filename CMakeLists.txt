@@ -199,6 +199,7 @@ add_executable(pyrite64 src/main.cpp
         src/build/projectBuilder.cpp
         src/build/romMetaBuilder.h
         src/build/romMetaBuilder.cpp
+        src/build/vscodeProject.cpp
         src/utils/fs.h
         src/utils/string.h
         src/utils/proc.h

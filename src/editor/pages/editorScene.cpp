@@ -478,7 +478,9 @@ void Editor::Scene::draw()
       {
         if(ImGui::MenuItem(ICON_MDI_HAMMER " Build"))Actions::call(Actions::Type::PROJECT_BUILD);
         if(ImGui::MenuItem(ICON_MDI_PLAY " Build & Run"))Actions::call(Actions::Type::PROJECT_BUILD, "run");
-        if(ImGui::MenuItem("Clean"))Actions::call(Actions::Type::PROJECT_CLEAN);
+        if(ImGui::MenuItem(ICON_MDI_BROOM " Clean"))Actions::call(Actions::Type::PROJECT_CLEAN);
+        ImGui::Separator();
+        if(ImGui::MenuItem(ICON_MDI_MICROSOFT_VISUAL_STUDIO_CODE " VSCode Setup"))Actions::call(Actions::Type::PROJECT_GEN_VSCODE);
         ImGui::EndMenu();
       }
 

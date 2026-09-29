@@ -37,6 +37,13 @@ namespace
     #endif
   }
 
+  fs::path getToolchainPath(const std::string &projectN64Inst)
+  {
+    // the project path may be an MSYS2 path on Windows, only use it if valid natively
+    if(!projectN64Inst.empty() && fs::exists(projectN64Inst))return projectN64Inst;
+    return ctx.toolchain.getState().toolchainPath;
+  }
+
   /// Saves the project and kicks off the build on a worker thread. See Type::PROJECT_BUILD.
   void startBuild(const std::string &arg)
   {
@@ -174,6 +181,20 @@ namespace Editor::Actions
       });
     });
 
+    registerAction(Type::PROJECT_GEN_VSCODE, [](const std::string&) {
+      if (!ctx.project)return false;
+      bool res = Build::generateVSCodeProject(
+        ctx.project->getPath(), ctx.project->getConfigPath(),
+        getToolchainPath(ctx.project->conf.pathN64Inst)
+      );
+      if(res) {
+        Editor::Noti::add(Editor::Noti::Type::SUCCESS, "VSCode project generated!");
+      } else {
+        Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to generate VSCode project, see log");
+      }
+      return res;
+    });
+
     registerAction(Type::PROJECT_CREATE, [](const std::string &payload)
     {
       if(ctx.project)return false;
@@ -213,6 +234,7 @@ namespace Editor::Actions
       configJSON["romName"] = args["rom"];
       Utils::FS::saveTextFile(configPath, configJSON.dump(2));
 
+      Build::generateVSCodeProject(newPath, configPath, getToolchainPath(""));
       return true;
     });
 

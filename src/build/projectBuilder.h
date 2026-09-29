@@ -49,6 +49,8 @@ namespace Build
   };
   bool cleanProject(const Project::Project &project, const CleanArgs &args = {});
 
+  bool generateVSCodeProject(const fs::path &projectPath, const fs::path &configPath, const fs::path &toolchainPath);
+
   // individual parts
   // runtimeId and parentRuntimeId are this node's ids. 'expanding' is true once the walk
   // has descended into a prefab definition. Nested children then get build-time ids from

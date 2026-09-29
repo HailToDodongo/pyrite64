@@ -16,6 +16,7 @@ namespace Editor::Actions
     PROJECT_BUILD,
     PROJECT_CREATE,
     PROJECT_CLEAN,
+    PROJECT_GEN_VSCODE,
     ASSETS_RELOAD,
     COPY, PASTE,
 
