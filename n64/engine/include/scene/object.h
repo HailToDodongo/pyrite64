@@ -36,12 +36,13 @@ namespace P64
       uint16_t id{};
       uint16_t group{};
       uint16_t flags{};
-      uint16_t compCount{0};
+      uint8_t compCount{0};
+      uint8_t visMask{0xFF};
 
       // extra data, is overlapping with component data if unused
       fm_quat_t rot{};
-      fm_vec3_t pos{};
-      fm_vec3_t scale{};
+      fm_vec3_t pos{};   // world position in meters
+      fm_vec3_t scale{}; // unitless multiplier of the model's authored size
 
       // component references, this is then also followed by a buffer for the actual data
       // the object allocation logic keeps extra space to fit everything

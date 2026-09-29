@@ -8,7 +8,7 @@
   "collLayer6": "Layer 6",
   "collLayer7": "Layer 7",
   "debugMenu": true,
-  "editorVersion": "0.8.0",
+  "editorVersion": "0.9.0",
   "metadata": {
     "enabled": false,
     "langs": [
@@ -34,7 +34,7 @@
       }
     ]
   },
-  "name": "material_test",
+  "name": "Material Test-Scene",
   "pathEmu": "ares",
   "pathN64Inst": "",
   "romHeader": {
@@ -53,5 +53,13 @@
   "romName": "material_test",
   "sceneIdLastOpened": 2,
   "sceneIdOnBoot": 2,
-  "sceneIdOnReset": 2
+  "sceneIdOnReset": 2,
+  "visLayer0": "Default",
+  "visLayer1": "",
+  "visLayer2": "",
+  "visLayer3": "",
+  "visLayer4": "",
+  "visLayer5": "",
+  "visLayer6": "",
+  "visLayer7": ""
 }

@@ -5,11 +5,24 @@
 #include <renderer/material.h>
 
 #include "lib/logger.h"
+#include "renderer/renderScale.h"
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
 
 namespace
 {
+  // Nudges the light off the eye so a vertex right at the camera still has a defined direction. Offset is in meters
+  constexpr fm_vec3_t FRESNEL_EYE_OFFSET = {0.02f, 0.02f, 0.02f};
+
+  /**
+   * t3d_light_set_point() caps the size at 0x2000 * 0.5 render units, 
+   * so asking for exactly that keeps the effect the same at any render scale.
+   * Radius is in meters.
+   */
+  float fresnelLightRadius() {
+    return 4096.0f * P64::Renderer::getInvRenderScale();
+  }
+
   struct DynamicData
   {
     char* data{};
@@ -114,8 +127,8 @@ void P64::Renderer::MaterialInstance::begin(Object &obj)
     for(int i=0; i<fresnel; ++i) {
       light.addPointLight(
         colorFresnel,
-        cam.getPos() + fm_vec3_t{2.0f, 2.0f, 2.0f},
-        10000.0f
+        cam.getPos() + FRESNEL_EYE_OFFSET,
+        fresnelLightRadius()
       );
     }
 
@@ -151,8 +164,9 @@ void P64::Renderer::Material::begin(MaterialState &state)
   uint8_t t3dVertFxFunc{};
   uint16_t t3dVertFxArg0{};
   uint16_t t3dVertFxArg1{};
+  int16_t t3dDepthOffset{};
 
-  /*debugf("Mat: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+  /*debugf("Mat: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
     sets(FLAG_OVERRIDE)   ? "Overrd" : "  --  ", sets(FLAG_TEX0)        ? " TEX0 " : "  --  ",
     sets(FLAG_TEX1)       ? " TEX1 " : "  --  ", sets(FLAG_CC)          ? "  CC  " : "  --  ",
     sets(FLAG_BLENDER)    ? "BLEND " : "  --  ", sets(FLAG_FOG)         ? " Fog  " : "  --  ",
@@ -161,7 +175,8 @@ void P64::Renderer::Material::begin(MaterialState &state)
     sets(FLAG_ALPHA_COMP) ? "A-Comp" : "  --  ", sets(FLAG_K4K5)        ? " K4K5 " : "  --  ",
     sets(FLAG_PRIMLOD)    ? "P-LOD " : "  --  ", sets(FLAG_AA)          ? "  AA  " : "  --  ",
     sets(FLAG_DITHER)     ? "Dither" : "  --  ", sets(FLAG_FILTER)      ? "Filter" : "  --  ",
-    sets(FLAG_ZMODE)      ? "ZMode " : "  --  ", sets(FLAG_PERSP)       ? "Persp." : "  --  "
+    sets(FLAG_ZMODE)      ? "ZMode " : "  --  ", sets(FLAG_PERSP)       ? "Persp." : "  --  ",
+    sets(FLAG_T3D_ZOFFSET) ? "Z-Offs" : "  --  "
   );*/
 
   if(sets(FLAG_OVERRIDE)) {
@@ -229,6 +244,10 @@ void P64::Renderer::Material::begin(MaterialState &state)
     rdpq_mode_zoverride(true, zPrim, zDelta);
   }
 
+  if(sets(FLAG_T3D_ZOFFSET)) {
+    t3dDepthOffset = ptr.fetch<int16_t>();
+  }
+
   if(sets(FLAG_T3D_VERT_FX)) {
     t3dVertFxArg0 = ptr.fetch<uint16_t>();
     t3dVertFxArg1 = ptr.fetch<uint16_t>();
@@ -272,6 +291,9 @@ void P64::Renderer::Material::begin(MaterialState &state)
       t3dVertFxArg0, t3dVertFxArg1
     );
   }
+  if(sets(FLAG_T3D_ZOFFSET)) {
+    t3d_state_set_depth_offset(t3dDepthOffset);
+  }
 
   // @TODO: optimize to u8
   t3d_state_set_drawflags(static_cast<T3DDrawFlags>(t3dDrawFlags));
@@ -281,6 +303,9 @@ void P64::Renderer::Material::end(MaterialState &state)
 {
   if(sets(FLAG_T3D_VERT_FX)) {
     t3d_state_set_vertex_fx(T3D_VERTEX_FX_NONE, 0, 0);
+  }
+  if(sets(FLAG_T3D_ZOFFSET)) {
+    t3d_state_set_depth_offset(0);
   }
   if(sets(FLAG_OVERRIDE)) {
     rdpq_mode_pop();

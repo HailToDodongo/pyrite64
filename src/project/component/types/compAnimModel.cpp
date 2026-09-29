@@ -64,6 +64,13 @@ namespace Project::Component::AnimModel
     return std::make_shared<Data>();
   }
 
+  void setModel(Entry &entry, uint64_t modelUUID)
+  {
+    Data &data = *static_cast<Data*>(entry.data.get());
+    data.model.value = modelUUID;
+    data.obj3D.removeMesh();
+  }
+
   nlohmann::json serialize(const Entry &entry)
   {
     Data &data = *static_cast<Data*>(entry.data.get());
@@ -330,7 +337,7 @@ namespace Project::Component::AnimModel
         }
         data.aabb = asset->mesh3D->getAABB();
         data.obj3D.setMesh(asset->mesh3D);
-        data.skeleton = std::make_shared<Renderer::Skeleton>(ctx.gpu, asset->model, asset->conf.baseScale);
+        data.skeleton = std::make_shared<Renderer::Skeleton>(ctx.gpu, asset->model, asset->model.autoBaseScale);
       }
     }
 
@@ -342,19 +349,12 @@ namespace Project::Component::AnimModel
 
     data.obj3D.setObjectID(obj.uuid);
 
-    // @TODO: tidy-up
-    glm::vec3 skew{0,0,0};
-    glm::vec4 persp{0,0,0,1};
-    data.obj3D.uniform.modelMat = glm::recompose(
-      obj.scale.resolve(obj.propOverrides),
-      obj.rot.resolve(obj.propOverrides),
-      obj.pos.resolve(obj.propOverrides),
-      skew, persp);
-
     auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
     if (!asset || !asset->mesh3D) {
       return;
     }
+
+    data.obj3D.uniform.modelMat = makeModelMatrix(obj, 1.0f / asset->model.autoBaseScale);
 
     for(auto &anim : asset->model.t3dm.animations)
     {
@@ -365,20 +365,31 @@ namespace Project::Component::AnimModel
       }
     }
 
+    bool layerDepthRead = true;
+    bool layerDepthWrite = true;
+    auto &layers = ctx.project->getScenes().getLoadedScene()->conf.layers3D;
+    auto layerIdx = data.layerIdx.resolve(obj);
+    if(layerIdx >= 0 && layerIdx < (int)layers.size()) {
+      layerDepthRead = layers[layerIdx].depthCompare.resolve(obj);
+      layerDepthWrite = layers[layerIdx].depthWrite.resolve(obj);
+    }
+
     data.skeleton->use(pass);
     data.obj3D.draw(pass, cmdBuff, {
       .partsIndices = {},
       .model = &asset->model,
       .matInstance = &data.material,
-      .obj = obj
+      .obj = obj,
+      .layerDepthRead = layerDepthRead,
+      .layerDepthWrite = layerDepthWrite
     });
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)
     {
       Utils::AABB aabb = data.aabb;
-      auto center = obj.pos.resolve(obj.propOverrides) + (aabb.getCenter() * obj.scale.resolve(obj.propOverrides) * (float)0xFFFF);
-      auto halfExt = aabb.getHalfExtend() * obj.scale.resolve(obj.propOverrides) * (float)0xFFFF;
+      auto center = obj.pos.resolve(obj.propOverrides) + (aabb.getCenter() * obj.scale.resolve(obj.propOverrides));
+      auto halfExt = aabb.getHalfExtend() * obj.scale.resolve(obj.propOverrides);
 
       glm::u8vec4 aabbCol{0xAA,0xAA,0xAA,0xFF};
       if (isSelected) {
@@ -393,9 +404,24 @@ namespace Project::Component::AnimModel
 
   Utils::AABB getAABB(Object &obj, Entry &entry) {
     Data &data = *static_cast<Data*>(entry.data.get());
-    Utils::AABB aabb = data.aabb;
-    aabb.min *= (float)0xFFFF;
-    aabb.max *= (float)0xFFFF;
+    Utils::AABB aabb{};
+    auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
+    if (!asset) return aabb;
+
+    // Use the imported bind-pose geometry so bounds are available before first render.
+    // Positions are quantized vertex units, scale them back to meters.
+    float vertexScale = 1.0f / asset->model.autoBaseScale;
+    for (const auto &model : asset->model.t3dm.models) {
+      for (const auto &triangle : model.triangles) {
+        for (const auto &vert : triangle.vert) {
+          aabb.addPoint(glm::vec3{vert.pos[0], vert.pos[1], vert.pos[2]} * vertexScale);
+        }
+      }
+    }
     return aabb;
   }
+  uint64_t getModelUUID(const Entry &entry) {
+    return static_cast<const Data*>(entry.data.get())->model.value;
+  }
+
 }

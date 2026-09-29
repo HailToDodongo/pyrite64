@@ -17,7 +17,7 @@ namespace P64::Math
   constexpr fm_quat_t QUAT_IDENTITY = {0.0f, 0.0f, 0.0f, 1.0f};
   constexpr fm_vec3_t VEC3_UP = {0.0f, 1.0f, 0.0f};
   constexpr fm_vec3_t VEC3_RIGHT = {1.0f, 0.0f, 0.0f};
-  constexpr fm_vec3_t VEC3_FORWARD = {0.0f, 0.0f, 1.0f};
+  constexpr fm_vec3_t VEC3_FORWARD = {0.0f, 0.0f, -1.0f};
   constexpr fm_vec3_t VEC3_ZERO = {0.0f, 0.0f, 0.0f};
 
   constexpr uint32_t alignUp(uint32_t val, uint32_t alignTo) {

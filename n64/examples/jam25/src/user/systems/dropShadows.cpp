@@ -9,6 +9,7 @@
 
 #include "../../p64/assetTable.h"
 #include "lib/matrixManager.h"
+#include "renderer/renderScale.h"
 #include "debug/debugDraw.h"
 
 namespace
@@ -96,9 +97,12 @@ namespace P64::User::DropShadows
   }
 
   void addShadow(const fm_vec3_t &pos_, const fm_vec3_t &normal, float size, float strength) {
-    size *= 50;
+    // vertices are written straight into a t3d buffer, so convert the meter-space
+    // input into the render units for the RSP
+    float renderScale = P64::Renderer::getRenderScale();
+    size *= 0.5f * renderScale;
 
-    auto pos = pos_ + normal*2;
+    auto pos = (pos_ + normal * 0.02f) * renderScale;
 
     if (shadowCount < MAX_SHADOWS) {
       auto posA = t3d_vertbuffer_get_pos(currVertBuff, vertOffset+2);

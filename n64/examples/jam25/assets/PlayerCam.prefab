@@ -5,9 +5,15 @@
       {
         "data": {
           "aspect": 0.0,
-          "far": 500.0,
+          "far": 12.0,
           "fov": 75.0,
-          "near": 15.0,
+          "mode": 0,
+          "near": 0.14999999105930328,
+          "orthoSize": 0.029999999329447746,
+          "projection": 0,
+          "targetMode": 0,
+          "targetObjUUID": 0,
+          "visMask": 255,
           "vpOffset": [
             0,
             0
@@ -17,6 +23,7 @@
             240
           ]
         },
+        "enabled": true,
         "id": 3,
         "name": "Camera",
         "uuid": 591397515709753079
@@ -29,20 +36,21 @@
           },
           "script": 14399702542144614172
         },
+        "enabled": true,
         "id": 0,
         "name": "Code",
         "uuid": 6507494994126332152
       }
     ],
     "enabled": true,
-    "id": 7,
     "name": "PlayerCam",
     "pos": [
-      -6.179775238037109,
-      79.23812866210938,
-      231.6162567138672
+      -0.06179774925112724,
+      0.7923812866210938,
+      2.316162586212158
     ],
     "propOverrides": {},
+    "proportionalScale": false,
     "rot": [
       0.0,
       0.0,
@@ -56,7 +64,9 @@
     ],
     "selectable": true,
     "uuid": 899220285,
-    "uuidPrefab": 0
+    "uuidPrefab": 0,
+    "visMask": 1
   },
-  "uuid": 3582011595
+  "uuid": 3582011595,
+  "version": 2
 }

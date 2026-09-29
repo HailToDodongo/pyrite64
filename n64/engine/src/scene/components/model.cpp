@@ -11,6 +11,7 @@
 #include "../../renderer/bigtex/bigtex.h"
 #include "lib/logger.h"
 #include "renderer/material.h"
+#include "renderer/renderScale.h"
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
 
@@ -107,6 +108,7 @@ namespace P64::Comp
 
     data->model = (T3DModel*)AssetManager::getByIndex(initData->assetIdx);
     assert(data->model != nullptr);
+    data->vertexScale = AssetManager::getVertexScale(initData->assetIdx);
     data->layerIdx = initData->layer;
     data->flags = initData->flags;
 
@@ -159,7 +161,7 @@ namespace P64::Comp
   void Model::draw(Object &obj, Model* data, float deltaTime)
   {
     auto mat = data->matFP.getNext();
-    t3d_mat4fp_from_srt(mat, obj.scale, obj.rot, obj.pos);
+    Renderer::fillModelMatrixFP(mat, obj.scale, obj.rot, obj.pos, data->vertexScale);
 
     if(data->layerIdx)DrawLayer::use3D(data->layerIdx);
     auto &material = data->getMatInstance();
@@ -172,7 +174,8 @@ namespace P64::Comp
 
     if (data->flags & FLAG_CULLING) {
       auto frustum = t3d_viewport_get()->viewFrustum;
-      t3d_frustum_scale(&frustum, obj.scale.x); // @TODO: handle non-uniform scale
+      // map the world-space frustum into the model's vertex space // @TODO: handle non-uniform scale
+      t3d_frustum_scale(&frustum, obj.scale.x * (data->vertexScale * Renderer::getRenderScale()));
 
       const T3DBvh *bvh = t3d_model_bvh_get(data->model); assert(bvh);
       t3d_model_bvh_query_frustum(bvh, &frustum);

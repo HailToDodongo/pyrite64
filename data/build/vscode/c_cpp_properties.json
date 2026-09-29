@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "name": "N64",
+      "compilerPath": "{{COMPILER_PATH}}",
+      "intelliSenseMode": "linux-gcc-x64",
+      "cStandard": "gnu17",
+      "cppStandard": "gnu++20",
+      "includePath": [
+        "${workspaceFolder}/src",
+        "${workspaceFolder}/src/user",
+        "${workspaceFolder}/engine/include",
+        "{{N64_INST}}/mips64-elf/include",
+        "{{N64_INST}}/include"
+      ],
+      "defines": [
+        "N64",
+        "LIBDRAGON_PREVIEW=2"
+      ]
+    }
+  ],
+  "version": 4
+}

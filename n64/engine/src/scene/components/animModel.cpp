@@ -9,6 +9,7 @@
 
 #include "../../renderer/bigtex/bigtex.h"
 #include "renderer/material.h"
+#include "renderer/renderScale.h"
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
 
@@ -175,6 +176,7 @@ namespace P64::Comp
 
     data->model = (T3DModel*)AssetManager::getByIndex(initData->assetIdx);
     assert(data->model != nullptr);
+    data->vertexScale = AssetManager::getVertexScale(initData->assetIdx);
     data->layerIdx = initData->layer;
     data->flags = initData->flags;
 
@@ -302,7 +304,7 @@ namespace P64::Comp
   void AnimModel::draw(Object &obj, AnimModel* data, [[maybe_unused]] float deltaTime)
   {
     auto mat = data->matFP.getNext();
-    t3d_mat4fp_from_srt(mat, obj.scale, obj.rot, obj.pos);
+    Renderer::fillModelMatrixFP(mat, obj.scale, obj.rot, obj.pos, data->vertexScale);
 
     if(data->layerIdx)DrawLayer::use3D(data->layerIdx);
 

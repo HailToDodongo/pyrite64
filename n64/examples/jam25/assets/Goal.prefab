@@ -61,6 +61,7 @@
           "meshFilter": "Outer",
           "model": 5873588011152101620
         },
+        "enabled": true,
         "id": 1,
         "name": "Model (Static)",
         "uuid": 1292144841195497982
@@ -124,6 +125,7 @@
           "meshFilter": "Inner",
           "model": 5873588011152101620
         },
+        "enabled": true,
         "id": 1,
         "name": " Copy",
         "uuid": 3153656564097790663
@@ -133,20 +135,21 @@
           "bounce": 0.0,
           "friction": 0.800000011920929,
           "halfExtend": [
-            15.0,
-            15.0,
-            15.0
+            0.9375,
+            0.9375,
+            0.9375
           ],
           "isTrigger": true,
           "maskRead": 4,
           "maskWrite": 0,
           "offset": [
             0.0,
-            20.0,
+            1.25,
             0.0
           ],
           "type": 1
         },
+        "enabled": true,
         "id": 5,
         "name": "Collision-Body",
         "uuid": 4751107092302757394
@@ -160,6 +163,7 @@
           },
           "script": 13947773430842915973
         },
+        "enabled": true,
         "id": 0,
         "name": "Code",
         "uuid": 3872373312472777256
@@ -168,20 +172,21 @@
         "data": {
           "asset": 3546436722396576303,
           "autoRun": false,
-          "repeatable": false
+          "objRefs": {},
+          "varDefaults": {}
         },
+        "enabled": true,
         "id": 9,
         "name": "Node Graph",
         "uuid": 8877302676670451240
       }
     ],
     "enabled": true,
-    "id": 1,
     "name": "Goal",
     "pos": [
-      -60.0,
+      -0.5999999642372131,
       0.0,
-      300.0
+      3.0
     ],
     "propOverrides": {},
     "proportionalScale": false,
@@ -192,13 +197,15 @@
       1.0
     ],
     "scale": [
-      1.0,
-      1.0,
-      1.0
+      0.1599999964237213,
+      0.1599999964237213,
+      0.1599999964237213
     ],
     "selectable": true,
     "uuid": 1392473973,
-    "uuidPrefab": 0
+    "uuidPrefab": 0,
+    "visMask": 1
   },
-  "uuid": 1245864117
+  "uuid": 1245864117,
+  "version": 2
 }

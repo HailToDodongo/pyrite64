@@ -69,6 +69,7 @@ void Utils::Toolchain::scan()
   if(state.hasLibdragon && state.hasTiny3d)
   {
     auto rspqHeader = FS::loadTextFile(state.toolchainPath / "mips64-elf" / "include" / "rspq.h");
+    auto fgeomHeader = FS::loadTextFile(state.toolchainPath / "mips64-elf" / "include" / "fgeom.h");
     auto t3dHeader = FS::loadTextFile(state.toolchainPath / "mips64-elf" / "include" / "t3d" / "t3d.h");
 
     state.upToDateLibs = true;
@@ -80,8 +81,16 @@ void Utils::Toolchain::scan()
       printf("Libdragon out of date, missing 'rspq_block_set_placeholder' in rspq.h\n");
       state.upToDateLibs = false;
     }
+    if(!fgeomHeader.contains("operator==(fm_vec3_t")) {
+      printf("Libdragon out of date, missing operator '==' for fm_vec3_t in fgeom.h\n");
+      state.upToDateLibs = false;
+    }
     if(!t3dHeader.contains("t3d_state_set_lighting_mode")) {
       printf("tiny3d out of date, missing 't3d_state_set_lighting_mode' in t3d.h\n");
+      state.upToDateLibs = false;
+    }
+    if(!t3dHeader.contains("#define T3D_LIB_VER_MAJOR 1")) {
+      printf("tiny3d out of date, missing '#define T3D_LIB_VER_MAJOR 1' in t3d.h\n");
       state.upToDateLibs = false;
     }
   }

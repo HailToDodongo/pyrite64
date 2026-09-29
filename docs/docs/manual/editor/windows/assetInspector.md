@@ -21,7 +21,9 @@ See {doc}`Images <../../assets/images>` for details on the texture formats.
 
 | Option | Description |
 |--------|-------------|
-| **Base-Scale** | A scale applied to the model on import. Changing it reloads the asset. |
+| **Vertex-Precision** | Read-only. The step size vertex positions are quantized to, derived from the model's bounding box so the 16bit range is used as well as possible. |
+| **Manual Precision** | Overrides the automatic value. For example when an animation moves vertices outside the model's rest-pose bounds. |
+| **Units Per Meter** | Only with **Manual Precision** enabled: the quantization factor to use. Lower values give more headroom at cost of precision. Changing it reloads the asset. |
 | **Create BVH** | Builds a bounding-volume hierarchy, required for per-object culling on the {doc}`Model <../components/model>` component. |
 
 See {doc}`3D Models <../../assets/model3d>` for the model pipeline.

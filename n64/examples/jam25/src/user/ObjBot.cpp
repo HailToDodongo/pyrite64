@@ -7,14 +7,14 @@
 
 namespace
 {
-  constexpr float MOVE_SPEED = 100.0f;
+  constexpr float MOVE_SPEED = 1.0f;
   constexpr float MOVE_SPEED_SLOWDOWN = 0.75f;
 
   constexpr float ROT_SPEED = 1.6f;
   constexpr float ROT_SPEED_SLOWDOWN = 0.8f;
 
   constexpr fm_vec3_t UP{0.0f, 1.0f, 0.0f};
-  constexpr fm_vec3_t COLL_OFFSET{0.0f, 20.0f, 0.0f};
+  constexpr fm_vec3_t COLL_OFFSET{0.0f, 0.2f, 0.0f};
 }
 
 namespace P64::Script::C4F4D286D6CB0DE3
@@ -50,7 +50,7 @@ namespace P64::Script::C4F4D286D6CB0DE3
     if(obj.id != User::ctx.controlledId)
     {
       auto &cam = SceneManager::getCurrent().getActiveCamera();
-      auto screenPos = cam.getScreenPos(obj.pos + fm_vec3_t{0.0f, 20.0f, 0.0f});
+      auto screenPos = cam.getScreenPos(obj.pos + fm_vec3_t{0.0f, 0.2f, 0.0f});
       if(screenPos.z > 1)return;
       if(screenPos.x < 16 || screenPos.x > 320-16)return;
       if(screenPos.y < 16 || screenPos.y > 240-16)return;
@@ -98,8 +98,8 @@ namespace P64::Script::C4F4D286D6CB0DE3
       // bcs.velocity += dir * MOVE_SPEED;
     }
 
-    auto camPos = obj.pos + fm_vec3_t{0.0f, 39.0f, 0.0f};
-    fm_vec3_t camTarget{0.0f, 0.0f, -100.0f};
+    auto camPos = obj.pos + fm_vec3_t{0.0f, 0.39f, 0.0f};
+    fm_vec3_t camTarget{0.0f, 0.0f, -1.0f};
     camTarget = camPos + (obj.rot * camTarget);
 
     auto &cam = SceneManager::getCurrent().getActiveCamera();

@@ -27,7 +27,7 @@ namespace P64::Script::C48BB14F061323F6
     data->camRotX = 1.544792654048f;
     data->camRotY = 4.05f;
 
-    data->camPos = {140, 240, 260};
+    data->camPos = {1.4f, 2.4f, 2.6f};
     data->camPosCur = data->camPos;
   }
 
@@ -38,7 +38,7 @@ namespace P64::Script::C48BB14F061323F6
 
     auto joypad = joypad_get_inputs(JOYPAD_PORT_1);
     float camRotSpeed = deltaTime * 0.01f;
-    float camSpeed = deltaTime * 5.01f;
+    float camSpeed = deltaTime * 0.05f;
 
     data->camDir.v[0] = fm_cosf(data->camRotX) * fm_cosf(data->camRotY);
     data->camDir.v[1] = fm_sinf(data->camRotY);

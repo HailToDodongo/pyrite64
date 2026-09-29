@@ -4,7 +4,7 @@
 namespace
 {
   constexpr float bobSpeed = 2.0f;
-  constexpr float wobbleAmplitude = 40.0f;
+  constexpr float wobbleAmplitude = 0.4f;
   constexpr float wobbleSpeed = 1.2f;
   constexpr float rotAmplitude = 0.10f;
   constexpr float rotSpeed = 1.1f;
@@ -34,7 +34,7 @@ namespace P64::Script::C3F36ABD43F3FD05
     data->time += deltaTime;
 
     float wobbleOffset = fm_cosf(data->time * wobbleSpeed) * wobbleAmplitude;
-    wobbleOffset += 5;
+    wobbleOffset += 0.05f;
 
     // Rotation (roll and pitch)
     float roll = fm_sinf(data->time * rotSpeed) * rotAmplitude; // Z axis (side to side)
@@ -48,11 +48,11 @@ namespace P64::Script::C3F36ABD43F3FD05
         // Move towards target Z as before
         if(obj.pos.z < 0)
         {
-          constexpr float targetZ = -310.0f;
-          constexpr float slowDownDist = 130.0f;
+          constexpr float targetZ = -3.1f;
+          constexpr float slowDownDist = 1.3f;
           float distToTarget = targetZ - obj.pos.z;
           float speedFactor = fminf(distToTarget / slowDownDist, 1.0f);
-          obj.pos.z += 600.0f * speedFactor * deltaTime;
+          obj.pos.z += 6.0f * speedFactor * deltaTime;
           if(obj.pos.z > targetZ)
           {
             obj.pos.z = targetZ;

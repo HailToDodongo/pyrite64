@@ -50,7 +50,10 @@ namespace Project
   {
     uint64_t uuid{0};
     int format{0};
+    // legacy import scale for models (kept for scene migration), point size for fonts
     int baseScale{0};
+    // optional manual override of the auto-computed model import scale (0 = auto)
+    int baseScaleOverride{0};
     bool gltfBVH{0};
 
     ComprTypes compression{ComprTypes::DEFAULT};
@@ -73,6 +76,8 @@ namespace Project
   {
     std::string name{};
     std::string path{};
+    // path relative to the project root, unix separators (e.g. "assets/img/x.png")
+    std::string projectPath{};
     std::string outPath{};
     std::string romPath{};
     FileType type{};

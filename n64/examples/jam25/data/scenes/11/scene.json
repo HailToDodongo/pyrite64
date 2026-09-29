@@ -81,8 +81,8 @@
     "physicsTickRate": 50,
     "positionSolverIterations": 6,
     "renderPipeline": 0,
-    "velocitySolverIterations": 7,
-    "visualUnitsPerMeter": 100.0
+    "renderScale": 100.0,
+    "velocitySolverIterations": 7
   },
   "graph": {
     "children": [
@@ -92,10 +92,15 @@
           {
             "data": {
               "aspect": 0.0,
-              "far": 1000.0,
+              "far": 10.0,
               "fov": 75.0,
               "mode": 0,
-              "near": 10.0,
+              "near": 0.09999999403953552,
+              "orthoSize": 0.029999999329447746,
+              "projection": 0,
+              "targetMode": 0,
+              "targetObjUUID": 0,
+              "visMask": 255,
               "vpOffset": [
                 0,
                 0
@@ -105,6 +110,7 @@
                 240
               ]
             },
+            "enabled": true,
             "id": 3,
             "name": "Camera",
             "uuid": 16427684098203612843
@@ -118,9 +124,10 @@
                 0.4745098054409027
               ],
               "index": 0,
-              "size": 50.0,
+              "size": 0.5,
               "type": 0
             },
+            "enabled": true,
             "id": 2,
             "name": "Light",
             "uuid": 9788230890520147479
@@ -134,6 +141,7 @@
               },
               "script": 14151449751811836530
             },
+            "enabled": true,
             "id": 0,
             "name": "Code",
             "uuid": 16379213148722549909
@@ -142,20 +150,21 @@
             "data": {
               "asset": 173709406110029613,
               "autoRun": true,
-              "repeatable": false
+              "objRefs": {},
+              "varDefaults": {}
             },
+            "enabled": true,
             "id": 9,
             "name": "Node Graph",
             "uuid": 325639232898908950
           }
         ],
         "enabled": true,
-        "id": 1,
         "name": "Cam",
         "pos": [
-          107.99051666259766,
-          49.33186721801758,
-          312.8325500488281
+          1.0799051523208618,
+          0.493318647146225,
+          3.1283254623413086
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -172,12 +181,12 @@
         ],
         "selectable": true,
         "uuid": 1896567566,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       }
     ],
     "components": [],
     "enabled": true,
-    "id": 0,
     "name": "Scene",
     "pos": [
       0.0,
@@ -199,6 +208,8 @@
     ],
     "selectable": true,
     "uuid": 4252910706,
-    "uuidPrefab": 0
-  }
+    "uuidPrefab": 0,
+    "visMask": 1
+  },
+  "version": 2
 }

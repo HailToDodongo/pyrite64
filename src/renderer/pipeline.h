@@ -26,7 +26,9 @@ namespace Renderer
       {
         const Renderer::Shader &shader;
         SDL_GPUPrimitiveType prim{};
-        bool useDepth{};
+        bool depthTest{true};
+        bool depthWrite{true};
+        SDL_GPUCompareOp depthCompare{SDL_GPU_COMPAREOP_LESS};
         bool drawsObjID{};
         bool translucent{};
         uint32_t vertPitch{};

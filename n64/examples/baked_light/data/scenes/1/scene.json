@@ -98,8 +98,8 @@
     "physicsTickRate": 50,
     "positionSolverIterations": 6,
     "renderPipeline": 0,
-    "velocitySolverIterations": 7,
-    "visualUnitsPerMeter": 100.0
+    "renderScale": 100.0,
+    "velocitySolverIterations": 7
   },
   "graph": {
     "children": [
@@ -109,10 +109,15 @@
           {
             "data": {
               "aspect": 0.0,
-              "far": 800.0,
+              "far": 16.0,
               "fov": 65.0,
               "mode": 0,
-              "near": 50.0,
+              "near": 0.5,
+              "orthoSize": 0.029999999329447746,
+              "projection": 0,
+              "targetMode": 0,
+              "targetObjUUID": 0,
+              "visMask": 255,
               "vpOffset": [
                 0,
                 0
@@ -122,6 +127,7 @@
                 240
               ]
             },
+            "enabled": true,
             "id": 3,
             "name": "Camera",
             "uuid": 591397515709753079
@@ -131,18 +137,18 @@
               "args": {},
               "script": 14162608406159107062
             },
+            "enabled": true,
             "id": 0,
             "name": "Code",
             "uuid": 16549120563115437213
           }
         ],
         "enabled": true,
-        "id": 1,
         "name": "Camera",
         "pos": [
           0.0,
-          363.2380065917969,
-          420.00921630859375
+          3.6323800086975098,
+          4.20009183883667
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -159,7 +165,8 @@
         ],
         "selectable": true,
         "uuid": 2593312191,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       },
       {
         "children": [],
@@ -173,21 +180,21 @@
                 0.0
               ],
               "index": 0,
-              "size": 50.0,
+              "size": 0.5,
               "type": 0
             },
+            "enabled": true,
             "id": 2,
             "name": "Light",
             "uuid": 17810945128247966012
           }
         ],
         "enabled": true,
-        "id": 3,
         "name": "Ambient Light",
         "pos": [
           -0.0,
-          380.0,
-          250.0
+          3.799999952316284,
+          2.5
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -204,7 +211,8 @@
         ],
         "selectable": true,
         "uuid": 2808468358,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       },
       {
         "children": [],
@@ -244,18 +252,18 @@
               "meshFilter": "",
               "model": 5571486329968408081
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 6779675580221722013
           }
         ],
         "enabled": true,
-        "id": 2,
         "name": "Model",
         "pos": [
-          122.05777740478516,
-          -91.54431915283203,
-          -2.396625518798828
+          1.2205777168273926,
+          -0.9154431819915771,
+          -0.02396625466644764
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -266,13 +274,14 @@
           1.0
         ],
         "scale": [
-          1.0,
-          1.0,
-          1.0
+          0.6399999856948853,
+          0.6399999856948853,
+          0.6399999856948853
         ],
         "selectable": true,
         "uuid": 4006332953,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       },
       {
         "children": [],
@@ -286,9 +295,10 @@
                 0.0
               ],
               "index": 0,
-              "size": 500.0,
+              "size": 5.0,
               "type": 2
             },
+            "enabled": true,
             "id": 2,
             "name": "Light",
             "uuid": 4897907279583773594
@@ -298,6 +308,7 @@
               "args": {},
               "script": 14900018265967802195
             },
+            "enabled": true,
             "id": 0,
             "name": "Code",
             "uuid": 15373841209691404796
@@ -337,17 +348,17 @@
               "meshFilter": "",
               "model": 5641860867990737482
             },
+            "enabled": true,
             "id": 1,
             "name": "Model (Static)",
             "uuid": 2196556218757424071
           }
         ],
         "enabled": true,
-        "id": 5,
         "name": "Light",
         "pos": [
-          -90.0,
-          200.0,
+          -0.8999999761581421,
+          2.0,
           0.0
         ],
         "propOverrides": {},
@@ -359,18 +370,18 @@
           0.3921983540058136
         ],
         "scale": [
-          0.9999968409538269,
-          0.9999999403953552,
-          0.999999463558197
+          0.15999948978424072,
+          0.15999998152256012,
+          0.15999990701675415
         ],
         "selectable": true,
         "uuid": 3600547349,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       }
     ],
     "components": [],
     "enabled": true,
-    "id": 0,
     "name": "Scene",
     "pos": [
       0.0,
@@ -392,6 +403,8 @@
     ],
     "selectable": true,
     "uuid": 4252910706,
-    "uuidPrefab": 0
-  }
+    "uuidPrefab": 0,
+    "visMask": 1
+  },
+  "version": 2
 }

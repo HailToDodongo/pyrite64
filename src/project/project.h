@@ -69,6 +69,7 @@ namespace Project
     bool debugMenu{true};
 
     std::array<std::string, 8> collLayerNames{};
+    std::array<std::string, 8> visLayerNames{};
 
     std::string serialize() const;
   };

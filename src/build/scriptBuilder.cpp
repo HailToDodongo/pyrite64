@@ -90,7 +90,7 @@ void Build::buildScripts(Project::Project &project, SceneCtx &sceneCtx)
   src = Utils::replaceAll(src, "__GRAPH_DEF__", graphDecl);
 
 
-  Utils::FS::saveTextFile(pathTable, src);
+  Utils::FS::saveTextFileIfChanged(pathTable, src);
 }
 
 void Build::buildGlobalScripts(Project::Project &project, SceneCtx &sceneCtx)
@@ -178,5 +178,5 @@ void Build::buildGlobalScripts(Project::Project &project, SceneCtx &sceneCtx)
   auto src = Utils::FS::loadTextFile("data/scripts/globalScriptTable.cpp");
   src = Utils::replaceAll(src, "__CODE_DECL__", srcDecl);
   src = Utils::replaceAll(src, "__CODE_HOOKS__", srcHook);
-  Utils::FS::saveTextFile(pathTable, src);
+  Utils::FS::saveTextFileIfChanged(pathTable, src);
 }

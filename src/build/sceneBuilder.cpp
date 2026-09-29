@@ -58,7 +58,8 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
   ctx.fileObj.write<uint16_t>(objFlags); // @TODO type
   ctx.fileObj.write<uint16_t>(runtimeId);
   ctx.fileObj.write<uint16_t>(parentRuntimeId);
-  ctx.fileObj.write<uint16_t>(0); // padding
+  ctx.fileObj.write<uint8_t>(srcObj->visMask.resolve(obj.propOverrides));
+  ctx.fileObj.write<uint8_t>(0); // padding
 
   glm::vec3 lpos   = srcObj->pos.resolve(obj.propOverrides);
   glm::vec3 lscale = srcObj->scale.resolve(obj.propOverrides);
@@ -116,11 +117,15 @@ uint32_t Build::writeObject(Build::SceneCtx &ctx, Project::Object &obj, bool sav
 
   std::vector<Project::Component::Entry*> compList{};
   for (auto &comp : srcObj->components) {
+    PropScope::Path compPath(comp.uuid);
+    if (!comp.enabled.resolve(obj)) continue;
     compList.push_back(&comp);
   }
 
   if(srcObj != &obj) {
     for (auto &comp : obj.components) {
+      PropScope::Path compPath(comp.uuid);
+      if (!comp.enabled.resolve(obj)) continue;
       compList.push_back(&comp);
     }
   }
@@ -214,7 +219,7 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
   ctx.fileScene.write<float>(gravity.x);
   ctx.fileScene.write<float>(gravity.y);
   ctx.fileScene.write<float>(gravity.z);
-  ctx.fileScene.write<float>(std::max(sc->conf.visualUnitsPerMeter.value, 0.001f));
+  ctx.fileScene.write<float>(std::max(sc->conf.renderScale.value, 0.001f));
 
   ctx.fileScene.write<uint8_t>(std::clamp(sc->conf.velocitySolverIterations.value, 1, 32));
   ctx.fileScene.write<uint8_t>(std::clamp(sc->conf.positionSolverIterations.value, 1, 32));

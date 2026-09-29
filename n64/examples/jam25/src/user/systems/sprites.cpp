@@ -94,7 +94,7 @@ void P64::User::Sprites::draw()
 
   // @TODO: fix this bs in t3d:
   float far = P64::SceneManager::getCurrent().getActiveCamera().far;
-  far = 1.0f / (far / 500.0f);
+  far = 1.0f / (far / 5.0f);
   far *= 64;
   tpx_state_set_base_size((uint16_t)far);
   coin->draw(deltaTime);

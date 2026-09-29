@@ -34,10 +34,10 @@ namespace P64::Script::CF977D94F4DB7A71
       data->state = 1;
     }
 
-    if(fabsf(data->lastDiffX) > 0.001f)
+    if(fabsf(data->lastDiffX) > 0.0001f)
     {
       float diffX = obj.pos.x - data->playerPos.x;
-      data->rot += diffX * deltaTime * 0.001f;
+      data->rot += diffX * deltaTime * 0.06f;
       data->state = 0;
     } else
     {

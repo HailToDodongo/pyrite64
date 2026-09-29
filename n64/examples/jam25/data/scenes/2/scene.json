@@ -98,8 +98,8 @@
     "physicsTickRate": 50,
     "positionSolverIterations": 6,
     "renderPipeline": 2,
-    "velocitySolverIterations": 7,
-    "visualUnitsPerMeter": 100.0
+    "renderScale": 100.0,
+    "velocitySolverIterations": 7
   },
   "graph": {
     "children": [
@@ -109,10 +109,15 @@
           {
             "data": {
               "aspect": 0.0,
-              "far": 1000.0,
+              "far": 20.0,
               "fov": 75.0,
               "mode": 0,
-              "near": 10.0,
+              "near": 0.09999999403953552,
+              "orthoSize": 3.0,
+              "projection": 0,
+              "targetMode": 0,
+              "targetObjUUID": 0,
+              "visMask": 255,
               "vpOffset": [
                 0,
                 0
@@ -122,6 +127,7 @@
                 240
               ]
             },
+            "enabled": true,
             "id": 3,
             "name": "Camera",
             "uuid": 16427684098203612843
@@ -135,9 +141,10 @@
                 1.0
               ],
               "index": 0,
-              "size": 50.0,
+              "size": 0.5,
               "type": 0
             },
+            "enabled": true,
             "id": 2,
             "name": "Light",
             "uuid": 9788230890520147479
@@ -149,6 +156,7 @@
               "loop": true,
               "volume": 0.6000000238418579
             },
+            "enabled": true,
             "id": 6,
             "name": "Audio (2D)",
             "uuid": 5073560434412074309
@@ -160,6 +168,7 @@
               },
               "script": 13892553063188281069
             },
+            "enabled": true,
             "id": 0,
             "name": "Code",
             "uuid": 7449883661690250439
@@ -173,6 +182,7 @@
               },
               "varDefaults": {}
             },
+            "enabled": true,
             "id": 9,
             "name": "Node Graph",
             "uuid": 4032697254049382714
@@ -181,9 +191,9 @@
         "enabled": true,
         "name": "Cam",
         "pos": [
-          10.0,
-          10.0,
-          310.0
+          0.09999999403953552,
+          0.09999999403953552,
+          3.0999999046325684
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -200,7 +210,8 @@
         ],
         "selectable": true,
         "uuid": 2825094749,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       },
       {
         "children": [],
@@ -240,6 +251,7 @@
               "meshFilter": "",
               "model": 3490146552000525650
             },
+            "enabled": true,
             "id": 1,
             "name": "Model",
             "uuid": 7977984767214092972
@@ -252,6 +264,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 17193749350125483216
@@ -268,6 +281,7 @@
               },
               "script": 14292327376580313433
             },
+            "enabled": true,
             "id": 0,
             "name": "Code",
             "uuid": 16452073701336549970
@@ -276,9 +290,9 @@
         "enabled": true,
         "name": "Skybox",
         "pos": [
-          -110.0,
+          -1.100000023841858,
           0.0,
-          -540.0
+          -5.400000095367432
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -289,13 +303,14 @@
           -0.27891606092453003
         ],
         "scale": [
-          2.0,
-          2.0322649478912354,
-          2.0000007152557373
+          0.9599999785423279,
+          0.9754871726036072,
+          0.9600003361701965
         ],
         "selectable": true,
         "uuid": 1803225908,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       },
       {
         "children": [],
@@ -335,6 +350,7 @@
               "meshFilter": "",
               "model": 6985508143550202785
             },
+            "enabled": true,
             "id": 1,
             "name": "Model",
             "uuid": 6458194440525757285
@@ -342,9 +358,9 @@
           {
             "data": {
               "halfExtend": [
-                160.0,
-                160.0,
-                160.0
+                10.0,
+                10.0,
+                10.0
               ],
               "offset": [
                 0.0,
@@ -353,6 +369,7 @@
               ],
               "type": 1
             },
+            "enabled": true,
             "id": 8,
             "name": "Culling",
             "uuid": 6993190722672049404
@@ -362,6 +379,7 @@
               "args": {},
               "script": 14119746617858063621
             },
+            "enabled": true,
             "id": 0,
             "name": "Code",
             "uuid": 8319212738518817560
@@ -371,8 +389,8 @@
         "name": "Head",
         "pos": [
           0.0,
-          -35.95965576171875,
-          -2433.409423828125
+          -0.3595965504646301,
+          -24.33409309387207
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -383,13 +401,14 @@
           1.0
         ],
         "scale": [
-          1.1844000816345215,
-          1.1844000816345215,
-          1.1844000816345215
+          0.189504012465477,
+          0.189504012465477,
+          0.189504012465477
         ],
         "selectable": true,
         "uuid": 2325492290,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       }
     ],
     "components": [],
@@ -415,6 +434,8 @@
     ],
     "selectable": true,
     "uuid": 4252910706,
-    "uuidPrefab": 0
-  }
+    "uuidPrefab": 0,
+    "visMask": 1
+  },
+  "version": 2
 }

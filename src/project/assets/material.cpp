@@ -95,6 +95,8 @@ nlohmann::json Project::Assets::Material::serialize() const
     .set(zprim).set(zprimSet)
     .set(zdelta)
 
+    .set(depthOffset).set(depthOffsetSet)
+
     .set(persp).set(perspSet)
     .set(alphaComp).set(alphaCompSet)
     .set(vertexFX)
@@ -126,6 +128,8 @@ void Project::Assets::Material::deserialize(const nlohmann::json &doc)
 
   J::readProp(doc, zprim);   J::readProp(doc, zprimSet);
   J::readProp(doc, zdelta);
+
+  J::readProp(doc, depthOffset); J::readProp(doc, depthOffsetSet);
 
   J::readProp(doc, persp);
   J::readProp(doc, perspSet);

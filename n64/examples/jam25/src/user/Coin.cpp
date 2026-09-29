@@ -10,8 +10,8 @@
 
 namespace
 {
-  constexpr float DEF_FLOOR_DIST = 28.0f;
-  constexpr float MAX_SHADOW_DIST = 640.0_square;
+  constexpr float DEF_FLOOR_DIST = 0.28f;
+  constexpr float MAX_SHADOW_DIST = 6.4_square;
 }
 
 namespace P64::Script::CFEEDEA8CF251F94
@@ -33,7 +33,7 @@ namespace P64::Script::CFEEDEA8CF251F94
     if (data->noCast == 0)
     {
       Coll::Raycast ray;
-      ray = Coll::Raycast::create(obj.pos + fm_vec3_t{0.0f, 5.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, 100.0f, Coll::RaycastColliderTypeFlags::ALL, false, 0x08);
+      ray = Coll::Raycast::create(obj.pos + fm_vec3_t{0.0f, 0.05f, 0.0f}, {0.0f, -1.0f, 0.0f}, 100.0f, Coll::RaycastColliderTypeFlags::ALL, false, 0x08);
       obj.getScene().getCollision().raycast(ray, data->floorCast);
       if (data->floorCast.didHit)
       {

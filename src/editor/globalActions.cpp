@@ -17,6 +17,7 @@
 #include "../utils/proc.h"
 #include "undoRedo.h"
 #include "pages/editorScene.h"
+#include "pages/parts/migrationOverlay.h"
 //#include <stacktrace>
 
 namespace
@@ -35,6 +36,66 @@ namespace
       setenv("PATH", path.c_str(), 1);
     #endif
   }
+
+  fs::path getToolchainPath(const std::string &projectN64Inst)
+  {
+    // the project path may be an MSYS2 path on Windows, only use it if valid natively
+    if(!projectN64Inst.empty() && fs::exists(projectN64Inst))return projectN64Inst;
+    return ctx.toolchain.getState().toolchainPath;
+  }
+
+  /// Saves the project and kicks off the build on a worker thread. See Type::PROJECT_BUILD.
+  void startBuild(const std::string &arg)
+  {
+    ImGui::SetWindowFocus("Log");
+
+    ctx.project->save();
+    ctx.editorScene->save();
+
+    auto z64Path = ctx.project->getPath() + "/" + ctx.project->conf.romName + ".z64";
+    fs::remove(z64Path);
+
+    std::string runCmd{};
+    if (arg == "run") {
+      // Quote both paths so spaces (e.g. "E:\Ares Emulator\ares.exe") don't
+      // split into separate tokens. runSyncLogged() runs this via popen(),
+      // which on Windows invokes `cmd.exe /c`; cmd strips the outermost pair
+      // of quotes, so the whole command is wrapped in an extra pair to keep
+      // the per-path quotes intact.
+#ifdef _WIN32
+      runCmd = "\"\"" + ctx.project->conf.pathEmu + "\" \"" + z64Path + "\"\"";
+#else
+      runCmd = "\"" + ctx.project->conf.pathEmu + "\" \"" + z64Path + "\"";
+#endif
+    }
+
+    ctx.futureBuildRun = std::async(std::launch::async, [] (std::string configPath, std::string runCmd)
+    {
+      auto oldPATH = getProcessPath();
+      bool result = false;
+      try {
+        result = Build::buildProject(configPath);
+      } catch (const std::exception &e)
+      {
+        restoreProcessPath(oldPATH);
+        auto error = "Build failed with exception:\n" + std::string(e.what());
+        Utils::Logger::log(error, Utils::Logger::LEVEL_ERROR);
+        Editor::Noti::add(Editor::Noti::Type::ERROR, error);
+        return;
+      }
+
+      restoreProcessPath(oldPATH);
+
+      if(!result) {
+        Editor::Noti::add(Editor::Noti::Type::ERROR, "Build failed!");
+        return;
+      }
+
+      if (!runCmd.empty()) {
+        Utils::Proc::runSyncLogged(runCmd);
+      }
+    }, ctx.project->getConfigPath(), runCmd);
+  }
 }
 
 namespace Editor::Actions
@@ -50,8 +111,25 @@ namespace Editor::Actions
        try {
          ctx.project = new Project::Project(path);
          // Custom node definitions (<project>/nodes/*.js) are loaded by the Project ctor.
-         if(ctx.project && !ctx.project->getScenes().getEntries().empty()) {
-           ctx.project->getScenes().loadScene(ctx.project->conf.sceneIdLastOpened);
+         if(ctx.project) {
+           // The one place a project is checked for outdated files: everything past this point
+           // (editing, building) assumes the current format. Declining closes the project again
+           // so nothing ever reads half-converted data, and the user can back it up first.
+           int sceneId = ctx.project->conf.sceneIdLastOpened;
+           MigrationOverlay::guard(
+             Project::Migration::scanProject(*ctx.project),
+             "Open Project",
+             [sceneId]() {
+               if(ctx.project && !ctx.project->getScenes().getEntries().empty()) {
+                 ctx.project->getScenes().loadScene(sceneId);
+               }
+             },
+             []() {
+               ctx.wantsProjectClose = true;
+               Editor::Noti::add(Editor::Noti::Type::ERROR,
+                 "The project still uses an older format and was left unchanged.\n"
+                 "Open it again to update it.");
+             });
          }
          if(ctx.project && ctx.project->wasSavedWithNewerVersion()) {
            Editor::Noti::add(Editor::Noti::Type::ERROR,
@@ -103,6 +181,20 @@ namespace Editor::Actions
       });
     });
 
+    registerAction(Type::PROJECT_GEN_VSCODE, [](const std::string&) {
+      if (!ctx.project)return false;
+      bool res = Build::generateVSCodeProject(
+        ctx.project->getPath(), ctx.project->getConfigPath(),
+        getToolchainPath(ctx.project->conf.pathN64Inst)
+      );
+      if(res) {
+        Editor::Noti::add(Editor::Noti::Type::SUCCESS, "VSCode project generated!");
+      } else {
+        Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to generate VSCode project, see log");
+      }
+      return res;
+    });
+
     registerAction(Type::PROJECT_CREATE, [](const std::string &payload)
     {
       if(ctx.project)return false;
@@ -125,15 +217,30 @@ namespace Editor::Actions
       }
       
       // copy example project as template
-      fs::copy("n64/examples/empty", newPath, 
+      std::string templateName = args.value("template", "empty");
+      fs::path templatePath = fs::path{"n64/examples"} / templateName;
+      if(templateName.empty() || templateName.find_first_of("/\\.") != std::string::npos
+        || !fs::exists(templatePath / "project.p64proj"))
+      {
+        Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to create project, invalid template: " + templateName);
+        return false;
+      }
+
+      fs::copy(templatePath, newPath,
         fs::copy_options::recursive | fs::copy_options::overwrite_existing
       );
 
-      // clear some temp files
-      fs::remove(newPath / "p64_project.z64");
+      // clear build outputs the template may contain
+      for(auto &entry : fs::directory_iterator{newPath}) {
+        auto ext = entry.path().extension();
+        if(ext == ".z64" || ext == ".pak" || ext == ".ram")fs::remove(entry.path());
+      }
       fs::remove(newPath / "Makefile");
       fs::remove_all(newPath / "build");
       fs::remove_all(newPath / "filesystem");
+      fs::remove_all(newPath / "metadata");
+      fs::remove_all(newPath / ".vscode");
+      fs::remove_all(newPath / "engine" / "build");
 
       // open project.json and patch name
       auto configPath = (newPath / "project.p64proj").string();
@@ -142,6 +249,7 @@ namespace Editor::Actions
       configJSON["romName"] = args["rom"];
       Utils::FS::saveTextFile(configPath, configJSON.dump(2));
 
+      Build::generateVSCodeProject(newPath, configPath, getToolchainPath(""));
       return true;
     });
 
@@ -149,47 +257,7 @@ namespace Editor::Actions
       if (ctx.isBuildOrRunning())return false;
       if (!ctx.project)return false;
 
-      ImGui::SetWindowFocus("Log");
-
-      ctx.project->save();
-      ctx.editorScene->save();
-
-      auto z64Path = ctx.project->getPath() + "/" + ctx.project->conf.romName + ".z64";
-      fs::remove(z64Path);
-
-      std::string runCmd{};
-      if (arg == "run") {
-        runCmd = ctx.project->conf.pathEmu + " " + z64Path;
-      }
-
-      ctx.futureBuildRun = std::async(std::launch::async, [] (std::string configPath, std::string runCmd)
-      {
-        auto oldPATH = getProcessPath();
-        bool result = false;
-        try {
-          result = Build::buildProject(configPath);
-        } catch (const std::exception &e)
-        {
-          restoreProcessPath(oldPATH);
-          auto error = "Build failed with exception:\n" + std::string(e.what());
-          //error += "\n" + std::to_string(std::stacktrace::current());
-          Utils::Logger::log(error, Utils::Logger::LEVEL_ERROR);
-          Editor::Noti::add(Editor::Noti::Type::ERROR, error);
-          return;
-        }
-
-        restoreProcessPath(oldPATH);
-        
-        if(!result) {
-          Editor::Noti::add(Editor::Noti::Type::ERROR, "Build failed!");
-          return;
-        }
-
-        if (!runCmd.empty()) {
-          Utils::Proc::runSyncLogged(runCmd);
-        }
-      }, ctx.project->getConfigPath(), runCmd);
-
+      startBuild(arg);
       return true;
     });
 

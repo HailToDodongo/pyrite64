@@ -363,6 +363,11 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
             [&]{ ImGui::InputInt("##1", &mat.zdelta.value); }
           );
         });
+
+        toggleProp("Z-Offset", mat.depthOffsetSet.value, [&] {
+          ImGui::InputInt("##ZO", &mat.depthOffset.value);
+        });
+        mat.depthOffset.value = glm::clamp(mat.depthOffset.value, -0x8000, 0x7FFF);
       });
 
       ImGui::Dummy({0, 2_px});

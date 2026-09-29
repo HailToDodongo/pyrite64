@@ -12,11 +12,17 @@ The top section holds the object **Name**. For prefab instances it also shows th
 comes from, with a button to switch between editing the instance and editing the prefab source
 (see the Prefabs section below).
 
+It also contains the object's **Visibility** layers: during the 3D pass, an object is only
+drawn by cameras that share at least one of its layers (see the camera's **Sees Layers**
+option).
+
 ## Transform
 
 The transform section edits the object's **Position**, **Rotation** and **Scale**. Values are
 relative to the parent object. Editing a value here is equivalent to using the viewport gizmo,
 and is recorded in the undo history.
+
+**Position** is in meters, **Scale** is a multiplier of the model's authored size.
 
 ## Components
 

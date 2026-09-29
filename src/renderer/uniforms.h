@@ -13,6 +13,9 @@ namespace Renderer
     glm::mat4 cameraMat{};
     glm::vec2 screenSize{};
     glm::vec2 spriteSize{};
+    // fixed-point world units per meter
+    float renderScale{100.0f};
+    float _padding[3]{};
   };
 
   struct UniformN64Material
@@ -52,6 +55,7 @@ namespace Renderer
 
     glm::u32vec2 blender;
     float alphaClip;
+    float depthOffset; // clip-space, emulates 't3d_state_set_depth_offset'
   };
 
   struct UniformsObject

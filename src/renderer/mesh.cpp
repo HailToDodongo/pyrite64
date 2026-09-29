@@ -25,7 +25,7 @@ void Renderer::Mesh::recreate(Renderer::Scene &scene, bool clearData) {
   } else {
     aabb.reset();
     for (const auto& v : vertices) {
-      aabb.addPoint(glm::vec3(v.pos) * (1.0f / 65536.0f));
+      aabb.addPoint(glm::vec3(v.pos) * vertexScale);
     }
 
     vertBuff->setData(vertices, indices);

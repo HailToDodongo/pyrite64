@@ -25,6 +25,8 @@ namespace
     if (str == "int32_t") return Utils::DataType::s32;
     if (str == "float") return Utils::DataType::f32;
     if (str == "char") return Utils::DataType::string;
+    if (str == "fm_vec3_t") return Utils::DataType::VEC3;
+    if (str == "fm_quat_t") return Utils::DataType::QUAT;
     if (str == "AssetRef<sprite_t>") return Utils::DataType::ASSET_SPRITE;
     if (str == "PrefabRef") return Utils::DataType::PREFAB;
     if (str == "ObjectRef" || str == "P64::ObjectRef" || str.rfind("ObjectRef<", 0) == 0 || str.find("::ObjectRef<") != std::string::npos) return Utils::DataType::OBJECT_REF;
@@ -39,6 +41,10 @@ namespace
       case Utils::DataType::u16:
       case Utils::DataType::s16:
         return 2;
+      case Utils::DataType::VEC3:
+        return 12;
+      case Utils::DataType::QUAT:
+        return 16;
       case Utils::DataType::u32:
       case Utils::DataType::s32:
       case Utils::DataType::f32:
@@ -154,6 +160,14 @@ Utils::CPP::Struct Utils::CPP::parseDataStruct(const std::string &sourceCode, co
         if (bitmaskAttr != field.attr.end()) {
           field.bitmask = parseBitmask(bitmaskAttr->second);
         }
+      }
+
+      // Normalize vector defaults (e.g. "{{1, 2, 3}}" or empty) into the "x,y,z" form stored by the editor.
+      if (field.type == DataType::VEC3 || field.type == DataType::QUAT) {
+        auto values = Utils::parseFloatList(field.defaultValue);
+        if (field.type == DataType::QUAT && values.empty()) values = {0,0,0,1};
+        values.resize(field.type == DataType::VEC3 ? 3 : 4, 0.0f);
+        field.defaultValue = Utils::floatListToString(values.data(), values.size());
       }
 
       if(field.type == DataType::string) {

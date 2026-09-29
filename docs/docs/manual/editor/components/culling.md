@@ -18,8 +18,8 @@ Note that the volume is always in world-space and will **not** rotate with the o
 | Option | Description |
 |--------|-------------|
 | **Type** | The bounding volume shape:<br>• **Box**: an axis-aligned box defined by a half-extent.<br>• **Sphere**: a sphere defined by a radius. |
-| **Size** | The half-extent (box) or radius (sphere) of the volume. |
-| **Offset** | Offset of the volume's center relative to the object's origin. |
+| **Size** | The half-extent (box) or radius (sphere) of the volume, in meters. Scaled by the object's scale. |
+| **Offset** | Offset of the volume's center relative to the object's origin, in meters. Scaled by the object's scale. |
 
 ## See also
 

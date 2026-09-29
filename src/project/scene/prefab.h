@@ -22,6 +22,9 @@ namespace Project
     public:
       PROP_U32(uuid);
       Object obj{};
+      // Format version this prefab is at, see Project::Migration. Only advances when a migration
+      // converts the loaded copy and writes it back.
+      int fileVersion{};
 
       std::string serialize(const Object &obj) const;
       std::string serialize() const { return serialize(obj); }

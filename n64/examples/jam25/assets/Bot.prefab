@@ -1,24 +1,112 @@
-{"uuid":643897098,"obj":{"id":1,
-"name":"Bot",
-"uuid":2353005945,
-"selectable":true,
-"enabled":true,
-"isGroup":false,
-"uuidPrefab":0,"pos":[35.618080139160156,0.0,73.73957824707031],"rot":[0.0,0.7071065306663513,0.0,0.7071070075035095],"scale":[0.9689699411392212,1.0,0.9689699411392212],"propOverrides":{}
-,"components":[{"id":1,
-"uuid":7764188377837846551,
-"name":"Model","data":{"model":9595630529416898165}
-},
-{"id":0,
-"uuid":13224791012213080026,
-"name":"Code","data":{"script":14192199802322357731,"args":{"Active":" 0",
-"moveVelocity":"",
-"turnVelocity":"",
-"active":"1"}}
-},
-{"id":5,
-"uuid":3778714151176027946,
-"name":"Collision-Body","data":{"halfExtend":[20.0,20.0,20.0],"offset":[0.0,16.0,0.0],
-"type":1}
-}],"children":[]}
+{
+  "obj": {
+    "children": [],
+    "components": [
+      {
+        "data": {
+          "culling": false,
+          "layerIdx": 0,
+          "material": {
+            "depth": 0,
+            "env": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "fresnel": 0,
+            "fresnelColor": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "lighting": true,
+            "prim": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "setDepth": false,
+            "setEnv": false,
+            "setFresnel": false,
+            "setLighting": false,
+            "setPrim": false
+          },
+          "meshFilter": "",
+          "model": 9595630529416898165
+        },
+        "enabled": true,
+        "id": 1,
+        "name": "Model",
+        "uuid": 7764188377837846551
+      },
+      {
+        "data": {
+          "args": {
+            "Active": " 0",
+            "active": "1",
+            "moveVelocity": "",
+            "turnVelocity": ""
+          },
+          "script": 14192199802322357731
+        },
+        "enabled": true,
+        "id": 0,
+        "name": "Code",
+        "uuid": 13224791012213080026
+      },
+      {
+        "data": {
+          "bounce": 0.0,
+          "friction": 0.800000011920929,
+          "halfExtend": [
+            1.25,
+            1.25,
+            1.25
+          ],
+          "isTrigger": false,
+          "maskRead": 0,
+          "maskWrite": 0,
+          "offset": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "type": 1
+        },
+        "enabled": true,
+        "id": 5,
+        "name": "Collision-Body",
+        "uuid": 3778714151176027946
+      }
+    ],
+    "enabled": true,
+    "name": "Bot",
+    "pos": [
+      0.3561807870864868,
+      0.0,
+      0.7373957633972168
+    ],
+    "propOverrides": {},
+    "proportionalScale": false,
+    "rot": [
+      0.0,
+      0.7071065306663513,
+      0.0,
+      0.7071070075035095
+    ],
+    "scale": [
+      0.15503518283367157,
+      0.1599999964237213,
+      0.15503518283367157
+    ],
+    "selectable": true,
+    "uuid": 2353005945,
+    "uuidPrefab": 0,
+    "visMask": 1
+  },
+  "uuid": 643897098,
+  "version": 2
 }

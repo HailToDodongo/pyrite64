@@ -192,19 +192,12 @@ namespace Project::Component::CollMesh
     data.obj3D.setObjectID(obj.uuid);
     //data.obj3D.setPos(obj.pos);
 
-    // @TODO: tidy-up
-    glm::vec3 skew{0,0,0};
-    glm::vec4 persp{0,0,0,1};
-    data.obj3D.uniform.modelMat = glm::recompose(
-      obj.scale.resolve(obj.propOverrides),
-      obj.rot.resolve(obj.propOverrides),
-      obj.pos.resolve(obj.propOverrides),
-      skew, persp);
-
     auto asset = ctx.project->getAssets().getEntryByUUID(data.modelUUID.value);
     if (!asset || !asset->mesh3D) {
       return;
     }
+
+    data.obj3D.uniform.modelMat = makeModelMatrix(obj, 1.0f / asset->model.autoBaseScale);
     auto &meshes = data.filter.filterT3DM(asset->model.t3dm.models, obj, false);
 
     data.obj3D.draw(pass, cmdBuff, {
@@ -217,8 +210,8 @@ namespace Project::Component::CollMesh
     bool isSelected = ctx.isObjectSelected(obj.uuid);
     if (isSelected)
     {
-      auto center = obj.pos.resolve(obj.propOverrides) + (data.aabb.getCenter() * obj.scale.resolve(obj.propOverrides) * (float)0xFFFF);
-      auto halfExt = data.aabb.getHalfExtend() * obj.scale.resolve(obj.propOverrides) * (float)0xFFFF;
+      auto center = obj.pos.resolve(obj.propOverrides) + (data.aabb.getCenter() * obj.scale.resolve(obj.propOverrides));
+      auto halfExt = data.aabb.getHalfExtend() * obj.scale.resolve(obj.propOverrides);
 
       glm::u8vec4 aabbCol{0xAA,0xAA,0xAA,0xFF};
       if (isSelected) {
@@ -233,9 +226,10 @@ namespace Project::Component::CollMesh
 
   Utils::AABB getAABB(Object &obj, Entry &entry) {
     Data &data = *static_cast<Data*>(entry.data.get());
-    Utils::AABB aabb = data.aabb;
-    aabb.min *= (float)0xFFFF;
-    aabb.max *= (float)0xFFFF;
-    return aabb;
+    return data.aabb;
   }
+  uint64_t getModelUUID(const Entry &entry) {
+    return static_cast<const Data*>(entry.data.get())->modelUUID.value;
+  }
+
 }

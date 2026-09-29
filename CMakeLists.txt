@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(pyrite64 VERSION 0.8.0)
+project(pyrite64 VERSION 0.10.0)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,6 +16,22 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
     message(FATAL_ERROR
         "In-source builds are disabled.\n"
         "Run: cmake --preset <name>")
+endif()
+
+# A checkout without git-lfs leaves ~130 byte text pointers instead of the real assets
+set(P64_LFS_PROBE "${CMAKE_SOURCE_DIR}/data/GoogleSansCode.ttf")
+if(EXISTS "${P64_LFS_PROBE}")
+    file(SIZE "${P64_LFS_PROBE}" P64_LFS_PROBE_SIZE)
+else()
+    set(P64_LFS_PROBE_SIZE 0)
+endif()
+
+if(P64_LFS_PROBE_SIZE LESS 1024)
+    message(FATAL_ERROR
+        "Git LFS assets were not fetched (data/GoogleSansCode.ttf is only ${P64_LFS_PROBE_SIZE} bytes).\n\n"
+        "Install git-lfs (https://git-lfs.com), then run:\n"
+        "  git lfs install\n"
+        "  git lfs pull\n")
 endif()
 
 # add_compile_options(-fsanitize=address)
@@ -135,6 +151,8 @@ add_executable(pyrite64 src/main.cpp
         src/project/project.cpp
         src/editor/actions.h
         src/editor/actions.cpp
+        src/editor/audioPreview.h
+        src/editor/audioPreview.cpp
         src/editor/undoRedo.h
         src/editor/undoRedo.cpp
         src/editor/selectionUtils.h
@@ -172,11 +190,16 @@ add_executable(pyrite64 src/main.cpp
         src/project/scene/sceneManager.cpp
         src/project/scene/scene.h
         src/project/scene/scene.cpp
+        src/project/scene/migration.h
+        src/project/scene/migration.cpp
+        src/editor/pages/parts/migrationOverlay.h
+        src/editor/pages/parts/migrationOverlay.cpp
         src/editor/pages/parts/sceneInspector.cpp
         src/build/projectBuilder.h
         src/build/projectBuilder.cpp
         src/build/romMetaBuilder.h
         src/build/romMetaBuilder.cpp
+        src/build/vscodeProject.cpp
         src/utils/fs.h
         src/utils/string.h
         src/utils/proc.h
@@ -238,6 +261,8 @@ add_executable(pyrite64 src/main.cpp
         src/project/assets/collision.cpp
         src/build/t3dmBuilder.cpp
         src/build/collisionBuilder.cpp
+        src/build/autoScale.h
+        src/build/autoScale.cpp
         src/project/component/types/compCollBody.cpp
         src/project/component/types/compRigidBody.cpp
         src/project/component/types/compCharBody.cpp
@@ -256,6 +281,7 @@ add_executable(pyrite64 src/main.cpp
         src/build/prefabBuilder.cpp
         src/project/component/types/compConstraint.cpp
         src/project/component/types/compCulling.cpp
+        src/project/component/types/compSurface.cpp
         src/editor/pages/parts/nodeEditor.cpp
         src/project/component/shared/materialInstance.cpp
         src/project/component/shared/meshFilter.cpp

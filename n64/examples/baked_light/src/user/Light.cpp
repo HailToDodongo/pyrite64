@@ -19,12 +19,12 @@ namespace P64::Script::CEC77FAB51D7B753
     auto held = joypad_get_buttons_held(JOYPAD_PORT_1);
     auto light = obj.getComponent<Comp::Light>();
 
-    constexpr float moveSpeed = 8.0f;
-    constexpr float sizeSpeed = 8.0f;
+    constexpr float moveSpeed = 0.08f;
+    constexpr float strengthSpeed = 0.08f;
 
-    light->size += held.a * sizeSpeed;
-    light->size -= held.b * sizeSpeed;
-  
+    light->size += held.a * strengthSpeed;
+    light->size -= held.b * strengthSpeed;
+
     if(held.z) {
       obj.pos.y += held.c_up * moveSpeed;
       obj.pos.y -= held.c_down * moveSpeed;

@@ -60,6 +60,7 @@
           "model": 1480057396441694021,
           "previewAnimName": "<Default Pose>"
         },
+        "enabled": true,
         "id": 10,
         "name": "Model",
         "uuid": 2142405350790453093
@@ -85,6 +86,7 @@
           },
           "script": 13942767222428474859
         },
+        "enabled": true,
         "id": 0,
         "name": "Code",
         "uuid": 10732132723724657709
@@ -113,6 +115,7 @@
             0.0
           ]
         },
+        "enabled": true,
         "id": 12,
         "name": "Character-Body",
         "uuid": 3855746307429151189
@@ -122,32 +125,32 @@
           "bounce": 0.0,
           "friction": 0.800000011920929,
           "halfExtend": [
-            20.0,
-            20.0,
-            20.0
+            2.222222328186035,
+            2.222222328186035,
+            2.222222328186035
           ],
           "isTrigger": false,
           "maskRead": 2,
           "maskWrite": 6,
           "offset": [
             0.0,
-            20.0,
+            2.222222328186035,
             0.0
           ],
           "type": 1
         },
+        "enabled": true,
         "id": 5,
         "name": "Collider",
         "uuid": 8201453225663442880
       }
     ],
     "enabled": true,
-    "id": 15,
     "name": "Player",
     "pos": [
       0.0,
       0.0,
-      194.30795288085938
+      1.9430794715881348
     ],
     "propOverrides": {},
     "proportionalScale": false,
@@ -158,13 +161,15 @@
       1.0
     ],
     "scale": [
-      1.0,
-      1.0,
-      1.0
+      0.09000000357627869,
+      0.09000000357627869,
+      0.09000000357627869
     ],
     "selectable": true,
     "uuid": 958445916,
-    "uuidPrefab": 0
+    "uuidPrefab": 0,
+    "visMask": 1
   },
-  "uuid": 3372488998
+  "uuid": 3372488998,
+  "version": 2
 }

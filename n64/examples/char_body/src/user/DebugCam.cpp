@@ -30,7 +30,7 @@ namespace P64::Script::C48BB14F061323F6
     data->camRotX = 1.544792654048f;
     data->camRotY = 4.05f;
     
-    data->camPos = {100, 200, 200};
+    data->camPos = {1.0f, 2.0f, 2.0f};
     data->camPosCur = data->camPos;
 
     data->camDir = {};

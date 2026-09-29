@@ -10,6 +10,7 @@
           },
           "script": 14983157826919407508
         },
+        "enabled": true,
         "id": 0,
         "name": "Code",
         "uuid": 14364518929117375858
@@ -19,9 +20,9 @@
           "bounce": 0.0,
           "friction": 0.800000011920929,
           "halfExtend": [
-            10.0,
-            10.0,
-            10.0
+            0.09999999403953552,
+            0.09999999403953552,
+            0.09999999403953552
           ],
           "isTrigger": true,
           "maskRead": 4,
@@ -33,13 +34,13 @@
           ],
           "type": 1
         },
+        "enabled": true,
         "id": 5,
         "name": "Collision-Body",
         "uuid": 7891004927505572530
       }
     ],
     "enabled": true,
-    "id": 15,
     "name": "Coin",
     "pos": [
       0.0,
@@ -61,7 +62,9 @@
     ],
     "selectable": true,
     "uuid": 794755115,
-    "uuidPrefab": 0
+    "uuidPrefab": 0,
+    "visMask": 1
   },
-  "uuid": 1066636061
+  "uuid": 1066636061,
+  "version": 2
 }

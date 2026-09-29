@@ -41,7 +41,8 @@ namespace Project
     PROP_S32(audioFreq);
     PROP_S32(physicsTickRate);
     PROP_VEC3(gravity);
-    PROP_FLOAT(visualUnitsPerMeter);
+    // RSP fixed-point world units per meter. Affects render precision only, gameplay is in meters.
+    PROP_FLOAT(renderScale);
     PROP_S32(velocitySolverIterations);
     PROP_S32(positionSolverIterations);
     PROP_BOOL(interpolatePhysicsTransforms);
@@ -79,10 +80,26 @@ namespace Project
 
       std::shared_ptr<Object> addPrefabInstance(uint64_t prefabUUID);
 
+      /**
+       * Creates an object with a static or animated Model component for a 3D model asset.
+       * @param modelUUID UUID of the 3D model asset.
+       * @return Created scene object, or null when the asset is not a 3D model.
+       */
+      std::shared_ptr<Object> addModelObject(uint64_t modelUUID);
+
       void removeObject(Object &obj);
       void removeAllObjects();
 
-      bool moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild);
+      /**
+       * Moves an object relative to another scene object or the scene root.
+       *
+       * @param uuidObject UUID of the object to move.
+       * @param uuidTarget UUID of the destination object or scene root.
+       * @param asChild Whether to append the object as a child of the destination.
+       * @param insertBefore Whether sibling insertion should occur before the destination (this is the only way to insert as first child when there are already child elements).
+       * @return True when the object was moved.
+       */
+      bool moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild, bool insertBefore = false);
 
       std::shared_ptr<Object> getObjectByUUID(uint32_t uuid) {
         if (objectsMap.contains(uuid)) {
@@ -91,7 +108,7 @@ namespace Project
         return nullptr;
       }
 
-      uint32_t createPrefabFromObject(uint32_t uuid);
+      uint64_t createPrefabFromObject(uint32_t uuid, const std::string &subDir = {});
 
       // Unpacks a prefab instance (shallow) into real, editable scene objects
       void unpackPrefabInstance(uint32_t uuid);

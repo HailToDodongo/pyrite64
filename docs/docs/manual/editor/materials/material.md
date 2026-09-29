@@ -301,3 +301,10 @@ By default, depth values are taken and interpolated across the triangle that is 
 You can however force a single fixed value to be used intead.\
 Enabling this lets you specify that value, as well as the delta (change per pixel).\
 This is a rather specific feature and you most likely never have to use it.
+
+`Z-Offset`, adds a fixed offset to the final screen-space depth of each vertex.\
+In contrast to `Fixed-Z`, the depth across the triangle is kept, it is only shifted as a whole.\
+Negative values pull the geometry closer to the camera, positive ones push it away (e.g. `-64`).\
+This can be used as an alternative to decals, by drawing normally with an offset instead.\
+Note that the offset is applied in screen-space, so the effect in world-space depends on the distance to the camera.\
+This setting is correctly reverted after the material is done drawing.

@@ -26,6 +26,8 @@ layout(std140, set = 1, binding = 0) uniform UniformGlobal {
     mat4 projMat;
     mat4 cameraMat;
     vec2 screenSize;
+    vec2 spriteSize;
+    float renderScale;
 };
 
 layout(std140, set = 1, binding = 1) uniform UniformObject {
@@ -60,7 +62,7 @@ void main()
     matM = matM * boneMat[inBoneIdx.x];
   }
 
-  mat4 matMV = quantizeMat4(cameraMat * matM);
+  mat4 matMV = quantizeMat4(cameraMat * matM, renderScale);
   mat4 matMVP = projMat * matMV;
 
   mat3 matNormLight = calcNormalMax(matM);
@@ -78,6 +80,8 @@ void main()
 
   vec4 posWorld = matM * vec4(vec3(inPosition), 1.0);
   gl_Position = matMVP * vec4(vec3(inPosition), 1.0);
+  // material depth-offset
+  gl_Position.z += material.depthOffset * gl_Position.w;
   posScreen = gl_Position.xy / gl_Position.w;
 
   cc_shade = inColor;

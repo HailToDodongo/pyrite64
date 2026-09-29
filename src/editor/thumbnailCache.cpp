@@ -196,7 +196,7 @@ void Editor::ThumbnailCache::onCopyPass(SDL_GPUCommandBuffer*, SDL_GPUCopyPass* 
 
   if(skinned) {
     if(activeSkelAsset != uuid || !activeSkel) {
-      activeSkel = std::make_shared<Renderer::Skeleton>(ctx.gpu, asset->model, asset->conf.baseScale);
+      activeSkel = std::make_shared<Renderer::Skeleton>(ctx.gpu, asset->model, asset->model.autoBaseScale);
       activeSkelAsset = uuid;
     }
     activeSkel->update(*copyPass);
@@ -212,16 +212,17 @@ void Editor::ThumbnailCache::renderAngle(SDL_GPUCommandBuffer* cmdBuff, Renderer
   auto asset = ctx.project->getAssets().getEntryByUUID(assetUUID);
   if(!asset || !asset->mesh3D || !asset->mesh3D->isLoaded())return;
 
+  float vertexScale = 1.0f / asset->model.autoBaseScale;
+
   obj3D.setMesh(asset->mesh3D);
   obj3D.uniform = {};
-  obj3D.uniform.modelMat = glm::mat4(1.0f);
+  obj3D.uniform.modelMat = glm::scale(glm::mat4(1.0f), glm::vec3{vertexScale});
   obj3D.uniform.mat.flags = 0;
   obj3D.setObjectID(0);
 
-  constexpr float POS_SCALE = 65536.0f;
   Utils::AABB aabb = asset->mesh3D->getAABB();
-  glm::vec3 center = aabb.getCenter() * POS_SCALE;
-  float radius = glm::length(aabb.getHalfExtend()) * POS_SCALE;
+  glm::vec3 center = aabb.getCenter();
+  float radius = glm::length(aabb.getHalfExtend());
   if(radius < 0.0001f)radius = 1.0f;
 
   // The 8 frames span a half rotation centered on the front (+90°..-90°)

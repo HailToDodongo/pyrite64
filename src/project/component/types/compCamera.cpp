@@ -17,6 +17,13 @@
 
 namespace
 {
+  constexpr int PROJ_PERSPECTIVE = 0;
+  constexpr int PROJ_ORTHOGRAPHIC = 1;
+
+  constexpr int TARGET_FRAMEBUFFER = 0;
+  constexpr int TARGET_SURFACE = 1;
+
+  constexpr int COMP_ID_SURFACE = 13;
 }
 
 namespace Project::Component::Camera
@@ -29,7 +36,12 @@ namespace Project::Component::Camera
     PROP_FLOAT(near);
     PROP_FLOAT(far);
     PROP_FLOAT(aspect);
+    PROP_FLOAT(orthoSize);
     PROP_S32(mode);
+    PROP_S32(projection);
+    PROP_S32(targetMode);
+    PROP_U32(targetObjUUID);
+    Property<uint32_t> visMask{"visMask", 0xFF};
   };
 
   std::shared_ptr<void> init(Object &obj) {
@@ -55,7 +67,12 @@ namespace Project::Component::Camera
       .set(data.near)
       .set(data.far)
       .set(data.aspect)
+      .set(data.orthoSize)
       .set(data.mode)
+      .set(data.projection)
+      .set(data.targetMode)
+      .set(data.targetObjUUID)
+      .set(data.visMask)
       .doc;
   }
 
@@ -64,10 +81,15 @@ namespace Project::Component::Camera
     Utils::JSON::readProp(doc, data->vpOffset);
     Utils::JSON::readProp(doc, data->vpSize);
     Utils::JSON::readProp(doc, data->fov, 65.0f);
-    Utils::JSON::readProp(doc, data->near, 100.0f);
-    Utils::JSON::readProp(doc, data->far, 4000.0f);
+    Utils::JSON::readProp(doc, data->near, 1.0f);
+    Utils::JSON::readProp(doc, data->far, 40.0f);
     Utils::JSON::readProp(doc, data->aspect, 0.0f);
+    Utils::JSON::readProp(doc, data->orthoSize, 3.0f);
     Utils::JSON::readProp(doc, data->mode, 0);
+    Utils::JSON::readProp(doc, data->projection, PROJ_PERSPECTIVE);
+    Utils::JSON::readProp(doc, data->targetMode, TARGET_FRAMEBUFFER);
+    Utils::JSON::readProp(doc, data->targetObjUUID);
+    Utils::JSON::readProp(doc, data->visMask, 0xFFu);
     return data;
   }
 
@@ -81,7 +103,19 @@ namespace Project::Component::Camera
     ctx.fileObj.write<float>(data.near.resolve(obj));
     ctx.fileObj.write<float>(data.far.resolve(obj));
     ctx.fileObj.write<float>(data.aspect.resolve(obj));
+    ctx.fileObj.write<float>(data.orthoSize.resolve(obj));
+    auto targetMode = data.targetMode.resolve(obj);
+    uint16_t targetObjId = 0;
+    if(targetMode == TARGET_SURFACE && ctx.scene) {
+      auto objRef = ctx.scene->getObjectByUUID(data.targetObjUUID.resolve(obj));
+      targetObjId = objRef ? objRef->runtimeId : 0;
+    }
+
     ctx.fileObj.write<uint8_t>(data.mode.resolve(obj));
+    ctx.fileObj.write<uint8_t>(data.projection.resolve(obj));
+    ctx.fileObj.write<uint8_t>(data.visMask.resolve(obj));
+    ctx.fileObj.write<uint8_t>(targetMode);
+    ctx.fileObj.write<uint16_t>(targetObjId);
   }
 
   void update(Object &obj, Entry &entry)
@@ -96,7 +130,11 @@ namespace Project::Component::Camera
     if (aspect <= 0.0f) {
       aspect = size.y != 0 ? (float)size.x / (float)size.y : 4.0f / 3.0f;
     }
-    return View{size.x, size.y, aspect, data.fov.resolve(obj)};
+    return View{
+      size.x, size.y, aspect, data.fov.resolve(obj),
+      data.projection.resolve(obj) == PROJ_ORTHOGRAPHIC,
+      data.orthoSize.resolve(obj)
+    };
   }
 
   void draw(Object &obj, Entry &entry) {
@@ -104,7 +142,7 @@ namespace Project::Component::Camera
 
     if (ImTable::start("Comp", &obj))
     {
-      [[maybe_unused]] auto scene = ctx.project->getScenes().getLoadedScene();
+      auto scene = ctx.project->getScenes().getLoadedScene();
       assert(scene);
 
       ImTable::add("Name", entry.name);
@@ -113,12 +151,52 @@ namespace Project::Component::Camera
         "Manually", "By Object"
       });
 
+      ImTable::addComboBox("Projection", data.projection.resolve(obj), {
+        "Perspective", "Orthographic"
+      });
+
+      ImTable::addComboBox("Target", data.targetMode.resolve(obj), {
+        "Framebuffer", "Surface"
+      });
+
+      if(data.targetMode.resolve(obj) == TARGET_SURFACE)
+      {
+        // objects that have a Surface component to render into,
+        // with no selection the camera renders nothing at runtime
+        std::vector<ImTable::ComboEntry> objList;
+        objList.push_back({0, "<None>"});
+        for (auto &[id, object] : scene->objectsMap) {
+          for (auto &comp : object->components) {
+            if(comp.id == COMP_ID_SURFACE) {
+              objList.push_back({.value = object->uuid, .name = object->name});
+              break;
+            }
+          }
+        }
+
+        ImTable::addObjProp<uint32_t>("Surface Object", data.targetObjUUID, [&objList](uint32_t *val) -> bool {
+          uint32_t proxy = *val;
+          ImGui::VectorComboBox("##", objList, proxy);
+          if (proxy == *val) {
+            return false;
+          }
+          *val = proxy;
+          return true;
+        }, nullptr);
+      }
+
       ImTable::addObjProp("Offset", data.vpOffset);
       ImTable::addObjProp("Size", data.vpSize);
-      ImTable::addObjProp("FOV", data.fov);
+      if(data.projection.resolve(obj) == PROJ_ORTHOGRAPHIC) {
+        ImTable::addObjProp("Ortho Size", data.orthoSize);
+      } else {
+        ImTable::addObjProp("FOV", data.fov);
+      }
       ImTable::addObjProp("Near", data.near);
       ImTable::addObjProp("Far", data.far);
       ImTable::addObjProp("Aspect", data.aspect);
+      ImTable::addMultiSelectMask8("Sees Layers", data.visMask.resolve(obj),
+        ctx.project->conf.visLayerNames, "<Nothing>");
       ImTable::end();
     }
   }
@@ -135,16 +213,27 @@ namespace Project::Component::Camera
     float fovY = glm::radians(data.fov.resolve(obj));
     float aspect = data.aspect.resolve(obj);
     float nearDist = data.near.resolve(obj);
-    float farDist = nearDist + 85;//data.far.resolve(obj);
+    float farDist = nearDist + 0.85f;//data.far.resolve(obj);
     if (aspect <= 0.0f) {
       aspect = (float)data.vpSize.resolve(obj).x / (float)data.vpSize.resolve(obj).y;
     }
 
-    float tanFovY = tanf(fovY * 0.5f);
-    float nearHeight = 2.0f * tanFovY * nearDist;
-    float nearWidth = nearHeight * aspect;
-    float farHeight = 2.0f * tanFovY * farDist;
-    float farWidth = farHeight * aspect;
+    bool isOrtho = data.projection.resolve(obj) == PROJ_ORTHOGRAPHIC;
+
+    float nearHeight, nearWidth, farHeight, farWidth;
+    if (isOrtho) {
+      // in ortho the volume is a box, both planes have the same size
+      nearHeight = 2.0f * data.orthoSize.resolve(obj);
+      nearWidth = nearHeight * aspect;
+      farHeight = nearHeight;
+      farWidth = nearWidth;
+    } else {
+      float tanFovY = tanf(fovY * 0.5f);
+      nearHeight = 2.0f * tanFovY * nearDist;
+      nearWidth = nearHeight * aspect;
+      farHeight = 2.0f * tanFovY * farDist;
+      farWidth = farHeight * aspect;
+    }
 
     glm::vec3 camPos = pos;
     auto rot = obj.rot.resolve(obj);
@@ -188,21 +277,29 @@ namespace Project::Component::Camera
     // little triangle marker on top of the upper edge of the far plane
     glm::vec3 lineDist = ftr - ftl;
     glm::vec3 triCenter = ftl + (lineDist * 0.5f);
-    triCenter += up * 10.0f;
-    glm::vec3 triLeft = triCenter - (right * 30.0f);
-    glm::vec3 triRight = triCenter + (right * 30.0f);
-    triCenter += up * 30.0f;
+    triCenter += up * 0.1f;
+    glm::vec3 triLeft = triCenter - (right * 0.3f);
+    glm::vec3 triRight = triCenter + (right * 0.3f);
+    triCenter += up * 0.3f;
     Utils::Mesh::addLine(*vp.getLines(), triCenter, triLeft, col);
     Utils::Mesh::addLine(*vp.getLines(), triCenter, triRight, col);
     Utils::Mesh::addLine(*vp.getLines(), triLeft, triRight, col);
 
 
-    // Connect near plane and camera pos
+    // Connect near plane and camera pos, in ortho the rays are parallel instead of converging
     col = glm::u8vec4{0xCC, 0xAA, 0xAA, 0xFF};
-    Utils::Mesh::addLine(*vp.getLines(), camPos, ntl, col);
-    Utils::Mesh::addLine(*vp.getLines(), camPos, ntr, col);
-    Utils::Mesh::addLine(*vp.getLines(), camPos, nbl, col);
-    Utils::Mesh::addLine(*vp.getLines(), camPos, nbr, col);
+    if (isOrtho) {
+      glm::vec3 planeOffset = forward * nearDist;
+      Utils::Mesh::addLine(*vp.getLines(), ntl - planeOffset, ntl, col);
+      Utils::Mesh::addLine(*vp.getLines(), ntr - planeOffset, ntr, col);
+      Utils::Mesh::addLine(*vp.getLines(), nbl - planeOffset, nbl, col);
+      Utils::Mesh::addLine(*vp.getLines(), nbr - planeOffset, nbr, col);
+    } else {
+      Utils::Mesh::addLine(*vp.getLines(), camPos, ntl, col);
+      Utils::Mesh::addLine(*vp.getLines(), camPos, ntr, col);
+      Utils::Mesh::addLine(*vp.getLines(), camPos, nbl, col);
+      Utils::Mesh::addLine(*vp.getLines(), camPos, nbr, col);
+    }
 
     auto spriteCol = isSelected ? Utils::Colors::kSelectionTint : glm::u8vec4{0xFF};
     Utils::Mesh::addSprite(*vp.getSprites(), pos, obj.uuid, 3, spriteCol);

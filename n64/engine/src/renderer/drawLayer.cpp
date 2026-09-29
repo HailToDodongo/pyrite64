@@ -9,6 +9,7 @@
 #include <t3d/tpx.h>
 
 #include "lib/logger.h"
+#include "renderer/renderScale.h"
 #include "scene/scene.h"
 
 namespace
@@ -65,6 +66,14 @@ void P64::DrawLayer::use2D(uint32_t idx)
   use(idx + layerSetup->layerCount3D + layerSetup->layerCountPtx);
 }
 
+void P64::DrawLayer::applyForCamera(uint32_t layerIdx)
+{
+  auto &setup = layerSetup->layerConf[layerIdx];
+  if(setup.fogMode == Conf::FogMode::NONE)return;
+  // fog distances are in meters, view space is in render units
+  t3d_fog_set_range(setup.fogMin * Renderer::getRenderScale(), setup.fogMax * Renderer::getRenderScale());
+}
+
 void P64::DrawLayer::draw(uint32_t layerIdx)
 {
   auto &setup = layerSetup->layerConf[layerIdx];
@@ -85,7 +94,8 @@ void P64::DrawLayer::draw(uint32_t layerIdx)
   if(setup.fogMode != Conf::FogMode::NONE)
   {
     t3d_fog_set_enabled(true);
-    t3d_fog_set_range(setup.fogMin, setup.fogMax);
+    // 3D layers get their range per camera via 'applyForCamera'
+    if(layerIdx >= layerSetup->layerCount3D)applyForCamera(layerIdx);
 
     if(setup.fogMode == Conf::FogMode::CLEAR_COLOR) {
       rdpq_set_fog_color(SceneManager::getCurrent().getConf().clearColor);

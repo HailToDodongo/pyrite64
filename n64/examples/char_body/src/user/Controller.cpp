@@ -11,8 +11,8 @@ namespace
   constexpr float COYOTE_TIME = 0.15f;  // Grace window after leaving the floor
   float MOVE_SPEED  = 0.009f;
 
-  constexpr float CAM_DIST   = 390.0f;
-  constexpr float CAM_HEIGHT = 400.0f;
+  constexpr float CAM_DIST   = 3.9f;
+  constexpr float CAM_HEIGHT = 4.0f;
   constexpr float CAM_YAW_SNAP = 45.0_deg;
   constexpr float CAM_PITCH_SPEED = 2.0f;  // Pitch target change speed (radians/sec)
   constexpr float CAM_INTERP_SPEED = 0.15f;  // Rotation interpolation factor per frame (0-1)
@@ -23,7 +23,7 @@ namespace
   constexpr float CAM_PITCH_MAX = 70.0_deg;
 
   constinit uint64_t ticks{0};
-  constexpr fm_vec3_t PLANET_POS{0, 1300, 0};
+  constexpr fm_vec3_t PLANET_POS{0, 13, 0};
 }
 
 namespace P64::Script::CD0A328E7EE01313
@@ -140,7 +140,7 @@ namespace P64::Script::CD0A328E7EE01313
     data->lastVel += targetVelocity * data->moveSpeedFactor;
 
     // force respawn when falling down too much
-    if(obj.pos.y < -750.0f) body.teleport({0, 100, 0});
+    if(obj.pos.y < -7.5f) body.teleport({0, 1.0f, 0});
 
     const bool grounded = body.isOnFloor();
     const fm_vec3_t bodyUp = body.getSettings().up;

@@ -217,8 +217,7 @@ namespace Project::Component::CharBody
     float snapD  = data.floorSnapDistance.resolve(obj.propOverrides);
     glm::vec3 upDir = glm::normalize(data.up.resolve(obj.propOverrides));
 
-    float vuPerMeter = scene->conf.visualUnitsPerMeter.value;
-    float toVis = vuPerMeter * (objScale.x + objScale.y + objScale.z) / 3.0f;
+    float toVis = (objScale.x + objScale.y + objScale.z) / 3.0f;
 
     glm::vec3 localOff = data.centerOffset.resolve(obj.propOverrides);
     glm::vec3 center   = objPos + (objRot * (localOff * toVis));

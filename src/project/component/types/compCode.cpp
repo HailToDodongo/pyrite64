@@ -226,6 +226,27 @@ namespace Project::Component::Code
               ImTable::addAssetVecComboBox("", prefabs, uuid, validationFunc);
             }
             ImGui::PopID();
+          } else if(field.type == Utils::DataType::VEC3) {
+            ImTable::addObjProp<std::string>(name, prop, [&](std::string *val) -> bool {
+              auto values = Utils::parseFloatList(*val);
+              values.resize(3, 0.0f);
+              if (ImGui::InputFloat3("##", values.data())) {
+                *val = Utils::floatListToString(values.data(), 3);
+                return true;
+              }
+              return false;
+            }, nullptr);
+          } else if(field.type == Utils::DataType::QUAT) {
+            ImTable::addObjProp<std::string>(name, prop, [&](std::string *val) -> bool {
+              auto values = Utils::parseFloatList(*val);
+              if (values.empty()) values = {0,0,0,1};
+              values.resize(4, 0.0f);
+              if (ImGui::InputFloat4("##", values.data())) {
+                *val = Utils::floatListToString(values.data(), 4);
+                return true;
+              }
+              return false;
+            }, nullptr);
           } else if(!field.bitmask.empty()) {
             ImTable::addObjProp<std::string>(name, prop, [&](std::string *val) -> bool {
               uint32_t mask = val->empty() ? 0u : static_cast<uint32_t>(Utils::parseU64(*val));

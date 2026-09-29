@@ -50,10 +50,10 @@ namespace P64::Script::CD4C7661C1068CED
     }
 
     if(data->type == 1) {
-      obj.pos.y = data->startPos.y + fm_sinf(data->time) * 140;
+      obj.pos.y = data->startPos.y + fm_sinf(data->time) * 1.4f;
     }
     if(data->type == 2) {
-      obj.pos.x = data->startPos.x + fm_sinf(data->time) * 140;
+      obj.pos.x = data->startPos.x + fm_sinf(data->time) * 1.4f;
     }
     if(data->type == 3) {
       obj.scale.x = (fm_sinf(data->time) * 0.25f + 0.75f) * 1.2f;

@@ -22,6 +22,7 @@
 #include "editor/pages/editorScene.h"
 #include "editor/thumbnailCache.h"
 #include "editor/imgui/notification.h"
+#include "editor/pages/parts/migrationOverlay.h"
 #include "renderer/scene.h"
 #include "renderer/shader.h"
 #include "SDL3_image/SDL_image.h"
@@ -446,6 +447,8 @@ int main(int argc, char** argv)
         Editor::UndoRedo::getHistory().begin();
         ctx.editorScene->draw();
         Editor::UndoRedo::getHistory().end();
+        // asks before scene/prefab files are upgraded, see Project::Migration
+        Editor::MigrationOverlay::draw();
       } else {
         editorMain.draw();
       }

@@ -35,8 +35,9 @@ void Editor::Preferences::load()
         recentProjects.push_back({e.value("path", ""), e.value("name", ""), e.value("cardImage", "")});
       }
     }
-    zoomSpeed = doc.value("zoomSpeed", DEF.zoomSpeed);
-    moveSpeed = doc.value("moveSpeed", DEF.moveSpeed);
+    // keys renamed with the switch to meters, so pre-meter values are dropped
+    zoomSpeed = doc.value("zoomSpeedMeters", DEF.zoomSpeed);
+    moveSpeed = doc.value("moveSpeedMeters", DEF.moveSpeed);
     panSpeed = doc.value("panSpeed", DEF.panSpeed);
     lookSpeed = doc.value("lookSpeed", DEF.lookSpeed);
     invertWheelY = doc.value("invertWheelY", DEF.invertWheelY);
@@ -46,6 +47,20 @@ void Editor::Preferences::load()
     showRotAsEuler = doc.value("showRotAsEuler", DEF.showRotAsEuler);
     mouseWheelModifiesSpeed = doc.value("mouseWheelModifiesSpeed", DEF.mouseWheelModifiesSpeed);
     viewportLockMode = doc.value("viewportLockMode", DEF.viewportLockMode);
+    colliderColor = DEF.colliderColor;
+    if (doc.contains("colliderColor")
+        && doc["colliderColor"].is_array()
+        && doc["colliderColor"].size() >= 3
+        && doc["colliderColor"][0].is_number()
+        && doc["colliderColor"][1].is_number()
+        && doc["colliderColor"][2].is_number()) {
+      // Read each channel explicitly because GLM vectors are not deserialised by nlohmann
+      colliderColor = {
+        doc["colliderColor"][0].get<float>(),
+        doc["colliderColor"][1].get<float>(),
+        doc["colliderColor"][2].get<float>()
+      };
+    }
   } else {
     applyKeymapPreset();
   }
@@ -63,8 +78,8 @@ void Editor::Preferences::save()
     .set("keymap", keymap.serialize(keymapPreset))
     .set("themeName", themeName)
     .set("recentProjects", recents)
-    .set("zoomSpeed", zoomSpeed)
-    .set("moveSpeed", moveSpeed)
+    .set("zoomSpeedMeters", zoomSpeed)
+    .set("moveSpeedMeters", moveSpeed)
     .set("panSpeed", panSpeed)
     .set("lookSpeed", lookSpeed)
     .set("invertWheelY", invertWheelY)
@@ -74,6 +89,9 @@ void Editor::Preferences::save()
     .set("showRotAsEuler", showRotAsEuler)
     .set("mouseWheelModifiesSpeed", mouseWheelModifiesSpeed)
     .set("viewportLockMode", viewportLockMode)
+    .set("colliderColor", nlohmann::json::array({
+      colliderColor.r, colliderColor.g, colliderColor.b
+    }))
     .toString();
   auto prefPath = getPrefsPath();
   printf("Saving prefs to %s\n", prefPath.c_str());

@@ -20,19 +20,19 @@ Vertex attributes are quantized for performance and hardware reasons:
 All of this is handled automatically, and usually nothing you have to care about.
 
 The only thing to keep in mind is the vertex position part. \
-Pyrite64 offers a pre-scaling factor during model conversion, defaulting to `x16`. \
-What this means is if e.g. a vertex has the position `1.25`, it will be stored as `40` in the final data.
-This allows you to model at reasonable scales in blender, while keeping precision.  
+To fit into 16bit integers, positions are multiplied by a factor during conversion. \
+This factor is picked automatically from the model's bounding box, so that the largest vertex \
+uses up most of the available range and no precision is wasted.
 
-You can compensate for this by scaling the model up or down in the editor. \
-Please be aware that wanting 1:1 units with blender will cause precision issues eventually. \
-So try to not rely on it too much.
+It is divided back out when rendering, so a model always appears at the size it has in blender. \
+Model at real-world scale there, where `1 blender unit` will translate to `1 meter` in the editor.
 
-If you notice models looking very blocky, or squished to small sizes, \
-you can try increasing the pre-scaling factor.
+The resulting precision is shown in the `Asset Inspector`, \
+e.g. `0.98mm` for a model that is a few meters across. \
+Smaller models get finer steps, larger ones coarser.
 
-By default, the editor tries to show a good scaling range, \
-so try to keep the general world-scale along the lines of 1unit = 1cm at runtime.
+The automatic factor only looks at the rest pose. \
+If an animation moves vertices far outside of it, you might need to enable **Manual Precision** in the asset inspector and lower the value until it fits.
 
 ### Materials
 All materials need to be created with [fast64](https://github.com/Fast-64/fast64). \

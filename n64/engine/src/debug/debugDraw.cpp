@@ -4,6 +4,7 @@
 */
 #include "debug/debugDraw.h"
 #include "collision/vecMath.h"
+#include "renderer/renderScale.h"
 #include <t3d/t3d.h>
 #include <cmath>
 #include <vector>
@@ -93,7 +94,9 @@ void P64::Debug::destroy() {
 
 void P64::Debug::drawLine(const fm_vec3_t &a, const fm_vec3_t &b, color_t color) {
   if(lines.size() > MAX_LINE_COUNT)return;
-  lines.push_back({a, b, color_to_packed16(color), 0});
+  // input is in meters, projection happens in render units (all other shapes route through here)
+  float renderScale = Renderer::getRenderScale();
+  lines.push_back({a * renderScale, b * renderScale, color_to_packed16(color), 0});
 }
 
 color_t P64::Debug::paletteColor(uint32_t index) {

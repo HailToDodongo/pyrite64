@@ -23,6 +23,7 @@ namespace P64::Comp
 
     T3DModel *model{};
     RingMat4FP matFP{};
+    float vertexScale{1.0f};
     uint8_t layerIdx{0};
     uint8_t flags{0};
     uint8_t meshIdxCount{0};

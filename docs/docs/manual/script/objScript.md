@@ -126,9 +126,15 @@ While you can use any type you want for variables,\
 exposed ones are limited to a few known types:
 - Integers: `uint8_t`, `int8_t`, `uint16_t`, `int16_t`, `uint32_t`, `int32_t`
 - Float: `float`
+- Vectors: `fm_vec3_t`, `fm_quat_t`
 - References: `AssetRef<sprite_t>`, `ObjectRef`
 
 The reference types allow you to plug in assets or objects from the editor.
+
+Vectors are edited as their individual components,\
+quaternions as their raw `x,y,z,w` values.\
+Default values can be set with a regular initializer, e.g. `fm_vec3_t dir = {0, 1, 0};`.\
+A quaternion without a default value starts as the identity rotation.
 
 In the editor, you can now see the values showing up:
 

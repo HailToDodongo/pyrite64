@@ -48,6 +48,10 @@ namespace Renderer
         const Project::Component::Shared::MaterialInstance *matInstance;
         const Project::Object &obj;
         bool isCollision{false};
+        // z-mode from the object's draw layer, a material or material-instance
+        // override on a part takes precedence over these
+        bool layerDepthRead{true};
+        bool layerDepthWrite{true};
       };
 
       void fromT3DM(

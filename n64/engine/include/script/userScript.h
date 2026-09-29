@@ -15,6 +15,9 @@
 #include "collision/shapes.h"
 #include "renderer/drawLayer.h"
 
+#include "p64/assetTable.h"
+#include "p64/sceneTable.h"
+
 #define P64_DATA(...) struct Data { __VA_ARGS__ }; \
   static_assert(sizeof(Data) < 0xFFFF); \
   constinit uint16_t DATA_SIZE = static_cast<uint16_t>( \

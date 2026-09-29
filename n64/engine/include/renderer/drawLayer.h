@@ -55,6 +55,7 @@ namespace P64::DrawLayer
 
   inline void useDefault() { use(0); }
 
+  void applyForCamera(uint32_t layerIdx);
 
   void draw(uint32_t layerIdx);
 

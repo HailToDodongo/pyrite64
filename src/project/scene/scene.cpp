@@ -4,6 +4,8 @@
 */
 #include "scene.h"
 #include "object.h"
+#include "migration.h"
+#include <filesystem>
 #include <functional>
 #include "../../utils/json.h"
 #include "../../context.h"
@@ -20,6 +22,8 @@
 namespace
 {
   constexpr float DEF_MODEL_SCALE = 1.0f;
+  constexpr int COMP_ID_MODEL_STATIC = 1;
+  constexpr int COMP_ID_MODEL_ANIMATED = 10;
 
   /**
    * Checks whether a target object belongs to the subtree of a given ancestor.
@@ -74,7 +78,7 @@ nlohmann::json Project::SceneConf::serialize() const {
     .set(audioFreq)
     .set(physicsTickRate)
     .set(gravity)
-    .set(visualUnitsPerMeter)
+    .set(renderScale)
     .set(velocitySolverIterations)
     .set(positionSolverIterations)
     .set(interpolatePhysicsTransforms)
@@ -157,6 +161,27 @@ std::shared_ptr<Project::Object> Project::Scene::addPrefabInstance(uint64_t pref
   return addObject(root, obj);
 }
 
+std::shared_ptr<Project::Object> Project::Scene::addModelObject(uint64_t modelUUID)
+{
+  AssetManagerEntry* asset = ctx.project->getAssets().getEntryByUUID(modelUUID);
+  if (!asset || asset->type != FileType::MODEL_3D) return nullptr;
+
+  std::shared_ptr<Object> obj = addObject(root);
+  obj->name = std::filesystem::path{asset->name}.stem().string();
+
+  // Models containing animation clips use the animated component automatically
+  bool isAnimated = !asset->model.t3dm.animations.empty();
+  obj->addComponent(isAnimated ? COMP_ID_MODEL_ANIMATED : COMP_ID_MODEL_STATIC);
+
+  Component::Entry &component = obj->components.back();
+  if (isAnimated)
+    Component::AnimModel::setModel(component, modelUUID);
+  else
+    Component::Model::setModel(component, modelUUID);
+
+  return obj;
+}
+
 void Project::Scene::removeObject(Object &obj) {
   ctx.removeObjectSelection(obj.uuid);
 
@@ -172,7 +197,7 @@ void Project::Scene::removeAllObjects() {
   root.children.clear();
 }
 
-bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild)
+bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild, bool insertBefore)
 {
   if(uuidObject == uuidTarget) {
     return false;
@@ -218,7 +243,7 @@ bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool a
       // Add as sibling to target
       auto parent = target->parent;
       if (parent) {
-        // insert after target
+        // Insert before or after the target
         auto &siblings = parent->children;
         auto it = std::find_if(
           siblings.begin(), siblings.end(),
@@ -226,7 +251,7 @@ bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool a
         );
         if (it != siblings.end())
         {
-          siblings.insert(it + 1, obj);
+          siblings.insert(insertBefore ? it : it + 1, obj);
           obj->parent = parent;
         }
       }
@@ -241,7 +266,7 @@ void Project::Scene::save()
   Utils::FS::saveTextFile(scenePath + "/scene.json", serialize());
 }
 
-uint32_t Project::Scene::createPrefabFromObject(uint32_t uuid)
+uint64_t Project::Scene::createPrefabFromObject(uint32_t uuid, const std::string &subDir)
 {
   auto obj = getObjectByUUID(uuid);
   if(!obj)return 0;
@@ -282,10 +307,11 @@ uint32_t Project::Scene::createPrefabFromObject(uint32_t uuid)
   ), name.end());
   if(name.empty())name = "prefab " + std::to_string(prefab.uuid.value);
 
-  Utils::FS::saveTextFile(
-    ctx.project->getPath() + "/assets/" + name + ".prefab",
-    prefabJson
-  );
+  auto prefabPath = std::filesystem::path(ctx.project->getPath()) / "assets";
+  if(!subDir.empty())
+    prefabPath /= subDir;
+  prefabPath /= name + ".prefab";
+  Utils::FS::saveTextFile(prefabPath, prefabJson);
 
   ctx.project->getAssets().reload();
 
@@ -306,7 +332,7 @@ uint32_t Project::Scene::createPrefabFromObject(uint32_t uuid)
   obj->addPropOverride(obj->pos);
   obj->addPropOverride(obj->rot);
   obj->addPropOverride(obj->scale);
-  return 0;
+  return prefab.uuid.value;
 }
 
 void Project::Scene::unpackPrefabInstance(uint32_t uuid)
@@ -329,6 +355,7 @@ void Project::Scene::unpackPrefabInstance(uint32_t uuid)
       auto data = cdef.funcSerialize(comp);
       dst.components.push_back(Component::Entry{
         .id = comp.id, .uuid = comp.uuid, .name = comp.name,
+        .enabled = comp.enabled,
         .data = cdef.funcDeserialize(data)
       });
     }
@@ -387,6 +414,7 @@ void Project::Scene::unpackPrefabInstance(uint32_t uuid)
 
 std::string Project::Scene::serialize(bool minify) {
   nlohmann::json doc{};
+  doc["version"] = Migration::FILE_VERSION;
   doc["conf"] = conf.serialize();
   doc["graph"] = root.serialize();
   return doc.dump(minify ? -1 : 2);
@@ -446,7 +474,10 @@ void Project::Scene::deserialize(const std::string &data)
     Utils::JSON::readProp(docConf, conf.audioFreq, 32000);
     Utils::JSON::readProp(docConf, conf.physicsTickRate, 50);
     Utils::JSON::readProp(docConf, conf.gravity, glm::vec3{0.0f, -9.81f, 0.0f});
-    Utils::JSON::readProp(docConf, conf.visualUnitsPerMeter, 100.0f);
+    // "visualUnitsPerMeter" is what this setting was called before scenes were stored in meters,
+    // read as a fallback so an outdated scene still loads with its real value.
+    Utils::JSON::readProp(docConf, conf.renderScale,
+      docConf.value("visualUnitsPerMeter", 100.0f));
     Utils::JSON::readProp(docConf, conf.velocitySolverIterations, 7);
     Utils::JSON::readProp(docConf, conf.positionSolverIterations, 6);
     Utils::JSON::readProp(docConf, conf.interpolatePhysicsTransforms, true);

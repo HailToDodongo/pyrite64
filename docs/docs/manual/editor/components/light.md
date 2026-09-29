@@ -23,7 +23,7 @@ checkout the scene function for it:
 | **Type** | The kind of light:<br>• **Ambient**: a flat, omnidirectional base light.<br>• **Directional**: a light coming from a fixed direction (the object's facing).<br>• **Point**: a light that radiates from the object's position outward. |
 | **Index** | The light slot this light occupies. The engine supports a limited number of simultaneous lights; the index selects which slot to write to. |
 | **Color** | The light's color (RGBA). |
-| **Size** | *(Point lights only)* the radius/range of the point light's falloff. |
+| **Size** | *(Point lights only)* the radius/range of the point light's falloff, in meters. |
 
 ## See also
 

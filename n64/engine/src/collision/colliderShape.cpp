@@ -4,11 +4,53 @@
  * @brief Defines the Basic (non-mesh) Colliders (see colliderShape.h)
  */
 #include "collision/colliderShape.h"
-#include "collision/gfxScale.h"
 #include "collision/meshCollider.h"
+#include "collision/rigidBody.h"
 #include "scene/object.h"
 
 using namespace P64::Coll;
+
+void Collider::markGeometryChanged() {
+  geometryDirty_ = true;
+  // size and offset of a shape feed into the center of mass and inertia tensor of a compound body
+  if(rigidBody_) rigidBody_->markCompoundPropertiesDirty();
+}
+
+void Collider::refreshWorldShape() {
+  const fm_vec3_t scale = owner_ ? owner_->scale : fm_vec3_t{{1.0f, 1.0f, 1.0f}};
+  const float x = fabsf(localHalfExtend_.x * scale.x);
+  const float y = fabsf(localHalfExtend_.y * scale.y);
+  const float z = fabsf(localHalfExtend_.z * scale.z);
+  const float radius = fmaxf(x, z);
+
+  switch(type_) {
+    case ShapeType::Sphere:
+      sphere_.radius = fmaxf(x, fmaxf(y, z));
+    break;
+    case ShapeType::Box:
+      box_.halfSize = fm_vec3_t{{x, y, z}};
+    break;
+    case ShapeType::Capsule:
+      capsule_.radius = radius;
+      capsule_.innerHalfHeight = y;
+    break;
+    case ShapeType::Cylinder:
+      cylinder_.radius = radius;
+      cylinder_.halfHeight = y;
+    break;
+    case ShapeType::Cone:
+      cone_.radius = radius;
+      cone_.halfHeight = y;
+    break;
+    case ShapeType::Pyramid:
+      pyramid_.baseHalfWidthX = x;
+      pyramid_.baseHalfWidthZ = z;
+      pyramid_.halfHeight = y;
+    break;
+  }
+
+  markGeometryChanged();
+}
 
 fm_vec3_t Collider::support(const fm_vec3_t &dir) const {
   switch(type_) {
@@ -23,6 +65,18 @@ fm_vec3_t Collider::support(const fm_vec3_t &dir) const {
 }
 
 AABB Collider::boundingBox(const fm_quat_t *rotation) const {
+  switch(type_) {
+    case ShapeType::Sphere:   return sphere_.boundingBox(rotation);
+    case ShapeType::Box:      return box_.boundingBox(rotation);
+    case ShapeType::Capsule:  return capsule_.boundingBox(rotation);
+    case ShapeType::Cylinder: return cylinder_.boundingBox(rotation);
+    case ShapeType::Cone:     return cone_.boundingBox(rotation);
+    case ShapeType::Pyramid:  return pyramid_.boundingBox(rotation);
+  }
+  __builtin_unreachable();
+}
+
+AABB Collider::boundingBox(const Matrix3x3 &rotation) const {
   switch(type_) {
     case ShapeType::Sphere:   return sphere_.boundingBox(rotation);
     case ShapeType::Box:      return box_.boundingBox(rotation);
@@ -66,7 +120,7 @@ bool Collider::hasOwnerTransformChanged() const {
   if(!owner_) return false;
   if(!hasCachedOwnerTransform_) return true;
 
-  fm_vec3_t ownerPhysicsPos = owner_->pos * getInvGfxScale();
+  fm_vec3_t ownerPhysicsPos = owner_->pos;
   if(fm_vec3_distance2(&ownerPhysicsPos, &lastOwnerPosition_) > FM_EPSILON * FM_EPSILON ) return true;
   if(fm_vec3_distance2(&owner_->scale, &lastOwnerScale_) > FM_EPSILON * FM_EPSILON ) return true;
 
@@ -80,18 +134,21 @@ void Collider::syncOwnerTransform() {
     lastOwnerRotation_ = QUAT_IDENTITY;
     lastOwnerScale_ = fm_vec3_t{{1.0f, 1.0f, 1.0f}};
   } else {
-    lastOwnerPosition_ = owner_->pos * getInvGfxScale();
+    lastOwnerPosition_ = owner_->pos;
     lastOwnerRotation_ = owner_->rot;
     lastOwnerScale_ = owner_->scale;
   }
 
   rotationMatrix_ = quatToMatrix3(lastOwnerRotation_);
-  inverseRotationMatrix_ = quatToMatrix3(quatConjugate(lastOwnerRotation_));
+  // A rotation matrix's inverse is its transpose
+  inverseRotationMatrix_ = matrix3Transpose(rotationMatrix_);
   hasCachedOwnerTransform_ = true;
 }
 
 bool Collider::syncFromRigidBody(const fm_vec3_t& rbPosition, const fm_quat_t& rbRotation) {
-  if(hasCachedOwnerTransform_) {
+  const bool scaleChanged = owner_ && owner_->scale != lastOwnerScale_;
+
+  if(hasCachedOwnerTransform_ && !geometryDirty_ && !scaleChanged) {
     const float posDeltaSq = fm_vec3_distance2(&rbPosition, &lastOwnerPosition_);
     const float rotSim = fabsf(quatDot(rbRotation, lastOwnerRotation_));
     if(posDeltaSq <= FM_EPSILON * FM_EPSILON && rotSim >= 1.0f - FM_EPSILON) {
@@ -102,13 +159,15 @@ bool Collider::syncFromRigidBody(const fm_vec3_t& rbPosition, const fm_quat_t& r
   lastOwnerPosition_ = rbPosition;
   lastOwnerRotation_ = rbRotation;
   lastOwnerScale_ = owner_ ? owner_->scale : fm_vec3_t{{1,1,1}};
+  if(scaleChanged) refreshWorldShape();
   rotationMatrix_ = quatToMatrix3(lastOwnerRotation_);
-  inverseRotationMatrix_ = quatToMatrix3(quatConjugate(lastOwnerRotation_));
+  inverseRotationMatrix_ = matrix3Transpose(rotationMatrix_);
   hasCachedOwnerTransform_ = true;
 
   worldCenter_ = lastOwnerPosition_ + matrix3Vec3Mul(rotationMatrix_, parentOffset_ * lastOwnerScale_);
 
-  const AABB local = boundingBox(&lastOwnerRotation_);
+  // Pass the matrix we just built: the quaternion overload would rebuild it from lastOwnerRotation_
+  const AABB local = boundingBox(rotationMatrix_);
   worldAabb_.min = local.min + worldCenter_;
   worldAabb_.max = local.max + worldCenter_;
   ++worldStateVersion_;
@@ -120,12 +179,17 @@ bool Collider::syncWorldState() {
   if(!owner_) return false;
 
   const bool transformChanged = !hasCachedOwnerTransform_ || hasOwnerTransformChanged();
-  if(!transformChanged) return false;
+  // a resized or moved shape needs a new AABB too, even if the object itself didn't move
+  if(!transformChanged && !geometryDirty_) return false;
 
-  syncOwnerTransform();
+  const bool scaleChanged = owner_->scale != lastOwnerScale_;
+
+  if(transformChanged) syncOwnerTransform();
+  // the shape is object-scaled, so a scaled object needs it rebuilt
+  if(scaleChanged) refreshWorldShape();
   worldCenter_ = lastOwnerPosition_ + matrix3Vec3Mul(rotationMatrix_, parentOffset_ * lastOwnerScale_);
 
-  const AABB local = boundingBox(&lastOwnerRotation_);
+  const AABB local = boundingBox(rotationMatrix_);
   worldAabb_.min = local.min + worldCenter_;
   worldAabb_.max = local.max + worldCenter_;
   ++worldStateVersion_;

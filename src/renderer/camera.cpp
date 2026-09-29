@@ -12,7 +12,6 @@ namespace
 {
   constexpr glm::vec3 WORLD_UP{0,1,0};
   constexpr glm::vec3 WORLD_FORWARD{0,0,-1};
-  constexpr float ORTHO_SIZE = 310.0f;
 }
 
 Renderer::Camera::Camera() {
@@ -21,7 +20,7 @@ Renderer::Camera::Camera() {
     glm::radians(-180.0f),
     glm::vec3(1,0,0)
   );
-  focus(glm::vec3(0,220,0), 220);
+  focus(glm::vec3(0, 2.2f, 0), 2.2f);
 }
 
 void Renderer::Camera::update() {
@@ -47,14 +46,13 @@ void Renderer::Camera::update() {
 void Renderer::Camera::apply(UniformGlobal &uniGlobal)
 {
   float aspect = screenSize.x / screenSize.y;
-  float near = 10.0f;
-  float far = 10'000.0f;
+  float near = 0.1f;
+  float far = 200.0f;
   float fovRad = glm::radians(fov);
 
   if(isOrtho)
   {
-    uniGlobal.spriteSize = {10, 10};
-    float orthoSize = ORTHO_SIZE;
+    uniGlobal.spriteSize = {0.1f, 0.1f};
     uniGlobal.projMat = glm::ortho(
       -orthoSize * aspect,
       orthoSize * aspect,
@@ -64,7 +62,7 @@ void Renderer::Camera::apply(UniformGlobal &uniGlobal)
     );
   } else
   {
-    uniGlobal.spriteSize = {7000, 7000};
+    uniGlobal.spriteSize = {70, 70};
     uniGlobal.projMat = glm::perspective(fovRad, aspect, near, far);
   }
   uniGlobal.spriteSize *= ctx.prefs.renderFactorAA;
@@ -124,7 +122,7 @@ void Renderer::Camera::moveDelta(glm::vec2 screenDelta) {
   float pixelsToWorld = 0.001f;
   if (isOrtho) {
     if (screenSize.y > 0.0f) {
-      pixelsToWorld = (ORTHO_SIZE * 2.0f) / screenSize.y;
+      pixelsToWorld = (orthoSize * 2.0f) / screenSize.y;
     }
   } else {
     float dist = glm::length(pivot - pos);

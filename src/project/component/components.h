@@ -11,6 +11,9 @@
 #include "IconsMaterialDesignIcons.h"
 #include "../../build/sceneContext.h"
 #include "../../utils/aabb.h"
+#include "../../utils/prop.h"
+#include "glm/vec3.hpp"
+#include "glm/gtc/quaternion.hpp"
 
 namespace Editor
 {
@@ -21,7 +24,7 @@ struct SDL_GPUCommandBuffer;
 struct SDL_GPUGraphicsPipeline;
 struct SDL_GPURenderPass;
 
-namespace Project { class Object; }
+namespace Project { class Object; class Scene; }
 
 namespace Project::Component
 {
@@ -30,7 +33,19 @@ namespace Project::Component
     int id{};
     uint64_t uuid{};
     std::string name{};
+    Property<bool> enabled{"enabled", true};
     std::shared_ptr<void> data{};
+  };
+
+  // Everything transform evaluation is allowed to depend on. Filled once per frame by
+  // the viewport, so previews follow the camera you are actually looking through.
+  struct EvalCtx
+  {
+    glm::vec3 camPos{};
+    glm::quat camRot{glm::vec3(0.0f)};
+    glm::vec3 camViewDir{0,0,-1};
+    float deltaTime{0};
+    Scene *scene{nullptr};
   };
 
   typedef void(*FuncCompDraw)(Object&, Entry &entry);
@@ -41,6 +56,11 @@ namespace Project::Component
   typedef std::shared_ptr<void>(*FuncCompDeserial)(nlohmann::json &doc);
   typedef void(*FuncCompBuild)(Object&, Entry &entry, Build::SceneCtx &ctx);
   typedef Utils::AABB(*FuncCompGetAABB)(Object&, Entry &entry);
+  // Adjusts obj.display for this frame. Runs before any drawing, never touches the
+  // authored transform. See Object::display.
+  typedef void(*FuncCompEvalTransform)(Object&, Entry &entry, const EvalCtx &evalCtx);
+  // UUID of the 3D model asset a component references, 0 if it references none
+  typedef uint64_t(*FuncCompGetModelUUID)(const Entry &entry);
 
   struct CompInfo
   {
@@ -59,6 +79,8 @@ namespace Project::Component
     FuncCompDeserial funcDeserialize{};
     FuncCompBuild funcBuild{};
     FuncCompGetAABB funcGetAABB{};
+    FuncCompEvalTransform funcEvalTransform{};
+    FuncCompGetModelUUID funcGetModelUUID{};
   };
 
   #define MAKE_COMP(name) \
@@ -73,6 +95,8 @@ namespace Project::Component
       std::shared_ptr<void> deserialize(nlohmann::json &doc); \
       void build(Object&, Entry &entry, Build::SceneCtx &ctx); \
       Utils::AABB getAABB(Object &obj, Entry &entry); \
+      void evalTransform(Object &obj, Entry &entry, const EvalCtx &evalCtx); \
+      uint64_t getModelUUID(const Entry &entry); \
     }
 
   MAKE_COMP(Code)
@@ -88,11 +112,21 @@ namespace Project::Component
   MAKE_COMP(NodeGraph)
   MAKE_COMP(AnimModel)
   MAKE_COMP(CharBody)
+  MAKE_COMP(Surface)
+
+  /**
+   * Model matrix mapping a model's quantized vertex units to world meters.
+   * @param vertexScale meters per vertex unit of the model, see Assets::Model3D
+   */
+  glm::mat4 makeModelMatrix(Object &obj, float vertexScale);
 
   namespace Camera
   {
     // Resolved view parameters of a camera component, used by the editor viewport to mirror it.
-    struct View { int resX{320}; int resY{240}; float aspect{4.0f/3.0f}; float fov{65.0f}; };
+    struct View {
+      int resX{320}; int resY{240}; float aspect{4.0f/3.0f}; float fov{65.0f};
+      bool isOrtho{false}; float orthoSize{300.0f};
+    };
     View getView(Object &obj, Entry &entry);
   }
 
@@ -105,6 +139,26 @@ namespace Project::Component
      * @param openScriptComboBox true to auto-open the combo box.
      */
     void setScript(Entry &entry, uint64_t scriptUUID, bool openScriptComboBox);
+  }
+
+  namespace Model
+  {
+    /**
+     * Assigns a 3D model asset to a static Model component.
+     * @param entry Static Model component entry to update.
+     * @param modelUUID UUID of the 3D model asset.
+     */
+    void setModel(Entry &entry, uint64_t modelUUID);
+  }
+
+  namespace AnimModel
+  {
+    /**
+     * Assigns a 3D model asset to an animated Model component.
+     * @param entry Animated Model component entry to update.
+     * @param modelUUID UUID of the 3D model asset.
+     */
+    void setModel(Entry &entry, uint64_t modelUUID);
   }
 
   constexpr std::array TABLE{
@@ -131,7 +185,8 @@ namespace Project::Component
       .funcSerialize = Model::serialize,
       .funcDeserialize = Model::deserialize,
       .funcBuild = Model::build,
-      .funcGetAABB = Model::getAABB
+      .funcGetAABB = Model::getAABB,
+      .funcGetModelUUID = Model::getModelUUID
     },
     CompInfo{
       .id = 2,
@@ -172,7 +227,8 @@ namespace Project::Component
       .funcSerialize = CollMesh::serialize,
       .funcDeserialize = CollMesh::deserialize,
       .funcBuild = CollMesh::build,
-      .funcGetAABB = CollMesh::getAABB
+      .funcGetAABB = CollMesh::getAABB,
+      .funcGetModelUUID = CollMesh::getModelUUID
     },
     CompInfo{
       .id = 5,
@@ -212,7 +268,8 @@ namespace Project::Component
       .funcSerialize = Constraint::serialize,
       .funcDeserialize = Constraint::deserialize,
       .funcBuild = Constraint::build,
-      .funcGetAABB = nullptr
+      .funcGetAABB = nullptr,
+      .funcEvalTransform = Constraint::evalTransform
     },
     CompInfo{
       .id = 8,
@@ -253,7 +310,8 @@ namespace Project::Component
       .funcSerialize = AnimModel::serialize,
       .funcDeserialize = AnimModel::deserialize,
       .funcBuild = AnimModel::build,
-      .funcGetAABB = AnimModel::getAABB
+      .funcGetAABB = AnimModel::getAABB,
+      .funcGetModelUUID = AnimModel::getModelUUID
     },
     CompInfo{
       .id = 11,
@@ -279,6 +337,19 @@ namespace Project::Component
       .funcSerialize = CharBody::serialize,
       .funcDeserialize = CharBody::deserialize,
       .funcBuild = CharBody::build,
+      .funcGetAABB = nullptr
+    },
+    CompInfo{
+      .id = 13,
+      .prio = -1, // surfaces must exist before scripts/components that may fetch them in init
+      .icon = ICON_MDI_TEXTURE " ",
+      .name = "Surface",
+      .docSlug = "/manual/editor/components/surface",
+      .funcInit = Surface::init,
+      .funcDraw = Surface::draw,
+      .funcSerialize = Surface::serialize,
+      .funcDeserialize = Surface::deserialize,
+      .funcBuild = Surface::build,
       .funcGetAABB = nullptr
     },
   };

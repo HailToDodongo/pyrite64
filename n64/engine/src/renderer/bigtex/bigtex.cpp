@@ -3,6 +3,7 @@
 * @license MIT
 */
 #include <string>
+#include <t3d/t3d.h>
 
 #include "bigtex.h"
 #include <vector>
@@ -49,7 +50,8 @@ void P64::Renderer::BigTex::patchT3DM(T3DModel &model)
     rdpq_set_prim_color({(uint8_t)(baseAddrMat + matIdx), 0, 0, 0xFF});
 
     mat->begin(state);
-    t3d_model_draw_object(it.object, nullptr);
+    auto boneSeg = (const T3DMat4FP*)t3d_segment_placeholder(T3D_SEGMENT_SKELETON);
+    t3d_model_draw_object(it.object, boneSeg);
     mat->end(state);
   }
 

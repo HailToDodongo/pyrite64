@@ -86,6 +86,8 @@ namespace P64::Coll {
 
     const fm_vec3_t &previousStepPosition() const { return previousStepPosition_; }
     const fm_quat_t &previousStepRotation() const { return previousStepRotation_; }
+    const fm_vec3_t &syncedOwnerPos() const { return syncedOwnerPos_; }
+    const fm_quat_t &syncedOwnerRot() const { return syncedOwnerRot_; }
 
     const AABB &worldAabb() const { return worldAabb_; }
     const Matrix3x3 &inverseWorldInertiaTensor() const { return invWorldInertiaTensor_; }
@@ -160,11 +162,6 @@ namespace P64::Coll {
       return matrix3Vec3Mul(constrainedInvWorldInertiaTensor_, in);
     }
 
-    /// Reset split impulse push velocities at the start of each physics step
-    void resetPushVelocities() { pushLinearVelocity_ = VEC3_ZERO; pushAngularVelocity_ = VEC3_ZERO; }
-    const fm_vec3_t &pushLinearVelocity() const { return pushLinearVelocity_; }
-    const fm_vec3_t &pushAngularVelocity() const { return pushAngularVelocity_; }
-
   private:
     friend class CollisionScene;
 
@@ -183,12 +180,15 @@ namespace P64::Coll {
     fm_vec3_t previousStepPosition_{};
     fm_quat_t previousStepRotation_{};
     fm_vec3_t previousStepScale_{};
+    // Owner transform as last written by the physics->object sync. If the owner no longer matches (e.g. it got moved) 
+    // the scene adopts the new transform as a teleport at the start of the next step
+    fm_vec3_t syncedOwnerPos_{};
+    fm_quat_t syncedOwnerRot_{};
     float inverseMass_{1.0f};
     float timeScale_{1.0f};
     float gravityScale_{1.0f};
     float angularDamping_{0.03f};
     uint32_t transformVersion_{0};
-    NodeProxy aabbTreeNodeId_{NULL_NODE};
     uint16_t sleepCounter_{0};
     bool hasGravity_{true};
     bool isEnabled_{true};
@@ -196,6 +196,10 @@ namespace P64::Coll {
     bool isSleeping_{false};
 
     float mass_{1.0f};
+    // Colliders registered for the same owner, maintained by the CollisionScene on add/remove
+    std::vector<Collider *> attachedColliders_{};
+    // Visitation stamp for island traversals (compared against the scene epoch counter)
+    uint32_t islandVisitEpoch_{0};
     Constraint constraints_{Constraint::None};
     fm_vec3_t localCenterOfMass_{};
     fm_vec3_t localCenterOfMassOffset_{};
@@ -211,11 +215,16 @@ namespace P64::Coll {
     bool hasAngularConstraints_{false};
     bool compoundPropertiesDirty_{true};
 
-    /// Split impulse push velocities (Bullet-style).
-    /// These accumulate position-correction impulses separately from real velocities,
-    /// preventing the "bouncy stacking" artifact of Baumgarte stabilization.
-    fm_vec3_t pushLinearVelocity_{};
-    fm_vec3_t pushAngularVelocity_{};
+    // Inputs updateWorldInertia() last ran on, so it can early out if nothing changed.
+    fm_quat_t worldInertiaCacheRotation_{};
+    fm_vec3_t worldInertiaCachePosition_{};
+    fm_vec3_t worldInertiaCacheLocalInv_{};
+    fm_vec3_t worldInertiaCacheLocalCom_{};
+    bool worldInertiaCacheValid_{false};
+
+    /// Index into the CollisionScene's per-step solver body array (-1 = not participating).
+    /// Only valid while the scene builds and runs the contact solvers.
+    int16_t solverIndex_{-1};
 
     void refreshConstraintCaches();
     void refreshAngularConstraintProjection();

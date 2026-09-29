@@ -6,6 +6,8 @@
 #include <fgeom.h>
 #include <graphics.h>
 
+#include "renderer/renderScale.h"
+
 namespace P64
 {
   constexpr uint32_t MAX_LIGHTS = 6;
@@ -48,10 +50,16 @@ namespace P64
         addLight({.dirOrPos = dir, .color = col});
       }
 
-      void addPointLight(const color_t col, const fm_vec3_t& pos, float strength) {
-        strength = fmaxf(strength, 0.001f);
-        //strength = fminf(strength, 1.0f);
-        addLight({.dirOrPos = pos, .strength = strength, .color = col});
+      /**
+       * Adds a point light for the current frame.
+       * @param pos position in meters
+       * @param size roughly the maximum radius in meters the light will cover
+       */
+      void addPointLight(const color_t col, const fm_vec3_t& pos, float size) {
+        // lights are applied in render units
+        float renderScale = Renderer::getRenderScale();
+        size = fmaxf(size * renderScale, 0.001f);
+        addLight({.dirOrPos = pos * renderScale, .strength = size, .color = col});
       }
   };
 }

@@ -23,6 +23,7 @@ namespace
 
     const char* path{};
     void* data{};
+    float vertexScale{}; // 3D models: model-vertex units per meter reciprocal (1/baseScale), 0 otherwise
 
     uint32_t getFlags() const {
       return ((uint32_t)data >> (32-8)) & 0x0F;
@@ -158,6 +159,16 @@ const char* P64::AssetManager::getPathByIndex(uint32_t idx)
 
   auto &entry = assetTable->entries[idx];
   return entry.path;
+}
+
+float P64::AssetManager::getVertexScale(uint32_t idx)
+{
+  if (idx >= assetTable->count) {
+    return 1.0f;
+  }
+
+  float scale = assetTable->entries[idx].vertexScale;
+  return scale > 0.0f ? scale : 1.0f;
 }
 
 /*void* P64::AssetManager::getByFilePath(const std::string &path)

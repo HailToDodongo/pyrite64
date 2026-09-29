@@ -4,7 +4,6 @@
 */
 #include "collision/characterBody.h"
 #include "collision/capsuleSweep.h"
-#include "collision/gfxScale.h"
 #include "scene/sceneManager.h"
 #include "scene/scene.h"
 #include "scene/object.h"
@@ -68,12 +67,12 @@ void CharacterBody::setCenterOffset(const fm_vec3_t& offset)
 
 fm_vec3_t CharacterBody::capsuleCenter() const
 {
-  return owner->pos * getInvGfxScale() + cachedCenterOffset;
+  return owner->pos + cachedCenterOffset;
 }
 
 fm_vec3_t CharacterBody::getFootPos() const
 {
-  return (capsuleCenter() - normUp * halfHeight) * getGfxScale();
+  return (capsuleCenter() - normUp * halfHeight);
 }
 
 float CharacterBody::extentAlong(const fm_vec3_t& dir) const
@@ -98,7 +97,6 @@ void CharacterBody::teleport(const fm_vec3_t& ownerPos, bool resetForces)
 void CharacterBody::moveAndSlide(float deltaTime)
 {
   CollisionScene& scene = SceneManager::getCurrent().getCollision();
-  const float gfxScale = getGfxScale();
   const bool wasOnFloor = onFloor;
   const bool wasOnSteepSurface = onSteepSurface;
   const bool wasProbeFloor = probeFoundFloor;
@@ -113,7 +111,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
   if(settings.followFloor) {
     const fm_vec3_t foot = capsuleCenter() - up * halfHeight;
     fm_vec3_t carryDiff = floorAttach.update(foot);
-    owner->pos = owner->pos - carryDiff * gfxScale;
+    owner->pos = owner->pos - carryDiff;
     // The floor dragged us this frame if the contact point moved (translation/rotation).
     if(fm_vec3_len2(&carryDiff) > 1e-8f) movedByFloor = 1;
   }
@@ -177,7 +175,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
     );
 
     if(!didHit) {
-      owner->pos = owner->pos + displacement * gfxScale;
+      owner->pos = owner->pos + displacement;
       break;
     }
 
@@ -206,7 +204,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
           pushDir = pushDir * (1.0f / sqrtf(len2));
         }
       }
-      owner->pos = owner->pos + pushDir * (pushOut * gfxScale);
+      owner->pos = owner->pos + pushDir * (pushOut);
       // Strip the into-wall component from displacement so re-tries don't re-enter.
       const float dispInto = fminf(0.0f, fm_vec3_dot(&displacement, &pushDir));
       displacement = displacement - pushDir * dispInto;
@@ -229,7 +227,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
       // in sharp corners where every sweep returns t=0.
       if(fabsf(dispInto) <= FM_EPSILON) {
         if(!hasPrevHit || fm_vec3_dot(&displacement, &prevHitNormal) >= -FM_EPSILON) {
-          owner->pos = owner->pos + displacement * gfxScale;
+          owner->pos = owner->pos + displacement;
           displacement = VEC3_ZERO;
         }
       }
@@ -240,7 +238,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
 
     // Advance to the contact point
     float allowed = hit.t * dispLen;
-    owner->pos = owner->pos + displacement / dispLen * (allowed * gfxScale);
+    owner->pos = owner->pos + displacement / dispLen * (allowed);
 
     fm_vec3_t normal = vec3AssumeNormalized(hit.normal, up);
     fm_vec3_t remaining = displacement / dispLen * (dispLen - allowed);
@@ -340,7 +338,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
           pushOut = fminf(pushOut / efficiency, 0.1f);
         }
       }
-      owner->pos = owner->pos + pushDir * (pushOut * gfxScale);
+      owner->pos = owner->pos + pushDir * (pushOut);
       prevDepN = pushDir;
       hasPrevDep = true;
     }
@@ -379,7 +377,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
         // Lift when grounded (stair stepping) or falling (landing correction).
         const bool shouldLift = (wasOnFloor && !wasOnSteepSurface) || velUp < 0.0f;
         if(shouldLift) {
-          owner->pos = owner->pos + up * (-clearance * gfxScale);
+          owner->pos = owner->pos + up * (-clearance);
           effectiveClearance = 0;
           // Only zero falling velocity for walkable surfaces; steep surfaces must let gravity accumulate.
           if(velUp < 0.0f && hitNormalUp >= walkCos) velocity = velocity - up * velUp;
@@ -399,7 +397,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
         if(stick) {
           const float delta = effectiveClearance;
           if(fabsf(delta) > 1e-5f) {
-            owner->pos = owner->pos - up * (delta * gfxScale);
+            owner->pos = owner->pos - up * (delta);
           }
         }
         if(stick || landed) {
@@ -427,7 +425,6 @@ void CharacterBody::moveAndSlide(float deltaTime)
 
 void CharacterBody::debugDraw() const
 {
-  const float gfxScale = getGfxScale();
   const fm_vec3_t& up = normUp;
   const float r    = settings.radius;
   const float hh   = halfHeight;
@@ -438,7 +435,7 @@ void CharacterBody::debugDraw() const
   const fm_vec3_t center = capsuleCenter();
 
   // Dim outline of the full logical capsule
-  Debug::drawCapsule(center * gfxScale, r * gfxScale, ih * gfxScale, QUAT_IDENTITY,
+  Debug::drawCapsule(center, r, ih, QUAT_IDENTITY,
     color_t{0x40, 0x40, 0x40, 0xFF});
 
   // Physics capsule (what actually collides) — green on floor, orange on steep, white airborne
@@ -448,25 +445,25 @@ void CharacterBody::debugDraw() const
       ? color_t{0xFF, 0xA0, 0x00, 0xFF}
       : color_t{0x00, 0xFF, 0x40, 0xFF};
   }
-  Debug::drawCapsule(center * gfxScale, r * gfxScale, ih_phys * gfxScale, QUAT_IDENTITY, physColor);
+  Debug::drawCapsule(center, r, ih_phys, QUAT_IDENTITY, physColor);
 
   // Step zone indicator: horizontal line at the physics capsule bottom
   if(stepH > 0.0f) {
     const fm_vec3_t physBottom = center - up * (ih_phys + r);
     const fm_vec3_t side = fm_vec3_t{{up.y, up.z, up.x}} * r; // arbitrary perpendicular
-    Debug::drawLine((physBottom - side) * gfxScale, (physBottom + side) * gfxScale,
+    Debug::drawLine((physBottom - side), (physBottom + side),
       color_t{0xFF, 0xFF, 0x00, 0xFF});
   }
 
   // Floor snap probe: line from capsule center showing full probe reach
   const float probeDist = hh + settings.floorSnapDistance;
   const fm_vec3_t probeEnd = center - up * probeDist;
-  Debug::drawLine(center * gfxScale, probeEnd * gfxScale, color_t{0x80, 0x80, 0xFF, 0xFF});
+  Debug::drawLine(center, probeEnd, color_t{0x80, 0x80, 0xFF, 0xFF});
 
   // Contact normal from capsule bottom (cyan, only when on floor)
   if(onFloor) {
     const fm_vec3_t bottom = center - up * hh;
-    Debug::drawLine(bottom * gfxScale, (bottom + contactNormal * r) * gfxScale,
+    Debug::drawLine(bottom, (bottom + contactNormal * r),
       color_t{0x00, 0xFF, 0xFF, 0xFF});
   }
 }

@@ -61,6 +61,7 @@
           "meshFilter": "",
           "model": 13158347792289066104
         },
+        "enabled": true,
         "id": 1,
         "name": "Model (Static)",
         "uuid": 7969905121091012640
@@ -70,6 +71,7 @@
           "args": {},
           "script": 14362500582464911582
         },
+        "enabled": true,
         "id": 0,
         "name": "Code",
         "uuid": 3964465403154490205
@@ -82,6 +84,7 @@
           "useRot": false,
           "useScale": false
         },
+        "enabled": true,
         "id": 7,
         "name": "Constraint",
         "uuid": 4559030683467367008
@@ -90,9 +93,9 @@
     "enabled": true,
     "name": "Flame",
     "pos": [
-      258.55926513671875,
-      56.261226654052734,
-      -158.92572021484375
+      2.58559250831604,
+      0.5626122355461121,
+      -1.5892571210861206
     ],
     "propOverrides": {},
     "proportionalScale": false,
@@ -103,13 +106,15 @@
       0.5381418466567993
     ],
     "scale": [
-      0.9999978542327881,
-      1.0,
-      0.999997079372406
+      0.15999965369701385,
+      0.1599999964237213,
+      0.1599995344877243
     ],
     "selectable": true,
     "uuid": 1318691820,
-    "uuidPrefab": 0
+    "uuidPrefab": 0,
+    "visMask": 1
   },
-  "uuid": 1874064647
+  "uuid": 1874064647,
+  "version": 2
 }

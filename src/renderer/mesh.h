@@ -26,10 +26,14 @@ namespace Renderer
       std::vector<Renderer::LineVertex> vertLines{};
       std::vector<uint16_t> indices{};
 
+      // meters per quantized vertex unit, used to report the AABB in meters
+      float vertexScale{1.0f};
+
       void recreate(Renderer::Scene &scene, bool clearData = true);
 
       void draw(SDL_GPURenderPass* pass, uint32_t indexOffset = 0, uint32_t indexCount = 0);
 
+      /// Bounds of the mesh in meters.
       const Utils::AABB& getAABB() const { return aabb; }
 
       Mesh();

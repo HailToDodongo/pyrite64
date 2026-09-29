@@ -66,7 +66,7 @@ namespace Project::Component::Light
     Utils::JSON::readProp(doc, data->index);
     Utils::JSON::readProp(doc, data->type);
     Utils::JSON::readProp(doc, data->color);
-    Utils::JSON::readProp(doc, data->size, 50.0f);
+    Utils::JSON::readProp(doc, data->size, 0.5f);
     return data;
   }
 
@@ -119,8 +119,8 @@ namespace Project::Component::Light
   {
     Data &data = *static_cast<Data*>(entry.data.get());
 
-    constexpr float BOX_SIZE = 0.125f;
-    constexpr float LINE_LEN = 75.0f;
+    constexpr float BOX_SIZE = 0.05f;
+    constexpr float LINE_LEN = 0.75f;
     glm::u8vec4 col = data.color.resolve(obj.propOverrides) * 255.0f;
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);

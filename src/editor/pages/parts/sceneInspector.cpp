@@ -105,9 +105,21 @@ void Editor::SceneInspector::draw() {
     ImTable::add("Tick Rate", scene->conf.physicsTickRate.value);
     ImTable::add("Interpolate Transforms", scene->conf.interpolatePhysicsTransforms.value);
     ImTable::add("Gravity", scene->conf.gravity.value);
-    ImTable::add("Visual Units Per Meter", scene->conf.visualUnitsPerMeter.value);
     ImTable::add("Solver Vel. Iterations", scene->conf.velocitySolverIterations.value);
     ImTable::add("Solver Pos. Iterations", scene->conf.positionSolverIterations.value);
+    ImTable::end();
+  }
+
+  if (ImGui::CollapsingHeader("Advanced"))
+  {
+    ImTable::start("Advanced");
+
+    ImTable::add("Render Scale", scene->conf.renderScale.value);
+    ImGui::SetItemTooltip(
+      "Fixed-point world units per meter used by the RSP.\n"
+      "Affects rendering precision only, everything is authored in meters.\n"
+      "Lower it for scenes reaching beyond ~327m from the origin."
+    );
     ImTable::end();
   }
 }

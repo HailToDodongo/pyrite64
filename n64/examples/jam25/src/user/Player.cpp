@@ -8,8 +8,6 @@
 #include "scene/components/animModel.h"
 #include "systems/dropShadows.h"
 #include "systems/sprites.h"
-#include "collision/gfxScale.h"
-#include "../p64/assetTable.h"
 
 namespace
 {
@@ -24,8 +22,8 @@ namespace
   constexpr float ROT_SPEED = 0.01f;
   constexpr float ROT_SPEED_SLOWDOWN = 0.9f;
 
-  constexpr float CAMERA_DISTANCE = 200.0f;
-  constexpr float CAMERA_HEIGHT = 70.0f;
+  constexpr float CAMERA_DISTANCE = 2.0f;
+  constexpr float CAMERA_HEIGHT = 0.7f;
 
   constexpr float CAM_PITCH_MIN = -0.45f;
   constexpr float CAM_PITCH_MAX = 1.1f;
@@ -40,7 +38,7 @@ namespace
     for(uint32_t i=0; i<count; ++i) {
       auto pt = pos;
       pt.x += (P64::Math::rand01()-0.5f) * dist;
-      pt.z += (P64::Math::rand01()-0.5f) * dist + 0.2f;
+      pt.z += (P64::Math::rand01()-0.5f) * dist + 0.002f;
       P64::User::Sprites::dust->add(pt, seed+i, P64::Math::rand01() * 0.2f + size);
     }
   }
@@ -123,7 +121,7 @@ namespace P64::Script::C17EA8EAB6CF1DEB
 
     {
       // Respawn when fallen out of the world
-      if(obj.pos.y * Coll::getInvGfxScale() < -10.0f)
+      if(obj.pos.y < -10.0f)
       {
         data->body->teleport(data->lastSafePos);
         data->hurtVelocity = {};
@@ -277,14 +275,14 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     fm_quat_from_euler_zyx(&camRot, T3D_PI - data->camPitch, data->camYaw, 0.0f);
 
     // Determine cam target, this is slightly ahead of the player in the direction facing.
-    fm_vec3_t camTarget = obj.pos + fm_vec3_t{0.0f, 20.0f, 0.0f};
+    fm_vec3_t camTarget = obj.pos + fm_vec3_t{0.0f, 0.2f, 0.0f};
 
     fm_vec3_t yawVec{};
     yawVec.x = sinf(data->camTargetOffsetYaw);
     yawVec.y = 0.0f;
     yawVec.z = cosf(data->camTargetOffsetYaw);
 
-    auto targetOffset = yawVec * 20.0f;
+    auto targetOffset = yawVec * 0.2f;
     fm_vec3_lerp(&data->camTargetOffset, &data->camTargetOffset, &targetOffset, 0.1f);
 
     camTarget += data->camTargetOffset;
@@ -297,7 +295,7 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     data->camTarget.y = fm_lerp(data->camTarget.y, camTarget.y, lerpY);
 
     fm_vec3_t camOffset{0.0f, CAMERA_HEIGHT, CAMERA_DISTANCE};
-    camOffset.z += camPitchNorm * 150;
+    camOffset.z += camPitchNorm * 1.5f;
     camOffset = camRot * camOffset;
     fm_vec3_t camPos = data->camTarget - camOffset;
 
@@ -379,7 +377,7 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     bool floorMoved = data->body->wasMovedByFloor();
 
     bool playerStill = data->lastFramePos.x == obj.pos.x
-                    && data->lastFramePos.y - obj.pos.y < 0.01f
+                    && data->lastFramePos.y - obj.pos.y < 0.0001f
                     && data->lastFramePos.z == obj.pos.z;
 
     if(playerStill && !floorMoved)
@@ -417,7 +415,7 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     {
       data->dustTimer = 0.1f + Math::rand01() * 0.3f;
       auto seed = (uint32_t)rand();
-      spawnParticles(data->body->getFootPos(), seed % 3 + 1, seed, 40.0f, 0.5f);
+      spawnParticles(data->body->getFootPos(), seed % 3 + 1, seed, 0.4f, 0.5f);
     }
 
     data->lastFramePos = obj.pos;
@@ -503,10 +501,10 @@ namespace P64::Script::C17EA8EAB6CF1DEB
       haveFloor   = true;
     } else {
       Coll::Raycast ray = Coll::Raycast::create(
-        obj.pos * Coll::getInvGfxScale(), {0.0f, -1.0f, 0.0f}, 5.0f,
+        obj.pos, {0.0f, -1.0f, 0.0f}, 5.0f,
         Coll::RaycastColliderTypeFlags::ALL, false, 0x08);
       SceneManager::getCurrent().getCollision().raycast(ray, data->shadowCast);
-      floorPos    = data->shadowCast.point * P64::Coll::getGfxScale();
+      floorPos    = data->shadowCast.point;
       floorNormal = data->shadowCast.normal;
       haveFloor   = data->shadowCast.didHit;
     }
@@ -515,7 +513,7 @@ namespace P64::Script::C17EA8EAB6CF1DEB
     {
       float floorY = floorPos.y;
       float shadowHeight = obj.pos.y - floorY;
-      shadowHeight *= 0.001f;
+      shadowHeight *= 0.1f; // fades out over 10m
       shadowHeight = Math::clamp(shadowHeight, 0.0f, 1.0f);
       shadowHeight = 1.0f - shadowHeight;
       User::DropShadows::addShadow(

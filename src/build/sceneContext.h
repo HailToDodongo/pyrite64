@@ -19,6 +19,8 @@ namespace Build
     uint32_t stringOffset{};
     uint32_t type{};
     uint32_t flags{};
+    // 3D models: meters per quantized vertex unit (1 / import base-scale), 0 otherwise
+    float vertexScale{};
   };
 
   struct SceneCtx

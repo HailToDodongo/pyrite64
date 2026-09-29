@@ -49,6 +49,8 @@ namespace Build
   };
   bool cleanProject(const Project::Project &project, const CleanArgs &args = {});
 
+  bool generateVSCodeProject(const fs::path &projectPath, const fs::path &configPath, const fs::path &toolchainPath);
+
   // individual parts
   // runtimeId and parentRuntimeId are this node's ids. 'expanding' is true once the walk
   // has descended into a prefab definition. Nested children then get build-time ids from
@@ -64,5 +66,5 @@ namespace Build
     uint64_t newUUID
   );
 
-  Utils::BinaryFile buildCollision(const std::string &gltfPath, float baseScale, const std::unordered_set<std::string> &meshes = {});
+  Utils::BinaryFile buildCollision(const std::string &gltfPath, const std::unordered_set<std::string> &meshes = {});
 }

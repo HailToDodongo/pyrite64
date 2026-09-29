@@ -32,6 +32,16 @@ namespace P64::AssetManager
   void* getByIndex(uint32_t idx);
 
   const char* getPathByIndex(uint32_t idx);
+
+  /**
+   * Returns the vertex-scale of a 3D model asset: the factor that converts the
+   * model's quantized vertex units back into meters (1 / import base-scale).
+   * Pass it to Renderer::fillModelMatrixFP() when drawing a model manually.
+   * Returns 1.0 for non-model assets.
+   *
+   * @param idx asset index, the `_asset` suffix can be used
+   */
+  float getVertexScale(uint32_t idx);
 }
 
 namespace P64

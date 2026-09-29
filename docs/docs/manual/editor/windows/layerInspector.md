@@ -30,7 +30,7 @@ Each layer expands to its settings:
 | **Fog** | Enables fog for the layer, with the options below. |
 | **Fog-Mode** | Use the clear color, a custom color, or leave the fog color unchanged. |
 | **Fog Color** | The custom fog color (when Fog-Mode is set to custom). |
-| **Fog Min / Max** | The near and far fog distances. |
+| **Fog Min / Max** | The near and far fog distances, in meters. |
 
 ## See also
 

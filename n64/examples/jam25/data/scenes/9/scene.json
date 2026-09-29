@@ -52,8 +52,8 @@
           1.0
         ],
         "fogColorMode": 2,
-        "fogMax": 1500.0,
-        "fogMin": 150.0,
+        "fogMax": 15.0,
+        "fogMin": 1.5,
         "lightMode": 0,
         "name": "3D Opaque"
       },
@@ -98,8 +98,8 @@
     "physicsTickRate": 50,
     "positionSolverIterations": 6,
     "renderPipeline": 2,
-    "velocitySolverIterations": 7,
-    "visualUnitsPerMeter": 100.0
+    "renderScale": 100.0,
+    "velocitySolverIterations": 7
   },
   "graph": {
     "children": [
@@ -141,6 +141,7 @@
               "meshFilter": "",
               "model": 3490146552000525650
             },
+            "enabled": true,
             "id": 1,
             "name": "Model",
             "uuid": 16741971196228245872
@@ -153,6 +154,7 @@
               "useRot": false,
               "useScale": false
             },
+            "enabled": true,
             "id": 7,
             "name": "Constraint",
             "uuid": 16655039922200722144
@@ -164,18 +166,18 @@
               },
               "script": 14223520606171785222
             },
+            "enabled": true,
             "id": 0,
             "name": "Code",
             "uuid": 8563193159995289832
           }
         ],
         "enabled": true,
-        "id": 8,
         "name": "Skybox",
         "pos": [
-          -997.7451171875,
-          0.0008925491711124778,
-          745.1507568359375
+          -9.97745132446289,
+          8.925491783884354e-06,
+          7.451507568359375
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -186,13 +188,14 @@
           0.937267005443573
         ],
         "scale": [
-          0.9999991059303284,
-          0.9999995231628418,
-          0.9999998211860657
+          0.4799995720386505,
+          0.47999975085258484,
+          0.4799998998641968
         ],
         "selectable": true,
         "uuid": 1449816335,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       },
       {
         "children": [],
@@ -232,17 +235,19 @@
               "meshFilter": "",
               "model": 6985508143550202785
             },
+            "enabled": true,
             "id": 1,
             "name": "Model",
             "uuid": 11198798950600696496
           },
           {
             "data": {
-              "maskRead": 255,
-              "maskWrite": 255,
+              "maskRead": 240,
+              "maskWrite": 241,
               "meshFilter": "",
               "modelUUID": 6985508143550202785
             },
+            "enabled": true,
             "id": 4,
             "name": "Collision-Mesh",
             "uuid": 13842518856035766855
@@ -250,9 +255,9 @@
           {
             "data": {
               "halfExtend": [
-                160.0,
-                160.0,
-                160.0
+                10.0,
+                10.0,
+                10.0
               ],
               "offset": [
                 0.0,
@@ -261,18 +266,18 @@
               ],
               "type": 1
             },
+            "enabled": true,
             "id": 8,
             "name": "Culling",
             "uuid": 17261034214634616857
           }
         ],
         "enabled": true,
-        "id": 2,
         "name": "Head",
         "pos": [
-          -5.840520858764648,
-          90.75291442871094,
-          81.81239318847656
+          -0.058405205607414246,
+          0.9075291156768799,
+          0.8181239366531372
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -283,13 +288,14 @@
           0.8106203079223633
         ],
         "scale": [
-          2.5009801387786865,
-          2.5009806156158447,
-          2.500977039337158
+          0.40015682578086853,
+          0.4001568853855133,
+          0.40015631914138794
         ],
         "selectable": true,
         "uuid": 3229644935,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       },
       {
         "children": [],
@@ -297,10 +303,15 @@
           {
             "data": {
               "aspect": 0.0,
-              "far": 800.0,
+              "far": 16.0,
               "fov": 75.0,
               "mode": 0,
-              "near": 40.0,
+              "near": 0.3999999761581421,
+              "orthoSize": 0.029999999329447746,
+              "projection": 0,
+              "targetMode": 0,
+              "targetObjUUID": 0,
+              "visMask": 255,
               "vpOffset": [
                 0,
                 0
@@ -310,6 +321,7 @@
                 240
               ]
             },
+            "enabled": true,
             "id": 3,
             "name": "Camera",
             "uuid": 4485649967143766620
@@ -323,9 +335,10 @@
                 1.0
               ],
               "index": 0,
-              "size": 50.0,
+              "size": 0.5,
               "type": 0
             },
+            "enabled": true,
             "id": 2,
             "name": "Light",
             "uuid": 3473147158458975485
@@ -335,18 +348,18 @@
               "args": {},
               "script": 14162608406159107062
             },
+            "enabled": true,
             "id": 0,
             "name": "Code",
             "uuid": 9485979137340656554
           }
         ],
         "enabled": true,
-        "id": 1,
         "name": "Camera",
         "pos": [
-          -484.5214538574219,
-          74.58395385742188,
-          131.65626525878906
+          -4.845214366912842,
+          0.745839536190033,
+          1.3165626525878906
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -363,7 +376,8 @@
         ],
         "selectable": true,
         "uuid": 3093723939,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       },
       {
         "children": [],
@@ -403,17 +417,19 @@
               "meshFilter": "",
               "model": 15813250936274457379
             },
+            "enabled": true,
             "id": 1,
             "name": "Model",
             "uuid": 11198798950600696496
           },
           {
             "data": {
-              "maskRead": 255,
-              "maskWrite": 255,
+              "maskRead": 240,
+              "maskWrite": 241,
               "meshFilter": "",
               "modelUUID": 15813250936274457379
             },
+            "enabled": true,
             "id": 4,
             "name": "Collision-Mesh",
             "uuid": 13842518856035766855
@@ -421,9 +437,9 @@
           {
             "data": {
               "halfExtend": [
-                160.0,
-                160.0,
-                160.0
+                5.0,
+                5.0,
+                5.0
               ],
               "offset": [
                 0.0,
@@ -432,18 +448,18 @@
               ],
               "type": 1
             },
+            "enabled": true,
             "id": 8,
             "name": "Culling",
             "uuid": 17261034214634616857
           }
         ],
         "enabled": true,
-        "id": 3,
         "name": "Head",
         "pos": [
-          -153.94989013671875,
-          -13.135269165039063,
-          1712.8524169921875
+          -1.5394989252090454,
+          -0.13135269284248352,
+          17.128522872924805
         ],
         "propOverrides": {},
         "proportionalScale": false,
@@ -454,13 +470,14 @@
           0.027372483164072037
         ],
         "scale": [
-          4.376713752746582,
-          4.376717567443848,
-          4.376698017120361
+          1.4005483388900757,
+          1.4005495309829712,
+          1.4005433320999146
         ],
         "selectable": true,
         "uuid": 2996380993,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       },
       {
         "children": [],
@@ -469,15 +486,16 @@
             "data": {
               "asset": 14564750114837411147,
               "autoRun": true,
-              "repeatable": false
+              "objRefs": {},
+              "varDefaults": {}
             },
+            "enabled": true,
             "id": 9,
             "name": "Node Graph",
             "uuid": 14365830001566631028
           }
         ],
         "enabled": true,
-        "id": 4,
         "name": "New Object",
         "pos": [
           0.0,
@@ -499,12 +517,12 @@
         ],
         "selectable": true,
         "uuid": 3389850844,
-        "uuidPrefab": 0
+        "uuidPrefab": 0,
+        "visMask": 1
       }
     ],
     "components": [],
     "enabled": true,
-    "id": 0,
     "name": "Scene",
     "pos": [
       0.0,
@@ -526,6 +544,8 @@
     ],
     "selectable": true,
     "uuid": 4252910706,
-    "uuidPrefab": 0
-  }
+    "uuidPrefab": 0,
+    "visMask": 1
+  },
+  "version": 2
 }

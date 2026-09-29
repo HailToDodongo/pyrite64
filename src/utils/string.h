@@ -3,7 +3,9 @@
 * @license MIT
 */
 #pragma once
+#include <cstdio>
 #include <string>
+#include <vector>
 
 namespace Utils
 {
@@ -70,6 +72,42 @@ namespace Utils
     } catch (...) {
       return 0;
     }
+  }
+
+  // Parses comma separated floats (e.g. "1.5, 2, 3"), ignores braces/whitespace
+  // so C++ initializers like "{{1.0f, 2.0f}}" work too.
+  inline std::vector<float> parseFloatList(const std::string &str)
+  {
+    std::vector<float> result{};
+    std::string part{};
+    auto flush = [&]() {
+      if(part.empty())return;
+      try {
+        result.push_back(std::stof(part));
+      } catch (...) {
+        result.push_back(0.0f);
+      }
+      part.clear();
+    };
+
+    for(char c : str) {
+      if(c == ',') flush();
+      else if(c != '{' && c != '}' && !isspace((unsigned char)c)) part += c;
+    }
+    flush();
+    return result;
+  }
+
+  inline std::string floatListToString(const float *values, size_t count)
+  {
+    std::string result{};
+    char buf[32]{};
+    for(size_t i=0; i<count; ++i) {
+      snprintf(buf, sizeof(buf), "%.9g", values[i]);
+      if(i > 0)result += ',';
+      result += buf;
+    }
+    return result;
   }
 
   inline std::string toHex64(uint64_t value) {

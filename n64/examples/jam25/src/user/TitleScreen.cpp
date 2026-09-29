@@ -20,11 +20,11 @@ namespace
   fm_vec3_t getCamPos(float t)
   {
     // circle around planet (origin)
-    float radius = 360.0f;// + (sinf(t) * 150.0f);
+    float radius = 3.6f;// + (sinf(t) * 1.5f);
     float speed = 10.2f; // radians per second
     float x = radius * cosf(speed * t);
     float z = radius * sinf(speed * t);
-    return {x, 50, z};
+    return {x, 0.5f, z};
   }
 }
 

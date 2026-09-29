@@ -24,6 +24,9 @@ namespace Project
   class Object
   {
     public:
+      // runtime stores the component count as a u8
+      static constexpr size_t MAX_COMPONENTS = 255;
+
       Object* parent{nullptr};
 
       std::string name{};
@@ -37,6 +40,19 @@ namespace Project
       PROP_VEC3(pos);
       PROP_QUAT(rot);
       PROP_VEC3(scale);
+
+      // visibility layer mask, cameras only draw objects matching their own mask
+      Property<uint32_t> visMask{"visMask", 1};
+
+      struct Trans
+      {
+        glm::vec3 pos{0,0,0};
+        glm::quat rot{glm::vec3(0.0f)};
+        glm::vec3 scale{1,1,1};
+      };
+
+      Trans display{};
+      bool displayActive{false};
 
       bool proportionalScale{false};
       bool enabled{true};
@@ -99,10 +115,24 @@ namespace Project
         return propOverrides.contains(prop.id);
       }
 
+      Trans getAuthoredTrans() {
+        return {
+          pos.resolve(propOverrides),
+          rot.resolve(propOverrides),
+          scale.resolve(propOverrides)
+        };
+      }
+
+      Trans getDisplayTrans() {
+        return displayActive ? display : getAuthoredTrans();
+      }
+
       Utils::AABB getLocalAABB() const {
         Utils::AABB aabb{};
         bool hasVolume = false;
         for (const auto &entry : components) {
+          PropScope::Dispatch enabledScope(propOverrides, entry.uuid);
+          if (!entry.enabled.resolve(*this)) continue;
           const auto &info = Component::TABLE[entry.id];
           if (!info.funcGetAABB) continue;
           PropScope::Dispatch dispatchScope(propOverrides, entry.uuid);
@@ -123,10 +153,8 @@ namespace Project
 
       Utils::AABB getWorldAABB() {
         Utils::AABB aabb = getLocalAABB();
-        glm::vec3 t = pos.resolve(propOverrides);
-        glm::quat r = rot.resolve(propOverrides);
-        glm::vec3 s = scale.resolve(propOverrides);
-        aabb.transform(t, r, s);
+        Trans t = getDisplayTrans();
+        aabb.transform(t.pos, t.rot, t.scale);
         return aabb;
       }
   };

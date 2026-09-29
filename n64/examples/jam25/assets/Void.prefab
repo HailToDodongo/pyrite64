@@ -37,6 +37,7 @@
           "meshFilter": "",
           "model": 10939121960889249575
         },
+        "enabled": true,
         "id": 1,
         "name": "Model",
         "uuid": 8855416690646441623
@@ -46,9 +47,9 @@
           "bounce": 0.0,
           "friction": 0.800000011920929,
           "halfExtend": [
-            30.0,
-            30.0,
-            30.0
+            1.875,
+            1.875,
+            1.875
           ],
           "isTrigger": true,
           "maskRead": 4,
@@ -60,6 +61,7 @@
           ],
           "type": 1
         },
+        "enabled": true,
         "id": 5,
         "name": "Collision-Body",
         "uuid": 17155583793980512750
@@ -75,6 +77,7 @@
           },
           "script": 14790936481723831464
         },
+        "enabled": true,
         "id": 0,
         "name": "Code",
         "uuid": 16810290497791999707
@@ -84,9 +87,9 @@
           "bounce": 0.0,
           "friction": 0.800000011920929,
           "halfExtend": [
-            16.0,
-            16.0,
-            16.0
+            1.0,
+            1.0,
+            1.0
           ],
           "isTrigger": false,
           "maskRead": 0,
@@ -98,18 +101,18 @@
           ],
           "type": 1
         },
+        "enabled": true,
         "id": 5,
         "name": "Collision-Body",
         "uuid": 1503277676867244821
       }
     ],
     "enabled": true,
-    "id": 52,
     "name": "Void",
     "pos": [
-      -203.84361267089844,
-      34.22049331665039,
-      130.26246643066406
+      -2.0384361743927,
+      0.3422049283981323,
+      1.3026245832443237
     ],
     "propOverrides": {},
     "proportionalScale": false,
@@ -120,13 +123,15 @@
       1.0
     ],
     "scale": [
-      2.0,
-      2.0,
-      2.0
+      0.3199999928474426,
+      0.3199999928474426,
+      0.3199999928474426
     ],
     "selectable": true,
     "uuid": 3124238361,
-    "uuidPrefab": 0
+    "uuidPrefab": 0,
+    "visMask": 1
   },
-  "uuid": 3258852297
+  "uuid": 3258852297,
+  "version": 2
 }

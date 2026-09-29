@@ -1,5 +1,6 @@
 #include "script/userScript.h"
 #include "systems/context.h"
+#include "scene/components/surface.h"
 
 namespace
 {
@@ -24,22 +25,14 @@ namespace P64::Script::C00EFAD26DE8842F
     // Allowed types:
     // - uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t
     // - float
-    surface_t mapSurf;
     float playerAngle;
     float lastPlayerPos[2];
   );
 
-  void destroy(Object& obj, Data *data)
-  {
-    surface_free(&data->mapSurf);
-  }
 
   void init(Object& obj, Data *data)
   {
     data->playerAngle = 0;
-    data->mapSurf = surface_alloc(FMT_I8, MAP_DIM, MAP_DIM);
-    assert(STRIDE == data->mapSurf.stride);
-    sys_hw_memset16(data->mapSurf.buffer, 0x0000, data->mapSurf.height * STRIDE);
   }
 
   void update(Object& obj, Data *data, float deltaTime)
@@ -58,19 +51,23 @@ namespace P64::Script::C00EFAD26DE8842F
     int mapPosX = (int)(data->lastPlayerPos[0]);
     int mapPosY = (int)(data->lastPlayerPos[1]);
 
+    auto mapSurf = obj.getComponent<Comp::Surface>()->getSurface();
+
     for(int y=0; y<3; ++y)
     {
       for(int x=0; x<3; ++x)
       {
-        setPixel(data->mapSurf, mapPosX + x - 1, mapPosY + y - 1, 0x44);
+        setPixel(mapSurf, mapPosX + x - 1, mapPosY + y - 1, 0x44);
       }
     }
-    setPixel(data->mapSurf, mapPosX, mapPosY, 0xFF);
+    setPixel(mapSurf, mapPosX, mapPosY, 0xFF);
 
   }
 
   void draw(Object& obj, Data *data, float deltaTime)
   {
+    auto mapSurf = obj.getComponent<Comp::Surface>()->getSurface();
+    
     rdpq_blitparms_t p{};
     p.theta = -data->playerAngle;
     p.cx = data->lastPlayerPos[0];
@@ -93,7 +90,7 @@ namespace P64::Script::C00EFAD26DE8842F
       int mapPosY = 240-32;
 
       rdpq_set_scissor(320-64, 240-64, 320, 240);
-      rdpq_tex_blit(&data->mapSurf, mapPosX, mapPosY, &p);
+      rdpq_tex_blit(&mapSurf, mapPosX, mapPosY, &p);
       rdpq_set_scissor(0, 0, 320, 240);
 
       rdpq_mode_pop();

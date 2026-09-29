@@ -68,14 +68,17 @@ ivec4 wrappedMirror(ivec4 texSize, ivec4 uv)
   return uv;
 }
 
-mat4 quantizeMat4(mat4 inMat)
+// Emulates what the RSP sees: the matrix is in meters here, but the console renders in
+// fixed-point world units, so scale up before rounding and back down afterwards.
+mat4 quantizeMat4(mat4 inMat, float renderScale)
 {
-  inMat *= 65536.0; // convert to 16.16 fixed point
+  float toFixed = renderScale * 65536.0; // to render units, then 16.16 fixed point
+  inMat *= toFixed;
   inMat[0] = round(inMat[0]);
   inMat[1] = round(inMat[1]);
   inMat[2] = round(inMat[2]);
   inMat[3] = round(inMat[3]);
-  return inMat *= 1.0f / 65536.0;
+  return inMat *= 1.0f / toFixed;
 }
 
 mat3 quantizeMat3(mat3 inMat)

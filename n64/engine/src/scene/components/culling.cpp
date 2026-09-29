@@ -5,6 +5,7 @@
 #include "scene/object.h"
 #include "scene/components/culling.h"
 
+#include "renderer/renderScale.h"
 #include "scene/scene.h"
 #include "scene/sceneManager.h"
 
@@ -27,11 +28,13 @@ void P64::Comp::Culling::initDelete(Object &obj, Culling* data, void* initData)
 void P64::Comp::Culling::draw(Object &obj, Culling* data, float deltaTime)
 {
   auto vp = t3d_viewport_get();
-  auto pos = (data->offset * obj.scale) + obj.pos;
+  // extents/offsets are in meters, the frustum is in render units
+  float renderScale = Renderer::getRenderScale();
+  auto pos = ((data->offset * obj.scale) + obj.pos) * renderScale;
 
   if(data->type == 0)
   {
-    auto scaledSize = data->halfExtend * obj.scale;
+    auto scaledSize = data->halfExtend * obj.scale * renderScale;
     auto min = pos - scaledSize;
     auto max = pos + scaledSize;
     if(!t3d_frustum_vs_aabb(&vp->viewFrustum, &min, &max)) {
@@ -39,7 +42,7 @@ void P64::Comp::Culling::draw(Object &obj, Culling* data, float deltaTime)
     }
   } else {
     float maxSize = fmaxf(fmaxf(obj.scale.x, obj.scale.y), obj.scale.z);
-    if(!t3d_frustum_vs_sphere(&vp->viewFrustum, &pos, data->halfExtend.x * maxSize)) {
+    if(!t3d_frustum_vs_sphere(&vp->viewFrustum, &pos, data->halfExtend.x * maxSize * renderScale)) {
       obj.setFlag(ObjectFlags::IS_CULLED, true);
     }
   }

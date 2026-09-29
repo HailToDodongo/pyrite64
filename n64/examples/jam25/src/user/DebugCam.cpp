@@ -32,7 +32,7 @@ namespace P64::Script::C48BB14F061323F6
     auto held = joypad_get_buttons_held(JOYPAD_PORT_1);
     auto joypad = joypad_get_inputs(JOYPAD_PORT_1);
     float camRotSpeed = deltaTime * 0.01f;
-    float camSpeed = deltaTime * 20.01f;
+    float camSpeed = deltaTime * 0.2f;
 
     data->camDir.v[0] = fm_cosf(data->camRotX) * fm_cosf(data->camRotY);
     data->camDir.v[1] = fm_sinf(data->camRotY);

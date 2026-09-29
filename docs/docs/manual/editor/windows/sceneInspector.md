@@ -38,9 +38,17 @@ requires fixed values.
 |--------|-------------|
 | **Tick Rate** | Physics update rate. |
 | **Interpolate Transforms** | Smooth object transforms between physics ticks. |
-| **Gravity** | Global gravity vector. |
-| **Visual Units Per Meter** | Conversion between physics meters and visual units. |
+| **Gravity** | Global gravity vector, in m/s². |
 | **Solver Vel. / Pos. Iterations** | Constraint solver iteration counts. |
+
+## Advanced
+
+| Option | Description |
+|--------|-------------|
+| **Render Scale** | How many fixed-point world units the RSP gets per meter, default `100`. This affects render precision only, everything else is authored and simulated in meters. |
+
+The default gives roughly ±327m of usable space around the scene origin.
+Lower it for scenes that reach further out, potentially raise it for very small ones.
 
 ## See also
 

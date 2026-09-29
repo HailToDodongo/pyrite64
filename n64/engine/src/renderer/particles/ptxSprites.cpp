@@ -5,25 +5,7 @@
 #include "renderer/particles/ptxSprites.h"
 #include "debug/debugDraw.h"
 #include "lib/logger.h"
-
-namespace
-{
-  constexpr float BASE_SCALE = 1.0f;
-  constexpr float BASE_SCALE_INV = 1.0f / BASE_SCALE;
-  constexpr fm_vec3_t BASE_SCALE_VEC_INV{BASE_SCALE_INV, BASE_SCALE_INV, BASE_SCALE_INV};
-
-  T3DMat4 TMP_MAT{{
-    {BASE_SCALE_INV, 0, 0, 0},
-    {0, BASE_SCALE_INV, 0, 0},
-    {0, 0, BASE_SCALE_INV, 0},
-    {0,0,0,1}
-  }};
-
-  // compare op for fm_vec3_t
-  /*constexpr bool operator==(const fm_vec3_t &a, const fm_vec3_t &b) {
-    return a.x == b.x && a.y == b.y && a.z == b.z;
-  }*/
-}
+#include "renderer/renderScale.h"
 
 P64::PTX::Sprites::Sprites(const char* spritePath, const Conf &conf_)
   : system{System::TEX_A_S16, conf_.maxSize}, conf{conf_}
@@ -72,7 +54,8 @@ void P64::PTX::Sprites::add(const fm_vec3_t &pos, uint32_t seed, color_t col, fl
     return;
   }
 
-  auto posScaled = pos * BASE_SCALE;
+  // position is in meters, the particle buffer holds render-unit coordinates
+  auto posScaled = pos * Renderer::getRenderScale();
 
   uint32_t offset = seed;
   if(!conf.noRng) {

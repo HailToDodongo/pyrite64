@@ -65,44 +65,15 @@ namespace P64::Coll {
     return localPoint;
   }
 
-  inline fm_vec3_t contactReferenceOffset(
-    const fm_vec3_t &worldPoint,
-    const RigidBody *rigidBody,
-    const Collider *collider,
-    const MeshCollider *meshCollider) {
-    if(rigidBody) {
-      return worldPoint - rigidBody->worldCenterOfMass();
-    }
-
-    if(meshCollider) {
-      return worldPoint - (meshCollider->ownerObject() ? meshCollider->ownerObject()->pos : VEC3_ZERO);
-    }
-
-    if(collider) {
-      return worldPoint - collider->worldCenter();
-    }
-
-    return VEC3_ZERO;
-  }
-
   inline void refreshContactPointWorldState(
     ContactPoint &point,
-    const ContactConstraint &constraint,
-    bool computeRelativeOffsets = false) {
+    const ContactConstraint &constraint) {
     point.contactA = contactWorldPointFromLocalPoint(point.localPointA, constraint.rigidBodyA, constraint.colliderA, constraint.meshColliderA);
     point.contactB = contactWorldPointFromLocalPoint(point.localPointB, constraint.rigidBodyB, constraint.colliderB, constraint.meshColliderB);
     point.point = (point.contactA + point.contactB) * 0.5f;
 
     const fm_vec3_t diff = point.contactA - point.contactB;
     point.penetration = -fm_vec3_dot(&diff, &constraint.normal);
-
-    if(computeRelativeOffsets) {
-      point.aToContact = contactReferenceOffset(point.contactA, constraint.rigidBodyA, constraint.colliderA, constraint.meshColliderA);
-      point.bToContact = contactReferenceOffset(point.contactB, constraint.rigidBodyB, constraint.colliderB, constraint.meshColliderB);
-    } else {
-      point.aToContact = VEC3_ZERO;
-      point.bToContact = VEC3_ZERO;
-    }
   }
 
 } // namespace P64::Coll

@@ -160,8 +160,8 @@ namespace P64::Script::CD43F65D4883D4A8
   {
     if(data->textTimer <= 0.0f || data->fadeTimer >= 0)return;
 
-    fm_vec3_t screenPos{};
-    t3d_viewport_calc_viewspace_pos(nullptr, &screenPos, &obj.pos);
+    auto &cam = SceneManager::getCurrent().getActiveCamera();
+    fm_vec3_t screenPos = cam.getScreenPos(obj.pos);
 
     if (screenPos.z > 1.0f) return;
 
