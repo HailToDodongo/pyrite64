@@ -183,7 +183,7 @@ namespace Project::Component::Code
             // Lock toggle button
             if (isInstanceMode)
             {
-              if (ImGui::IconToggle(isOverridden, ICON_MDI_LOCK_OPEN, ICON_MDI_LOCK, ImVec2{16,16})) {
+              if (ImGui::IconToggle(isOverridden, ICON_MDI_LOCK_OPEN, ICON_MDI_LOCK, ImVec2{20_px, 20_px})) {
                 if (isOverridden) {
                   obj.addPropOverride(prop);
                 } else {

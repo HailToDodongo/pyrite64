@@ -931,7 +931,7 @@ namespace ImTable
         isOverrideLocal,
         ICON_MDI_LOCK_OPEN,
         ICON_MDI_LOCK,
-        ImVec2{16,16}
+        ImVec2{20_px, 20_px}
       )) {
         if(isOverrideLocal) {
           obj->addPropOverride(prop);
