@@ -36,7 +36,7 @@ echo "Building Libdragon environment..."
 if [ -e $zipfile ]; then
     echo "Toolchain already downloaded"
 else
-    wget "https://github.com/DragonMinded/libdragon/releases/download/toolchain-continuous-prerelease/gcc-toolchain-mips64-win64.zip" -O $zipfile
+    wget "https://github.com/n64brew/libdragon/releases/download/toolchain-continuous-prerelease/gcc-toolchain-mips64-win64.zip" -O $zipfile
 fi
 
 if [ -e $sdkpath ]; then
@@ -65,7 +65,7 @@ echo "Toolchain installation in '$N64_INST' looks OK"
 if [ -e "libdragon" ]; then
     echo "Libdragon already downloaded"
 else
-    git clone -b preview https://github.com/DragonMinded/libdragon.git
+    git clone -b preview https://github.com/n64brew/libdragon.git
 fi
 
 cd libdragon

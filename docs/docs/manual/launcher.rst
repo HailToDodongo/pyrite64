@@ -90,4 +90,4 @@ On linux or MacOS, it instead only validates and links relevant documentation to
 
 
 .. _tiny3d: https://github.com/HailToDodongo/tiny3d
-.. _Libdragon: https://github.com/DragonMinded/libdragon
+.. _Libdragon: https://github.com/n64brew/libdragon

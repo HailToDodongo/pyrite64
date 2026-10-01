@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-N64 game-engine and editor using <a href="https://github.com/DragonMinded/libdragon">Libdragon</a> and <a href="https://github.com/HailToDodongo/tiny3d">tiny3d</a>.
+N64 game-engine and editor using <a href="https://github.com/n64brew/libdragon">Libdragon</a> and <a href="https://github.com/HailToDodongo/tiny3d">tiny3d</a>.
 </p>
 <br/>
 
