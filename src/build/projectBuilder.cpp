@@ -131,11 +131,13 @@ bool Build::buildProject(const std::string &configPath)
     }
   }
 
-  // check if files got added/removed, in which case trigger an asset rebuild.
-  // This is needed as some assets reference others via indices.
+  // check if the asset table changed (added/removed/excluded), in which case trigger an asset rebuild.
+  // This is needed as some assets reference others via indices, so the order matters too.
   {
-    auto fileNames = sceneCtx.files;
-    std::sort(fileNames.begin(), fileNames.end());
+    std::vector<std::string> fileNames{};
+    for(auto &entry : sceneCtx.assetList) {
+      fileNames.push_back(entry.path + ":" + std::to_string(entry.type));
+    }
     auto fileStr = Utils::join(fileNames, " ");
 
     auto oldFileStr = Utils::FS::loadTextFile(fsDataPath / "fileList.txt");
