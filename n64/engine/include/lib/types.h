@@ -16,7 +16,8 @@ namespace P64
     }
   #endif
 
-  consteval uint32_t crc32(const char* str, size_t len) {
+
+  constexpr uint32_t crc32Runtime(const char* str, size_t len) {
     uint32_t crc = 0xFFFFFFFF;
     for (size_t i = 0; i < len; i++) {
       crc ^= static_cast<uint8_t>(str[i]);
@@ -29,6 +30,10 @@ namespace P64
       }
     }
     return ~crc;
+  }
+
+  consteval uint32_t crc32(const char* str, size_t len) {
+    return crc32Runtime(str, len);
   }
 
   consteval uint64_t crc64(const char* str, size_t len)
