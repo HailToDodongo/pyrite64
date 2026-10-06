@@ -11,7 +11,6 @@
 #include <functional>
 #include <iterator>
 #include <optional>
-#include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -303,27 +302,7 @@ void Editor::ObjectInspector::draw() {
     };
 
     static std::unordered_map<std::string, std::string> mixedValueCache{};
-
-    auto parseFloatList = [](const std::string &text, float *out, int count) {
-      std::string cleaned = text;
-      for (auto &ch : cleaned) {
-        if (ch == ',' || ch == ';' || ch == '(' || ch == ')' || ch == '[' || ch == ']') {
-          ch = ' ';
-        }
-      }
-
-      std::stringstream stream(cleaned);
-      for (int i = 0; i < count; ++i) {
-        if (!(stream >> out[i])) {
-          return false;
-        }
-      }
-      return true;
-    };
-
-    auto parseFloat = [&](const std::string &text, float &out) {
-      return parseFloatList(text, &out, 1);
-    };
+    static std::unordered_map<std::string, std::vector<float>> mixedValueBaselines{};
 
     if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen)) {
       if (ImTable::start("General", nullptr)) {
@@ -382,8 +361,18 @@ void Editor::ObjectInspector::draw() {
           if (!floatEqual(rot.w, rotValue.w)) mixedRot[3] = true;
         }
 
-        auto applyVec3Component = [&](Property<glm::vec3> Project::Object::*prop, int index, float value) {
+        auto collectVec3Component = [&](Property<glm::vec3> Project::Object::*prop, int index) {
+          std::vector<float> values{};
+          values.reserve(selectedObjects.size());
           for (auto *selObj : selectedObjects) {
+            values.push_back((selObj->*prop).resolve(selObj->propOverrides)[index]);
+          }
+          return values;
+        };
+
+        auto applyVec3Component = [&](Property<glm::vec3> Project::Object::*prop, int index, const std::vector<float> &values) {
+          for (size_t objectIndex = 0; objectIndex < selectedObjects.size(); ++objectIndex) {
+            auto *selObj = selectedObjects[objectIndex];
             bool createdOverride = false;
             glm::vec3 resolvedBefore = (selObj->*prop).resolve(selObj->propOverrides);
             if (selObj->isPrefabInstance()
@@ -397,14 +386,22 @@ void Editor::ObjectInspector::draw() {
             if (createdOverride) {
               vec = resolvedBefore;
             }
-            if (index == 0) vec.x = value;
-            if (index == 1) vec.y = value;
-            if (index == 2) vec.z = value;
+            vec[index] = values[objectIndex];
           }
         };
 
-        auto applyQuatComponent = [&](Property<glm::quat> Project::Object::*prop, int index, float value) {
+        auto collectQuatComponent = [&](Property<glm::quat> Project::Object::*prop, int index) {
+          std::vector<float> values{};
+          values.reserve(selectedObjects.size());
           for (auto *selObj : selectedObjects) {
+            values.push_back((selObj->*prop).resolve(selObj->propOverrides)[index]);
+          }
+          return values;
+        };
+
+        auto applyQuatComponent = [&](Property<glm::quat> Project::Object::*prop, int index, const std::vector<float> &values) {
+          for (size_t objectIndex = 0; objectIndex < selectedObjects.size(); ++objectIndex) {
+            auto *selObj = selectedObjects[objectIndex];
             bool createdOverride = false;
             glm::quat resolvedBefore = (selObj->*prop).resolve(selObj->propOverrides);
             if (selObj->isPrefabInstance()
@@ -418,10 +415,7 @@ void Editor::ObjectInspector::draw() {
             if (createdOverride) {
               quat = resolvedBefore;
             }
-            if (index == 0) quat.x = value;
-            if (index == 1) quat.y = value;
-            if (index == 2) quat.z = value;
-            if (index == 3) quat.w = value;
+            quat[index] = values[objectIndex];
           }
         };
 
@@ -431,80 +425,118 @@ void Editor::ObjectInspector::draw() {
           float &value,
           float width,
           const std::string &snapshotLabel,
-          const std::function<void(float)> &applyValue
+          const std::function<std::vector<float>()> &collectValues,
+          const std::function<void(const std::vector<float>&)> &applyValues
         ) {
           std::string inputId = std::string{"##Value_"} + widgetKey;
           ImGui::SetNextItemWidth(width);
-          if (mixed) {
+          auto baselineIt = mixedValueBaselines.find(inputId);
+          bool mixedEditActive = baselineIt != mixedValueBaselines.end() && !baselineIt->second.empty();
+          if (mixed || mixedEditActive) {
             auto &text = mixedValueCache[inputId];
-            ImGui::InputTextWithHint(inputId.c_str(), "-", &text);
+            bool edited = ImGui::InputTextWithHint(inputId.c_str(), "-", &text);
+            auto &baseline = mixedValueBaselines[inputId];
+            if (ImGui::IsItemActivated()
+                || (ImGui::IsItemActive() && baseline.size() != selectedObjects.size())) {
+              // Capture one stable value per object so live previews never compound # expressions
+              baseline = collectValues();
+            }
             handleHistory(snapshotLabel);
-            if (ImGui::IsItemDeactivatedAfterEdit()) {
-              float parsed = value;
-              if (parseFloat(text, parsed)) {
-                value = parsed;
-                applyValue(parsed);
+            if (edited) {
+              std::vector<float> calculatedValues{};
+              calculatedValues.reserve(baseline.size());
+              bool valid = true;
+              for (float baseValue : baseline) {
+                double result{};
+                if (!ImGui::EvaluateMathExpression(text, result, baseValue)) {
+                  valid = false;
+                  break;
+                }
+                calculatedValues.push_back(static_cast<float>(result));
               }
+              if (valid && !calculatedValues.empty()) {
+                value = calculatedValues.front();
+                applyValues(calculatedValues);
+              }
+            }
+            if (ImGui::IsItemDeactivatedAfterEdit()) {
               text.clear();
+              baseline.clear();
             }
           } else {
-            if (ImGui::InputFloat(inputId.c_str(), &value)) {
-              applyValue(value);
+            auto mathInputBefore = ImGui::GetMathInputActivity();
+            if (ImGui::MathInputFloat(inputId.c_str(), &value)) {
+              applyValues(std::vector<float>(selectedObjects.size(), value));
             }
-            handleHistory(snapshotLabel);
+            auto mathInputAfter = ImGui::GetMathInputActivity();
+            // Expression confirmed --> Record one undo step
+            if (mathInputAfter.confirmations != mathInputBefore.confirmations)
+              Editor::UndoRedo::getHistory().markChanged(snapshotLabel);
           }
+        };
+
+        auto drawVec3Field = [&](\
+          const char *widgetKey,
+          bool mixed,
+          float &value,
+          float width,
+          const std::string &snapshotLabel,
+          Property<glm::vec3> Project::Object::*prop,
+          int index
+        ) {
+          drawFloatField(
+            widgetKey, mixed, value, width, snapshotLabel,
+            [&]() { return collectVec3Component(prop, index); },
+            [&](const std::vector<float> &values) { applyVec3Component(prop, index, values); }
+          );
+        };
+
+        auto drawQuatField = [&](\
+          const char *widgetKey,
+          bool mixed,
+          float &value,
+          float width,
+          const std::string &snapshotLabel,
+          Property<glm::quat> Project::Object::*prop,
+          int index
+        ) {
+          drawFloatField(
+            widgetKey, mixed, value, width, snapshotLabel,
+            [&]() { return collectQuatComponent(prop, index); },
+            [&](const std::vector<float> &values) { applyQuatComponent(prop, index, values); }
+          );
         };
 
         ImTable::add("Position");
         ImGui::PushID("Position");
         float posWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 2.0f) / 3.0f;
-        drawFloatField("PosX", mixedPos[0], posValue.x, posWidth, "Edit Position", [&](float val) {
-          applyVec3Component(&Project::Object::pos, 0, val);
-        });
+        drawVec3Field("PosX", mixedPos[0], posValue.x, posWidth, "Edit Position", &Project::Object::pos, 0);
         ImGui::SameLine();
-        drawFloatField("PosY", mixedPos[1], posValue.y, posWidth, "Edit Position", [&](float val) {
-          applyVec3Component(&Project::Object::pos, 1, val);
-        });
+        drawVec3Field("PosY", mixedPos[1], posValue.y, posWidth, "Edit Position", &Project::Object::pos, 1);
         ImGui::SameLine();
-        drawFloatField("PosZ", mixedPos[2], posValue.z, posWidth, "Edit Position", [&](float val) {
-          applyVec3Component(&Project::Object::pos, 2, val);
-        });
+        drawVec3Field("PosZ", mixedPos[2], posValue.z, posWidth, "Edit Position", &Project::Object::pos, 2);
         ImGui::PopID();
 
         ImTable::add("Rotation");
         ImGui::PushID("Rotation");
         float rotWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 3.0f) / 4.0f;
-        drawFloatField("RotX", mixedRot[0], rotValue.x, rotWidth, "Edit Rotation", [&](float val) {
-          applyQuatComponent(&Project::Object::rot, 0, val);
-        });
+        drawQuatField("RotX", mixedRot[0], rotValue.x, rotWidth, "Edit Rotation", &Project::Object::rot, 0);
         ImGui::SameLine();
-        drawFloatField("RotY", mixedRot[1], rotValue.y, rotWidth, "Edit Rotation", [&](float val) {
-          applyQuatComponent(&Project::Object::rot, 1, val);
-        });
+        drawQuatField("RotY", mixedRot[1], rotValue.y, rotWidth, "Edit Rotation", &Project::Object::rot, 1);
         ImGui::SameLine();
-        drawFloatField("RotZ", mixedRot[2], rotValue.z, rotWidth, "Edit Rotation", [&](float val) {
-          applyQuatComponent(&Project::Object::rot, 2, val);
-        });
+        drawQuatField("RotZ", mixedRot[2], rotValue.z, rotWidth, "Edit Rotation", &Project::Object::rot, 2);
         ImGui::SameLine();
-        drawFloatField("RotW", mixedRot[3], rotValue.w, rotWidth, "Edit Rotation", [&](float val) {
-          applyQuatComponent(&Project::Object::rot, 3, val);
-        });
+        drawQuatField("RotW", mixedRot[3], rotValue.w, rotWidth, "Edit Rotation", &Project::Object::rot, 3);
         ImGui::PopID();
 
         ImTable::add("Scale");
         ImGui::PushID("Scale");
         float scaleWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 2.0f) / 3.0f;
-        drawFloatField("ScaleX", mixedScale[0], scaleValue.x, scaleWidth, "Edit Scale", [&](float val) {
-          applyVec3Component(&Project::Object::scale, 0, val);
-        });
+        drawVec3Field("ScaleX", mixedScale[0], scaleValue.x, scaleWidth, "Edit Scale", &Project::Object::scale, 0);
         ImGui::SameLine();
-        drawFloatField("ScaleY", mixedScale[1], scaleValue.y, scaleWidth, "Edit Scale", [&](float val) {
-          applyVec3Component(&Project::Object::scale, 1, val);
-        });
+        drawVec3Field("ScaleY", mixedScale[1], scaleValue.y, scaleWidth, "Edit Scale", &Project::Object::scale, 1);
         ImGui::SameLine();
-        drawFloatField("ScaleZ", mixedScale[2], scaleValue.z, scaleWidth, "Edit Scale", [&](float val) {
-          applyVec3Component(&Project::Object::scale, 2, val);
-        });
+        drawVec3Field("ScaleZ", mixedScale[2], scaleValue.z, scaleWidth, "Edit Scale", &Project::Object::scale, 2);
         ImGui::PopID();
 
         ImTable::end();
@@ -654,7 +686,7 @@ void Editor::ObjectInspector::draw() {
         std::function<bool(glm::vec3*)> cb = [](glm::vec3 *val) -> bool {
           glm::vec3 scale = *val;
           if (scale == glm::vec3(0,0,0)) {
-            if (!ImGui::InputFloat3("##", glm::value_ptr(*val))) return false;
+            if (!ImGui::MathInputFloatN("##", glm::value_ptr(*val), 3)) return false;
             *val = glm::vec3(val->x + val->y + val->z);
             return true;
           }
@@ -666,7 +698,7 @@ void Editor::ObjectInspector::draw() {
             if (i > 0) ImGui::SameLine(0, g.Style.ItemInnerSpacing.x);
             bool isZero = glm::abs(scale[i]) < 0.0001f;
             if (isZero) ImGui::BeginDisabled();
-            if (ImGui::InputFloat("", &(*val)[i])) ratio = (*val)[i] / scale[i];
+            if (ImGui::MathInputFloat("", &(*val)[i])) ratio = (*val)[i] / scale[i];
             if (isZero) ImGui::EndDisabled();
             ImGui::PopID();
             ImGui::PopItemWidth();
