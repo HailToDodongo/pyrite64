@@ -8,7 +8,7 @@
   "collLayer6": "",
   "collLayer7": "",
   "debugMenu": true,
-  "editorVersion": "0.9.0",
+  "editorVersion": "0.10.0",
   "metadata": {
     "enabled": true,
     "langs": [
@@ -56,7 +56,7 @@
     "saveType": 3
   },
   "romName": "gj25_cathode_quest",
-  "sceneIdLastOpened": 8,
+  "sceneIdLastOpened": 1,
   "sceneIdOnBoot": 10,
   "sceneIdOnReset": 10,
   "visLayer0": "Default",

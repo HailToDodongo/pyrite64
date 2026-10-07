@@ -21,7 +21,7 @@ namespace
   constinit glm::vec4 lastEnv{};
 }
 
-void Renderer::N64Mesh::fromT3DM(const Project::Assets::Model3D &model3d, Project::AssetManager &assetManager)
+void Renderer::N64Mesh::fromT3DM(const Project::Assets::Model3D &model3d, Project::AssetManager &assetManager, bool includeNoMaterial)
 {
   loaded = false;
   mesh.vertices.clear();
@@ -30,11 +30,12 @@ void Renderer::N64Mesh::fromT3DM(const Project::Assets::Model3D &model3d, Projec
 
   auto &t3dmData = model3d.t3dm;
   mesh.vertexScale = model3d.autoBaseScale > 0.0f ? 1.0f / model3d.autoBaseScale : 1.0f;
-  parts.resize(t3dmData.models.size());
+  auto &models = includeNoMaterial ? t3dmData.modelsNoMat : t3dmData.models;
+  parts.resize(models.size());
   auto part = parts.begin();
 
   uint16_t idx = 0;
-  for (auto &model : t3dmData.models)
+  for (auto &model : models)
   {
     part->indicesOffset = mesh.indices.size();
     part->indicesCount = model.triangles.size() * 3;

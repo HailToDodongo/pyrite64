@@ -56,7 +56,8 @@ namespace Renderer
 
       void fromT3DM(
         const Project::Assets::Model3D &model3d,
-        Project::AssetManager &assetManager
+        Project::AssetManager &assetManager,
+        bool includeNoMaterial = false
       );
 
       void recreate(Scene &sc);

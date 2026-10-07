@@ -84,6 +84,7 @@ namespace Project
     std::shared_ptr<Renderer::Texture> texture{nullptr};
     Assets::Model3D model{};
     std::shared_ptr<Renderer::N64Mesh> mesh3D{};
+    std::shared_ptr<Renderer::N64Mesh> meshColl3D{}; // also contains meshes without materials
     std::shared_ptr<Prefab> prefab{nullptr};
     AssetConf conf{};
     Utils::CPP::Struct params{};

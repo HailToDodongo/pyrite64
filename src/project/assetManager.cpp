@@ -355,6 +355,12 @@ void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::str
           }
           entry.mesh3D->fromT3DM(entry.model, *this);
         }
+        if (!entry.model.t3dm.modelsNoMat.empty()) {
+          if (!entry.meshColl3D) {
+            entry.meshColl3D = std::make_shared<Renderer::N64Mesh>();
+          }
+          entry.meshColl3D->fromT3DM(entry.model, *this, true);
+        }
       } catch (std::exception &e) {
         Utils::Logger::log("Failed to load 3D model asset: " + entry.path + " - " + e.what(), Utils::Logger::LEVEL_ERROR);
       }
