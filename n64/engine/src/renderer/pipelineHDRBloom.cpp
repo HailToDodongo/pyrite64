@@ -66,7 +66,7 @@ P64::RenderPipelineHDRBloom::~RenderPipelineHDRBloom()
   Mem::freeDepthBuffer();
 }
 
-void P64::RenderPipelineHDRBloom::preDraw()
+void P64::RenderPipelineHDRBloom::beginFrame()
 {
   //rdpq_set_color_image(&surfHDRSafe);
   setupLayer();
@@ -82,12 +82,9 @@ void P64::RenderPipelineHDRBloom::preDraw()
   }
 }
 
-void P64::RenderPipelineHDRBloom::draw()
+void P64::RenderPipelineHDRBloom::endFrame()
 {
   uint32_t frameIdxLast = (frameIdx+BUFF_COUNT-1) % BUFF_COUNT;
-
-  DrawLayer::draw3D();
-  DrawLayer::drawPtx();
 
   postProc[frameIdx].endFrame();
   assert(fb != nullptr);

@@ -68,7 +68,7 @@ P64::RenderPipelineBigTex::~RenderPipelineBigTex()
   BigTex::ucodeDestroy();
 }
 
-void P64::RenderPipelineBigTex::preDraw()
+void P64::RenderPipelineBigTex::beginFrame()
 {
   setupLayer();
 
@@ -90,7 +90,29 @@ void P64::RenderPipelineBigTex::preDraw()
   rdpq_set_z_image(surfDepth);
 }
 
-void P64::RenderPipelineBigTex::draw()
+// layers are drawn deferred after the texture pass (see 'draw'),
+// so the per-camera target and scissor have to be recorded into them
+void P64::RenderPipelineBigTex::beginCamera(Camera &cam)
+{
+  for(int i=1; i<scene.getConf().layerSetup.layerCount3D; ++i) {
+    DrawLayer::use3D(i);
+      cam.applyTargetImages();
+      cam.reApplyScissor();
+    DrawLayer::useDefault();
+  }
+}
+
+void P64::RenderPipelineBigTex::endCamera(Camera &cam)
+{
+  for(int i=1; i<scene.getConf().layerSetup.layerCount3D; ++i) {
+    DrawLayer::use3D(i);
+      t3d_tri_sync();
+      cam.restoreTargetImages();
+    DrawLayer::useDefault();
+  }
+}
+
+void P64::RenderPipelineBigTex::endFrame()
 {
   uint32_t frameIdxLast = (frameIdx + 2) % 3;
   //DrawLayer::draw(DrawLayer::LAYER_TRANS);

@@ -25,6 +25,12 @@ void P64::RenderPipeline::setupLayer()
   rdpq_mode_end();
 }
 
+void P64::RenderPipeline::endCamera(Camera&)
+{
+  DrawLayer::draw3D();
+  DrawLayer::drawPtx();
+}
+
 void P64::RenderPipelineDefault::init()
 {
   tex_format_t fmt = (scene.getConf().flags & SceneConf::FLAG_SCR_32BIT) ? FMT_RGBA32 : FMT_RGBA16;
@@ -54,7 +60,7 @@ P64::RenderPipelineDefault::~RenderPipelineDefault()
   Mem::freeDepthBuffer();
 }
 
-void P64::RenderPipelineDefault::preDraw()
+void P64::RenderPipelineDefault::beginFrame()
 {
   setupLayer();
 
@@ -66,10 +72,8 @@ void P64::RenderPipelineDefault::preDraw()
   }
 }
 
-void P64::RenderPipelineDefault::draw()
+void P64::RenderPipelineDefault::endFrame()
 {
-  DrawLayer::draw3D();
-  DrawLayer::drawPtx();
   DrawLayer::draw2D();
 
   DrawLayer::nextFrame();

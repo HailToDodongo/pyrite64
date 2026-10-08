@@ -55,8 +55,9 @@ namespace P64::DrawLayer
 
   inline void useDefault() { use(0); }
 
-  void applyForCamera(uint32_t layerIdx);
-
+  /// @brief applies layer modes and runs commands recorded since last run.
+  /// Layers can be recorded and drawn multiple times per frame (e.g. multiple cameras). 
+  /// @param layerIdx 
   void draw(uint32_t layerIdx);
 
   void draw3D();

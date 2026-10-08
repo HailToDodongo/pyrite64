@@ -25,7 +25,9 @@ namespace P64
       ~RenderPipelineBigTex() override;
 
       void init() override;
-      void preDraw() override;
-      void draw() override;
+      void beginFrame() override;
+      void endFrame() override;
+      void beginCamera(Camera &cam) override;
+      void endCamera(Camera &cam) override;
   };
 }

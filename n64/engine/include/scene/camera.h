@@ -65,6 +65,9 @@ namespace P64
       surface_t* targetSurfPtr{}; // raw target surface, takes precedence over 'targetObjId'
       surface_t* targetDepthPtr{}; // optional depth buffer for 'targetSurfPtr'
 
+      // called after the camera's draw-layers were drawn and before its target is detached
+      void (*onDrawEnd)(Camera&){};
+
       Camera();
       CLASS_NO_COPY_MOVE(Camera);
       ~Camera();

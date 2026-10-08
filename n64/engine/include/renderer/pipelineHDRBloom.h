@@ -30,7 +30,7 @@ namespace P64
       ~RenderPipelineHDRBloom() override;
 
       void init() override;
-      void preDraw() override;
-      void draw() override;
+      void beginFrame() override;
+      void endFrame() override;
   };
 }
