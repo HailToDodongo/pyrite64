@@ -349,7 +349,6 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
     GlobalScript::callHooks(GlobalScript::HookType::SCENE_POST_DRAW_3D);
     ticksGlobalDraw += get_user_ticks() - t;
 
-    t3d_tri_sync(); // pending triangles must land before the layer mode changes
     t3d_matrix_pop(1);
     renderPipeline->endCamera(*cam);
     if(cam->onDrawEnd) {
