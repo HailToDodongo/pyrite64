@@ -106,7 +106,6 @@ void P64::RenderPipelineBigTex::endCamera(Camera &cam)
 {
   for(int i=1; i<scene.getConf().layerSetup.layerCount3D; ++i) {
     DrawLayer::use3D(i);
-      t3d_tri_sync();
       cam.restoreTargetImages();
     DrawLayer::useDefault();
   }

@@ -120,7 +120,6 @@ void P64::DrawLayer::draw(uint32_t layerIdx)
   if(layerIdx < layerSetup->layerCount3D) {
     t3d_matrix_push_pos(1);
       rspq_queue_run(queue);
-      t3d_tri_sync();
     t3d_matrix_pop(1);
   } else {
     rspq_queue_run(queue);
