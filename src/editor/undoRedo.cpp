@@ -4,6 +4,8 @@
 */
 #include "undoRedo.h"
 #include "../context.h"
+#include "imgui.h"
+#include "imgui_internal.h"
 
 namespace
 {
@@ -14,6 +16,7 @@ namespace Editor::UndoRedo
 {
   bool History::undo()
   {
+    commit();
     if (!canUndo()) return false;
 
     auto cmd = std::move(undoStack.back());
@@ -34,6 +37,7 @@ namespace Editor::UndoRedo
   
   bool History::redo()
   {
+    commit();
     if (!canRedo()) return false;
 
     auto cmd = std::move(redoStack.back());
@@ -56,6 +60,7 @@ namespace Editor::UndoRedo
     undoStack.clear();
     redoStack.clear();
     nextChangedReason.clear();
+    hasPendingActiveId = false;
     savedState.reset();
     snapshotScene = nullptr;
     snapshotSelUUIDs.clear();
@@ -78,14 +83,36 @@ namespace Editor::UndoRedo
     }
 
     snapshotScene = scene;
-    snapshotSelUUIDs = ctx.selObjectUUIDs;
+    if (nextChangedReason.empty()) {
+      snapshotSelUUIDs = ctx.selObjectUUIDs;
+    }
   }
 
   void History::end() {
+    // sliders, color-pickers or text inputs would cause change each frame
+    // only commit once the interaction is over
+    if (!nextChangedReason.empty()) {
+      ImGuiID activeId = ImGui::GetActiveID();
+      if (!hasPendingActiveId) {
+        pendingActiveId = activeId;
+        hasPendingActiveId = true;
+      }
+      // also commit when tabbing/clicking into another widget
+      if (activeId == 0 || activeId != pendingActiveId) {
+        commit();
+      }
+    }
+    snapshotScene = nullptr;
+  }
+
+  void History::commit() {
+    hasPendingActiveId = false;
     if (nextChangedReason.empty())return;
 
     auto scene = snapshotScene;
-    snapshotScene = nullptr;
+    if (!scene && ctx.project) {
+      scene = ctx.project->getScenes().getLoadedScene();
+    }
     if (!scene) {
       nextChangedReason.clear();
       return;
@@ -124,6 +151,7 @@ namespace Editor::UndoRedo
 
   void History::markSaved()
   {
+    commit();
     if (undoStack.empty()) {
       savedState.reset();
       return;
