@@ -221,16 +221,7 @@ void CharacterBody::moveAndSlide(float deltaTime)
           displacement = VEC3_ZERO;
         }
       }
-      // When nothing was stripped from displacement (it was already parallel
-      // to this surface) and it doesn't point into any previous surface, apply
-      // it now. This stops gravity accumulation from being silently discarded
-      // in sharp corners where every sweep returns t=0.
-      if(fabsf(dispInto) <= FM_EPSILON) {
-        if(!hasPrevHit || fm_vec3_dot(&displacement, &prevHitNormal) >= -FM_EPSILON) {
-          owner->pos = owner->pos + displacement;
-          displacement = VEC3_ZERO;
-        }
-      }
+      
       prevHitNormal = pushDir;
       hasPrevHit    = true;
       continue;

@@ -13,6 +13,7 @@ namespace P64::Coll {
 
 static constexpr float SWEEP_EPS  = 1e-6f;
 static constexpr float PARAM_EPS  = 1e-4f; // inset to avoid double-counting end caps
+static constexpr float CONTACT_SKIN = 1e-3f; // A t==0 overlap less than this is treated as a resting contact
 
 // ── Point-in-triangle (P already projected onto face plane) ──────────────────
 
@@ -49,11 +50,14 @@ static float sphereFaceTest(
   float face_d   = fm_vec3_dot(&triN, &v0);
   float sdist    = fm_vec3_dot(&triN, &S) - face_d; // positive = in front
 
-  if (sdist < -r) return std::numeric_limits<float>::max(); // fully behind
+  // Two-sided collision: a centre behind the plane collides with the back face. 
+  // work with inverted normal for back faces and absolute distance
+  const fm_vec3_t n = (sdist < 0.0f) ? -triN : triN;
+  sdist = fabsf(sdist);
 
   float t;
   if (sdist >= r) {
-    float ndotd = fm_vec3_dot(&triN, &dir);
+    float ndotd = fm_vec3_dot(&n, &dir);
     if (ndotd >= -SWEEP_EPS) return std::numeric_limits<float>::max();
     t = (sdist - r) / (-ndotd);
     if (t > t_max) return std::numeric_limits<float>::max();
@@ -64,11 +68,11 @@ static float sphereFaceTest(
   }
 
   fm_vec3_t C_t      = S + dir * t;
-  fm_vec3_t hitPlane = C_t - triN * r;
+  fm_vec3_t hitPlane = C_t - n * r;
   if (!pointInTriangle(hitPlane, v0, v1, v2, triN))
     return std::numeric_limits<float>::max();
 
-  outN = triN;
+  outN = n;
   outP = hitPlane;
   return t;
 }
@@ -141,6 +145,9 @@ bool capsuleSweepTriangle(
 
   auto update = [&](float t, const fm_vec3_t& n, const fm_vec3_t& p, float depth) {
     if (t > dist + SWEEP_EPS) return;
+    // Resting contact while moving along or away from the surface is not a hit
+    // Reporting it as a 0 overlap could prevent real contacts further along the sweep
+    if (t == 0.0f && depth <= CONTACT_SKIN && fm_vec3_dot(&n, &dir) >= -1e-4f) return;
     // Among t==0 hits keep the deepest; otherwise keep the earliest
     if (t < bestT || (t == 0.0f && depth > bestDepth)) {
       bestT     = t;
@@ -220,7 +227,9 @@ bool capsuleSweepTriangle(
     float b     = fm_vec3_dot(&axis, &d2);
     float denom = a * e_val - b * b;
 
-    if (denom < SWEEP_EPS * SWEEP_EPS) return std::numeric_limits<float>::max();
+    // a*e_val - b*b fails for (almost)parallel segments,
+    // absolute epsilon lets garbage n_hat/s_star through which can produce garbage contacts
+    if (denom <= 1e-5f * a * e_val) return std::numeric_limits<float>::max();
 
     fm_vec3_t n_cross;
     fm_vec3_cross(&n_cross, &axis, &d2);

@@ -49,11 +49,14 @@ static float sphereFaceTest(
   float face_d   = fm_vec3_dot(&triN, &v0);
   float sdist    = fm_vec3_dot(&triN, &S) - face_d; // positive = in front
 
-  if (sdist < -r) return std::numeric_limits<float>::max(); // fully behind
+  // Two-sided collision: a centre behind the plane collides with the back face. 
+  // work with inverted normal for back faces and absolute distance
+  const fm_vec3_t n = (sdist < 0.0f) ? -triN : triN;
+  sdist = fabsf(sdist);
 
   float t;
   if (sdist >= r) {
-    float ndotd = fm_vec3_dot(&triN, &dir);
+    float ndotd = fm_vec3_dot(&n, &dir);
     if (ndotd >= -SWEEP_EPS) return std::numeric_limits<float>::max();
     t = (sdist - r) / (-ndotd);
     if (t > t_max) return std::numeric_limits<float>::max();
@@ -64,11 +67,11 @@ static float sphereFaceTest(
   }
 
   fm_vec3_t C_t      = S + dir * t;
-  fm_vec3_t hitPlane = C_t - triN * r;
+  fm_vec3_t hitPlane = C_t - n * r;
   if (!pointInTriangle(hitPlane, v0, v1, v2, triN))
     return std::numeric_limits<float>::max();
 
-  outN = triN;
+  outN = n;
   outP = hitPlane;
   return t;
 }
