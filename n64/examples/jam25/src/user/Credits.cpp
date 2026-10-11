@@ -223,7 +223,7 @@ namespace P64::Script::C10BED11E4F936F7
 
     logoSubtext(baseY, logoPyrite, "github.com/HailToDodongo/pyrite64");
     logoSubtext(baseY, logoTiny3d, "github.com/HailToDodongo/tiny3d");
-    logoSubtext(baseY, logoLibdragon, "github.com/DragonMinded/libdragon", -16.0f);
+    logoSubtext(baseY, logoLibdragon, "github.com/n64brew/libdragon", -16.0f);
 
     titleBlock(baseY, "Special Thanks");
 
