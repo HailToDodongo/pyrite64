@@ -255,7 +255,7 @@ namespace Project::Component::Code
             ImTable::addObjProp<std::string>(name, prop, [&](std::string *val) -> bool {
               auto values = Utils::parseFloatList(*val);
               values.resize(3, 0.0f);
-              if (ImGui::InputFloat3("##", values.data())) {
+              if (ImGui::MathInputFloatN("##", values.data(), 3)) {
                 *val = Utils::floatListToString(values.data(), 3);
                 return true;
               }
@@ -266,7 +266,7 @@ namespace Project::Component::Code
               auto values = Utils::parseFloatList(*val);
               if (values.empty()) values = {0,0,0,1};
               values.resize(4, 0.0f);
-              if (ImGui::InputFloat4("##", values.data())) {
+              if (ImGui::MathInputFloatN("##", values.data(), 4)) {
                 *val = Utils::floatListToString(values.data(), 4);
                 return true;
               }
