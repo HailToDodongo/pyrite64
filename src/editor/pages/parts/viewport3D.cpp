@@ -794,7 +794,7 @@ void Editor::Viewport3D::draw()
         PropScope::Dispatch enabledScope(camObj->propOverrides, comp.uuid);
         if (comp.enabled.resolve(*camObj) && comp.id == 3) {
           camView = Project::Component::Camera::getView(*camObj, comp);
-          camera.pos = camObj->pos.resolve(camObj->propOverrides);
+          camera.pos = camObj->pos.resolve(camObj->propOverrides) + camView.worldOffset;
           camera.rot = glm::normalize(camObj->rot.resolve(camObj->propOverrides));
           camera.fov = camView.fov;
           camera.isOrtho = camView.isOrtho;

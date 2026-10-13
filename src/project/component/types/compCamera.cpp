@@ -31,6 +31,7 @@ namespace Project::Component::Camera
   struct Data
   {
     PROP_IVEC2(vpOffset);
+    PROP_VEC3(worldOffset);
     PROP_IVEC2(vpSize);
     PROP_FLOAT(fov);
     PROP_FLOAT(near);
@@ -62,6 +63,7 @@ namespace Project::Component::Camera
     Data &data = *static_cast<Data*>(entry.data.get());
     return Utils::JSON::Builder{}
       .set(data.vpOffset)
+      .set(data.worldOffset)
       .set(data.vpSize)
       .set(data.fov)
       .set(data.near)
@@ -79,6 +81,7 @@ namespace Project::Component::Camera
   std::shared_ptr<void> deserialize(nlohmann::json &doc) {
     auto data = std::make_shared<Data>();
     Utils::JSON::readProp(doc, data->vpOffset);
+    Utils::JSON::readProp(doc, data->worldOffset, glm::vec3{0.0f});
     Utils::JSON::readProp(doc, data->vpSize);
     Utils::JSON::readProp(doc, data->fov, 65.0f);
     Utils::JSON::readProp(doc, data->near, 1.0f);
@@ -99,6 +102,7 @@ namespace Project::Component::Camera
 
     ctx.fileObj.writeArray(glm::value_ptr(data.vpOffset.resolve(obj)), 2);
     ctx.fileObj.writeArray(glm::value_ptr(data.vpSize.resolve(obj)), 2);
+    ctx.fileObj.writeArray(glm::value_ptr(data.worldOffset.resolve(obj)), 3);
     ctx.fileObj.write<float>(glm::radians(data.fov.resolve(obj)));
     ctx.fileObj.write<float>(data.near.resolve(obj));
     ctx.fileObj.write<float>(data.far.resolve(obj));
@@ -133,7 +137,7 @@ namespace Project::Component::Camera
     return View{
       size.x, size.y, aspect, data.fov.resolve(obj),
       data.projection.resolve(obj) == PROJ_ORTHOGRAPHIC,
-      data.orthoSize.resolve(obj)
+      data.orthoSize.resolve(obj), data.worldOffset.resolve(obj)
     };
   }
 
@@ -185,7 +189,8 @@ namespace Project::Component::Camera
         }, nullptr);
       }
 
-      ImTable::addObjProp("Offset", data.vpOffset);
+      ImTable::addObjProp("World Space Offset", data.worldOffset);
+      ImTable::addObjProp("Screen Space Offset", data.vpOffset);
       ImTable::addObjProp("Size", data.vpSize);
       if(data.projection.resolve(obj) == PROJ_ORTHOGRAPHIC) {
         ImTable::addObjProp("Ortho Size", data.orthoSize);
@@ -205,7 +210,7 @@ namespace Project::Component::Camera
   {
     Data &data = *static_cast<Data*>(entry.data.get());
 
-    auto pos = obj.pos.resolve(obj);
+    auto pos = obj.pos.resolve(obj) + data.worldOffset.resolve(obj);
 
     bool isSelected = ctx.isObjectSelected(obj.uuid);
 

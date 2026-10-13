@@ -13,7 +13,8 @@ Multiple cameras can be active at once (e.g. for split-screen).
 |--------|-------------|
 | **Controlled** | How the camera transform is driven:<br>• **Manually**: you set the camera position/rotation yourself (e.g. from a script).<br>• **By Object**: the camera follows the object's transform. |
 | **Projection** | How the scene is projected:<br>• **Perspective**: objects get smaller with distance, configured via **FOV**.<br>• **Orthographic**: no perspective distortion (e.g. for isometric or 2D games), configured via **Ortho Size**. |
-| **Offset** | The viewport's top-left offset on screen, in pixels. |
+| **World Space Offset** | Camera position offset from the object along the world X/Y/Z axes, in meters. Unaffected by object rotation or scale. Applied initially in both control modes; **By Object** also reapplies it as the object moves. For example, `(0, 1.7, 0)` raises the camera by 1.7 meters. |
+| **Screen Space Offset** | The viewport's top-left offset on screen, in pixels. |
 | **Size** | The viewport's size on screen, in pixels. |
 | **FOV** | Vertical field of view, in degrees. Only used in perspective mode. |
 | **Ortho Size** | Vertical half-size of the visible area, in meters. The horizontal size is derived from it via the aspect ratio. Only used in orthographic mode. |

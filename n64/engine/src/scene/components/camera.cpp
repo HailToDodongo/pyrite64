@@ -18,6 +18,7 @@ void P64::Comp::Camera::initDelete(Object &obj, Camera* data, InitData* initData
   new(data) Camera();
 
   data->mode = initData->mode;
+  data->worldOffset = initData->worldOffset;
   auto &cam = data->camera;
   cam.setScreenArea(initData->vpOffset[0], initData->vpOffset[1], initData->vpSize[0], initData->vpSize[1]);
   cam.fov  = initData->fov;
@@ -34,7 +35,9 @@ void P64::Comp::Camera::initDelete(Object &obj, Camera* data, InitData* initData
     cam.aspectRatio = (float)initData->vpSize[0] / (float)initData->vpSize[1];
   }
 
-  cam.setPosRot(obj.pos, obj.rot);
+  fm_vec3_t pos;
+  fm_vec3_add(&pos, &obj.pos, &data->worldOffset);
+  cam.setPosRot(pos, obj.rot);
 
   if(obj.isEnabled()) {
     SceneManager::getCurrent().addCamera(&cam);
@@ -54,6 +57,8 @@ void P64::Comp::Camera::onEvent(Object &obj, Camera* data, const ObjectEvent &ev
 void P64::Comp::Camera::update(Object &obj, Camera* data, float deltaTime)
 {
   if(data->mode == Mode::OBJECT) {
-    data->camera.setPosRot(obj.pos, obj.rot);
+    fm_vec3_t pos;
+    fm_vec3_add(&pos, &obj.pos, &data->worldOffset);
+    data->camera.setPosRot(pos, obj.rot);
   }
 }

@@ -27,6 +27,7 @@ namespace P64::Comp
     {
       int vpOffset[2];
       int vpSize[2];
+      fm_vec3_t worldOffset;
       float fov;
       float near;
       float far;
@@ -41,6 +42,7 @@ namespace P64::Comp
 
     P64::Camera camera{};
     Mode mode;
+    fm_vec3_t worldOffset{}; // meters along world axes, independent of object rotation/scale
 
     /**
      * Switches the camera over to a perspective projection.
