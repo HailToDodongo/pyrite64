@@ -92,6 +92,8 @@
 
 #define DRAW_SHADER_COLLISION  (1 << 8)
 #define LIGHT_MODE_ADD         (1 << 9)
+#define FOG_TO_ALPHA           (1 << 10) // t3d setting to move fog into alpha
+#define FOG_BLEND              (1 << 11) // actual blending to fog
 
 /*
 struct TileConf {

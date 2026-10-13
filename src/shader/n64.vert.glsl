@@ -122,6 +122,12 @@ void main()
   //cc_shade.rgb = lightTotal.rgb;
 
   cc_shade = clamp(cc_shade, 0.0, 1.0);
+
+  if((DRAW_FLAGS & FOG_TO_ALPHA) != 0) {
+    float depth = -(matMV * vec4(vec3(inPosition), 1.0)).z;
+    float fog = clamp((depth - material.fogRange.x) * material.fogRange.y, 0.0, 1.0);
+    cc_shade.a = round((1.0 - fog) * 255.0) / 255.0;
+  }
   // cc_shade.rgb = norm * 0.5 + 0.5; // TEST
   cc_shade_flat = cc_shade;
 

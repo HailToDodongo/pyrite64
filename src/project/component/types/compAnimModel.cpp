@@ -208,6 +208,7 @@ namespace Project::Component::AnimModel
       layerDepthRead = layers[layerIdx].depthCompare.resolve(obj);
       layerDepthWrite = layers[layerIdx].depthWrite.resolve(obj);
     }
+    applyLayerFog(data.obj3D.uniform.mat, ctx.project->getScenes().getLoadedScene()->conf, layerIdx, obj, vp.isFogPreviewed());
 
     data.skeleton->use(pass);
     data.obj3D.draw(pass, cmdBuff, {

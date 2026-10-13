@@ -15,6 +15,7 @@ struct UBO_Material {
 
   ivec4 modes; // vertexFX, other-low, other-high, flags
 
+  vec4 fogColor;
   vec4 lightColor[6];
   vec4 lightDir[6]; // [0].w is alpha clip
   vec4 colPrim;
@@ -29,6 +30,8 @@ struct UBO_Material {
   ivec2 blender;
   float alphaClip;
   float depthOffset;
+
+  vec2 fogRange; // min, 1 / (max - min)
 
   uint objectID;
 };

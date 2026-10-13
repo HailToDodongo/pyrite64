@@ -24,7 +24,8 @@ struct SDL_GPUCommandBuffer;
 struct SDL_GPUGraphicsPipeline;
 struct SDL_GPURenderPass;
 
-namespace Project { class Object; class Scene; }
+namespace Project { class Object; class Scene; struct SceneConf; }
+namespace Renderer { struct UniformN64Material; }
 
 namespace Project::Component
 {
@@ -119,6 +120,11 @@ namespace Project::Component
    * @param vertexScale meters per vertex unit of the model, see Assets::Model3D
    */
   glm::mat4 makeModelMatrix(Object &obj, float vertexScale);
+
+  /**
+   * Sets fog (color + range of the layer)
+   */
+  void applyLayerFog(Renderer::UniformN64Material &mat, const SceneConf &conf, int layerIdx, Object &obj, bool enabled);
 
   namespace Camera
   {

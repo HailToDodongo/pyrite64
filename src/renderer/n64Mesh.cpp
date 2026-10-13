@@ -91,7 +91,9 @@ void Renderer::N64Mesh::draw(
 ) {
   if (!scene)return;
 
-  uint32_t flagsGlobal = uniforms.mat.flags & LIGHT_MODE_ADD;
+  uint32_t flagsGlobal = uniforms.mat.flags & (LIGHT_MODE_ADD | FOG_TO_ALPHA | FOG_BLEND);
+  glm::vec4 fogColor = uniforms.mat.fogColor;
+  glm::vec2 fogRange = uniforms.mat.fogRange;
 
   int boundPipeline = -1;
 
@@ -101,6 +103,7 @@ void Renderer::N64Mesh::draw(
 
     bool depthRead = ref.layerDepthRead;
     bool depthWrite = ref.layerDepthWrite;
+    uint32_t flags = flagsGlobal;
 
     uint32_t slotIdx = 0;
     auto matEntry = ref.model->materials.find(part.materialName);
@@ -130,6 +133,11 @@ void Renderer::N64Mesh::draw(
         resolveTex(mat.tex0, 0);
         resolveTex(mat.tex1, 1);
         N64Material::convert(part, mat);
+      }
+
+      if(mat.fogSet.value && (flags & FOG_TO_ALPHA)) {
+        flags &= ~FOG_BLEND;
+        if(mat.fog.value != 0)flags |= FOG_BLEND;
       }
 
       if(mat.zmodeSet.value) {
@@ -173,7 +181,9 @@ void Renderer::N64Mesh::draw(
     uniforms.mat.colPrim = lastPrim;
     uniforms.mat.colEnv = lastEnv;
     uniforms.mat.blender.x = blender;
-    uniforms.mat.flags |= flagsGlobal;
+    uniforms.mat.flags |= flags;
+    uniforms.mat.fogColor = fogColor;
+    uniforms.mat.fogRange = fogRange;
 
     // @TODO: move out
 

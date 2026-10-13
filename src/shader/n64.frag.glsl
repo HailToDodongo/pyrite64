@@ -322,6 +322,10 @@ void main()
 
   FragColor = vec4(ccValue.rgb, ccValue.a);
 
+  if((DRAW_FLAGS & FOG_BLEND) != 0) {
+    FragColor.rgb = mix(material.fogColor.rgb, ccValue.rgb, ccShade.a);
+  }
+
   // hack for transparency, TODO: add proper blending support again
   if(material.blender.x == 0) {
     FragColor.a = 1.0f;

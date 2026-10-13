@@ -454,6 +454,7 @@ nlohmann::json Editor::Viewport3D::saveState() const
     {"showCollObj", showCollObj},
     {"showIcons", showIcons},
     {"previewTransforms", previewTransforms},
+    {"previewFog", previewFog},
     {"boundCam", boundCameraUUID},
     {"camRes", useCameraRes},
   };
@@ -466,6 +467,7 @@ void Editor::Viewport3D::loadState(const nlohmann::json &j)
   showCollObj = j.value("showCollObj", showCollObj);
   showIcons = j.value("showIcons", showIcons);
   previewTransforms = j.value("previewTransforms", previewTransforms);
+  previewFog = j.value("previewFog", previewFog);
   boundCameraUUID = j.value("boundCam", (uint64_t)0);
   useCameraRes = j.value("camRes", false);
 }
@@ -1114,6 +1116,13 @@ void Editor::Viewport3D::draw()
   }
   ImGui::SetItemTooltip("%s Constraints (billboards, copy transform)",
     previewTransforms ? "Ignore" : "Preview");
+
+  ImGui::SameLine();
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4_px);
+  if(ConnectedToggleButton(ICON_MDI_WEATHER_FOG, previewFog, true, true, ImVec2(32_px, 24_px))) {
+    previewFog = !previewFog;
+  }
+  ImGui::SetItemTooltip("%s Fog", previewFog ? "Hide" : "Preview");
 
   ImGui::SameLine();
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4_px);

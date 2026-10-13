@@ -226,6 +226,7 @@ namespace Project::Component::Model
         data.obj3D.uniform.mat.flags |= LIGHT_MODE_ADD;
       }
     }
+    applyLayerFog(data.obj3D.uniform.mat, ctx.project->getScenes().getLoadedScene()->conf, layerIdx, obj, vp.isFogPreviewed());
 
     if (!asset || !asset->mesh3D) {
       return;
