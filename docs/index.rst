@@ -15,4 +15,4 @@ Pyrite\ :sup:`64`
   docs/version
 
 .. _tiny3d: https://github.com/HailToDodongo/tiny3d
-.. _Libdragon: https://github.com/DragonMinded/libdragon
+.. _Libdragon: https://github.com/n64brew/libdragon

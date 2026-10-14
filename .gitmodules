@@ -21,7 +21,7 @@
 	url = https://github.com/HailToDodongo/tiny3d.git
 [submodule "vendored/libdragon"]
 	path = vendored/libdragon
-	url = https://github.com/DragonMinded/libdragon.git
+	url = https://github.com/n64brew/libdragon.git
 [submodule "vendored/tiny-regex-c"]
 	path = vendored/tiny-regex-c
 	url = https://github.com/kokke/tiny-regex-c.git
