@@ -49,7 +49,7 @@ void Editor::MatInstanceEditor::draw(
 
       slot.offset.value = glm::clamp(slot.offset.value, 0.0f, 1023.75f);
     } else if(slot.dynType.value == Project::Assets::MaterialTex::DYN_TYPE_FULL) {
-      TextureEditor::draw(matInst.texSlots[slotIdx]);
+      TextureEditor::draw(matInst.texSlots[slotIdx], modelUUID);
     }
     ImGui::PopID();
 

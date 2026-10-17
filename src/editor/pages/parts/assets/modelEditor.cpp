@@ -266,7 +266,7 @@ bool Editor::ModelEditor::draw(ImGuiID defDockId)
         if(tex.dynType.value == tex.DYN_TYPE_FULL) {
           ImTable::addProp("Size", tex.texSize);
         } else {
-          TextureEditor::draw(tex);
+          TextureEditor::draw(tex, assetUUID);
         }
 
         ImGui::PopID();
