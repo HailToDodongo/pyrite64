@@ -7,6 +7,7 @@
 #include "objectFlags.h"
 #include "event.h"
 #include "sceneManager.h"
+#include "script/scriptType.h"
 
 namespace P64
 {
@@ -106,6 +107,19 @@ namespace P64
         }
         return nullptr;
       }
+
+      /**
+       * Returns the data of a code component where the given type matches, see 'P64_DATA_TYPE'. 
+       * If no script matches, nullptr is returned.
+       * @tparam T data type of the script
+       * @return pointer to the script data or nullptr
+       */
+      template<typename T>
+      [[nodiscard]] T* getScriptData() const {
+        return static_cast<T*>(getScriptDataByType(&Script::TYPE_TAG<T>));
+      }
+
+      [[nodiscard]] void* getScriptDataByType(const void* typeTag) const;
 
       /**
        * Check if the object itself is enabled (not considering parent/group state).

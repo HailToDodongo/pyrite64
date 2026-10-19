@@ -31,3 +31,6 @@
 [submodule "vendored/quickjs-ng"]
 	path = vendored/quickjs-ng
 	url = https://github.com/quickjs-ng/quickjs.git
+[submodule "vendored/doctest"]
+	path = vendored/doctest
+	url = https://github.com/doctest/doctest.git

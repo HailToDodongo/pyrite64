@@ -10,7 +10,10 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <filesystem>
+#include <unordered_set>
 
+#include "fs.h"
 #include "logger.h"
 
 namespace
@@ -135,33 +138,205 @@ namespace
   }
 }
 
-Utils::CPP::Struct Utils::CPP::parseDataStruct(const std::string &sourceCode, const std::string &structName)
+namespace fs = std::filesystem;
+
+namespace
 {
-  // remove line and multi-line comments
-  auto code = std::regex_replace(sourceCode, std::regex(R"(//[^\n]*)"), "");
-  code = std::regex_replace(code, std::regex(R"(/\*[\s\S]*?\*/)"), "");
-
-  // Locate the P64_DATA(...) body by matching parentheses, so defaults that
-  // contain calls or macros (e.g. "color_t c = RGBA32(...)") don't end it early.
-  auto bodyStart = code.find("P64_DATA(");
-  if (bodyStart != std::string::npos)
+  std::string stripComments(const std::string &sourceCode)
   {
-    bodyStart += std::string_view{"P64_DATA("}.size();
-    size_t bodyEnd = bodyStart;
+    auto code = std::regex_replace(sourceCode, std::regex(R"(//[^\n]*)"), "");
+    return std::regex_replace(code, std::regex(R"(/\*[\s\S]*?\*/)"), "");
+  }
+
+  std::string trimSpace(const std::string &s) {
+    size_t start = s.find_first_not_of(" \t\n\r");
+    size_t end = s.find_last_not_of(" \t\n\r");
+    if (start == std::string::npos) return "";
+    return s.substr(start, end - start + 1);
+  }
+
+  // Returns the index after the bracket closing the one at 'start', or npos if unbalanced.
+  size_t skipBlock(const std::string &text, size_t start, char open, char close)
+  {
+    size_t i = start + 1;
     int depth = 1;
-    while (bodyEnd < code.size() && depth > 0) {
-      if (skipLiteral(code, bodyEnd)) continue;
-      if (code[bodyEnd] == '(') ++depth;
-      else if (code[bodyEnd] == ')') --depth;
-      ++bodyEnd;
+    while (i < text.size()) {
+      if (skipLiteral(text, i)) continue;
+      if (text[i] == open) ++depth;
+      else if (text[i] == close && --depth == 0) return i + 1;
+      ++i;
     }
-    if (depth != 0) return {};
+    return std::string::npos;
+  }
 
-    Struct s{.name = "Data"};
-    if (s.name != structName) return {};
+  std::string removeAttributes(const std::string &text)
+  {
+    std::string res{};
+    for (size_t i = 0; i < text.size();) {
+      if (text.compare(i, 2, "[[") == 0) {
+        auto end = text.find("]]", i);
+        if (end == std::string::npos) break;
+        i = end + 2;
+        continue;
+      }
+      res += text[i++];
+    }
+    return res;
+  }
 
-    std::string body = code.substr(bodyStart, bodyEnd - 1 - bodyStart);
+  std::string firstWord(const std::string &text)
+  {
+    size_t end = 0;
+    while (end < text.size() && (isalnum((unsigned char)text[end]) || text[end] == '_')) ++end;
+    return text.substr(0, end);
+  }
 
+  bool isFunctionDecl(const std::string &stmt)
+  {
+    if (std::regex_search(stmt, std::regex(R"(\boperator\b)"))) return true;
+    auto paren = stmt.find('(');
+    if (paren == std::string::npos) return false;
+    auto assign = stmt.find('=');
+    return assign == std::string::npos || paren < assign;
+  }
+
+  /**
+   * Reduces a struct/class body to its non-static data members, one per line.
+   * Methods, nested types, access specifiers and static members are removed.
+   */
+  std::string extractDataMembers(const std::string &body)
+  {
+    static const std::unordered_set<std::string> SKIP_WORDS{
+      "static", "using", "typedef", "friend", "template", "enum",
+      "struct", "class", "union", "constexpr", "inline", "static_assert"
+    };
+
+    std::string res{}, stmt{};
+    bool skipStmt = false;
+
+    auto finishStmt = [&]() {
+      auto plain = trimSpace(removeAttributes(stmt));
+      bool isBitField = std::regex_search(plain, std::regex(R"((^|[^:]):([^:]|$))"));
+      if (isBitField && !skipStmt) {
+        Utils::Logger::log("Bit-fields in script data are not supported: '" + plain + "'", Utils::Logger::LEVEL_WARN);
+      }
+      if (!skipStmt && !isBitField && !plain.empty() && !SKIP_WORDS.contains(firstWord(plain)) && !isFunctionDecl(plain)) {
+        res += trimSpace(stmt) + ";\n";
+      }
+      stmt.clear();
+      skipStmt = false;
+    };
+
+    for (size_t i = 0; i < body.size();)
+    {
+      size_t litStart = i;
+      if (skipLiteral(body, i)) {
+        stmt += body.substr(litStart, i - litStart);
+        continue;
+      }
+
+      char c = body[i];
+      if (c == '{') {
+        auto end = skipBlock(body, i, '{', '}');
+        if (end == std::string::npos) break;
+        auto plain = trimSpace(removeAttributes(stmt));
+        auto word = firstWord(plain);
+
+        if (word == "struct" || word == "class" || word == "union" || word == "enum") {
+          skipStmt = true; // nested type, ignore up to the next ';'
+        } else if (isFunctionDecl(plain)) {
+          stmt.clear(); // method body, no ';' follows
+        } else {
+          stmt += body.substr(i, end - i); // brace initializer
+        }
+        i = end;
+        continue;
+      }
+
+      if (c == ';') {
+        finishStmt();
+        ++i;
+        continue;
+      }
+
+      bool isScope = (i + 1 < body.size() && body[i + 1] == ':') || (i > 0 && body[i - 1] == ':');
+      if (c == ':' && !isScope) {
+        auto plain = trimSpace(stmt);
+        if (plain == "public" || plain == "private" || plain == "protected") {
+          stmt.clear();
+          ++i;
+          continue;
+        }
+      }
+
+      stmt += c;
+      ++i;
+    }
+    return res;
+  }
+
+  std::optional<std::string> findStructBody(const std::string &code, const std::string &name)
+  {
+    std::regex declRegex("\\b(?:struct|class)\\s+" + name + "\\b");
+    for (auto it = std::sregex_iterator(code.begin(), code.end(), declRegex); it != std::sregex_iterator(); ++it)
+    {
+      size_t pos = it->position() + it->length();
+      while (pos < code.size() && isspace((unsigned char)code[pos])) ++pos;
+      if (code.compare(pos, 5, "final") == 0) {
+        pos += 5;
+        while (pos < code.size() && isspace((unsigned char)code[pos])) ++pos;
+      }
+
+      if (pos < code.size() && code[pos] == ':') {
+        Utils::Logger::log("Script data type '" + name + "' has base classes, which are not supported", Utils::Logger::LEVEL_WARN);
+        return std::nullopt;
+      }
+      if (pos >= code.size() || code[pos] != '{') continue; // forward declaration or usage
+
+      auto end = skipBlock(code, pos, '{', '}');
+      if (end == std::string::npos) return std::nullopt;
+      return code.substr(pos + 1, end - pos - 2);
+    }
+    return std::nullopt;
+  }
+
+  // Searches the struct in the code and then recursively in its quoted includes.
+  std::optional<std::string> findStructInIncludes(
+    const std::string &code, const std::string &name, const fs::path &dir,
+    const std::vector<fs::path> &includeDirs, std::unordered_set<std::string> &visited, int depth
+  ) {
+    if (auto body = findStructBody(code, name)) return body;
+    if (depth > 8) return std::nullopt;
+
+    std::regex includeRegex(R"(#\s*include\s*"([^"]+)\")");
+    for (auto it = std::sregex_iterator(code.begin(), code.end(), includeRegex); it != std::sregex_iterator(); ++it)
+    {
+      std::string inc = (*it)[1];
+      std::vector<fs::path> candidates{dir / inc};
+      for (auto &incDir : includeDirs) candidates.push_back(incDir / inc);
+
+      for (auto &candidate : candidates)
+      {
+        std::error_code ec;
+        if (!fs::is_regular_file(candidate, ec)) continue;
+        auto key = fs::weakly_canonical(candidate, ec).string();
+        if (!visited.insert(key).second) break;
+
+        auto incCode = stripComments(Utils::FS::loadTextFile(candidate));
+        if (auto body = findStructInIncludes(incCode, name, candidate.parent_path(), includeDirs, visited, depth + 1)) {
+          return body;
+        }
+        break;
+      }
+    }
+    return std::nullopt;
+  }
+
+  std::vector<Utils::CPP::Field> parseFields(const std::string &body)
+  {
+    using namespace Utils;
+    using namespace Utils::CPP;
+    std::vector<Field> fields{};
     // Regex for attributes + field lines
     std::regex fieldRegex(
       R"((\[\[\s*([^\]]+)\s*\]\]\s*)?([\w:<>]+)\s+(\w+)(\[[0-9]+\])?(?:\s*\=(.*))?\s*;)"
@@ -258,14 +433,75 @@ Utils::CPP::Struct Utils::CPP::parseDataStruct(const std::string &sourceCode, co
 
       }
 
-      s.fields.push_back(field);
+      fields.push_back(field);
       fieldBegin = fieldMatch.suffix().first;
     }
 
+    return fields;
+  }
+}
+
+Utils::CPP::Struct Utils::CPP::parseDataStruct(const std::string &sourceCode, const std::string &structName)
+{
+  auto code = stripComments(sourceCode);
+
+  // Locate the P64_DATA(...) body by matching parentheses, so defaults that
+  // contain calls or macros (e.g. "color_t c = RGBA32(...)") don't end it early.
+  auto bodyStart = code.find("P64_DATA(");
+  if (bodyStart == std::string::npos)return {};
+
+  bodyStart += std::string_view{"P64_DATA("}.size();
+  size_t bodyEnd = bodyStart;
+  int depth = 1;
+  while (bodyEnd < code.size() && depth > 0) {
+    if (skipLiteral(code, bodyEnd)) continue;
+    if (code[bodyEnd] == '(') ++depth;
+    else if (code[bodyEnd] == ')') --depth;
+    ++bodyEnd;
+  }
+  if (depth != 0) return {};
+
+  Struct s{.name = "Data"};
+  if (s.name != structName) return {};
+
+  s.fields = parseFields(code.substr(bodyStart, bodyEnd - 1 - bodyStart));
+  return s;
+}
+
+Utils::CPP::Struct Utils::CPP::parseScriptData(
+  const std::string &sourceCode, const fs::path &sourcePath, const std::vector<fs::path> &includeDirs
+) {
+  auto code = stripComments(sourceCode);
+
+  constexpr std::string_view MACRO_TYPE{"P64_DATA_TYPE("};
+  auto macroPos = code.find(MACRO_TYPE);
+  if (macroPos == std::string::npos) {
+    return parseDataStruct(sourceCode, "Data");
+  }
+
+  auto argStart = macroPos + MACRO_TYPE.size();
+  auto argEnd = code.find(')', argStart);
+  if (argEnd == std::string::npos) return {};
+
+  auto typeName = trimSpace(code.substr(argStart, argEnd - argStart));
+  auto nsPos = typeName.rfind("::");
+  auto name = nsPos == std::string::npos ? typeName : typeName.substr(nsPos + 2);
+
+  Struct s{.name = "Data"};
+  if (!std::regex_match(name, std::regex(R"([A-Za-z_]\w*)"))) {
+    Logger::log("Invalid script data type '" + typeName + "' in " + sourcePath.filename().string(), Logger::LEVEL_WARN);
     return s;
   }
 
-  return {};
+  std::unordered_set<std::string> visited{};
+  auto body = findStructInIncludes(code, name, sourcePath.parent_path(), includeDirs, visited, 0);
+  if (!body) {
+    Logger::log("Script data type '" + typeName + "' not found in " + sourcePath.filename().string() + " or its includes", Logger::LEVEL_WARN);
+    return s;
+  }
+
+  s.fields = parseFields(extractDataMembers(*body));
+  return s;
 }
 
 bool Utils::CPP::hasFunction(const std::string&sourceCode, const std::string&retType, const std::string&name) {

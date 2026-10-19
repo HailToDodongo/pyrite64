@@ -3,6 +3,7 @@
 #include "scene/sceneManager.h"
 #include "debug/debugDraw.h"
 #include "./globals.h"
+#include "./CaptureData.h"
 
 #include <vector>
 
@@ -139,6 +140,26 @@ namespace P64::GlobalScript::C98127B5B02279B8
         {.type = EvType::DRAW,     .frame = 1, .objId = 2},
         {.type = EvType::DRAW,     .frame = 1, .objId = 3},
       });
+    }},
+    {"Script Data Lookup", 1, []{ return User::currFrame < 3; },
+    []{
+      for(uint16_t id=1; id<=3; ++id) {
+        auto obj = SceneManager::getCurrent().getObjectById(id);
+        auto data = obj ? obj->getScriptData<User::CaptureData>() : nullptr;
+        if(!data) {
+          debugf("Object %d: no CaptureData found\n", id);
+          return false;
+        }
+        if(data->marker != 42) {
+          debugf("Object %d: expected marker 42 but got %ld\n", id, data->marker);
+          return false;
+        }
+        if(data->updates != 2) {
+          debugf("Object %d: expected 2 updates but got %ld\n", id, data->updates);
+          return false;
+        }
+      }
+      return true;
     }},
     {"Init Nested", 2, []{ return User::currFrame < 2; }, 
     []{

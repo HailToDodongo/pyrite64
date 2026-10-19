@@ -24,6 +24,9 @@ Either navigate to the directory, or right-click on the entry in the editor to o
 Since scripts are internally identified by a UUID stored in the file itself,\
 you are free to move or rename files at any point.
 
+If "Shared Data" is checked when creating an object script, its data is put into a separate header.\
+See [Shared Data](#shared-data) for more details.
+
 ## Using Scripts
 
 Select the object you want to attach the script to,\
@@ -226,6 +229,77 @@ namespace P64::Script::C4640C925988CA72
 {
   ... 
 }
+```
+
+### Shared Data
+
+By default, the data of a script is only known to the script itself.\
+If other scripts need to access it, the data can be put into a struct in a regular header instead.\
+The struct can have any name and namespace (`P64::User` by default), and can also contain methods:
+
+```cpp
+// PlayerData.h
+#pragma once
+#include "script/userScript.h"
+
+namespace P64::User
+{
+  struct PlayerData
+  {
+    [[P64::Name("Health")]]
+    int32_t health = 100;
+
+    void heal(int32_t amount);
+  };
+}
+```
+
+The script then uses `P64_DATA_TYPE` with the name of the struct, instead of `P64_DATA`.\
+Everything else stays the same, `Data` can still be used in the script functions:
+
+```cpp
+// Player.cpp
+#include "script/userScript.h"
+#include "PlayerData.h"
+
+namespace P64::Script::C3A1F09B22D4E781
+{
+  P64_DATA_TYPE(User::PlayerData);
+
+  void update(Object& obj, Data *data, float deltaTime)
+  {
+    if(data->health < 10)data->heal(1);
+  }
+}
+
+void P64::User::PlayerData::heal(int32_t amount) {
+  health += amount;
+}
+```
+
+Methods of the struct have to be defined outside the script namespace, as shown above.\
+Exposed members work the same as in `P64_DATA`, the editor finds the struct by following the includes of the script.
+
+Any other script can now include the header and access the data on an object:
+
+```cpp
+#include "PlayerData.h"
+
+if(auto *player = otherObj->getScriptData<User::PlayerData>()) {
+  player->heal(5);
+}
+```
+
+`getScriptData` returns `nullptr` if the object has no script using that type.\
+The same header can also be used by multiple scripts, in which case any of them can be found that way.\
+If multiple of those are on the same object, the first one is returned.
+
+```{admonition} Warning:
+:class: warning
+
+The struct must be trivially copyable and standard-layout,
+so no constructors, destructors, virtual functions or base classes.
+Initial values are copied directly into memory, constructors are never called.
 ```
 
 ### Functions

@@ -4,6 +4,7 @@
 #include "scene/components/charBody.h"
 #include "debug/debugMenu.h"
 #include "debug/debugDraw.h"
+#include "ControllerData.h"
 
 namespace
 {
@@ -26,22 +27,9 @@ namespace
   constexpr fm_vec3_t PLANET_POS{0, 13, 0};
 }
 
-namespace P64::Script::CD0A328E7EE01313
+namespace P64::Script::C804324EF0CDB585
 {
-  P64_DATA(
-    fm_vec3_t camPosCur;
-    fm_vec3_t camTargetCur;
-    fm_vec3_t camForward; // persistent yaw=0 forward in world space, kept perpendicular to body up
-    fm_vec3_t lastVel;
-    float moveSpeedFactor;
-    float coyoteTimer;
-    float camYaw;
-    float camYawTarget;
-    float camPitch;
-    float camPitchTarget;
-    bool planetGravity;
-    fm_vec3_t currentUp;
-  );
+  P64_DATA_TYPE(P64::User::ControllerData);
 
   void init(Object& obj, Data *data)
   {
@@ -153,10 +141,7 @@ namespace P64::Script::CD0A328E7EE01313
       data->coyoteTimer = fmaxf(0.0f, data->coyoteTimer - deltaTime);
     }
 
-    if(pressed.a && data->coyoteTimer > 0.0f) {
-      body.setVelocity(body.getVelocity() + bodyUp * JUMP_SPEED);
-      data->coyoteTimer = 0.0f; // consume so we don't re-trigger mid-air
-    }
+    if(pressed.a)data->jump(obj);
 
     ticks = get_ticks();
     body.moveAndSlide(deltaTime);
@@ -253,5 +238,16 @@ namespace P64::Script::CD0A328E7EE01313
 
   void onCollision(Object& obj, Data *data, const Coll::CollEvent& event)
   {
+  }
+}
+
+void P64::User::ControllerData::jump(P64::Object& obj)
+{
+  if(coyoteTimer > 0.0f) {
+    auto &body = obj.getComponent<P64::Comp::CharBody>()->getBody();
+    const fm_vec3_t bodyUp = body.getSettings().up;
+
+    body.setVelocity(body.getVelocity() + bodyUp * JUMP_SPEED);
+    coyoteTimer = 0.0f; // consume so we don't re-trigger mid-air
   }
 }

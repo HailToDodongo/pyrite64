@@ -77,6 +77,7 @@ namespace
 
   std::string scriptName{};
   int scriptType{0};
+  bool scriptSharedData{false};
 }
 
 void Editor::AssetsBrowser::draw() {
@@ -842,13 +843,19 @@ void Editor::AssetsBrowser::draw() {
     ImTable::add("Name");
     ImGui::InputText("##ScriptName", &scriptName);
 
+    if(scriptType == 0) {
+      ImTable::add("Shared Data");
+      ImGui::Checkbox("##SharedData", &scriptSharedData);
+      ImGui::SetItemTooltip("Puts the script data into a header, so other scripts can access it");
+    }
+
     ImTable::end();
     // right align buttons
     ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - 112_px);
     if (ImGui::Button("Create"))
     {
       bool res{false};
-      if(scriptType == 0)res = ctx.project->getAssets().createScript(scriptName, false, newScriptDir);
+      if(scriptType == 0)res = ctx.project->getAssets().createScript(scriptName, false, newScriptDir, scriptSharedData);
       if(scriptType == 1)res = ctx.project->getAssets().createScript(scriptName, true, newScriptDir);
       if(scriptType == 2)res = ctx.project->getAssets().createNodeGraph(scriptName) != 0;
 

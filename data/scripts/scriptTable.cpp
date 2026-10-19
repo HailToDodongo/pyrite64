@@ -21,7 +21,8 @@ __CODE_ENTRIES__
 __CODE_SIZE_ENTRIES__
   };
 
-  constinit ScriptEntry codeDummy{};
+  constinit const void* codeDummyType = nullptr;
+  constinit ScriptEntry codeDummy{.dataType = &codeDummyType};
 
   ScriptEntry& getCodeByIndex(uint32_t idx)
   {

@@ -717,7 +717,7 @@
               {
                 "data": {
                   "args": {},
-                  "script": 14774677115137692435
+                  "script": 14412700022121280901
                 },
                 "enabled": true,
                 "id": 0,
@@ -781,8 +781,8 @@
             "enabled": true,
             "name": "Player",
             "pos": [
-              0.19999998807907104,
-              0.09999999403953552,
+              0.20000000298023224,
+              0.10000000149011612,
               -1.399999976158142
             ],
             "propOverrides": {},
@@ -1203,6 +1203,112 @@
         ],
         "selectable": true,
         "uuid": 631334425,
+        "uuidPrefab": 0,
+        "visMask": 1
+      },
+      {
+        "children": [],
+        "components": [
+          {
+            "data": {
+              "culling": false,
+              "layerIdx": 0,
+              "material": {
+                "depth": 0,
+                "env": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "fresnel": 0,
+                "fresnelColor": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "lighting": false,
+                "prim": [
+                  1.0,
+                  0.08064514398574829,
+                  0.08064514398574829,
+                  0.0
+                ],
+                "setDepth": false,
+                "setEnv": false,
+                "setFresnel": false,
+                "setLighting": false,
+                "setPrim": false
+              },
+              "meshFilter": "",
+              "model": 17660758381478844321
+            },
+            "enabled": true,
+            "id": 1,
+            "name": "Model (Static)",
+            "uuid": 909624560230006661
+          },
+          {
+            "data": {
+              "args": {
+                "cooldown": " 0.3",
+                "height": " 1"
+              },
+              "script": 14801757795894748686
+            },
+            "enabled": true,
+            "id": 0,
+            "name": "Code",
+            "uuid": 15395856848713706627
+          },
+          {
+            "data": {
+              "bounce": 0.0,
+              "friction": 0.800000011920929,
+              "halfExtend": [
+                2.0,
+                2.0,
+                2.0
+              ],
+              "isTrigger": false,
+              "maskRead": 4,
+              "maskWrite": 0,
+              "offset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "type": 0
+            },
+            "enabled": true,
+            "id": 5,
+            "name": "Collider",
+            "uuid": 9862757493808316934
+          }
+        ],
+        "enabled": true,
+        "name": "box",
+        "pos": [
+          -1.2000000476837158,
+          0.04511082172393799,
+          -1.399999976158142
+        ],
+        "propOverrides": {},
+        "proportionalScale": false,
+        "rot": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          0.21185865998268127,
+          0.10000000149011612,
+          0.2346237748861313
+        ],
+        "selectable": true,
+        "uuid": 2242332181,
         "uuidPrefab": 0,
         "visMask": 1
       }

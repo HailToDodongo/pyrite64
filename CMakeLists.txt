@@ -356,6 +356,19 @@ target_include_directories(pyrite64 PRIVATE
     n64
 )
 
+option(PYRITE64_BUILD_TESTS "Build the unit tests" ON)
+if(PYRITE64_BUILD_TESTS)
+    enable_testing()
+    add_executable(pyrite64_tests
+        tests/main.cpp
+        tests/codeParser.cpp
+        src/utils/codeParser.cpp
+        src/utils/logger.cpp
+    )
+    target_include_directories(pyrite64_tests PRIVATE src vendored/doctest vendored/glm)
+    add_test(NAME pyrite64_tests COMMAND pyrite64_tests)
+endif()
+
 
 # target_link_libraries(pyrite64 PRIVATE SDL3::SDL3)
 

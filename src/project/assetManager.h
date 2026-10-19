@@ -115,6 +115,8 @@ namespace Project
       std::unordered_map<uint64_t, std::string> dirtyNodeGraphState{};
 
       std::string defaultObjScript{};
+      std::string defaultObjSharedScript{};
+      std::string defaultObjDataHeader{};
       std::string defaultGlobalScript{};
       std::shared_ptr<Renderer::Texture> fallbackTex{};
 
@@ -184,7 +186,7 @@ namespace Project
 
       void save();
 
-      bool createScript(const std::string &name, bool isGlobal, const std::string &subDir = {});
+      bool createScript(const std::string &name, bool isGlobal, const std::string &subDir = {}, bool sharedData = false);
       uint64_t createNodeGraph(const std::string &name);
   };
 }

@@ -88,6 +88,9 @@ jobs:
         run: |
           ./scripts/build_appimage.sh
 
+      - name: Run unit tests
+        run: ctest --test-dir build --output-on-failure
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v6
         with:

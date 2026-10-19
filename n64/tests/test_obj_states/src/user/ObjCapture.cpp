@@ -1,21 +1,11 @@
 #include "script/userScript.h"
 #include "scene/sceneManager.h"
 #include "./globals.h"
+#include "./CaptureData.h"
 
 namespace P64::Script::CB7F8F3EFD4E4EBF
 {
-  P64_DATA(
-    // Put your arguments and runtime values bound to an object here.
-    // If you need them to show up in the editor, add a [[P64::Name("...")]] attribute.
-    //
-    // Types that can be set in the editor:
-    // - uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t
-    // - float
-    // - AssetRef<sprite_t>
-    // - ObjectRef
-    //
-    // Other types can be used but are not exposed in the editor.
-  );
+  P64_DATA_TYPE(User::CaptureData);
 
   // The following functions are called by the engine at different points in the object's lifecycle.
   // If you don't need a specific function you can remove it.
@@ -34,6 +24,7 @@ namespace P64::Script::CB7F8F3EFD4E4EBF
   void update(Object& obj, Data *data, float deltaTime)
   {
     User::addEvent(obj, User::EvType::UPDATE);
+    data->countUpdate();
   }
 
   void fixedUpdate(Object& obj, Data *data, float fixedDeltaTime)

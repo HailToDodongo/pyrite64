@@ -25,6 +25,7 @@ namespace P64::Script
     FuncObjDataDelta draw;
     FuncObjDataEvent onEvent;
     FuncObjDataColl onColl;
+    const void* const* dataType; // points to the 'DATA_TYPE' of the script, see 'TYPE_TAG'
   };
 
   // Note: generated and implement in the project:

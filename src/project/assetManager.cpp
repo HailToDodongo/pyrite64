@@ -55,6 +55,11 @@ namespace
     return res;
   }
 
+  bool isCodeHeader(const fs::path &path) {
+    auto ext = path.extension().string();
+    return ext == ".h" || ext == ".hpp";
+  }
+
   fs::path getAssetPath(Project::Project *project) {
     auto res = fs::path{project->getPath()} / "assets";
     if (!fs::exists(res)) {
@@ -231,7 +236,7 @@ namespace
       .path = path.string(),
       .projectPath = getProjectRelPath(path.string(), fs::absolute(project->getPath()).string()),
       .type = type,
-      .params = Utils::CPP::parseDataStruct(code, "Data")
+      .params = Utils::CPP::parseScriptData(code, path, {fs::path{project->getPath()} / "src", getCodePath(project)})
     };
     entry.conf.uuid = uuid;
 
@@ -261,6 +266,8 @@ Project::AssetManager::AssetManager(Project* pr)
   : project{pr}
 {
   defaultObjScript = Utils::FS::loadTextFile("data/scripts/defaultObject.cpp");
+  defaultObjSharedScript = Utils::FS::loadTextFile("data/scripts/defaultObjectShared.cpp");
+  defaultObjDataHeader = Utils::FS::loadTextFile("data/scripts/defaultObjectData.h");
   defaultGlobalScript = Utils::FS::loadTextFile("data/scripts/defaultGlobal.cpp");
 }
 
@@ -414,9 +421,12 @@ void Project::AssetManager::reload() {
   for (const auto &entry : fs::recursive_directory_iterator{codePath}) {
     if (entry.is_regular_file()) {
       auto path = entry.path();
-      if (path.extension().string() != ".cpp") continue;
+      bool isHeader = isCodeHeader(path);
+      if (path.extension().string() != ".cpp" && !isHeader) continue;
 
       watchFiles[path.string()] = Utils::FS::getFileAge(path);
+      if (isHeader) continue;
+
       AssetManagerEntry codeEntry{};
       if (!buildCodeEntry(project, path, codeEntry)) {
         continue;
@@ -473,6 +483,8 @@ bool Project::AssetManager::pollWatch()
   std::vector<std::string> addedCode{};
   std::vector<std::string> modifiedCode{};
   std::vector<std::string> removedPaths{};
+  std::vector<std::string> allCode{};
+  bool headerChanged = false;
 
   // Detect added/modified asset files
   auto assetPath = fs::path{project->getPath()} / "assets";
@@ -499,16 +511,23 @@ bool Project::AssetManager::pollWatch()
     for (const auto &entry : fs::recursive_directory_iterator{codePath}) {
       if (!entry.is_regular_file()) continue;
       auto path = entry.path();
-      if (path.extension().string() != ".cpp") continue;
+      bool isHeader = isCodeHeader(path);
+      if (path.extension().string() != ".cpp" && !isHeader) continue;
 
       auto pathStr = path.string();
       uint64_t age = Utils::FS::getFileAge(path);
 
       currentFiles[pathStr] = age;
+      if (!isHeader) allCode.push_back(pathStr);
       auto it = watchFiles.find(pathStr);
-      if (it == watchFiles.end()) {
+      bool isNew = it == watchFiles.end();
+      if (!isNew && it->second == age) continue;
+
+      if (isHeader) {
+        headerChanged = true;
+      } else if (isNew) {
         addedCode.push_back(pathStr);
-      } else if (it->second != age) {
+      } else {
         modifiedCode.push_back(pathStr);
       }
     }
@@ -518,7 +537,13 @@ bool Project::AssetManager::pollWatch()
   for (const auto &pair : watchFiles) {
     if (currentFiles.find(pair.first) == currentFiles.end()) {
       removedPaths.push_back(pair.first);
+      if (isCodeHeader(pair.first)) headerChanged = true;
     }
+  }
+
+  // scripts may use data types from headers, so re-parse all of them
+  if (headerChanged) {
+    modifiedCode = allCode;
   }
 
   // Bail out if nothing changed
@@ -783,7 +808,7 @@ void Project::AssetManager::clearNodeGraphDirty(uint64_t uuid)
   savedNodeGraphState.erase(uuid);
 }
 
-bool Project::AssetManager::createScript(const std::string &name, bool isGlobal, const std::string &subDir) {
+bool Project::AssetManager::createScript(const std::string &name, bool isGlobal, const std::string &subDir, bool sharedData) {
   // Catch forbidden characters
   if (name.find_first_of("/\\:*?\"<>|") != std::string::npos) {
     return false;
@@ -821,8 +846,24 @@ bool Project::AssetManager::createScript(const std::string &name, bool isGlobal,
     return false;
   }
 
-  auto code = isGlobal ? defaultGlobalScript : defaultObjScript;
+  bool useShared = sharedData && !isGlobal;
+  auto code = isGlobal ? defaultGlobalScript : (useShared ? defaultObjSharedScript : defaultObjScript);
   code = Utils::replaceAll(code, "__UUID__", uuidStr);
+
+  if (useShared) {
+    std::string structName{};
+    for (char c : name) structName += (isalnum((unsigned char)c) || c == '_') ? c : '_';
+    if (structName.empty() || isdigit((unsigned char)structName[0])) structName = "_" + structName;
+    structName += "Data";
+
+    auto headerPath = dirPath / (structName + ".h");
+    if (fs::exists(headerPath)) {
+      return false;
+    }
+
+    code = Utils::replaceAll(code, "__STRUCT__", structName);
+    Utils::FS::saveTextFile(headerPath, Utils::replaceAll(defaultObjDataHeader, "__STRUCT__", structName));
+  }
 
   Utils::FS::saveTextFile(filePath, code);
   if (!fs::exists(filePath)) {

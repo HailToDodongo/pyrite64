@@ -3,6 +3,7 @@
 * @license MIT
 */
 #pragma once
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -42,6 +43,17 @@ namespace Utils::CPP
   };
 
   Struct parseDataStruct(const std::string &sourceCode, const std::string &structName);
+
+  /**
+   * Parses the data of an object script, either inline ('P64_DATA') or a struct named by 'P64_DATA_TYPE'.
+   * The struct is searched in the script itself and recursively in its quoted includes,
+   * relative to the including file first and then to each of the include directories.
+   */
+  Struct parseScriptData(
+    const std::string &sourceCode,
+    const std::filesystem::path &sourcePath,
+    const std::vector<std::filesystem::path> &includeDirs
+  );
 
   bool hasFunction(const std::string &sourceCode, const std::string &retType, const std::string &name);
 

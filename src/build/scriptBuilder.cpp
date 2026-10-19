@@ -50,6 +50,7 @@ void Build::buildScripts(Project::Project &project, SceneCtx &sceneCtx)
 
     srcDecl += "  namespace " + uuidStr + " {\nstruct Data;\n";
     srcDecl += " extern uint16_t DATA_SIZE;\n";
+    srcDecl += " extern const void* DATA_TYPE;\n";
     if(hasInit)srcDecl += "void init(Object& obj, Data *data);\n";
     if(hasDestroy)srcDecl += "void destroy(Object& obj, Data *data);\n";
     if(hasUpdate)srcDecl += "void update(Object& obj, Data *data, float deltaTime);\n";
@@ -67,6 +68,7 @@ void Build::buildScripts(Project::Project &project, SceneCtx &sceneCtx)
     if(hasDraw)srcEntries += " .draw = (FuncObjDataDelta)" + uuidStr + "::draw,\n";
     if(hasEvent)srcEntries += " .onEvent = (FuncObjDataEvent)" + uuidStr + "::onEvent,\n";
     if(hasColl)srcEntries += " .onColl = (FuncObjDataColl)" + uuidStr + "::onCollision,\n";
+    srcEntries += " .dataType = &" + uuidStr + "::DATA_TYPE,\n";
     srcEntries += "},\n";
 
     sceneCtx.codeIdxMapUUID[script.getUUID()] = idx;
