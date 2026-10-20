@@ -73,11 +73,12 @@ TEST_SUITE("Layer")
 
   TEST_CASE("names hashing into the position range are not used")
   {
-    static_assert(Utils::Hash::crc32("layer4078752") == 0x5D);
-    CHECK_FALSE(Layer::isValidName("layer4078752"));
+    static_assert(Utils::Hash::crc32("layer8035639") == 0x0D);
+    static_assert(Layer::isIndexRef(0x0D));
+    CHECK_FALSE(Layer::isValidName("layer8035639"));
 
-    auto name = Layer::makeUniqueName({}, "layer4078752");
-    CHECK(name == "layer4078752 2");
+    auto name = Layer::makeUniqueName({}, "layer8035639");
+    CHECK(name == "layer8035639 2");
     CHECK(Layer::isValidName(name));
   }
 
