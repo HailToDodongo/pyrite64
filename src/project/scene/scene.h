@@ -57,6 +57,8 @@ namespace Project
       const std::string &getName() const { return conf.name.value; }
 
       void save();
+
+      void upgradeLayerRefs();
       Object& getRootObject() { return root; }
 
       std::unordered_map<uint32_t, std::shared_ptr<Object>> objectsMap{};

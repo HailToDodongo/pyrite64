@@ -263,7 +263,32 @@ bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool a
 
 void Project::Scene::save()
 {
+  upgradeLayerRefs();
   Utils::FS::saveTextFile(scenePath + "/scene.json", serialize());
+}
+
+void Project::Scene::upgradeLayerRefs()
+{
+  for(auto &[uuid, obj] : objectsMap)
+  {
+    for(auto &entry : obj->components)
+    {
+      if(entry.id != 1 && entry.id != 10)continue; // Model, AnimModel
+      const auto &info = Component::TABLE[entry.id];
+
+      auto data = info.funcSerialize(entry);
+      if(!data["layerIdx"].is_number())continue;
+
+      auto ref = data["layerIdx"].get<uint32_t>();
+      if(ref == Layer::REF_DEFAULT || !Layer::isIndexRef(ref) || ref >= conf.layers3D.size())continue;
+
+      auto &name = conf.layers3D[ref].name.value;
+      if(!Layer::isValidName(name))continue;
+
+      data["layerIdx"] = Layer::keyFromName(name);
+      entry.data = info.funcDeserialize(data);
+    }
+  }
 }
 
 uint64_t Project::Scene::createPrefabFromObject(uint32_t uuid, const std::string &subDir)
