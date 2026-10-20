@@ -20,9 +20,9 @@ namespace
   struct InitData
   {
     uint16_t assetIdx;
-    uint8_t layer;
     uint8_t flags;
     uint8_t meshIdxCount;
+    uint32_t layerRef;
     uint8_t meshIndices[];
 
     // Followed by: (after 4byte align)
@@ -109,7 +109,7 @@ namespace P64::Comp
     data->model = (T3DModel*)AssetManager::getByIndex(initData->assetIdx);
     assert(data->model != nullptr);
     data->vertexScale = AssetManager::getVertexScale(initData->assetIdx);
-    data->layerIdx = initData->layer;
+    data->layerRef = initData->layerRef;
     data->flags = initData->flags;
 
     data->meshIdxCount = initData->meshIdxCount;
@@ -132,7 +132,7 @@ namespace P64::Comp
     bool isBigTex = SceneManager::getCurrent().getConf().pipeline == SceneConf::Pipeline::BIG_TEX_256;
     bool separate = (data->flags & FLAG_CULLING) || (data->meshIdxCount != 0);
 
-    if(isBigTex && data->layerIdx == 0) {
+    if(isBigTex && data->layerRef == 0) {
       Renderer::BigTex::patchT3DM(*data->model);
       return;
     }
@@ -163,7 +163,7 @@ namespace P64::Comp
     auto mat = data->matFP.getNext();
     Renderer::fillModelMatrixFP(mat, obj.scale, obj.rot, obj.pos, data->vertexScale);
 
-    if(data->layerIdx)DrawLayer::use3D(data->layerIdx);
+    if(data->layerRef)data->layerRef = DrawLayer::use3D(data->layerRef);
     auto &material = data->getMatInstance();
 
     material.begin(obj);
@@ -194,6 +194,6 @@ namespace P64::Comp
     }
 
     material.end();
-    if(data->layerIdx)DrawLayer::useDefault();
+    if(data->layerRef)DrawLayer::useDefault();
   }
 }

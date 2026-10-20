@@ -8,24 +8,11 @@
 #include <unordered_map>
 #include <vector>
 
+#include "layer.h"
 #include "object.h"
 
 namespace Project
 {
-  struct LayerConf
-  {
-    PROP_STRING(name);
-    PROP_BOOL(depthCompare);
-    PROP_BOOL(depthWrite);
-    PROP_U32(blender);
-    PROP_BOOL(fog);
-    PROP_U32(fogColorMode);
-    PROP_VEC4(fogColor);
-    PROP_FLOAT(fogMin);
-    PROP_FLOAT(fogMax);
-    PROP_S32(lightMode);
-  };
-
   struct SceneConf
   {
     PROP_STRING(name);

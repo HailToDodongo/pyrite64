@@ -248,6 +248,7 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
     ctx.fileScene.write<uint8_t>(layer.lightMode.value);
     ctx.fileScene.write<uint8_t>(0); // padding
     ctx.fileScene.write<uint8_t>(0); // padding
+    ctx.fileScene.write<uint32_t>(Project::Layer::keyFromName(layer.name.value));
   };
 
   for(const auto &layer : sc->conf.layers3D)writeLayer(layer);

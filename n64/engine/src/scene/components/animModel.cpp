@@ -19,8 +19,9 @@ namespace
   struct InitData
   {
     uint16_t assetIdx;
-    uint8_t layer;
     uint8_t flags;
+    uint8_t padding;
+    uint32_t layerRef;
     P64::Renderer::MaterialInstance material;
   };
 }
@@ -68,7 +69,7 @@ namespace P64::Comp
     data->model = (T3DModel*)AssetManager::getByIndex(initData->assetIdx);
     assert(data->model != nullptr);
     data->vertexScale = AssetManager::getVertexScale(initData->assetIdx);
-    data->layerIdx = initData->layer;
+    data->layerRef = initData->layerRef;
     data->flags = initData->flags;
 
     // struct has move/copy removed for safety and to avoid accidental copies.
@@ -155,7 +156,7 @@ namespace P64::Comp
     auto mat = data->matFP.getNext();
     Renderer::fillModelMatrixFP(mat, obj.scale, obj.rot, obj.pos, data->vertexScale);
 
-    if(data->layerIdx)DrawLayer::use3D(data->layerIdx);
+    if(data->layerRef)data->layerRef = DrawLayer::use3D(data->layerRef);
 
     data->material.begin(obj);
 
@@ -164,6 +165,6 @@ namespace P64::Comp
     rspq_block_run(data->model->userBlock);
 
     data->material.end();
-    if(data->layerIdx)DrawLayer::useDefault();
+    if(data->layerRef)DrawLayer::useDefault();
   }
 }

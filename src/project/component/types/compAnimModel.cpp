@@ -30,7 +30,7 @@ namespace Project::Component::AnimModel
   struct Data
   {
     PROP_U64(model);
-    PROP_S32(layerIdx);
+    PROP_U32(layerIdx); // position or name key, see 'Project::Layer'
     PROP_STRING(previewAnimName);
 
     Shared::MaterialInstance material{};
@@ -87,9 +87,13 @@ namespace Project::Component::AnimModel
       id = res->second;
     }
 
+    auto layerRef = data.layerIdx.resolve(obj);
+    checkLayerRef(ctx, obj, layerRef);
+
     ctx.fileObj.write<uint16_t>(id);
-    ctx.fileObj.write<uint8_t>(data.layerIdx.resolve(obj));
     ctx.fileObj.write<uint8_t>(0); // flags, unused
+    ctx.fileObj.write<uint8_t>(0); // padding
+    ctx.fileObj.write<uint32_t>(layerRef);
 
     data.material.validateWithModel(
       ctx.project->getAssets().getEntryByUUID(data.model.value)->model
@@ -114,15 +118,9 @@ namespace Project::Component::AnimModel
         ctx.editorScene->openModelEditor(data.model.value);
       }
 
-      std::vector<const char*> layerNames{};
-      for (auto &layer : scene->conf.layers3D) {
-        layerNames.push_back(layer.name.value.c_str());
-      }
-
-      ImTable::addObjProp<int32_t>("Draw-Layer", data.layerIdx, [&layerNames](int32_t *layer)
-        {
-          return ImGui::Combo("##", layer, layerNames.data(), layerNames.size());
-        }, nullptr);
+      ImTable::addObjProp<uint32_t>("Draw-Layer", data.layerIdx, [&scene](uint32_t *ref) {
+        return layerCombo(*ref, scene->conf.layers3D);
+      }, nullptr);
 
       auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
       if (asset && asset->mesh3D)
@@ -176,10 +174,13 @@ namespace Project::Component::AnimModel
       }
     }
 
-    if(ctx.project->getScenes().getLoadedScene()->conf.renderPipeline.value == 2)
+    auto &sceneConf = ctx.project->getScenes().getLoadedScene()->conf;
+    int layerIdx = std::max(Layer::findIndex(sceneConf.layers3D, data.layerIdx.resolve(obj)), 0);
+
+    if(sceneConf.renderPipeline.value == 2)
     {
       data.obj3D.uniform.mat.flags = 0;
-      if(data.layerIdx.value == 0)data.obj3D.uniform.mat.flags |= T3D_FLAG_NO_LIGHT;
+      if(layerIdx == 0)data.obj3D.uniform.mat.flags |= T3D_FLAG_NO_LIGHT;
     }
 
     data.obj3D.setObjectID(obj.uuid);
@@ -202,13 +203,12 @@ namespace Project::Component::AnimModel
 
     bool layerDepthRead = true;
     bool layerDepthWrite = true;
-    auto &layers = ctx.project->getScenes().getLoadedScene()->conf.layers3D;
-    auto layerIdx = data.layerIdx.resolve(obj);
+    auto &layers = sceneConf.layers3D;
     if(layerIdx >= 0 && layerIdx < (int)layers.size()) {
       layerDepthRead = layers[layerIdx].depthCompare.resolve(obj);
       layerDepthWrite = layers[layerIdx].depthWrite.resolve(obj);
     }
-    applyLayerFog(data.obj3D.uniform.mat, ctx.project->getScenes().getLoadedScene()->conf, layerIdx, obj, vp.isFogPreviewed());
+    applyLayerFog(data.obj3D.uniform.mat, sceneConf, layerIdx, obj, vp.isFogPreviewed());
 
     data.skeleton->use(pass);
     data.obj3D.draw(pass, cmdBuff, {

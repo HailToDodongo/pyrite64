@@ -6,6 +6,7 @@
 #include <cstdint>
 
 #include "scene/components/collBody.h"
+#include "lib/types.h"
 
 namespace P64::DrawLayer
 {
@@ -34,6 +35,7 @@ namespace P64::DrawLayer
     uint8_t padding1{};
     uint8_t padding2{};
 
+    uint32_t key{}; // hash of the layer name, used by objects to reference it
   };
 
   struct Setup
@@ -45,13 +47,25 @@ namespace P64::DrawLayer
     Conf layerConf[16]{};
   };
 
+  /**
+   * Layers are referenced either by index (0 to MAX_INDEX_REF),
+   * or by the hash of their name (everything above that number).
+   */
+  constexpr uint32_t MAX_INDEX_REF = 64;
+
   void init(Setup &setup);
 
+  /// switches to a layer by its index across all lists
   void use(uint32_t idx);
 
-  inline void use3D(uint32_t idx) { use(idx); }
-  void usePtx(uint32_t idx = 0);
-  void use2D(uint32_t idx = 0);
+  /**
+   * Switches to a layer of the given list.
+   * References that don't exist fall back to the first layer of the list.
+   * @return index within the list, can be stored and passed in again to skip searching for a name hash
+   */
+  uint8_t use3D(uint32_t ref = 0);
+  uint8_t usePtx(uint32_t ref = 0);
+  uint8_t use2D(uint32_t ref = 0);
 
   inline void useDefault() { use(0); }
 

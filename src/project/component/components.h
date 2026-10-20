@@ -24,7 +24,7 @@ struct SDL_GPUCommandBuffer;
 struct SDL_GPUGraphicsPipeline;
 struct SDL_GPURenderPass;
 
-namespace Project { class Object; class Scene; struct SceneConf; }
+namespace Project { class Object; class Scene; struct SceneConf; struct LayerConf; }
 namespace Renderer { struct UniformN64Material; }
 
 namespace Project::Component
@@ -124,6 +124,16 @@ namespace Project::Component
   /**
    * Sets fog (color + range of the layer)
    */
+  /**
+   * Draws a combo to pick a layer, edits a layer reference (see 'Project::Layer').
+   */
+  bool layerCombo(uint32_t &ref, const std::vector<LayerConf> &layers);
+
+  /**
+   * Warns during a scene build if the layer reference doesn't match any 3D layer of the scene.
+   */
+  void checkLayerRef(Build::SceneCtx &ctx, const Object &obj, uint32_t ref);
+
   void applyLayerFog(Renderer::UniformN64Material &mat, const SceneConf &conf, int layerIdx, Object &obj, bool enabled);
 
   namespace Camera

@@ -171,6 +171,11 @@
               "vpSize": [
                 320,
                 240
+              ],
+              "worldOffset": [
+                0.0,
+                0.0,
+                0.0
               ]
             },
             "enabled": true,

@@ -7,6 +7,8 @@
 #include "../scene/scene.h"
 #include "../../renderer/uniforms.h"
 #include "../../shader/defines.h"
+#include "../../utils/logger.h"
+#include "imgui.h"
 
 namespace Project::Component
 {
@@ -20,6 +22,31 @@ namespace Project::Component
     // vertex scale is folded into the object scale here.
     auto trans = obj.getDisplayTrans();
     return glm::recompose(trans.scale * vertexScale, trans.rot, trans.pos, skew, persp);
+  }
+
+  bool layerCombo(uint32_t &ref, const std::vector<LayerConf> &layers)
+  {
+    int idx = Layer::findIndex(layers, ref);
+    bool changed = false;
+    if(ImGui::BeginCombo("##", idx < 0 ? "<Missing Layer>" : layers[idx].name.value.c_str())) {
+      for(int i=0; i<(int)layers.size(); ++i) {
+        ImGui::PushID(i);
+        if(ImGui::Selectable(layers[i].name.value.c_str(), i == idx)) {
+          ref = Layer::refFromIndex(layers, i);
+          changed = true;
+        }
+        ImGui::PopID();
+      }
+      ImGui::EndCombo();
+    }
+    return changed;
+  }
+
+  void checkLayerRef(Build::SceneCtx &ctx, const Object &obj, uint32_t ref)
+  {
+    if(!ctx.scene || Layer::findIndex(ctx.scene->conf.layers3D, ref) >= 0)return;
+    Utils::Logger::log("Object '" + obj.name + "' uses a draw-layer that doesn't exist in scene '"
+      + ctx.scene->getName() + "', the default layer is used instead", Utils::Logger::LEVEL_WARN);
   }
 
   void applyLayerFog(Renderer::UniformN64Material &mat, const SceneConf &conf, int layerIdx, Object &obj, bool enabled)

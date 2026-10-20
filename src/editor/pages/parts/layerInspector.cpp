@@ -7,6 +7,9 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "../../imgui/helper.h"
+#include "../../imgui/notification.h"
+#include "../../undoRedo.h"
+#include "../../../project/scene/scene.h"
 
 #define __LIBDRAGON_N64SYS_H 1
 #define PhysicalAddr(a) (uint64_t)(a)
@@ -17,8 +20,38 @@
 namespace
 {
   int ctxLayerIndex = -1;
+  std::string pendingName{};
 
-  void drawLayers(std::vector<Project::LayerConf> &layers, const std::string &layerName)
+  /**
+   * Counts how often models of the scene reference a 3D layer key, including overrides.
+   * If 'newKey' is set, those references are changed to it.
+   */
+  int visitLayerRefs(Project::Scene &scene, uint32_t key, const uint32_t *newKey)
+  {
+    if(Project::Layer::isIndexRef(key))return 0;
+
+    int count = 0;
+    for(auto &[uuid, obj] : scene.objectsMap)
+    {
+      for(auto &entry : obj->components) {
+        if(entry.id != 1 && entry.id != 10)continue; // Model, AnimModel
+        const auto &info = Project::Component::TABLE[entry.id];
+        auto data = info.funcSerialize(entry);
+        if(data.value("layerIdx", 0u) != key)continue;
+
+        ++count;
+        if(newKey) {
+          data["layerIdx"] = *newKey;
+          entry.data = info.funcDeserialize(data);
+        }
+      }
+
+      // @TODO: overrides are not handled
+    }
+    return count;
+  }
+
+  void drawLayers(Project::Scene &scene, std::vector<Project::LayerConf> &layers, const std::string &layerName, bool isLayer3D)
   {
     ImGui::Text("%s", layerName.c_str());
     ImGui::SameLine();
@@ -27,8 +60,9 @@ namespace
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 3_px);
     if (ImGui::Button(addLabel.c_str())) {
       Project::LayerConf layer{};
-      layer.name.value = "New Layer";
+      layer.name.value = Project::Layer::makeUniqueName(layers, "New Layer");
       layers.push_back(layer);
+      Editor::UndoRedo::getHistory().markChanged("Add Layer");
     }
 
     int layerIdx = 0;
@@ -45,7 +79,22 @@ namespace
 
       if (open) {
         ImTable::start("Settings");
-        ImTable::addProp("Name", layer.name);
+        // applied once editing is done, since the name is what objects reference the layer by
+        ImTable::add("Name");
+        std::string nameEdit = layer.name.value;
+        if(ImGui::InputText("##Name", &nameEdit))pendingName = nameEdit;
+        if(ImGui::IsItemDeactivatedAfterEdit() && !pendingName.empty() && pendingName != layer.name.value)
+        {
+          uint32_t oldKey = Project::Layer::keyFromName(layer.name.value);
+          layer.name.value = Project::Layer::makeUniqueName(layers, pendingName, &layer);
+          if(isLayer3D) {
+            uint32_t newKey = Project::Layer::keyFromName(layer.name.value);
+            visitLayerRefs(scene, oldKey, &newKey);
+            Editor::Noti::add(Editor::Noti::Type::INFO,
+              "Renamed layer, prefabs and other scenes still reference the old name");
+          }
+          Editor::UndoRedo::getHistory().markChanged("Rename Layer");
+        }
         ImTable::addProp("Z-Compare", layer.depthCompare);
         ImTable::addProp("Z-Write", layer.depthWrite);
 
@@ -89,11 +138,19 @@ namespace
     if(ImGui::BeginPopupContextItem(layerName.c_str())) {
       if(ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Duplicate")) {
         auto clone = layers[ctxLayerIndex];
-        clone.name.value += " Copy";
+        clone.name.value = Project::Layer::makeUniqueName(layers, clone.name.value + " Copy");
         layers.insert(layers.begin() + ctxLayerIndex + 1, clone);
+        Editor::UndoRedo::getHistory().markChanged("Duplicate Layer");
       }
-      if(layers.size() > 1 && ImGui::MenuItem(ICON_MDI_TRASH_CAN_OUTLINE " Delete")) {
+      // the first layer is the default one, which can't be removed
+      if(ctxLayerIndex > 0 && ImGui::MenuItem(ICON_MDI_TRASH_CAN_OUTLINE " Delete")) {
+        int refCount = isLayer3D ? visitLayerRefs(scene, Project::Layer::keyFromName(layers[ctxLayerIndex].name.value), nullptr) : 0;
         layers.erase(layers.begin() + ctxLayerIndex);
+        if(refCount > 0) {
+          Editor::Noti::add(Editor::Noti::Type::INFO, std::to_string(refCount)
+            + " reference(s) in this scene now point to a missing layer and use the default one");
+        }
+        Editor::UndoRedo::getHistory().markChanged("Delete Layer");
       }
       ImGui::EndPopup();
     }
@@ -107,13 +164,13 @@ void Editor::LayerInspector::draw() {
   auto scene = ctx.project->getScenes().getLoadedScene();
   if(!scene)return;
 
-  drawLayers(scene->conf.layers3D, "3D Layers");
+  drawLayers(*scene, scene->conf.layers3D, "3D Layers", true);
   ImGui::Dummy({0, 2});
 
-  drawLayers(scene->conf.layersPtx, "Particle Layers");
+  drawLayers(*scene, scene->conf.layersPtx, "Particle Layers", false);
   ImGui::Dummy({0, 2});
 
-  drawLayers(scene->conf.layers2D, "2D Layers");
+  drawLayers(*scene, scene->conf.layers2D, "2D Layers", false);
   ImGui::Dummy({0, 2});
 
   std::string resetLabel = "Reset";

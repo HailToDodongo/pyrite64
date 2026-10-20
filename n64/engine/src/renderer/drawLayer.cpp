@@ -67,14 +67,42 @@ void P64::DrawLayer::use(uint32_t idx)
   rspq_queue_switch(layer.queues[layer.runIdx]);
 }
 
-void P64::DrawLayer::usePtx(uint32_t idx)
+namespace
 {
-  use(idx + layerSetup->layerCount3D);
+  uint8_t resolveIn(uint32_t ref, uint32_t start, uint32_t count)
+  {
+    if(ref <= P64::DrawLayer::MAX_INDEX_REF) {
+      return (ref < count) ? ref : 0;
+    }
+
+    for(uint32_t i=0; i<count; ++i) {
+      if(layerSetup->layerConf[start + i].key == ref)return i;
+    }
+    P64::Log::warn("Draw-layer %08lX does not exist, using the first one", ref);
+    return 0;
+  }
 }
 
-void P64::DrawLayer::use2D(uint32_t idx)
+uint8_t P64::DrawLayer::use3D(uint32_t ref)
 {
-  use(idx + layerSetup->layerCount3D + layerSetup->layerCountPtx);
+  auto idx = resolveIn(ref, 0, layerSetup->layerCount3D);
+  use(idx);
+  return idx;
+}
+
+uint8_t P64::DrawLayer::usePtx(uint32_t ref)
+{
+  auto idx = resolveIn(ref, layerSetup->layerCount3D, layerSetup->layerCountPtx);
+  use(idx + layerSetup->layerCount3D);
+  return idx;
+}
+
+uint8_t P64::DrawLayer::use2D(uint32_t ref)
+{
+  uint32_t start = layerSetup->layerCount3D + layerSetup->layerCountPtx;
+  auto idx = resolveIn(ref, start, layerSetup->layerCount2D);
+  use(idx + start);
+  return idx;
 }
 
 void P64::DrawLayer::draw(uint32_t layerIdx)
