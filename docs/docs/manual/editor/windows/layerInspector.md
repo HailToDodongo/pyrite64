@@ -13,8 +13,28 @@ Objects reference a layer (for example through the Draw-Layer option of the
 ## Managing layers
 
 Use the **Add** button next to a list to append a new layer. Right-click a layer header to
-**Duplicate** or **Delete** it (the last remaining layer in a list cannot be deleted). The
-**Reset** button at the bottom restores the default layer set.
+**Duplicate** or **Delete** it. The first layer of a list is the default one and cannot be deleted.
+The **Reset** button at the bottom restores the default layer set.
+
+## Using layers in scripts
+
+`DrawLayer::use3D`, `DrawLayer::usePtx` and `DrawLayer::use2D` accept a position in the list,
+or the hash of a layer name with the `_hash` suffix.
+Names keep working if layers get reordered:
+
+```cpp
+DrawLayer::use3D("3D Transp."_hash);
+// ... draw something ...
+DrawLayer::useDefault();
+```
+
+If you want to cache the hash-lookup, you can remember the returned index:
+```cpp
+uint32_t layer = "3D Transp."_hash;
+...
+layer = DrawLayer::use3D(layer);
+```
+This will lazily resolve and remember the index.
 
 ## Layer options
 
