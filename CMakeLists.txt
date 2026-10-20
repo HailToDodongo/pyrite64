@@ -362,10 +362,11 @@ if(PYRITE64_BUILD_TESTS)
     add_executable(pyrite64_tests
         tests/main.cpp
         tests/codeParser.cpp
+        tests/layer.cpp
         src/utils/codeParser.cpp
         src/utils/logger.cpp
     )
-    target_include_directories(pyrite64_tests PRIVATE src vendored/doctest vendored/glm)
+    target_include_directories(pyrite64_tests PRIVATE src vendored/doctest vendored/glm vendored/SHA256/include)
     add_test(NAME pyrite64_tests COMMAND pyrite64_tests)
 endif()
 
