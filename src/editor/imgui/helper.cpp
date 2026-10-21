@@ -73,13 +73,14 @@ bool ImGui::HelpIcon(const char* docPath, const char* tooltip, float glyphSize)
 
 glm::vec3 tmpEuler;
 bool ImGui::rotationInput(glm::quat &quat) {
-  if(!ctx.prefs.showRotAsEuler) return InputFloat4("##", glm::value_ptr(quat));
+  // Both quaternion and Euler representations accept expressions on every axis
+  if(!ctx.prefs.showRotAsEuler) return MathInputFloatN("##", glm::value_ptr(quat), 4);
   
   glm::quat calcRot = glm::normalize(glm::quat(glm::radians(tmpEuler)));
   glm::quat orgRot = glm::normalize(quat);
   if (glm::dot(calcRot, orgRot) < 1) tmpEuler = glm::degrees(glm::eulerAngles(orgRot));
 
-  if (!InputFloat3("##RotEuler", glm::value_ptr(tmpEuler))) return false;
+  if (!MathInputFloatN("##RotEuler", glm::value_ptr(tmpEuler), 3)) return false;
   quat = glm::normalize(glm::quat(glm::radians(tmpEuler)));
   return true;
 }
