@@ -57,9 +57,7 @@ jobs:
             LICENSE
 
   build-linux:
-    # Built on the oldest supported glibc (ubuntu-22.04 => glibc 2.35) 
-    # so the resulting AppImage runs on a wide range of distros
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
@@ -68,17 +66,13 @@ jobs:
           submodules: recursive
           lfs: true
 
-      # 22.04's apt cmake (3.22) and gcc (11) are too old: the project needs
-      # CMake >= 3.28 and C++23. Pull a modern cmake/ninja and gcc-13.
-      - name: Setup CMake + Ninja
-        uses: lukka/get-cmake@latest
-
       - name: Install dependencies
         run: |
-          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
           sudo apt-get update
-          sudo apt-get install -y g++-13 \
+          sudo apt-get install -y cmake ninja-build gcc-13 g++-13 \
             libx11-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxss-dev libxtst-dev
+          gcc-13 --version
+          g++-13 --version
 #            libwayland-dev libwayland-client-dev libwayland-cursor-dev libwayland-egl-dev
 
       - name: Build AppImage
