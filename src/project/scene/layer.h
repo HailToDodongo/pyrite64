@@ -69,8 +69,9 @@ namespace Project
      */
     inline uint32_t refFromIndex(const std::vector<LayerConf> &layers, int idx)
     {
-      if(idx <= 0 || idx >= (int)layers.size())return REF_DEFAULT;
-      return keyFromName(layers[idx].name.value);
+      if(idx < 0 || idx >= (int)layers.size())return REF_DEFAULT;
+      auto &name = layers[idx].name.value;
+      return isValidName(name) ? keyFromName(name) : (uint32_t)idx;
     }
 
     /**

@@ -59,6 +59,14 @@ namespace P64::DrawLayer
   void use(uint32_t idx);
 
   /**
+   * Returns the index within the list of the referenced layer, without switching to it.
+   * References that don't exist fall back to the first layer of the list.
+   */
+  uint8_t resolve3D(uint32_t ref);
+  uint8_t resolvePtx(uint32_t ref);
+  uint8_t resolve2D(uint32_t ref);
+
+  /**
    * Switches to a layer of the given list.
    * References that don't exist fall back to the first layer of the list.
    * @return index within the list, can be stored and passed in again to skip searching for a name hash

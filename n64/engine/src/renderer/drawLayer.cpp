@@ -83,25 +83,39 @@ namespace
   }
 }
 
+uint8_t P64::DrawLayer::resolve3D(uint32_t ref)
+{
+  return resolveIn(ref, 0, layerSetup->layerCount3D);
+}
+
+uint8_t P64::DrawLayer::resolvePtx(uint32_t ref)
+{
+  return resolveIn(ref, layerSetup->layerCount3D, layerSetup->layerCountPtx);
+}
+
+uint8_t P64::DrawLayer::resolve2D(uint32_t ref)
+{
+  return resolveIn(ref, layerSetup->layerCount3D + layerSetup->layerCountPtx, layerSetup->layerCount2D);
+}
+
 uint8_t P64::DrawLayer::use3D(uint32_t ref)
 {
-  auto idx = resolveIn(ref, 0, layerSetup->layerCount3D);
+  auto idx = resolve3D(ref);
   use(idx);
   return idx;
 }
 
 uint8_t P64::DrawLayer::usePtx(uint32_t ref)
 {
-  auto idx = resolveIn(ref, layerSetup->layerCount3D, layerSetup->layerCountPtx);
+  auto idx = resolvePtx(ref);
   use(idx + layerSetup->layerCount3D);
   return idx;
 }
 
 uint8_t P64::DrawLayer::use2D(uint32_t ref)
 {
-  uint32_t start = layerSetup->layerCount3D + layerSetup->layerCountPtx;
-  auto idx = resolveIn(ref, start, layerSetup->layerCount2D);
-  use(idx + start);
+  auto idx = resolve2D(ref);
+  use(idx + layerSetup->layerCount3D + layerSetup->layerCountPtx);
   return idx;
 }
 

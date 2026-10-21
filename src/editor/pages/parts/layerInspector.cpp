@@ -65,6 +65,11 @@ namespace
       Editor::UndoRedo::getHistory().markChanged("Add Layer");
     }
 
+    // drag & drop to reorder
+    std::string dragType = "P64_LAYER_" + layerName;
+    int moveFrom = -1;
+    int moveTo = -1;
+
     int layerIdx = 0;
     for(auto &layer : layers)
     {
@@ -75,6 +80,19 @@ namespace
       if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
         ImGui::OpenPopup(layerName.c_str());
         ctxLayerIndex = layerIdx;
+      }
+
+      if(ImGui::BeginDragDropSource()) {
+        ImGui::SetDragDropPayload(dragType.c_str(), &layerIdx, sizeof(layerIdx));
+        ImGui::Text("%s", layer.name.value.c_str());
+        ImGui::EndDragDropSource();
+      }
+      if(ImGui::BeginDragDropTarget()) {
+        if(auto payload = ImGui::AcceptDragDropPayload(dragType.c_str())) {
+          moveFrom = *(const int*)payload->Data;
+          moveTo = layerIdx;
+        }
+        ImGui::EndDragDropTarget();
       }
 
       if (open) {
@@ -135,6 +153,13 @@ namespace
       ++layerIdx;
     }
 
+    if(moveFrom >= 0 && moveTo >= 0 && moveFrom != moveTo) {
+      auto layer = layers[moveFrom];
+      layers.erase(layers.begin() + moveFrom);
+      layers.insert(layers.begin() + moveTo, layer);
+      Editor::UndoRedo::getHistory().markChanged("Move Layer");
+    }
+
     if(ImGui::BeginPopupContextItem(layerName.c_str())) {
       if(ImGui::MenuItem(ICON_MDI_CONTENT_COPY " Duplicate")) {
         auto clone = layers[ctxLayerIndex];
@@ -142,8 +167,7 @@ namespace
         layers.insert(layers.begin() + ctxLayerIndex + 1, clone);
         Editor::UndoRedo::getHistory().markChanged("Duplicate Layer");
       }
-      // the first layer is the default one, which can't be removed
-      if(ctxLayerIndex > 0 && ImGui::MenuItem(ICON_MDI_TRASH_CAN_OUTLINE " Delete")) {
+      if(layers.size() > 1 && ImGui::MenuItem(ICON_MDI_TRASH_CAN_OUTLINE " Delete")) {
         int refCount = isLayer3D ? visitLayerRefs(scene, Project::Layer::keyFromName(layers[ctxLayerIndex].name.value), nullptr) : 0;
         layers.erase(layers.begin() + ctxLayerIndex);
         if(refCount > 0) {

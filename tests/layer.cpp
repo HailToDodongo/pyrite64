@@ -62,12 +62,13 @@ TEST_SUITE("Layer")
     CHECK(Layer::findIndex(layers, key) == 0);
   }
 
-  TEST_CASE("the first layer and invalid indices map to the default key")
+  TEST_CASE("layers are referenced by name, invalid indices by the default reference")
   {
-    auto layers = makeLayers({"Opaque", "Transp."});
-    CHECK(Layer::refFromIndex(layers, 0) == Layer::REF_DEFAULT);
+    auto layers = makeLayers({"Opaque", "Transp.", "layer8035639"});
+    CHECK(Layer::refFromIndex(layers, 0) == Layer::keyFromName("Opaque"));
     CHECK(Layer::refFromIndex(layers, 1) == Layer::keyFromName("Transp."));
-    CHECK(Layer::refFromIndex(layers, 2) == Layer::REF_DEFAULT);
+    CHECK(Layer::refFromIndex(layers, 2) == 2); // name hashes into the position range
+    CHECK(Layer::refFromIndex(layers, 3) == Layer::REF_DEFAULT);
     CHECK(Layer::refFromIndex(layers, -1) == Layer::REF_DEFAULT);
   }
 

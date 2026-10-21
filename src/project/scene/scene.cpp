@@ -280,7 +280,7 @@ void Project::Scene::upgradeLayerRefs()
       if(!data["layerIdx"].is_number())continue;
 
       auto ref = data["layerIdx"].get<uint32_t>();
-      if(ref == Layer::REF_DEFAULT || !Layer::isIndexRef(ref) || ref >= conf.layers3D.size())continue;
+      if(!Layer::isIndexRef(ref) || ref >= conf.layers3D.size())continue;
 
       auto &name = conf.layers3D[ref].name.value;
       if(!Layer::isValidName(name))continue;

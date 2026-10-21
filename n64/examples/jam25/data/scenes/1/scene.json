@@ -293,6 +293,11 @@
               "vpSize": [
                 320,
                 240
+              ],
+              "worldOffset": [
+                0.0,
+                0.0,
+                0.0
               ]
             },
             "enabled": true,
@@ -368,7 +373,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
@@ -560,7 +565,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
@@ -1104,7 +1109,7 @@
               {
                 "data": {
                   "culling": false,
-                  "layerIdx": 0,
+                  "layerIdx": 758828833,
                   "material": {
                     "depth": 0,
                     "env": [
@@ -1231,7 +1236,7 @@
               {
                 "data": {
                   "culling": false,
-                  "layerIdx": 0,
+                  "layerIdx": 758828833,
                   "material": {
                     "depth": 0,
                     "env": [
@@ -1328,7 +1333,7 @@
               {
                 "data": {
                   "culling": false,
-                  "layerIdx": 0,
+                  "layerIdx": 758828833,
                   "material": {
                     "depth": 0,
                     "env": [
@@ -1497,7 +1502,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
@@ -1590,7 +1595,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
@@ -1719,7 +1724,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 1,
+              "layerIdx": 2254958426,
               "material": {
                 "depth": 0,
                 "env": [
@@ -1801,7 +1806,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
@@ -1883,7 +1888,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 1,
+              "layerIdx": 2254958426,
               "material": {
                 "depth": 0,
                 "env": [
@@ -1965,7 +1970,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 1,
+              "layerIdx": 2254958426,
               "material": {
                 "depth": 0,
                 "env": [
@@ -2047,7 +2052,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
@@ -2129,7 +2134,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
@@ -2211,7 +2216,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
@@ -2293,7 +2298,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
@@ -2375,7 +2380,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
@@ -2457,7 +2462,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
@@ -2539,7 +2544,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
@@ -2621,7 +2626,7 @@
           {
             "data": {
               "culling": false,
-              "layerIdx": 0,
+              "layerIdx": 758828833,
               "material": {
                 "depth": 0,
                 "env": [
