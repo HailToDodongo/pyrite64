@@ -29,6 +29,7 @@ namespace Utils::CPP
     std::optional<float> min{};
     std::optional<float> max{};
     bool slider{false};
+    std::string group{};
 
     [[nodiscard]] bool isNumeric() const {
       return type == DataType::u8 || type == DataType::s8 || type == DataType::u16 ||

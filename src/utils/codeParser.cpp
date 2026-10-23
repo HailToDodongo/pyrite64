@@ -337,6 +337,7 @@ namespace
     using namespace Utils;
     using namespace Utils::CPP;
     std::vector<Field> fields{};
+    std::string currentGroup{};
     // Regex for attributes + field lines
     std::regex fieldRegex(
       R"((\[\[\s*([^\]]+)\s*\]\]\s*)?([\w:<>]+)\s+(\w+)(\[[0-9]+\])?(?:\s*\=(.*))?\s*;)"
@@ -432,6 +433,12 @@ namespace
         }
 
       }
+
+      auto groupAttr = field.attr.find("P64::Group");
+      if (groupAttr != field.attr.end()) {
+        currentGroup = groupAttr->second;
+      }
+      field.group = currentGroup;
 
       fields.push_back(field);
       fieldBegin = fieldMatch.suffix().first;

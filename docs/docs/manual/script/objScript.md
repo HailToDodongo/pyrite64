@@ -207,6 +207,29 @@ At runtime the member is just a regular integer, so you can test the bits as usu
 if(data->elementFlags & (1 << 0)) { /* Fire is set */ }
 ```
 
+### Group Attribute
+
+Members can be grouped into collapsible sections in the editor with `P64::Group`.\
+A group starts at the member that has the attribute, and includes all members after it until the next group.\
+An empty name ends the current group.
+
+Example:
+```cpp
+P64_DATA(
+  [[P64::Name("Health")]] int32_t health = 100;
+
+  [[P64::Group("Movement"), P64::Name("Speed")]]
+  float speed = 2.0f;
+  [[P64::Name("Jump Height")]]
+  float jumpHeight = 1.5f;
+
+  [[P64::Group("Debug"), P64::Name("Show Path")]]
+  bool showPath;
+);
+```
+
+Groups are only for the editor and have no effect at runtime.
+
 \
 Since a script is just a regular C++ file, it is also possible to have global memory.\
 This can be useful to share data global across all instances of a script.

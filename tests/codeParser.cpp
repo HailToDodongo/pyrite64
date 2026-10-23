@@ -168,6 +168,24 @@ TEST_SUITE("parseDataStruct")
     CHECK_FALSE(s.fields[4].min.has_value());
   }
 
+  TEST_CASE("groups apply until the next group")
+  {
+    auto s = parseData(R"(
+      int32_t before;
+      [[P64::Group("Movement"), P64::Name("Speed")]] float speed;
+      float jump;
+      [[P64::Group("Debug")]] bool showPath;
+      [[P64::Group("")]] int32_t after;
+    )");
+    REQUIRE(s.fields.size() == 5);
+    CHECK(s.fields[0].group == "");
+    CHECK(s.fields[1].group == "Movement");
+    CHECK(s.fields[1].attr.at("P64::Name") == "Speed");
+    CHECK(s.fields[2].group == "Movement");
+    CHECK(s.fields[3].group == "Debug");
+    CHECK(s.fields[4].group == "");
+  }
+
   TEST_CASE("bitmask attribute")
   {
     auto s = parseData(R"(

@@ -183,12 +183,26 @@ namespace Project::Component::Code
         }
 
         const bool isInstanceMode = ImTable::isPrefabLocked(&obj);
+        const std::string *currGroup = nullptr;
+        bool groupOpen = true;
         for (auto &field : script->params.fields)
         {
           std::string name{};
           auto metaName = field.attr.find("P64::Name");
           if (metaName == field.attr.end())continue;
           name = metaName->second;
+
+          if (!currGroup || *currGroup != field.group) {
+            currGroup = &field.group;
+            groupOpen = true;
+            if (!field.group.empty()) {
+              ImGui::TableNextRow();
+              ImGui::TableSetColumnIndex(0);
+              groupOpen = ImGui::TreeNodeEx(field.group.c_str(),
+                ImGuiTreeNodeFlags_SpanAllColumns | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+            }
+          }
+          if (!groupOpen)continue;
 
           if(data.args.find(field.name) == data.args.end()) {
             data.args[field.name] = PropString{field.name, field.defaultValue};

@@ -23,6 +23,9 @@ namespace P64::Script::__UUID__
     // [[P64::Bitmask("0=Fire, 1=Water, 2=Earth")]] attribute to edit them as a
     // named multi-select of bits instead of a plain number.
     //
+    // [[P64::Group("Your Name")]] puts this and all following members into a group.
+    // Until the next or an empty group ends it.
+    //
     // Other types can be used but are not exposed in the editor.
   );
 
