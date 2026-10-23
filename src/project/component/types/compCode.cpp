@@ -199,7 +199,7 @@ namespace Project::Component::Code
               ImGui::TableNextRow();
               ImGui::TableSetColumnIndex(0);
               groupOpen = ImGui::TreeNodeEx(field.group.c_str(),
-                ImGuiTreeNodeFlags_SpanAllColumns | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+                ImGuiTreeNodeFlags_SpanAllColumns | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_FramePadding);
             }
           }
           if (!groupOpen)continue;
