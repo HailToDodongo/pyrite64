@@ -12,16 +12,12 @@ namespace Project { class Project; }
 
 namespace Editor::ScriptHost
 {
+  struct Context;
+  
   struct EvalResult
   {
     std::string text{};
     bool success{};
-  };
-
-  struct Context
-  {
-    JSRuntime* rt{};
-    JSContext* ctx{};
   };
 
   bool start(Project::Project &project);

@@ -295,6 +295,8 @@ add_executable(pyrite64 src/main.cpp
         src/project/graph/jsNodeHost.cpp
         src/editor/script/scriptHost.h
         src/editor/script/scriptHost.cpp
+        src/editor/script/impl/impl.h
+        src/editor/script/impl/actions.cpp
         src/editor/actionSearch.h
         src/editor/actionSearch.cpp
         src/project/graph/valueTypes.h

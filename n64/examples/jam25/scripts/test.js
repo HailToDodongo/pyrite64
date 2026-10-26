@@ -1,5 +1,13 @@
 console.log("Hello!");
 
-editor.save();
+editor.addAction("test.123", "Test JS Action", () => {
+   console.log("Hello from Action 2!");
+   editor.save();
+});
 
-console.log("Hello again!");
+editor.addAction("test.abc", "efefewffeffe", () => {
+   console.log("Hello from Action 2!");
+   editor.close();
+});
+
+
