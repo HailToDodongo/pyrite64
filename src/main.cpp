@@ -16,6 +16,7 @@
 #include "cli.h"
 #include "build/projectBuilder.h"
 #include "editor/actions.h"
+#include "editor/actionSearch.h"
 #include "editor/script/scriptHost.h"
 #include "editor/window.h"
 #include "editor/imgui/theme.h"
@@ -449,6 +450,7 @@ int main(int argc, char** argv)
         editorMain.draw();
       }
 
+      Editor::ActionSearch::draw();
       Editor::Noti::draw();
 
       ctx.timeCpuSelf = SDL_GetTicksNS() - ticksSelf;

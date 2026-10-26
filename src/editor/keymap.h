@@ -25,6 +25,7 @@ namespace Editor::Input {
     ImGuiKeyChord reloadAssets = ImGuiKey_F5;
     ImGuiKeyChord build        = ImGuiKey_F11;
     ImGuiKeyChord buildAndRun  = ImGuiKey_F12;
+    ImGuiKeyChord actionSearch = ImGuiKey_F3;
 
     // Navigation/Viewport
     ImGuiKey moveForward    = ImGuiKey_W;

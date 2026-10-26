@@ -6,11 +6,12 @@
 #include "../utils/logger.h"
 #include "imgui/notification.h"
 
+#include <unordered_map>
 #include <utility>
 
 namespace
 {
-  Editor::Actions::ActionFn actionCallbacks[0xFF];
+  std::unordered_map<std::string, Editor::Actions::Action> actions{};
 }
 
 namespace Editor::Actions
@@ -19,24 +20,44 @@ namespace Editor::Actions
 }
 
 void Editor::Actions::init() {
-  for (auto &cb : actionCallbacks) {
-    cb = nullptr;
-  }
+  actions.clear();
   initGlobalActions();
 }
 
-void Editor::Actions::registerAction(Type type, ActionFn fn) {
-  actionCallbacks[static_cast<uint8_t>(type)] = std::move(fn);
+Editor::Actions::Action& Editor::Actions::registerAction(const std::string &id, const std::string &name, ActionFn fn) {
+  auto &action = actions[id];
+  action = {.id = id, .name = name, .fn = std::move(fn)};
+  return action;
 }
 
-bool Editor::Actions::call(Type type, const std::string &arg) {
-  if (actionCallbacks[static_cast<uint8_t>(type)]) {
-    try {
-      return actionCallbacks[static_cast<uint8_t>(type)](arg);
-    } catch (const std::exception &e) {
-      Utils::Logger::log("Error executing action: " + std::string(e.what()), Utils::Logger::LEVEL_ERROR);
-      Editor::Noti::add(Editor::Noti::Type::ERROR, "Action Failed:\n" + std::string(e.what()));
-    }
+void Editor::Actions::unregisterAction(const std::string &id) {
+  actions.erase(id);
+}
+
+bool Editor::Actions::isAvailable(const Action &action) {
+  return action.fn && (!action.isAvailable || action.isAvailable());
+}
+
+std::vector<const Editor::Actions::Action*> Editor::Actions::getActions() {
+  std::vector<const Action*> res{};
+  res.reserve(actions.size());
+  for(auto &[id, action] : actions)res.push_back(&action);
+  return res;
+}
+
+bool Editor::Actions::call(const std::string &id, const std::string &arg) {
+  auto it = actions.find(id);
+  if(it == actions.end()) {
+    Utils::Logger::log("Unknown action: " + id, Utils::Logger::LEVEL_WARN);
+    return false;
+  }
+  if(!isAvailable(it->second))return false;
+
+  try {
+    return it->second.fn(arg);
+  } catch (const std::exception &e) {
+    Utils::Logger::log("Error executing action: " + std::string(e.what()), Utils::Logger::LEVEL_ERROR);
+    Editor::Noti::add(Editor::Noti::Type::ERROR, "Action Failed:\n" + std::string(e.what()));
   }
   return false;
 }

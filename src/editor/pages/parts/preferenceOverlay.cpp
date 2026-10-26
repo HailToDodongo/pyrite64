@@ -77,6 +77,7 @@ bool Editor::PreferenceOverlay::draw()
       ImTable::addKeybind("Reload Assets", ctx.prefs.keymap.reloadAssets, defaults.reloadAssets);
       ImTable::addKeybind("Build",         ctx.prefs.keymap.build,        defaults.build);
       ImTable::addKeybind("Build & Run",   ctx.prefs.keymap.buildAndRun,  defaults.buildAndRun);
+      ImTable::addKeybind("Search Actions", ctx.prefs.keymap.actionSearch, defaults.actionSearch);
       ImTable::addKeybind("Zoom In",       ctx.prefs.keymap.zoomIn,       defaults.zoomIn);
       ImTable::addKeybind("Zoom Out",      ctx.prefs.keymap.zoomOut,      defaults.zoomOut);
       ImTable::end();

@@ -61,6 +61,7 @@ nlohmann::json Editor::Input::Keymap::serialize(KeymapPreset preset) const {
   writeChord("reloadAssets", reloadAssets,   defaultKeymap.reloadAssets);
   writeChord("build",        build,          defaultKeymap.build);
   writeChord("buildAndRun",  buildAndRun,    defaultKeymap.buildAndRun);
+  writeChord("actionSearch", actionSearch,   defaultKeymap.actionSearch);
   writeKey("moveForward",    moveForward,    defaultKeymap.moveForward);
   writeKey("moveBack",       moveBack,       defaultKeymap.moveBack);
   writeKey("moveLeft",       moveLeft,       defaultKeymap.moveLeft);
@@ -103,6 +104,7 @@ void Editor::Input::Keymap::deserialize(const nlohmann::json& parent, KeymapPres
   reloadAssets   = readChord("reloadAssets", defaultKeymap.reloadAssets);
   build          = readChord("build",        defaultKeymap.build);
   buildAndRun    = readChord("buildAndRun",  defaultKeymap.buildAndRun);
+  actionSearch   = readChord("actionSearch", defaultKeymap.actionSearch);
   moveForward    = readKey("moveForward",    defaultKeymap.moveForward);
   moveBack       = readKey("moveBack",       defaultKeymap.moveBack);
   moveLeft       = readKey("moveLeft",       defaultKeymap.moveLeft);

@@ -103,7 +103,9 @@ namespace Editor::Actions
 {
   void initGlobalActions()
   {
-    registerAction(Type::PROJECT_OPEN, [](const std::string &path) {
+    auto hasProject = [] { return ctx.project != nullptr; };
+
+    registerAction(Type::PROJECT_OPEN, "Open Project", [](const std::string &path) {
        Utils::Logger::log("Open Project: " + path);
        // Remember the outgoing project's open windows before it is torn down.
        if(ctx.editorScene && ctx.project) ctx.editorScene->onProjectClosing();
@@ -165,14 +167,14 @@ namespace Editor::Actions
          return false;
        }
        return ctx.project != nullptr;
-     });
+     }).showInSearch = false;
 
-    registerAction(Type::PROJECT_CLOSE, [](const std::string&) {
+    registerAction(Type::PROJECT_CLOSE, "Close Project", [](const std::string&) {
       ctx.wantsProjectClose = true;
       return true;
-    });
+    }).isAvailable = hasProject;
 
-    registerAction(Type::PROJECT_CLEAN, [](const std::string& arg) {
+    registerAction(Type::PROJECT_CLEAN, "Clean Project", [](const std::string& arg) {
       if (ctx.isBuildOrRunning())return false;
       if (!ctx.project)return false;
 
@@ -182,9 +184,9 @@ namespace Editor::Actions
         .engine = true,
         .engineSrc = true
       });
-    });
+    }).isAvailable = hasProject;
 
-    registerAction(Type::PROJECT_GEN_VSCODE, [](const std::string&) {
+    registerAction(Type::PROJECT_GEN_VSCODE, "Generate VSCode Setup", [](const std::string&) {
       if (!ctx.project)return false;
       bool res = Build::generateVSCodeProject(
         ctx.project->getPath(), ctx.project->getConfigPath(),
@@ -196,9 +198,9 @@ namespace Editor::Actions
         Editor::Noti::add(Editor::Noti::Type::ERROR, "Failed to generate VSCode project, see log");
       }
       return res;
-    });
+    }).isAvailable = hasProject;
 
-    registerAction(Type::PROJECT_CREATE, [](const std::string &payload)
+    registerAction(Type::PROJECT_CREATE, "Create Project", [](const std::string &payload)
     {
       if(ctx.project)return false;
       nlohmann::json args{};
@@ -254,24 +256,28 @@ namespace Editor::Actions
 
       Build::generateVSCodeProject(newPath, configPath, getToolchainPath(""));
       return true;
-    });
+    }).showInSearch = false;
 
-    registerAction(Type::PROJECT_BUILD, [](const std::string& arg) {
+    registerAction(Type::PROJECT_BUILD, "Build Project", [](const std::string& arg) {
       if (ctx.isBuildOrRunning())return false;
       if (!ctx.project)return false;
 
       startBuild(arg);
       return true;
-    });
+    }).isAvailable = hasProject;
 
-    registerAction(Type::ASSETS_RELOAD, [](const std::string&) {
+    registerAction(Type::PROJECT_BUILD_RUN, "Build & Run Project", [](const std::string&) {
+      return call(Type::PROJECT_BUILD, "run");
+    }).isAvailable = hasProject;
+
+    registerAction(Type::ASSETS_RELOAD, "Reload Assets", [](const std::string&) {
       if(ctx.project) {
         ctx.project->getAssets().reload();
       }
       return true;
-    });
+    }).isAvailable = hasProject;
 
-    registerAction(Type::COPY, [](const std::string&) {
+    registerAction(Type::COPY, "Copy Objects", [](const std::string&) {
       if(!ctx.project)return false;
       auto scene = ctx.project->getScenes().getLoadedScene();
       if(!scene)return false;
@@ -311,9 +317,9 @@ namespace Editor::Actions
       }
 
       return true;
-    });
+    }).isAvailable = hasProject;
 
-    registerAction(Type::PASTE, [](const std::string&) {
+    registerAction(Type::PASTE, "Paste Objects", [](const std::string&) {
       if(!ctx.project || ctx.clipboard.entries.empty())return false;
       auto scene = ctx.project->getScenes().getLoadedScene();
       if(!scene)return false;
@@ -328,6 +334,6 @@ namespace Editor::Actions
         }
       }
       return true;
-    });
+    }).isAvailable = hasProject;
   }
 }

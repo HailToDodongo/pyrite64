@@ -32,9 +32,8 @@ namespace
 
 Editor::Scene::Scene()
 {
-  Editor::Actions::registerAction(Editor::Actions::Type::OPEN_NODE_GRAPH, [this](const std::string& asset)
+  Editor::Actions::registerAction(Editor::Actions::Type::OPEN_NODE_GRAPH, "Open Node Graph", [this](const std::string& asset)
   {
-    printf("OPEN_NODE_GRAPH action called with asset: %s\n", asset.c_str());
     if(!ctx.project)return false;
     auto assetEntry = ctx.project->getAssets().getEntryByUUID(std::stoull(asset));
     if(assetEntry) {
@@ -42,7 +41,7 @@ Editor::Scene::Scene()
       return true;
     }
     return false;
-  });
+  }).showInSearch = false;
   needsSanityCheck = true;
 
   loadSession();
@@ -58,7 +57,7 @@ void Editor::Scene::addViewport()
 Editor::Scene::~Scene()
 {
   // The active project's windows are persisted when it is torn down (see persistOpenWindows).
-  Editor::Actions::registerAction(Editor::Actions::Type::OPEN_NODE_GRAPH, nullptr);
+  Editor::Actions::unregisterAction(Editor::Actions::Type::OPEN_NODE_GRAPH);
 }
 
 void Editor::Scene::loadSession()
