@@ -33,6 +33,15 @@ Variables or functions defined in one are available in the others, until the pro
 | `editor.clean()` | Cleans the project's build files |
 | `editor.close()` | Closes the project |
 | `editor.reloadAssets()` | Reloads all assets |
+| `editor.addAction(id, name, callback)` | Adds an {doc}`action <../editor/actions>` that can be run from the action search (F3).<br> Calling it again with the same id replaces the callback, ids of built-in actions can't be used |
+
+Example of a custom action:
+
+```js
+editor.addAction("test.hello", "Say Hello", () => {
+  console.log("Hello!");
+});
+```
 
 ### console
 

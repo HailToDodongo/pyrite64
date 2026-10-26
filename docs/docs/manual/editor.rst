@@ -13,3 +13,4 @@ Editor & Engine
   editor/prefabs
   editor/collision
   editor/materials
+  editor/actions
