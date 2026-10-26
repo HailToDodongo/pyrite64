@@ -119,6 +119,13 @@ namespace Editor::ScriptHost
     JS_FreeValue(js.ctx, global);
 
     Utils::Logger::log("Editor scripts: context started");
+
+    for(auto &entry : project.getAssets().getTypeEntries(Project::FileType::EDITOR_SCRIPT)) {
+      if(!entry.conf.autoRun)continue;
+      Utils::Logger::log("Auto-running script: " + entry.name);
+      auto res = runFile(entry.path);
+      if(!res.success)Utils::Logger::log(res.text, Utils::Logger::LEVEL_ERROR);
+    }
     return true;
   }
 

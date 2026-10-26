@@ -59,6 +59,7 @@ namespace Project
 
     ComprTypes compression{ComprTypes::DEFAULT};
     bool exclude{false};
+    bool autoRun{false};
 
     PROP_BOOL(wavForceMono);
     PROP_U32(wavResampleRate);

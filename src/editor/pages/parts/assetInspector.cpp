@@ -123,8 +123,7 @@ void Editor::AssetInspector::draw() {
   bool hasAssetConf = true;
   if (asset->type == FileType::CODE_OBJ
     || asset->type == FileType::CODE_GLOBAL
-    || asset->type == FileType::PREFAB
-    || asset->type == FileType::EDITOR_SCRIPT)
+    || asset->type == FileType::PREFAB)
   {
     hasAssetConf = false;
   }
@@ -211,7 +210,12 @@ void Editor::AssetInspector::draw() {
       );
     }
 
-    if (asset->type != FileType::AUDIO && asset->type != FileType::MUSIC_XM)
+    if (asset->type == FileType::EDITOR_SCRIPT)
+    {
+      ImTable::addCheckBox("Auto Run", asset->conf.autoRun);
+      ImGui::SetItemTooltip("Runs this script whenever the project is opened");
+    }
+    else if (asset->type != FileType::AUDIO && asset->type != FileType::MUSIC_XM)
     {
       int compression = (int)asset->conf.compression;
       if(ImTable::addComboBox("Compression", compression, {
@@ -224,7 +228,9 @@ void Editor::AssetInspector::draw() {
       }
     }
 
-    ImTable::addCheckBox("Exclude", asset->conf.exclude);
+    if (asset->type != FileType::EDITOR_SCRIPT) {
+      ImTable::addCheckBox("Exclude", asset->conf.exclude);
+    }
 
     ImTable::end();
 

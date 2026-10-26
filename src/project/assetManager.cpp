@@ -115,6 +115,7 @@ namespace
 
       conf.data = doc.contains("data") ? doc["data"] : nlohmann::json::object();
       conf.exclude = doc["exclude"];
+      conf.autoRun = doc.value("autoRun", false);
     }
   }
 
@@ -265,6 +266,7 @@ std::string Project::AssetConf::serialize() const {
     .set(fontId)
     .set(fontCharset)
     .set("exclude", exclude)
+    .set("autoRun", autoRun)
     .set("data", data)
     .toString();
 }
@@ -761,8 +763,11 @@ void Project::AssetManager::save()
     auto pathMeta = entry->path + ".conf";
     auto json = entry->conf.serialize();
 
-    Utils::Logger::log("Asset meta-data changed, forcing recompile: " + entry->outPath, Utils::Logger::LEVEL_INFO);
-    fs::remove(project->getPath() + "/" + entry->outPath);
+    if (!entry->outPath.empty()) {
+      Utils::Logger::log("Asset meta-data changed, forcing recompile: " + entry->outPath, Utils::Logger::LEVEL_INFO);
+      std::error_code ec{};
+      fs::remove(fs::path{project->getPath()} / entry->outPath, ec);
+    }
     Utils::FS::saveTextFile(pathMeta, json);
 
     dirtyAssetMeta.erase(uuid);
