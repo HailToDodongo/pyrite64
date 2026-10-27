@@ -113,7 +113,7 @@ other.rot = obj.rot;                 // copies the rotation
 Note that the components are not normalized automatically, call `normalize()` after changing single components.\
 It normalizes the quaternion in place, and returns it again.
 
-# Examples
+## Examples
 
 Adds an action that places all selected objects on their average height:
 ```js
