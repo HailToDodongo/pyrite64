@@ -81,8 +81,10 @@ They stay valid even after undo or redo, but throw an error once the object is d
 | `uuid` | Unique id of the object (read-only) |
 | `name` | Name of the object |
 | `pos` | Position as a [vector](#vectors) |
+| `rot` | Rotation as a [quaternion](#quaternions) |
+| `scale` | Scale as a [vector](#vectors) |
 
-Changing the position of a prefab instance automatically creates an override for it, same as in the inspector.
+Changing the position, rotation or scale of a prefab instance automatically creates an override for it, same as in the inspector.
 
 ## Vectors
 
@@ -98,3 +100,36 @@ history.markChanged("Move Objects");
 ```
 
 When setting a vector, any object with number values for `x`, `y` and `z` is accepted.
+
+## Quaternions
+
+Rotations are quaternions, objects with `x`, `y`, `z` and `w`.
+
+```js
+obj.rot = {x: 0, y: 0, z: 0, w: 1};  // no rotation
+other.rot = obj.rot;                 // copies the rotation
+```
+
+Note that the components are not normalized automatically, call `normalize()` after changing single components.\
+It normalizes the quaternion in place, and returns it again.
+
+# Examples
+
+Adds an action that places all selected objects on their average height:
+```js
+editor.addAction("user.avgHeight", "Average Height", () => 
+{
+  const objs = editor.getSelObjects();
+  if(objs.length == 0)return;
+
+  let h = 0;
+  for(let o of objs)h += o.pos.y;
+  h /= objs.length;
+   
+  for(let o of objs) {
+    o.pos.y = h;
+  }
+
+  history.markChanged("Average Height");
+});
+```

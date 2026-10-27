@@ -49,11 +49,20 @@ namespace
     return res;
   }
 
+  JSValue normalize(JSContext *c, JSValueConst self, int, JSValueConst*)
+  {
+    auto *quat = getVec(c, self, true);
+    if(!quat)return JS_EXCEPTION;
+    *quat = glm::length(*quat) > 0.0f ? glm::normalize(*quat) : glm::identity<glm::quat>();
+    return JS_DupValue(c, self);
+  }
+
   const JSCFunctionListEntry QUAT_PROTO[] = {
     JS_CGETSET_DEF("x", getComp<0>, setComp<0>),
     JS_CGETSET_DEF("y", getComp<1>, setComp<1>),
     JS_CGETSET_DEF("z", getComp<2>, setComp<2>),
     JS_CGETSET_DEF("w", getComp<3>, setComp<3>),
+    JS_CFUNC_DEF("normalize", 0, normalize),
     JS_CFUNC_DEF("toJSON", 0, toJSON),
   };
 }
