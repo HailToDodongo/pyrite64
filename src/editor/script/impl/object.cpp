@@ -65,23 +65,33 @@ namespace
     return obj.pos.resolve(obj.propOverrides);
   }
 
-  JSValue getPos(JSContext *c, JSValueConst self)
+  glm::vec3& resolveScale(Project::Object &obj, bool forWrite)
+  {
+    if(forWrite && obj.isPrefabInstance() && !ctx.isPrefabEditing(obj.uuid) && !obj.hasPropOverride(obj.scale)) {
+      obj.addPropOverride(obj.scale);
+    }
+    return obj.scale.resolve(obj.propOverrides);
+  }
+
+  template<auto RESOLVE>
+  JSValue getVec3(JSContext *c, JSValueConst self)
   {
     auto *obj = getObject(c, self);
     if(!obj)return JS_EXCEPTION;
     return JVec3::create(c, [uuid = obj->uuid](JSContext *c, bool forWrite) -> glm::vec3* {
       auto *obj = findObject(c, uuid);
-      return obj ? &resolvePos(*obj, forWrite) : nullptr;
+      return obj ? &RESOLVE(*obj, forWrite) : nullptr;
     });
   }
 
-  JSValue setPos(JSContext *c, JSValueConst self, JSValueConst val)
+  template<auto RESOLVE>
+  JSValue setVec3(JSContext *c, JSValueConst self, JSValueConst val)
   {
     auto *obj = getObject(c, self);
     if(!obj)return JS_EXCEPTION;
-    glm::vec3 pos{};
-    if(!JVec3::read(c, val, pos))return JS_ThrowTypeError(c, "pos must be an object with x, y and z");
-    resolvePos(*obj, true) = pos;
+    glm::vec3 v{};
+    if(!JVec3::read(c, val, v))return JS_ThrowTypeError(c, "value must be an object with x, y and z");
+    RESOLVE(*obj, true) = v;
     return JS_UNDEFINED;
   }
 
@@ -98,7 +108,8 @@ namespace
   const JSCFunctionListEntry OBJ_PROTO[] = {
     JS_CGETSET_DEF("uuid", getUUID, nullptr),
     JS_CGETSET_DEF("name", getName, setName),
-    JS_CGETSET_DEF("pos", getPos, setPos),
+    JS_CGETSET_DEF("pos", getVec3<resolvePos>, setVec3<resolvePos>),
+    JS_CGETSET_DEF("scale", getVec3<resolveScale>, setVec3<resolveScale>),
     JS_CFUNC_DEF("toJSON", 0, objToJSON),
   };
 }
