@@ -56,36 +56,33 @@ namespace
   };
 }
 
-namespace Editor::ScriptHost::Impl::Vec3
+void Editor::ScriptHost::Impl::Vec3::init(JSContext *c)
 {
-  void init(JSContext *c)
-  {
-    registerClass(c, vecClassId, {
-      .class_name = "Vec3",
-      .finalizer = [](JSRuntime*, JSValueConst val) {
-        delete (VecRef*)JS_GetOpaque(val, vecClassId);
-      },
-    }, VEC_PROTO, std::size(VEC_PROTO));
-  }
+  registerClass(c, vecClassId, {
+    .class_name = "Vec3",
+    .finalizer = [](JSRuntime*, JSValueConst val) {
+      delete (VecRef*)JS_GetOpaque(val, vecClassId);
+    },
+  }, VEC_PROTO, std::size(VEC_PROTO));
+}
 
-  JSValue create(JSContext *c, Resolver resolver)
-  {
-    JSValue res = JS_NewObjectClass(c, vecClassId);
-    JS_SetOpaque(res, new VecRef{std::move(resolver)});
-    return res;
-  }
+JSValue Editor::ScriptHost::Impl::Vec3::create(JSContext *c, Resolver resolver)
+{
+  JSValue res = JS_NewObjectClass(c, vecClassId);
+  JS_SetOpaque(res, new VecRef{std::move(resolver)});
+  return res;
+}
 
-  bool read(JSContext *c, JSValueConst val, glm::vec3 &out)
-  {
-    for(uint32_t i=0; i<3; ++i) {
-      const char name[2] = {"xyz"[i], 0};
-      JSValue item = JS_GetPropertyStr(c, val, name);
-      double num = 0;
-      bool isNum = JS_IsNumber(item) && JS_ToFloat64(c, &num, item) == 0;
-      JS_FreeValue(c, item);
-      if(!isNum)return false;
-      out[i] = (float)num;
-    }
-    return true;
+bool Editor::ScriptHost::Impl::Vec3::read(JSContext *c, JSValueConst val, glm::vec3 &out)
+{
+  for(uint32_t i=0; i<3; ++i) {
+    const char name[2] = {"xyz"[i], 0};
+    JSValue item = JS_GetPropertyStr(c, val, name);
+    double num = 0;
+    bool isNum = JS_IsNumber(item) && JS_ToFloat64(c, &num, item) == 0;
+    JS_FreeValue(c, item);
+    if(!isNum)return false;
+    out[i] = (float)num;
   }
+  return true;
 }

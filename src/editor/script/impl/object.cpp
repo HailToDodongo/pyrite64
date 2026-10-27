@@ -7,8 +7,11 @@
 #include "../../../project/scene/object.h"
 #include "../../../project/scene/scene.h"
 
+#include <utility>
+
 using namespace Editor::ScriptHost::Impl;
-namespace JVec3 = Editor::ScriptHost::Impl::Vec3;
+using JVec3 = Editor::ScriptHost::Impl::Vec3;
+using JQuat = Editor::ScriptHost::Impl::Quat;
 
 namespace
 {
@@ -57,41 +60,45 @@ namespace
     return JS_UNDEFINED;
   }
 
-  glm::vec3& resolvePos(Project::Object &obj, bool forWrite)
+  template<typename T> struct JSType;
+  template<> struct JSType<glm::vec3> { using type = JVec3; };
+  template<> struct JSType<glm::quat> { using type = JQuat; };
+
+  template<auto PROP>
+  using PropType = decltype((std::declval<Project::Object&>().*PROP).value);
+
+  // prefab instances get an override first, same as when editing in the inspector
+  template<auto PROP>
+  PropType<PROP>& resolveProp(Project::Object &obj, bool forWrite)
   {
-    if(forWrite && obj.isPrefabInstance() && !ctx.isPrefabEditing(obj.uuid) && !obj.hasPropOverride(obj.pos)) {
-      obj.addPropOverride(obj.pos);
+    auto &prop = obj.*PROP;
+    if(forWrite && obj.isPrefabInstance() && !ctx.isPrefabEditing(obj.uuid) && !obj.hasPropOverride(prop)) {
+      obj.addPropOverride(prop);
     }
-    return obj.pos.resolve(obj.propOverrides);
+    return prop.resolve(obj.propOverrides);
   }
 
-  glm::vec3& resolveScale(Project::Object &obj, bool forWrite)
+  template<auto PROP>
+  JSValue getProp(JSContext *c, JSValueConst self)
   {
-    if(forWrite && obj.isPrefabInstance() && !ctx.isPrefabEditing(obj.uuid) && !obj.hasPropOverride(obj.scale)) {
-      obj.addPropOverride(obj.scale);
-    }
-    return obj.scale.resolve(obj.propOverrides);
-  }
-
-  template<auto RESOLVE>
-  JSValue getVec3(JSContext *c, JSValueConst self)
-  {
+    using JS = typename JSType<PropType<PROP>>::type;
     auto *obj = getObject(c, self);
     if(!obj)return JS_EXCEPTION;
-    return JVec3::create(c, [uuid = obj->uuid](JSContext *c, bool forWrite) -> glm::vec3* {
+    return JS::create(c, [uuid = obj->uuid](JSContext *c, bool forWrite) -> PropType<PROP>* {
       auto *obj = findObject(c, uuid);
-      return obj ? &RESOLVE(*obj, forWrite) : nullptr;
+      return obj ? &resolveProp<PROP>(*obj, forWrite) : nullptr;
     });
   }
 
-  template<auto RESOLVE>
-  JSValue setVec3(JSContext *c, JSValueConst self, JSValueConst val)
+  template<auto PROP>
+  JSValue setProp(JSContext *c, JSValueConst self, JSValueConst val)
   {
+    using JS = typename JSType<PropType<PROP>>::type;
     auto *obj = getObject(c, self);
     if(!obj)return JS_EXCEPTION;
-    glm::vec3 v{};
-    if(!JVec3::read(c, val, v))return JS_ThrowTypeError(c, "value must be an object with x, y and z");
-    RESOLVE(*obj, true) = v;
+    PropType<PROP> v{};
+    if(!JS::read(c, val, v))return JS_ThrowTypeError(c, "value has the wrong format");
+    resolveProp<PROP>(*obj, true) = v;
     return JS_UNDEFINED;
   }
 
@@ -108,8 +115,9 @@ namespace
   const JSCFunctionListEntry OBJ_PROTO[] = {
     JS_CGETSET_DEF("uuid", getUUID, nullptr),
     JS_CGETSET_DEF("name", getName, setName),
-    JS_CGETSET_DEF("pos", getVec3<resolvePos>, setVec3<resolvePos>),
-    JS_CGETSET_DEF("scale", getVec3<resolveScale>, setVec3<resolveScale>),
+    JS_CGETSET_DEF("pos", getProp<&Project::Object::pos>, setProp<&Project::Object::pos>),
+    JS_CGETSET_DEF("rot", getProp<&Project::Object::rot>, setProp<&Project::Object::rot>),
+    JS_CGETSET_DEF("scale", getProp<&Project::Object::scale>, setProp<&Project::Object::scale>),
     JS_CFUNC_DEF("toJSON", 0, objToJSON),
   };
 }

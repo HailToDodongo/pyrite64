@@ -7,6 +7,7 @@
 #include <functional>
 #include "quickjs.h"
 #include "glm/vec3.hpp"
+#include "glm/gtc/quaternion.hpp"
 
 namespace Editor::ScriptHost::Impl
 {
@@ -38,19 +39,28 @@ namespace Editor::ScriptHost::Impl
 
   //########// Math Types //########//
 
-  namespace Vec3
+  struct Vec3
   {
     // Returns the vector a handle points to, or nullptr + JS exception.
     // forWrite is true if the access is writing to it (handles prefab overrides)
     using Resolver = std::function<glm::vec3*(JSContext *c, bool forWrite)>;
 
     // Registers the vector class, must be called once per context
-    void init(JSContext *c);
+    static void init(JSContext *c);
 
     // Live vector, the resolver is called on each access
-    JSValue create(JSContext *c, Resolver resolver);
+    static JSValue create(JSContext *c, Resolver resolver);
 
     // Accepts {x: 1, y: 2, z: 3} objects or another vector
-    bool read(JSContext *c, JSValueConst val, glm::vec3 &out);
-  }
+    static bool read(JSContext *c, JSValueConst val, glm::vec3 &out);
+  };
+
+  struct Quat
+  {
+    using Resolver = std::function<glm::quat*(JSContext *c, bool forWrite)>;
+
+    static void init(JSContext *c);
+    static JSValue create(JSContext *c, Resolver resolver);
+    static bool read(JSContext *c, JSValueConst val, glm::quat &out);
+  };
 }

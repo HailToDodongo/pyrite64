@@ -299,6 +299,7 @@ add_executable(pyrite64 src/main.cpp
         src/editor/script/impl/actions.cpp
         src/editor/script/impl/object.cpp
         src/editor/script/impl/vec.cpp
+        src/editor/script/impl/quat.cpp
         src/editor/actionSearch.h
         src/editor/actionSearch.cpp
         src/project/graph/valueTypes.h
