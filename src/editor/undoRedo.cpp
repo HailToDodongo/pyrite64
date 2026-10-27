@@ -12,23 +12,32 @@ namespace
   Editor::UndoRedo::History globalHistory;
 }
 
+namespace
+{
+  // @TODO: always use loaded one?
+  Project::Scene* getScene(Project::Scene *snapshotScene) {
+    if(snapshotScene)return snapshotScene;
+    return ctx.project ? ctx.project->getScenes().getLoadedScene() : nullptr;
+  }
+}
+
 namespace Editor::UndoRedo
 {
   bool History::undo()
   {
     commit();
-    if (!canUndo()) return false;
+    auto scene = getScene(snapshotScene);
+    if (!canUndo() || !scene) return false;
 
     auto cmd = std::move(undoStack.back());
     undoStack.pop_back();
     const auto &prevCmd = undoStack.back();
 
-    if (!snapshotScene) return false;
-    snapshotScene->deserialize(prevCmd->state);
+    scene->deserialize(prevCmd->state);
 
     uint32_t primarySel = prevCmd->selection.empty() ? 0 : prevCmd->selection.back();
     ctx.setObjectSelectionList(prevCmd->selection, primarySel);
-    ctx.sanitizeObjectSelection(snapshotScene);
+    ctx.sanitizeObjectSelection(scene);
 
     redoStack.push_back(std::move(cmd));
     
@@ -38,17 +47,17 @@ namespace Editor::UndoRedo
   bool History::redo()
   {
     commit();
-    if (!canRedo()) return false;
+    auto scene = getScene(snapshotScene);
+    if (!canRedo() || !scene) return false;
 
     auto cmd = std::move(redoStack.back());
     redoStack.pop_back();
 
-    if (!snapshotScene) return false;
-    snapshotScene->deserialize(cmd->state);
+    scene->deserialize(cmd->state);
 
     uint32_t primarySel = cmd->selection.empty() ? 0 : cmd->selection.back();
     ctx.setObjectSelectionList(cmd->selection, primarySel);
-    ctx.sanitizeObjectSelection(snapshotScene);
+    ctx.sanitizeObjectSelection(scene);
 
     undoStack.push_back(std::move(cmd));
 

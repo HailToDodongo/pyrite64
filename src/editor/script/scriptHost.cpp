@@ -6,6 +6,7 @@
 #include "../../utils/logger.h"
 #include "../../utils/fs.h"
 #include "../actions.h"
+#include "../undoRedo.h"
 #include "../../project/scene/object.h"
 #include "../../project/scene/scene.h"
 #include "../pages/editorScene.h"
@@ -30,7 +31,7 @@ namespace
     std::vector<JSCFunctionListEntry> entries{};
   };
 
-  const std::array<APIObjDef, 3> APIs{
+  const std::array<APIObjDef, 4> APIs{
     APIObjDef
     {
       .name = "editor",
@@ -51,6 +52,18 @@ namespace
         JS_LAMBDA("clean", 0, { return JS_NewBool(c, Act::call(Act::Type::PROJECT_CLEAN)); }),
         JS_LAMBDA("reloadAssets", 0, { return JS_NewBool(c, Act::call(Act::Type::ASSETS_RELOAD)); }),
         JS_CFUNC_DEF("addAction", 3, Editor::ScriptHost::Impl::addAction),
+        JS_CFUNC_DEF("getSelObjects", 0, Editor::ScriptHost::Impl::getSelectedObjects),
+      }
+    },{
+      .name = "history",
+      .entries = {
+        JS_LAMBDA("markChanged", 1, {
+          auto desc = argc > 0 ? toString(argv[0], js) : std::string{};
+          Editor::UndoRedo::getHistory().markChanged(desc.empty() ? "Script Change" : desc);
+          return JS_UNDEFINED;
+        }),
+        JS_LAMBDA("undo", 0, { return JS_NewBool(c, Editor::UndoRedo::getHistory().undo()); }),
+        JS_LAMBDA("redo", 0, { return JS_NewBool(c, Editor::UndoRedo::getHistory().redo()); }),
       }
     },{
       .name = "console",
@@ -107,6 +120,9 @@ namespace Editor::ScriptHost
       js.rt = nullptr;
       return false;
     }
+
+    Impl::Vec3::init(js.ctx);
+    Impl::initObjects(js.ctx);
 
     JSValue global = JS_GetGlobalObject(js.ctx);
     
