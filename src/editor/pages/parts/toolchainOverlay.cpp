@@ -184,7 +184,7 @@ bool Editor::ToolchainOverlay::draw()
           ImGui::Dummy({0, 4_px});
           ImGui::SetCursorPosX(posX);
 
-          ImGui::TextLinkOpenURL("Libdragon Wiki", "https://github.com/DragonMinded/libdragon/wiki/Installing-libdragon");
+          ImGui::TextLinkOpenURL("Libdragon Wiki", "https://github.com/n64brew/libdragon/wiki/Installing-libdragon");
           ImGui::SameLine(); ImGui::Text(" + "); ImGui::SameLine();
           ImGui::TextLinkOpenURL("Tiny3D Docs", "https://github.com/HailToDodongo/tiny3d?tab=readme-ov-file#build");
 
