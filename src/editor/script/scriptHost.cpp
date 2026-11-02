@@ -124,6 +124,7 @@ namespace Editor::ScriptHost
     Impl::Vec3::init(js.ctx);
     Impl::Quat::init(js.ctx);
     Impl::initObjects(js.ctx);
+    Impl::initComponents(js.ctx);
 
     JSValue global = JS_GetGlobalObject(js.ctx);
     

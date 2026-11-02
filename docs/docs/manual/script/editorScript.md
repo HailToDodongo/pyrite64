@@ -83,8 +83,39 @@ They stay valid even after undo or redo, but throw an error once the object is d
 | `pos` | Position as a [vector](#vectors) |
 | `rot` | Rotation as a [quaternion](#quaternions) |
 | `scale` | Scale as a [vector](#vectors) |
+| `components` | All [components](#components) of the object as an array (read-only) |
+
+| Function | Description |
+|----------|-------------|
+| `getComponent(type)` | Returns the first [component](#components) of the given type, or `null` if there is none |
 
 Changing the position, rotation or scale of a prefab instance automatically creates an override for it, same as in the inspector.
+
+## Components
+
+Components are returned by `obj.components` and `obj.getComponent(type)`.\
+Like objects, they stay valid after undo or redo, but throw an error once the component is removed.
+
+| Property | Description |
+|----------|-------------|
+| `uuid` | Unique id of the component as a string (read-only) |
+| `type` | Type name, as shown in the "Add Component" menu, e.g. `"Code"` or `"Model (Static)"` (read-only) |
+| `name` | Name of the component (read-only) |
+| `enabled` | Whether the component is enabled |
+
+For prefab instances, the components of the prefab come first, followed by the ones added to the instance itself.\
+Same as with the transform, changing `enabled` on a prefab instance creates an override.
+
+```js
+const obj = editor.getSelObjects()[0];
+for(const comp of obj.components) {
+  console.log(comp.type + ": " + comp.name);
+}
+
+const model = obj.getComponent("Model (Static)");
+if(model)model.enabled = false;
+history.markChanged("Disable Model");
+```
 
 ## Vectors
 

@@ -17,15 +17,6 @@ namespace
 {
   JSClassID objClassId{};
 
-  // always resolve fresh via UUID, otherwise we risk stale pointer shenanigans
-  Project::Object* findObject(JSContext *c, uint32_t uuid)
-  {
-    auto *scene = ctx.project ? ctx.project->getScenes().getLoadedScene() : nullptr;
-    auto obj = scene ? scene->getObjectByUUID(uuid) : nullptr;
-    if(!obj)JS_ThrowReferenceError(c, "object no longer exists");
-    return obj.get();
-  }
-
   JSValue newObjectHandle(JSContext *c, uint32_t uuid)
   {
     JSValue res = JS_NewObjectClass(c, objClassId);
@@ -102,6 +93,24 @@ namespace
     return JS_UNDEFINED;
   }
 
+  JSValue getComps(JSContext *c, JSValueConst self)
+  {
+    auto *obj = getObject(c, self);
+    return obj ? getComponents(c, *obj) : JS_EXCEPTION;
+  }
+
+  JSValue getComp(JSContext *c, JSValueConst self, int argc, JSValueConst *argv)
+  {
+    auto *obj = getObject(c, self);
+    if(!obj)return JS_EXCEPTION;
+    if(argc < 1 || !JS_IsString(argv[0]))return JS_ThrowTypeError(c, "getComponent expects a type name");
+
+    const char* type = JS_ToCString(c, argv[0]);
+    JSValue res = findComponent(c, *obj, type);
+    JS_FreeCString(c, type);
+    return res;
+  }
+
   JSValue objToJSON(JSContext *c, JSValueConst self, int, JSValueConst*)
   {
     auto *obj = getObject(c, self);
@@ -118,8 +127,19 @@ namespace
     JS_CGETSET_DEF("pos", getProp<&Project::Object::pos>, setProp<&Project::Object::pos>),
     JS_CGETSET_DEF("rot", getProp<&Project::Object::rot>, setProp<&Project::Object::rot>),
     JS_CGETSET_DEF("scale", getProp<&Project::Object::scale>, setProp<&Project::Object::scale>),
+    JS_CGETSET_DEF("components", getComps, nullptr),
+    JS_CFUNC_DEF("getComponent", 1, getComp),
     JS_CFUNC_DEF("toJSON", 0, objToJSON),
   };
+}
+
+// always resolve fresh via UUID, otherwise we risk stale pointer shenanigans
+Project::Object* Editor::ScriptHost::Impl::findObject(JSContext *c, uint32_t uuid)
+{
+  auto *scene = ctx.project ? ctx.project->getScenes().getLoadedScene() : nullptr;
+  auto obj = scene ? scene->getObjectByUUID(uuid) : nullptr;
+  if(!obj)JS_ThrowReferenceError(c, "object no longer exists");
+  return obj.get();
 }
 
 void Editor::ScriptHost::Impl::initObjects(JSContext *c)

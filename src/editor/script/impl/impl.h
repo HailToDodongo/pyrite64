@@ -9,6 +9,8 @@
 #include "glm/vec3.hpp"
 #include "glm/gtc/quaternion.hpp"
 
+namespace Project { class Object; }
+
 namespace Editor::ScriptHost::Impl
 {
   inline void registerClass(JSContext *c, JSClassID &id, const JSClassDef &def, const JSCFunctionListEntry *proto, int protoLen)
@@ -34,8 +36,22 @@ namespace Editor::ScriptHost::Impl
   // Registers the scene object class, must be called once per context
   void initObjects(JSContext *c);
 
+  // Looks up an object of the open scene, or returns nullptr + JS exception
+  Project::Object* findObject(JSContext *c, uint32_t uuid);
+
   // In JS: editor.getSelectedObjects()
   JSValue getSelectedObjects(JSContext *c, JSValueConst thisVal, int argc, JSValueConst *argv);
+
+  //########// Components //########//
+
+  // Registers the component class, must be called once per context
+  void initComponents(JSContext *c);
+
+  // Array of all components of an object, including the ones from its prefab
+  JSValue getComponents(JSContext *c, Project::Object &obj);
+
+  // First component with the given type name (e.g. "Model"), or null
+  JSValue findComponent(JSContext *c, Project::Object &obj, const char* type);
 
   //########// Math Types //########//
 
