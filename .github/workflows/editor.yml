@@ -122,7 +122,7 @@ jobs:
   build-macos:
     # Apple Silicon runner; CMAKE_OSX_ARCHITECTURES builds a universal
     # (arm64 + x86_64) binary so it runs on both Apple Silicon and Intel Macs.
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Checkout repository

@@ -32,8 +32,8 @@ void P64::Camera::setTargetScreen()
   targetObjId = 0;
   targetSurfPtr = nullptr;
   targetDepthPtr = nullptr;
-  if(screenArea[2] > 0) {
-    t3d_viewport_set_area(viewports, screenArea[0], screenArea[1], screenArea[2], screenArea[3]);
+  if(screenArea.width > 0) {
+    t3d_viewport_set_area(viewports, screenArea.x, screenArea.y, screenArea.width, screenArea.height);
   }
 }
 
@@ -142,10 +142,10 @@ void P64::Camera::restoreTargetImages()
 }
 
 void P64::Camera::setScreenArea(int x, int y, int width, int height) {
-  screenArea[0] = x;
-  screenArea[1] = y;
-  screenArea[2] = width;
-  screenArea[3] = height;
+  screenArea.x = x;
+  screenArea.y = y;
+  screenArea.width = width;
+  screenArea.height = height;
   t3d_viewport_set_area(viewports, x,y, width, height);
 }
 

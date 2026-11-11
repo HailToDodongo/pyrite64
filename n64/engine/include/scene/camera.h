@@ -29,6 +29,13 @@ namespace P64
         SURFACE = 1,
       };
 
+      struct ScreenArea{
+        int16_t x{};
+        int16_t y{};
+        int16_t width{};
+        int16_t height{};
+      };
+
     private:
       T3DViewport viewports{};
       fm_mat4_t viewMatrix{};
@@ -36,7 +43,7 @@ namespace P64
       fm_vec3_t pos{};
       fm_vec3_t target{}; // computed
 
-      int16_t screenArea[4]{}; // last area set via 'setScreenArea', restored when switching back to screen
+      ScreenArea screenArea{}; // last area set via 'setScreenArea', restored when switching back to screen
 
       surface_t depthView{};    // sized view into a borrowed depth buffer for surface targets
       surface_t* currTgtSurf{}; // target resolved by 'attach', valid until 'detach'
@@ -117,6 +124,14 @@ namespace P64
       }
 
       void setScreenArea(int x, int y, int width, int height);
+
+      /**
+       * Current area the camera covers in screen-space
+       * @return const ScreenArea& 
+       */
+      const ScreenArea& getScreenArea() const {
+        return screenArea;
+      }
 
       /**
        * Switches the camera over to a perspective projection.
