@@ -313,6 +313,11 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
     if(!cam->attach())continue;
     camMain = cam;
 
+    // 2D that gets drawn by an object should be inside the current cameras scissor
+    DrawLayer::use2D();
+      cam->reApplyScissor();
+    DrawLayer::useDefault();
+
     rdpq_mode_push(); // drawing the layers changes modes, keep each camera's pass self-contained
     DrawLayer::draw(0); // layers drawn for the previous camera may have changed the layer 0 state
     lighting.apply();
@@ -363,6 +368,8 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
 
   auto t = get_user_ticks();
   DrawLayer::use2D();
+    auto surf = renderPipeline->getCurrColorSurf();
+    rdpq_set_scissor(0, 0, surf->width, surf->height);
     GlobalScript::callHooks(GlobalScript::HookType::SCENE_DRAW_2D);
   DrawLayer::useDefault();
   ticksGlobalDraw += get_user_ticks() - t;
