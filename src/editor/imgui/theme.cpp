@@ -144,8 +144,17 @@ namespace
       font = io.Fonts->AddFontFromFileTTF("./data/materialdesignicons-webfont.ttf", 16, &icons_config, icons_ranges);
       IM_ASSERT(font != nullptr);
 
+      auto addFallbackFonts = [&io] {
+        ImFontConfig cfg;
+        cfg.MergeMode = true;
+        io.Fonts->AddFontFromFileTTF("./data/NotoSans-Regular.ttf", 0.0f, &cfg);
+        io.Fonts->AddFontFromFileTTF("./data/NotoSansJP-Regular.ttf", 0.0f, &cfg);
+      };
+      addFallbackFonts();
+
       fontMono = io.Fonts->AddFontFromFileTTF("./data/GoogleSansCode.ttf", 16);
       IM_ASSERT(fontMono != nullptr);
+      addFallbackFonts();
 
       loadedFontPath = uiFont;
     }
