@@ -143,6 +143,16 @@
         "id": 5,
         "name": "Collider",
         "uuid": 8201453225663442880
+      },
+      {
+        "data": {
+          "posObjectUUID": 0,
+          "rotSource": 1
+        },
+        "enabled": true,
+        "id": 15,
+        "name": "Audio Listener",
+        "uuid": 13131131050993627298
       }
     ],
     "enabled": true,

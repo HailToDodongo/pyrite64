@@ -23,6 +23,8 @@ Components
   components/charBody
   components/constraint
   components/audio2d
+  components/audio3d
+  components/audioListener
   components/surface
   components/code
   components/nodeGraph

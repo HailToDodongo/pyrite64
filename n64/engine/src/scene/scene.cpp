@@ -294,6 +294,7 @@ void P64::Scene::update(float deltaTime)
   }
   pendingObjDelete.clear();
 
+  AudioManager::update3D(deltaTime);
   AudioManager::update();
   VI::SwapChain::nextFrame();
 }
