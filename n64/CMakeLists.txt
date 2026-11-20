@@ -74,6 +74,10 @@ add_executable(n64_engine
         engine/src/renderer/bigtex/rspBigTex.cpp
         engine/include/scene/components/audio2d.h
         engine/src/scene/components/audio2d.cpp
+        engine/include/scene/components/audio3d.h
+        engine/src/scene/components/audio3d.cpp
+        engine/include/scene/components/audioListener.h
+        engine/src/scene/components/audioListener.cpp
         engine/src/scene/components/collBody.cpp
         engine/src/scene/components/rigidBody.cpp
         engine/src/renderer/hdr/rspHDR.cpp

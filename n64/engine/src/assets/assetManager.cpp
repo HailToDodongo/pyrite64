@@ -64,7 +64,9 @@ namespace
   namespace AssetType = P64::Assets::Type;
 
   wav64_t* wav64Load(const char* path) {
-    return wav64_load(path, nullptr);
+    auto wav = wav64_load(path, nullptr);
+    wav64_set_loop(wav, true);
+    return wav;
   }
 
   xm64player_t *xmLoad(const char* path) {

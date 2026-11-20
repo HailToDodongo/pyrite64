@@ -429,7 +429,7 @@
               "loop": true,
               "volume": 0.4000000059604645
             },
-            "enabled": true,
+            "enabled": false,
             "id": 6,
             "name": "Audio (2D)",
             "uuid": 16000442309288945905
@@ -2019,14 +2019,29 @@
             "id": 7,
             "name": "Constraint",
             "uuid": 8540802513302835434
+          },
+          {
+            "data": {
+              "audioUUID": 7170669891494496025,
+              "autoPlay": true,
+              "loop": true,
+              "maxDist": 5.0,
+              "nearDist": 0.5,
+              "rolloff": 1.0,
+              "volume": 1.0
+            },
+            "enabled": true,
+            "id": 14,
+            "name": "Audio (3D)",
+            "uuid": 1668544666332491139
           }
         ],
         "enabled": true,
         "name": "New Object",
         "pos": [
-          -0.6153700351715088,
-          0.8237248063087463,
-          4.016812324523926
+          -0.17328733205795288,
+          0.75,
+          3.75
         ],
         "propOverrides": {},
         "proportionalScale": false,

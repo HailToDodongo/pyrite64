@@ -45,9 +45,8 @@ namespace P64::Comp
     } else {
       data->audioWAV = (wav64_t*)AssetManager::getByIndex(initData->assetIdx);
       assert(data->audioWAV);
-      wav64_set_loop(data->audioWAV, (data->flags & FLAG_LOOP) != 0);
 
-      if(autoPlay)data->handle = AudioManager::play2D(data->audioWAV);
+      if(autoPlay)data->handle = AudioManager::play2D(data->audioWAV, (data->flags & FLAG_LOOP) != 0);
     }
 
     if(autoPlay)data->handle.setVolume(data->volume);
