@@ -50,9 +50,12 @@ namespace {
       fbState[fbIdxVI] = 0;
       fbFreeCount += 1;
       fbIdxVI = nextFbIdx;
+      frameIdx = 0;
+    } else {
+      // Retry the next VI once the minimum display interval has elapsed.
+      frameIdx = frameSkip;
     }
     enable_interrupts();
-    frameIdx = 0;
   }
 
   /**
