@@ -230,20 +230,20 @@ namespace Project::Component::NodeGraph
             ImTable::add(var.name);
             float v = def.is_number() ? def.get<float>() : 0.0f;
             ImGui::SetNextItemWidth(-1);
-            if(ImGui::InputFloat("##v", &v)) def = v;
+            if(ImGui::MathInputFloat("##v", &v)) def = v;
           } else if(var.type == "vec3" || var.type == "vec4") {
             int n = (var.type == "vec4") ? 4 : 3;
             float v[4] = {0,0,0,0};
             for(int i=0;i<n;++i) if(def.is_array() && (size_t)i<def.size() && def[i].is_number()) v[i]=def[i].get<float>();
             ImTable::add(var.name);
             ImGui::SetNextItemWidth(-1);
-            bool ch = (n == 4) ? ImGui::InputFloat4("##v", v) : ImGui::InputFloat3("##v", v);
+            bool ch = ImGui::MathInputFloatN("##v", v, n);
             if(ch) { def = nlohmann::json::array(); for(int i=0;i<n;++i) def.push_back(v[i]); }
           } else { // i32 / u32: integer field
             ImTable::add(var.name);
             int v = def.is_number() ? def.get<int>() : 0;
             ImGui::SetNextItemWidth(-1);
-            if(ImGui::InputInt("##v", &v)) def = v;
+            if(ImGui::MathInputInt("##v", &v)) def = v;
           }
           ImGui::PopID();
         }
